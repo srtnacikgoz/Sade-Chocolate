@@ -102,16 +102,18 @@ export const Legal: React.FC = () => {
   };
 
   return (
-    <main className="pt-24 max-w-md mx-auto pb-24 bg-white dark:bg-dark-900 min-h-screen px-5">
-      <button 
-        onClick={() => navigate(-1)} 
-        className="mb-8 flex items-center gap-2 text-gray-400 hover:text-brown-900 dark:hover:text-white transition-colors group"
-      >
-        <span className="material-icons-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-        <span className="text-[10px] font-bold uppercase tracking-widest">Geri Dön</span>
-      </button>
+    <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen">
+      <div className="max-w-3xl mx-auto">
+        <button 
+            onClick={() => navigate(-1)} 
+            className="mb-8 flex items-center gap-2 text-gray-400 hover:text-brown-900 dark:hover:text-white transition-colors group"
+        >
+            <span className="material-icons-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Geri Dön</span>
+        </button>
 
-      {renderContent()}
+        {renderContent()}
+      </div>
     </main>
   );
 };

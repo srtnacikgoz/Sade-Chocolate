@@ -39,7 +39,7 @@ export const Admin: React.FC = () => {
   };
 
   return (
-    <main className="pt-24 max-w-4xl mx-auto pb-32 bg-white dark:bg-dark-900 min-h-screen px-5">
+    <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-display text-3xl font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Yönetim Paneli</h1>

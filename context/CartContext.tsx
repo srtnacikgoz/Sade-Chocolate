@@ -21,8 +21,8 @@ interface CartContextType {
   // Gift State
   isGift: boolean;
   setIsGift: (isGift: boolean) => void;
-  giftNote: string;
-  setGiftNote: (note: string) => void;
+  giftMessage: string;
+  setGiftMessage: (message: string) => void;
   hideInvoice: boolean;
   setHideInvoice: (hide: boolean) => void;
 }
@@ -36,7 +36,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   // Gift State
   const [isGift, setIsGift] = useState(false);
-  const [giftNote, setGiftNote] = useState('');
+  const [giftMessage, setGiftMessage] = useState('');
   const [hideInvoice, setHideInvoice] = useState(true);
 
   const addToCart = (product: Product, quantity = 1) => {
@@ -71,7 +71,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearCart = () => {
       setItems([]);
       setIsGift(false);
-      setGiftNote('');
+      setGiftMessage('');
       setHideInvoice(true);
   };
 
@@ -109,8 +109,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isFavorite,
       isGift,
       setIsGift,
-      giftNote,
-      setGiftNote,
+      giftMessage,
+      setGiftMessage,
       hideInvoice,
       setHideInvoice
     }}>

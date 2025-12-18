@@ -58,6 +58,7 @@ export const TRANSLATIONS = {
     
     // Cart & Checkout
     cart: 'Sepetim',
+    cart_title: 'ALIŞVERİŞ SEPETİ',
     cart_empty: 'Sepetiniz şu an boş.',
     start_shopping: 'Alışverişe Başla',
     subtotal: 'Ara Toplam',
@@ -99,6 +100,8 @@ export const TRANSLATIONS = {
     // Catalog & Filters
     special_selection: 'Özel Seçim',
     all_products: 'Tüm Ürünler',
+    search_placeholder: 'Ürün veya kategori ara...',
+    no_search_results: 'Aramanızla eşleşen bir lezzet bulamadık.',
     sort_default: 'Varsayılan Sıralama',
     sort_price_asc: 'Fiyat: Artan',
     sort_price_desc: 'Fiyat: Azalan',
@@ -201,8 +204,10 @@ export const TRANSLATIONS = {
     
     // New Gift Module
     is_gift_label: 'Bu sipariş bir hediye mi?',
+    gift_checkbox_label: '🎁 Bu bir hediyedir (Hediye Paketi İstiyorum)',
     write_gift_note: 'Duygularınızı ekleyin (Max 140 karakter)',
     gift_note_placeholder: 'Sevgilerimle...',
+    gift_textarea_placeholder: "Hediye notunuzu buraya yazabilirsiniz (Sade'nin özel kartlarına elle yazılacaktır)...",
     preview_note: 'Notunuz böyle görünecek',
     hide_invoice: 'Faturayı Gizle (Fiyat bilgisi gönderilmez)',
     packaging_guarantee: 'Sıcak havalarda bile erimeye karşı %100 korumalı, özel izolasyonlu şık paketleme.',
@@ -273,6 +278,7 @@ export const TRANSLATIONS = {
     
     // Cart & Checkout
     cart: 'My Cart',
+    cart_title: 'SHOPPING CART',
     cart_empty: 'Your cart is empty.',
     start_shopping: 'Start Shopping',
     subtotal: 'Subtotal',
@@ -314,6 +320,8 @@ export const TRANSLATIONS = {
     // Catalog
     special_selection: 'Special Selection',
     all_products: 'All Products',
+    search_placeholder: 'Search products or categories...',
+    no_search_results: 'We couldn\'t find a flavor matching your search.',
     sort_default: 'Default Sorting',
     sort_price_asc: 'Price: Low to High',
     sort_price_desc: 'Price: High to Low',
@@ -416,8 +424,10 @@ export const TRANSLATIONS = {
     
     // New Gift Module
     is_gift_label: 'Is this order a gift?',
+    gift_checkbox_label: '🎁 This is a gift (I want Gift Packaging)',
     write_gift_note: 'Add your feelings (Max 140 chars)',
     gift_note_placeholder: 'With love...',
+    gift_textarea_placeholder: "You can write your gift note here (It will be handwritten on Sade's special cards)...",
     preview_note: 'Your note preview',
     hide_invoice: 'Hide Invoice (No price details sent)',
     packaging_guarantee: '100% protection against melting even in hot weather, special insulated stylish packaging.',
@@ -488,6 +498,7 @@ export const TRANSLATIONS = {
     
     // Cart & Checkout
     cart: 'Корзина',
+    cart_title: 'КОРЗИНА ПОКУПОК',
     cart_empty: 'Ваша корзина пуста.',
     start_shopping: 'Начать покупки',
     subtotal: 'Подытог',
@@ -529,6 +540,8 @@ export const TRANSLATIONS = {
     // Catalog
     special_selection: 'Особый выбор',
     all_products: 'Все продукты',
+    search_placeholder: 'Поиск продуктов...',
+    no_search_results: 'Товары не найдены',
     sort_default: 'По умолчанию',
     sort_price_asc: 'Цена: по возрастанию',
     sort_price_desc: 'Цена: по убыванию',
@@ -631,8 +644,10 @@ export const TRANSLATIONS = {
     
     // New Gift Module
     is_gift_label: 'Это подарок?',
+    gift_checkbox_label: '🎁 Это подарок (Хочу подарочную упаковку)',
     write_gift_note: 'Добавьте пожелание (макс. 140 символов)',
     gift_note_placeholder: 'С любовью...',
+    gift_textarea_placeholder: "Здесь вы можете написать свое поздравление (оно будет написано от руки на специальных открытках Sade)...",
     preview_note: 'Предпросмотр',
     hide_invoice: 'Скрыть чек (Без цен)',
     packaging_guarantee: '100% защита от таяния, специальная термоупаковка.',

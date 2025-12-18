@@ -10,13 +10,15 @@ import { Button } from '../components/ui/Button';
 type AccountView = 'main' | 'orders' | 'addresses' | 'invoice' | 'settings' | 'help';
 
 const MenuButton: React.FC<{ icon: string, label: string, color: string, onClick: () => void, count?: number }> = ({ icon, label, color, onClick, count }) => (
-  <button onClick={onClick} className="w-full flex items-center justify-between p-5 bg-gray-50 dark:bg-dark-800 rounded-2xl hover:bg-white dark:hover:bg-dark-700 transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm group">
-    <div className="flex items-center gap-4">
-      <span className={`material-icons-outlined ${color} transition-transform group-hover:scale-110`}>{icon}</span>
-      <span className="text-sm font-bold text-gray-900 dark:text-white">{label}</span>
+  <button onClick={onClick} className="w-full flex items-center justify-between p-6 bg-gray-50 dark:bg-dark-800 rounded-3xl hover:bg-white dark:hover:bg-dark-700 transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm group">
+    <div className="flex items-center gap-5">
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform`}>
+        <span className={`material-icons-outlined ${color}`}>{icon}</span>
+      </div>
+      <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest">{label}</span>
     </div>
-    <div className="flex items-center gap-2">
-      {count !== undefined && <span className="text-[10px] font-bold px-2 py-0.5 bg-white dark:bg-dark-900 rounded-full text-gray-400 group-hover:text-brown-900 dark:group-hover:text-gold">{count}</span>}
+    <div className="flex items-center gap-3">
+      {count !== undefined && <span className="text-[10px] font-bold px-3 py-1 bg-brown-900 dark:bg-gold text-white dark:text-black rounded-full shadow-sm">{count}</span>}
       <span className="material-icons-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
     </div>
   </button>
@@ -29,11 +31,9 @@ export const Account: React.FC = () => {
   const [currentView, setCurrentView] = useState<AccountView>('main');
   const [isRegistering, setIsRegistering] = useState(false);
   
-  // Login Form States
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   
-  // Register Form States
   const [regData, setRegData] = useState<UserProfile & { pass: string, confirmPass: string }>({
     firstName: '',
     lastName: '',
@@ -49,7 +49,6 @@ export const Account: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate network delay for premium feel
     setTimeout(() => {
       login(email, pass);
       setIsLoading(false);
@@ -67,7 +66,6 @@ export const Account: React.FC = () => {
         return;
     }
 
-    // Simple validation for birthdate
     if (!regData.birthDate) {
         setError(language === 'tr' ? 'Doğum tarihi gerekli.' : 'Birth date is required.');
         setIsLoading(false);
@@ -83,95 +81,97 @@ export const Account: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
-      <main className="pt-24 max-w-md mx-auto pb-24 bg-white dark:bg-dark-900 min-h-screen px-6 flex flex-col justify-center animate-fade-in">
-        <div className="text-center mb-12">
-          <h1 className="font-display text-5xl text-brown-900 dark:text-white mb-2 italic tracking-tighter">Sade</h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-gold-light ml-1">Patisserie & Artisan</p>
-        </div>
+      <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen flex flex-col justify-center animate-fade-in">
+        <div className="max-w-lg mx-auto w-full">
+            <div className="text-center mb-12">
+            <h1 className="font-display text-6xl text-brown-900 dark:text-white mb-2 italic tracking-tighter">Sade</h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-gold ml-1">Patisserie & Artisan</p>
+            </div>
 
-        <div className="bg-gray-50/50 dark:bg-dark-800/50 p-1 rounded-2xl mb-8 flex border border-gray-100 dark:border-gray-700 shadow-inner">
-          <button 
-            onClick={() => { setIsRegistering(false); setError(''); }}
-            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all ${!isRegistering ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-md' : 'text-gray-400'}`}
-          >
-            {t('login')}
-          </button>
-          <button 
-            onClick={() => { setIsRegistering(true); setError(''); }}
-            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all ${isRegistering ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-md' : 'text-gray-400'}`}
-          >
-            {t('register')}
-          </button>
-        </div>
+            <div className="bg-gray-50/50 dark:bg-dark-800/50 p-1 rounded-3xl mb-10 flex border border-gray-100 dark:border-gray-700 shadow-inner">
+            <button 
+                onClick={() => { setIsRegistering(false); setError(''); }}
+                className={`flex-1 py-4 text-[11px] font-bold uppercase tracking-[0.2em] rounded-2xl transition-all duration-500 ${!isRegistering ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-xl' : 'text-gray-400'}`}
+            >
+                {t('login')}
+            </button>
+            <button 
+                onClick={() => { setIsRegistering(true); setError(''); }}
+                className={`flex-1 py-4 text-[11px] font-bold uppercase tracking-[0.2em] rounded-2xl transition-all duration-500 ${isRegistering ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-xl' : 'text-gray-400'}`}
+            >
+                {t('register')}
+            </button>
+            </div>
 
-        {!isRegistering ? (
-          <div className="animate-fade-in space-y-6">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <Input type="email" placeholder={t('email')} value={email} onChange={e => setEmail(e.target.value)} required icon="email" />
-              <div className="space-y-1">
-                <Input type="password" placeholder={t('password')} value={pass} onChange={e => setPass(e.target.value)} required icon="lock" />
-                <div className="flex justify-end">
-                  <button type="button" className="text-[10px] font-bold text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors uppercase tracking-wider">
-                    {language === 'tr' ? 'Şifremi Unuttum' : 'Forgot Password?'}
-                  </button>
+            {!isRegistering ? (
+            <div className="animate-fade-in space-y-6">
+                <form onSubmit={handleLogin} className="space-y-4">
+                <Input type="email" placeholder={t('email')} value={email} onChange={e => setEmail(e.target.value)} required icon="email" />
+                <div className="space-y-2">
+                    <Input type="password" placeholder={t('password')} value={pass} onChange={e => setPass(e.target.value)} required icon="lock" />
+                    <div className="flex justify-end">
+                    <button type="button" className="text-[10px] font-bold text-gray-400 hover:text-gold transition-colors uppercase tracking-widest">
+                        {language === 'tr' ? 'Şifremi Unuttum' : 'Forgot Password?'}
+                    </button>
+                    </div>
                 </div>
-              </div>
-              <Button type="submit" className="w-full h-14" size="lg" loading={isLoading}>{t('login_button')}</Button>
-            </form>
-          </div>
-        ) : (
-          <div className="animate-fade-in">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Input placeholder={t('first_name')} value={regData.firstName} onChange={e => setRegData({...regData, firstName: e.target.value})} required />
-                <Input placeholder={t('last_name')} value={regData.lastName} onChange={e => setRegData({...regData, lastName: e.target.value})} required />
-              </div>
-              <Input type="email" placeholder={t('email')} value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} required icon="email" />
-              <Input type="tel" placeholder={t('phone')} value={regData.phone} onChange={e => setRegData({...regData, phone: e.target.value})} required icon="phone" />
-              <Input type="date" label={t('birth_date')} value={regData.birthDate} onChange={e => setRegData({...regData, birthDate: e.target.value})} required icon="cake" />
-              <div className="grid grid-cols-2 gap-3">
-                <Input type="password" placeholder={t('password')} value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} required icon="lock" />
-                <Input type="password" placeholder={t('confirm_password')} value={regData.confirmPass} onChange={e => setRegData({...regData, confirmPass: e.target.value})} required icon="lock" />
-              </div>
-              
-              {error && <p className="text-[10px] text-red-500 font-bold text-center uppercase tracking-tighter animate-pulse">{error}</p>}
-              
-              <Button type="submit" className="w-full h-14" size="lg" loading={isLoading}>{t('register_button')}</Button>
-            </form>
-          </div>
-        )}
+                <Button type="submit" className="w-full h-16 rounded-full shadow-2xl" size="lg" loading={isLoading}>{t('login_button')}</Button>
+                </form>
+            </div>
+            ) : (
+            <div className="animate-fade-in">
+                <form onSubmit={handleRegister} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <Input placeholder={t('first_name')} value={regData.firstName} onChange={e => setRegData({...regData, firstName: e.target.value})} required />
+                    <Input placeholder={t('last_name')} value={regData.lastName} onChange={e => setRegData({...regData, lastName: e.target.value})} required />
+                </div>
+                <Input type="email" placeholder={t('email')} value={regData.email} onChange={e => setRegData({...regData, email: e.target.value})} required icon="email" />
+                <Input type="tel" placeholder={t('phone')} value={regData.phone} onChange={e => setRegData({...regData, phone: e.target.value})} required icon="phone" />
+                <Input type="date" label={t('birth_date')} value={regData.birthDate} onChange={e => setRegData({...regData, birthDate: e.target.value})} required icon="cake" />
+                <div className="grid grid-cols-2 gap-4">
+                    <Input type="password" placeholder={t('password')} value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} required icon="lock" />
+                    <Input type="password" placeholder={t('confirm_password')} value={regData.confirmPass} onChange={e => setRegData({...regData, confirmPass: e.target.value})} required icon="lock" />
+                </div>
+                
+                {error && <p className="text-[10px] text-red-500 font-bold text-center uppercase tracking-widest animate-pulse">{error}</p>}
+                
+                <Button type="submit" className="w-full h-16 rounded-full shadow-2xl mt-4" size="lg" loading={isLoading}>{t('register_button')}</Button>
+                </form>
+            </div>
+            )}
+        </div>
       </main>
     );
   }
 
   const renderHeader = (title: string) => (
-    <div className="flex items-center mb-8">
-      <button onClick={() => setCurrentView('main')} className="mr-4 p-2 bg-gray-50 dark:bg-dark-800 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 transition-colors shadow-sm">
+    <div className="flex items-center mb-10">
+      <button onClick={() => setCurrentView('main')} className="mr-6 p-3 bg-gray-50 dark:bg-dark-800 rounded-full text-gray-900 dark:text-white hover:bg-gold hover:text-white transition-all shadow-sm">
         <span className="material-icons-outlined block">arrow_back</span>
       </button>
-      <h2 className="font-display text-2xl font-bold dark:text-white">{title}</h2>
+      <h2 className="font-display text-3xl font-bold dark:text-white italic">{title}</h2>
     </div>
   );
 
   return (
-    <main className="pt-24 max-w-md mx-auto pb-24 bg-white dark:bg-dark-900 min-h-screen px-5">
+    <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen">
       {currentView === 'main' ? (
-        <div className="animate-fade-in">
-          <div className="flex items-center gap-5 mb-10 p-4 bg-gray-50/50 dark:bg-dark-800/50 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-            <div className="w-20 h-20 bg-gradient-to-br from-brown-400 to-brown-900 rounded-full flex items-center justify-center text-white font-display text-3xl font-bold shadow-xl border-4 border-white dark:border-dark-900">
+        <div className="animate-fade-in max-w-2xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center gap-8 mb-16 p-10 bg-gray-50 dark:bg-dark-800 rounded-[50px] border border-gray-100 dark:border-gray-700 shadow-luxurious">
+            <div className="w-24 h-24 bg-gradient-to-br from-brown-400 to-brown-900 rounded-full flex items-center justify-center text-white font-display text-4xl font-bold shadow-2xl border-4 border-white dark:border-dark-900">
               {user?.firstName?.[0]}
             </div>
-            <div className="flex-1">
-              <h2 className="font-display text-2xl font-bold dark:text-white leading-tight">{t('welcome')}, {user?.firstName}</h2>
-              <p className="text-xs text-gray-400 font-medium">{user?.email}</p>
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-gold/10 text-gold rounded-full">
-                <span className="material-icons-outlined text-[10px]">stars</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest">Premium Member</span>
+            <div className="text-center md:text-left flex-1">
+              <h2 className="font-display text-4xl font-bold dark:text-white leading-tight mb-2 italic">{t('welcome')}, {user?.firstName}</h2>
+              <p className="text-sm text-gray-400 font-medium tracking-wide mb-4">{user?.email}</p>
+              <div className="inline-flex items-center gap-2 px-4 py-1 bg-gold/10 text-gold rounded-full border border-gold/20">
+                <span className="material-icons-outlined text-xs">stars</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Sade Premium</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 mb-10">
+          <div className="grid grid-cols-1 gap-4 mb-12">
             <MenuButton icon="shopping_bag" color="text-blue-500" label={t('my_orders')} count={orders.length} onClick={() => setCurrentView('orders')} />
             <MenuButton icon="location_on" color="text-orange-500" label={t('my_addresses')} onClick={() => setCurrentView('addresses')} />
             <MenuButton icon="receipt" color="text-brown-900 dark:text-gold" label={t('invoice_info')} onClick={() => setCurrentView('invoice')} />
@@ -179,12 +179,12 @@ export const Account: React.FC = () => {
             <MenuButton icon="help_outline" color="text-teal-500" label={t('help_support')} onClick={() => setCurrentView('help')} />
           </div>
 
-          <Button variant="outline" className="w-full text-red-500 border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 h-14" onClick={logout}>
+          <Button variant="outline" className="w-full text-red-500 border-red-100 dark:border-red-900/30 hover:bg-red-500 hover:text-white h-16 rounded-full transition-all" onClick={logout}>
             {t('logout')}
           </Button>
         </div>
       ) : (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in max-w-3xl mx-auto">
           {currentView === 'orders' && (
             <>
               {renderHeader(t('my_orders'))}
@@ -206,15 +206,15 @@ export const Account: React.FC = () => {
           {currentView === 'settings' && (
             <>
               {renderHeader(t('settings'))}
-              <div className="space-y-4 bg-gray-50 dark:bg-dark-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 animate-fade-in shadow-sm">
-                <div className="flex flex-col gap-3">
-                  <span className="text-xs font-bold uppercase tracking-widest text-gray-400 ml-1">Tercih Edilen Dil</span>
-                  <div className="flex gap-2">
+              <div className="space-y-6 bg-gray-50 dark:bg-dark-800 p-10 rounded-[40px] border border-gray-100 dark:border-gray-700 animate-fade-in shadow-sm">
+                <div className="flex flex-col gap-6">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 text-center">Tercih Edilen Dil / Language</span>
+                  <div className="flex gap-4">
                     {['tr', 'en', 'ru'].map(lang => (
                       <button 
                         key={lang} 
                         onClick={() => setLanguage(lang as any)} 
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-bold transition-all border ${language === lang ? 'bg-brown-900 dark:bg-white text-white dark:text-black border-transparent shadow-lg scale-105' : 'bg-white dark:bg-dark-900 text-gray-400 border-gray-100 dark:border-gray-700'}`}
+                        className={`flex-1 py-4 rounded-2xl text-[11px] font-bold transition-all border-2 ${language === lang ? 'bg-brown-900 border-transparent text-white dark:bg-gold dark:text-black shadow-xl scale-105' : 'bg-white dark:bg-dark-900 text-gray-400 border-gray-100 dark:border-gray-800'}`}
                       >
                         {lang.toUpperCase()}
                       </button>
@@ -227,13 +227,16 @@ export const Account: React.FC = () => {
           {currentView === 'help' && (
             <>
               {renderHeader(t('help_support'))}
-              <div className="p-10 bg-gray-50 dark:bg-dark-800 rounded-3xl border border-gray-100 dark:border-gray-700 text-sm text-gray-500 italic text-center animate-fade-in shadow-sm">
-                <div className="w-16 h-16 bg-teal-50 dark:bg-teal-900/20 text-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                  <span className="material-icons-outlined text-3xl">support_agent</span>
+              <div className="p-16 bg-gray-50 dark:bg-dark-800 rounded-[50px] border border-gray-100 dark:border-gray-700 text-sm text-gray-500 text-center animate-fade-in shadow-luxurious">
+                <div className="w-20 h-20 bg-teal-50 dark:bg-teal-900/20 text-teal-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <span className="material-icons-outlined text-4xl">support_agent</span>
                 </div>
-                <p className="mb-2 leading-relaxed">Destek ekibimize hafta içi 09:00 - 18:00 arası</p>
-                <a href="tel:05528963026" className="text-xl font-display font-bold text-brown-900 dark:text-white block hover:text-gold transition-colors">0552 896 30 26</a>
-                <p className="mt-4 text-[10px] uppercase tracking-widest font-bold">numaralı hattan ulaşabilirsiniz.</p>
+                <p className="text-lg font-sans text-gray-700 dark:text-gray-200 mb-2 leading-relaxed italic">"Herhangi bir sorunuzda yanınızdayız."</p>
+                <p className="mb-6 text-sm text-gray-400">Hafta içi 09:00 - 18:00 arası</p>
+                <a href="tel:05528963026" className="text-3xl font-display font-bold text-brown-900 dark:text-white block hover:text-gold transition-all">0552 896 30 26</a>
+                <div className="mt-10 pt-10 border-t border-gray-200 dark:border-gray-700">
+                  <a href="mailto:bilgi@sadepatisserie.com" className="text-xs font-bold uppercase tracking-widest text-teal-600 hover:opacity-80">E-Posta Gönder</a>
+                </div>
               </div>
             </>
           )}
