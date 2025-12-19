@@ -132,9 +132,9 @@ export const ProductDetail: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                   {(Object.keys(product.sensory) as Array<keyof typeof product.sensory>).map(key => (
-                    <div key={key} className="flex flex-col gap-2.5">
+                    <div key={String(key)} className="flex flex-col gap-2.5">
                       <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                        <span className="text-gray-500">{t(`sensory_${key}` as any)}</span>
+                        <span className="text-gray-500">{t(`sensory_${String(key)}` as any)}</span>
                         <span className="text-brown-900 dark:text-gold">{product.sensory?.[key]}%</span>
                       </div>
                       <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">

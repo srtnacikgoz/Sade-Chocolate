@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Product, ViewMode } from '../types';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -13,8 +14,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   const [quantity, setQuantity] = useState(1);
   const { addToCart, toggleFavorite, isFavorite } = useCart();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   
   const isFav = isFavorite(product.id);
+
+  const handleCardClick = () => {
+    navigate(`/product/${product.id}`);
+  };
 
   const handleAddToCart = (e: React.MouseEvent, qty: number = 1) => {
     e.preventDefault();
@@ -45,7 +51,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   // 1. GRID VIEW (Katalog Varsayılan Görünüm)
   if (viewMode === ViewMode.GRID) {
     return (
-      <div className="group bg-white dark:bg-dark-800 rounded-xl shadow-soft hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col h-full border border-gray-50 dark:border-gray-800 relative">
+      <div 
+        onClick={handleCardClick}
+        className="group bg-white dark:bg-dark-800 rounded-xl shadow-soft hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col h-full border border-gray-50 dark:border-gray-800 relative cursor-pointer"
+      >
         <div className="relative aspect-[4/5] bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden">
           
           {/* Rozetler */}
@@ -127,7 +136,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   // 2. LIST VIEW
   if (viewMode === ViewMode.LIST) {
     return (
-      <div className="group bg-white dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-gray-50 dark:border-gray-800 relative">
+      <div 
+        onClick={handleCardClick}
+        className="group bg-white dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-gray-50 dark:border-gray-800 relative cursor-pointer"
+      >
         <div className="relative aspect-[3/2] bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden">
           {product.badge && (
              <span className={`absolute top-4 left-4 text-white text-xs font-bold px-3 py-1.5 uppercase tracking-widest z-20 rounded-full ${product.badge === 'New' ? 'bg-gold' : 'bg-gray-900 dark:bg-white dark:text-black'}`}>
@@ -189,7 +201,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   // 3. LIST QTY VIEW (Liste + Adet)
   if (viewMode === ViewMode.LIST_QTY) {
     return (
-      <div className="group bg-white dark:bg-dark-800 rounded-xl shadow-soft hover:shadow-hover transition-all duration-300 overflow-hidden flex border border-gray-50 dark:border-gray-800 items-center p-3 relative">
+      <div 
+        onClick={handleCardClick}
+        className="group bg-white dark:bg-dark-800 rounded-xl shadow-soft hover:shadow-hover transition-all duration-300 overflow-hidden flex border border-gray-50 dark:border-gray-800 items-center p-3 relative cursor-pointer"
+      >
         <div className="relative w-24 h-24 flex-shrink-0 bg-[#F9F9F9] dark:bg-gray-800 rounded-lg overflow-hidden mr-3">
            {product.badge && (
             <span className={`absolute top-0 left-0 text-white text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-widest z-20 rounded-tl-lg rounded-br-lg ${product.badge === 'New' ? 'bg-gold' : 'bg-gray-900 dark:bg-white dark:text-black'}`}>
@@ -234,7 +249,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
               </span>
             </div>
             
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
               <button 
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="p-1 border border-gray-300 dark:border-gray-600 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser, UserProfile } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
 import { OrdersView } from '../components/account/OrdersView';
@@ -30,6 +30,7 @@ export const Account: React.FC = () => {
   
   const [currentView, setCurrentView] = useState<AccountView>('main');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -45,6 +46,23 @@ export const Account: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Check initial theme state
+    setIsDark(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    if (newIsDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +103,7 @@ export const Account: React.FC = () => {
         <div className="max-w-lg mx-auto w-full">
             <div className="text-center mb-12">
             <h1 className="font-display text-6xl text-brown-900 dark:text-white mb-2 italic tracking-tighter">Sade</h1>
-            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-gold ml-1">Patisserie & Artisan</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.5em] text-gold ml-1">Chocolate</p>
             </div>
 
             <div className="bg-gray-50/50 dark:bg-dark-800/50 p-1 rounded-3xl mb-10 flex border border-gray-100 dark:border-gray-700 shadow-inner">
@@ -207,6 +225,8 @@ export const Account: React.FC = () => {
             <>
               {renderHeader(t('settings'))}
               <div className="space-y-6 bg-gray-50 dark:bg-dark-800 p-10 rounded-[40px] border border-gray-100 dark:border-gray-700 animate-fade-in shadow-sm">
+                
+                {/* Language Settings */}
                 <div className="flex flex-col gap-6">
                   <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 text-center">Tercih Edilen Dil / Language</span>
                   <div className="flex gap-4">
@@ -221,6 +241,25 @@ export const Account: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Dark Mode Toggle */}
+                <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <button 
+                        onClick={toggleTheme}
+                        className="w-full flex items-center justify-between p-4 bg-white dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700 group hover:border-gold dark:hover:border-gold transition-colors"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'}`}>
+                                <span className="material-icons-outlined">{isDark ? 'dark_mode' : 'light_mode'}</span>
+                            </div>
+                            <span className="text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white">{t('dark_mode')}</span>
+                        </div>
+                        <div className={`w-12 h-6 rounded-full relative transition-colors ${isDark ? 'bg-gold' : 'bg-gray-300'}`}>
+                            <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${isDark ? 'translate-x-7' : 'translate-x-1'}`}></div>
+                        </div>
+                    </button>
+                </div>
+
               </div>
             </>
           )}
