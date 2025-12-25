@@ -12,8 +12,9 @@ export const Catalog: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.GRID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [minPrice, setMinPrice] = useState<number | ''>(''); // Yeni state
-  const [maxPrice, setMaxPrice] = useState<number | ''>(''); // Yeni state
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
+  const [sortOrder, setSortOrder] = useState<string>('default'); // Yeni state
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -28,7 +29,7 @@ export const Catalog: React.FC = () => {
     return ['all', ...Array.from(uniqueCategories)];
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
+  const sortedAndFilteredProducts = useMemo(() => {
     let currentProducts = products;
 
     if (searchTerm) {
@@ -52,8 +53,33 @@ export const Catalog: React.FC = () => {
       currentProducts = currentProducts.filter(p => p.price <= maxPrice);
     }
 
+    // Sıralama mantığı
+    switch (sortOrder) {
+      case 'price_asc':
+        currentProducts.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        currentProducts.sort((a, b) => b.price - a.price);
+        break;
+      case 'newest':
+        // 'createdAt' gibi bir zaman damgası varsayarak sıralama
+        // Product tipinde 'createdAt' özelliği yoksa bu kısım çalışmaz
+        // ve varsayılan sıralama kullanılır.
+        currentProducts.sort((a, b) => (new Date(b.createdAt || 0)).getTime() - (new Date(a.createdAt || 0)).getTime());
+        break;
+      case 'popular':
+        // 'popularity' gibi bir özellik varsayarak sıralama
+        // Product tipinde 'popularity' özelliği yoksa bu kısım çalışmaz
+        // ve varsayılan sıralama kullanılır.
+        currentProducts.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        break;
+      default:
+        // Varsayılan sıralama (ürünlerin orijinal sırası veya başka bir mantık)
+        break;
+    }
+
     return currentProducts;
-  }, [searchTerm, products, selectedCategory, minPrice, maxPrice]);
+  }, [searchTerm, products, selectedCategory, minPrice, maxPrice, sortOrder]);
 
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product);
@@ -67,7 +93,7 @@ export const Catalog: React.FC = () => {
     <div className="text-center py-8 bg-cream-100 dark:bg-dark-900 rounded-lg mb-8">
       <h2 className="text-xl font-serif italic text-gray-500">{t('search_results_for')}</h2>
       <p className="text-4xl font-display text-mocha-900 dark:text-white">"{searchTerm}"</p>
-      <p className="text-sm text-gray-400 mt-2">{filteredProducts.length} {t('products_found')}</p>
+      <p className="text-sm text-gray-400 mt-2">{sortedAndFilteredProducts.length} {t('products_found')}</p>
     </div>
   );
 
@@ -114,6 +140,18 @@ export const Catalog: React.FC = () => {
               onChange={(e) => setMaxPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
               className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 w-28"
             />
+            {/* Sıralama Seçenekleri */}
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200"
+            >
+              <option value="default">{t('sort_default') || "Varsayılan"}</option>
+              <option value="price_asc">{t('sort_price_asc') || "Fiyat: Artan"}</option>
+              <option value="price_desc">{t('sort_price_desc') || "Fiyat: Azalan"}</option>
+              <option value="newest">{t('sort_newest') || "En Yeniler"}</option>
+              <option value="popular">{t('sort_popular') || "En Popülerler"}</option>
+            </select>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setViewMode(ViewMode.GRID)} className={`p-2 rounded-md ${viewMode === ViewMode.GRID ? 'bg-gray-200 dark:bg-dark-700 text-mocha-900 dark:text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-800'}`}>
@@ -132,7 +170,7 @@ export const Catalog: React.FC = () => {
           </div>
         ) : (
           <div className={`grid gap-x-6 gap-y-10 transition-all duration-500 ${viewMode === ViewMode.GRID ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
-            {filteredProducts.map(product => (
+            {sortedAndFilteredProducts.map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
