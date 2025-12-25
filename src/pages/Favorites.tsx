@@ -7,6 +7,7 @@ import { QuickViewModal } from '../components/QuickViewModal';
 import { ViewMode, Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
+import { Tag, Gem, Sparkles, Grid, Package } from 'lucide-react'; // Yeni ikonlar
 
 export const Favorites: React.FC = () => {
   const { favorites, addToCart, setIsCartOpen } = useCart();
@@ -75,7 +76,7 @@ export const Favorites: React.FC = () => {
   }
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen">
+    <main className="w-full max-w-screen-xl mx-auto pt-32 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen">
         <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-10">
             <div>
               <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Sizin Seçimleriniz</span>
@@ -89,48 +90,48 @@ export const Favorites: React.FC = () => {
         {/* Smart Actions */}
         <div className="mb-20">
             <div className="flex items-center gap-3 mb-8 ml-1">
-                <span className="material-icons-outlined text-gold text-2xl">auto_awesome</span>
+                <Sparkles size={20} className="text-gold" />
                 <p className="text-[11px] font-bold font-sans text-gray-400 uppercase tracking-[0.4em]">{t('quick_pick')}</p>
             </div>
             
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
-                <button onClick={() => handleSmartAction('cheapest')} className="p-8 bg-gray-50 dark:bg-dark-800 rounded-[40px] flex flex-col items-center justify-center gap-4 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <span className="material-icons-outlined text-blue-500 text-3xl">savings</span>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <button onClick={() => handleSmartAction('cheapest')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
+                      <Tag size={24} className="text-blue-500" />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_cheapest')}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_cheapest')}</span>
                 </button>
-                <button onClick={() => handleSmartAction('expensive')} className="p-8 bg-gray-50 dark:bg-dark-800 rounded-[40px] flex flex-col items-center justify-center gap-4 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <span className="material-icons-outlined text-purple-500 text-3xl">workspace_premium</span>
+                <button onClick={() => handleSmartAction('expensive')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
+                      <Gem size={24} className="text-purple-500" />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_expensive')}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_expensive')}</span>
                 </button>
-                <button onClick={() => handleSmartAction('aesthetic')} className="p-8 bg-gray-50 dark:bg-dark-800 rounded-[40px] flex flex-col items-center justify-center gap-4 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <span className="material-icons-outlined text-orange-500 text-3xl">auto_awesome</span>
+                <button onClick={() => handleSmartAction('aesthetic')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
+                      <Sparkles size={24} className="text-orange-500" />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_surprise')}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_surprise')}</span>
                 </button>
-                <button onClick={() => handleSmartAction('all')} className="p-8 bg-gray-50 dark:bg-dark-800 rounded-[40px] flex flex-col items-center justify-center gap-4 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <span className="material-icons-outlined text-teal-500 text-3xl">all_inclusive</span>
+                <button onClick={() => handleSmartAction('all')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
+                      <Grid size={24} className="text-teal-500" />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_all')}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_all')}</span>
                 </button>
                 {/* Featured Curated Action */}
                 <button 
                     onClick={() => handleSmartAction('curated')}
-                    className="col-span-2 lg:col-span-1 p-8 bg-brown-900 dark:bg-white rounded-[40px] shadow-2xl group relative overflow-hidden transition-all hover:scale-[1.02] active:scale-95"
+                    className="col-span-2 lg:col-span-1 p-6 bg-brown-900 dark:bg-white rounded-[32px] shadow-2xl group relative overflow-hidden transition-all hover:scale-[1.02] active:scale-95"
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 dark:bg-black/5 rounded-full blur-3xl -mr-12 -mt-12"></div>
-                    <div className="flex flex-col items-center justify-center gap-4 relative z-10 text-center">
-                        <div className="w-14 h-14 bg-white/20 dark:bg-black/10 rounded-2xl flex items-center justify-center backdrop-blur-sm group-hover:rotate-12 transition-transform">
-                            <span className="material-icons-outlined text-white dark:text-black text-3xl">inventory_2</span>
+                    <div className="flex flex-col items-center justify-center gap-3 relative z-10 text-center">
+                        <div className="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center backdrop-blur-sm group-hover:rotate-12 transition-transform">
+                            <Package size={24} className="text-white dark:text-black" />
                         </div>
                         <div>
-                          <span className="block font-display font-bold text-lg text-white dark:text-black italic leading-none">{t('smart_curated')}</span>
-                          <span className="font-sans text-[9px] text-white/60 dark:text-black/50 uppercase tracking-[0.3em] mt-2 block">{t('create_custom_box')}</span>
+                          <span className="block font-display font-bold text-base text-white dark:text-black italic leading-none">{t('smart_curated')}</span>
+                          <span className="font-sans text-[8px] text-white/60 dark:text-black/50 uppercase tracking-[0.3em] mt-1 block">{t('create_custom_box')}</span>
                         </div>
                     </div>
                 </button>
