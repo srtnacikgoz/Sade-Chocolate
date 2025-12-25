@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useProducts } from '../context/ProductContext';
 import { ProductCard } from '../components/ProductCard';
 import { ViewMode, Product } from '../types';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom'; // useSearchParams eklendi
 import { useLanguage } from '../context/LanguageContext';
 import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,13 +12,43 @@ export const Catalog: React.FC = () => {
   const { products, isLoading } = useProducts();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.GRID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [minPrice, setMinPrice] = useState<number | ''>('');
-  const [maxPrice, setMaxPrice] = useState<number | ''>('');
-  const [sortOrder, setSortOrder] = useState<string>('default');
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false); // Yeni state
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { t } = useLanguage();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams(); // Yeni hook
+
+  // URL parametrelerinden state'leri başlat
+  const initialCategory = searchParams.get('category') || 'all';
+  const initialMinPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice') as string) : '';
+  const initialMaxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice') as string) : '';
+  const initialSortOrder = searchParams.get('sort') || 'default';
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const [minPrice, setMinPrice] = useState<number | ''>(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState<number | ''>(initialMaxPrice);
+  const [sortOrder, setSortOrder] = useState<string>(initialSortOrder);
+
+  const searchTerm = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('search')?.toLowerCase() || '';
+  }, [location.search]);
+
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
+    products.forEach(p => p.categories?.forEach(cat => uniqueCategories.add(cat)));
+    return ['all', ...Array.from(uniqueCategories)];
+  }, [products]);
+
+  // State değişikliklerini URL ile senkronize et
+  useEffect(() => {
+    const newSearchParams = new URLSearchParams();
+    if (searchTerm) newSearchParams.set('search', searchTerm);
+    if (selectedCategory !== 'all') newSearchParams.set('category', selectedCategory);
+    if (minPrice !== '') newSearchParams.set('minPrice', minPrice.toString());
+    if (maxPrice !== '') newSearchParams.set('maxPrice', maxPrice.toString());
+    if (sortOrder !== 'default') newSearchParams.set('sort', sortOrder);
+    setSearchParams(newSearchParams, { replace: true });
+  }, [selectedCategory, minPrice, maxPrice, sortOrder, searchTerm, setSearchParams]);
 
   const searchTerm = useMemo(() => {
     const params = new URLSearchParams(location.search);
