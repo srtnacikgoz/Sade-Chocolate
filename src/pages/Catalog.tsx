@@ -3,7 +3,7 @@ import { useProducts } from '../context/ProductContext';
 import { ProductCard } from '../components/ProductCard';
 import { ViewMode, Product } from '../types';
 import { QuickViewModal } from '../components/QuickViewModal';
-import { useLocation, useSearchParams } from 'react-router-dom'; // useSearchParams eklendi
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,31 +15,36 @@ export const Catalog: React.FC = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { t } = useLanguage();
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams(); // Yeni hook
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // URL parametrelerinden state'leri başlat
   const initialCategory = searchParams.get('category') || 'all';
   const initialMinPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice') as string) : '';
   const initialMaxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice') as string) : '';
   const initialSortOrder = searchParams.get('sort') || 'default';
+  const initialSearchTerm = searchParams.get('search')?.toLowerCase() || '';
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [minPrice, setMinPrice] = useState<number | ''>(initialMinPrice);
   const [maxPrice, setMaxPrice] = useState<number | ''>(initialMaxPrice);
   const [sortOrder, setSortOrder] = useState<string>(initialSortOrder);
-
-  const searchTerm = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get('search')?.toLowerCase() || '';
-  }, [location.search]);
+  const [searchTerm, setSearchTerm] = useState<string>(initialSearchTerm);
 
   const categories = useMemo(() => {
+    if (isLoading) return [];
     const uniqueCategories = new Set<string>();
     products.forEach(p => p.categories?.forEach(cat => uniqueCategories.add(cat)));
     return ['all', ...Array.from(uniqueCategories)];
-  }, [products]);
+  }, [products, isLoading]);
 
-  // State değişikliklerini URL ile senkronize et
+  useEffect(() => {
+    setSelectedCategory(searchParams.get('category') || 'all');
+    setMinPrice(searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice') as string) : '');
+    setMaxPrice(searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice') as string) : '');
+    setSortOrder(searchParams.get('sort') || 'default');
+    setSearchTerm(searchParams.get('search')?.toLowerCase() || '');
+  }, [searchParams]);
+
   useEffect(() => {
     const newSearchParams = new URLSearchParams();
     if (searchTerm) newSearchParams.set('search', searchTerm);
@@ -50,20 +55,9 @@ export const Catalog: React.FC = () => {
     setSearchParams(newSearchParams, { replace: true });
   }, [selectedCategory, minPrice, maxPrice, sortOrder, searchTerm, setSearchParams]);
 
-  const searchTerm = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get('search')?.toLowerCase() || '';
-  }, [location.search]);
-
-  const categories = useMemo(() => {
-    const uniqueCategories = new Set<string>();
-    products.forEach(p => p.categories?.forEach(cat => uniqueCategories.add(cat)));
-    return ['all', ...Array.from(uniqueCategories)];
-  }, [products]);
-
   const hasActiveFilters = useMemo(() => {
-    return selectedCategory !== 'all' || minPrice !== '' || maxPrice !== '' || sortOrder !== 'default';
-  }, [selectedCategory, minPrice, maxPrice, sortOrder]);
+    return selectedCategory !== 'all' || minPrice !== '' || maxPrice !== '' || sortOrder !== 'default' || searchTerm !== initialSearchTerm;
+  }, [selectedCategory, minPrice, maxPrice, sortOrder, searchTerm, initialSearchTerm]);
 
   const handleClearFilters = () => {
     setSelectedCategory('all');
@@ -96,7 +90,6 @@ export const Catalog: React.FC = () => {
       currentProducts = currentProducts.filter(p => p.price <= maxPrice);
     }
 
-    // Sıralama mantığı
     switch (sortOrder) {
       case 'price_asc':
         currentProducts.sort((a, b) => a.price - b.price);
@@ -182,12 +175,17 @@ export const Catalog: React.FC = () => {
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200"
+                    disabled={isLoading}
                   >
-                    {categories.map(category => (
-                      <option key={category} value={category}>
-                        {t(category === 'all' ? 'all_categories' : `category_${category.toLowerCase()}`) || category}
-                      </option>
-                    ))}
+                    {isLoading ? (
+                      <option>{t('loading_categories') || "Yükleniyor..."}</option>
+                    ) : (
+                      categories.map(category => (
+                        <option key={category} value={category}>
+                          {t(category === 'all' ? 'all_categories' : `category_${category.toLowerCase()}`) || category}
+                        </option>
+                      ))
+                    )}
                   </select>
                   {/* Fiyat Aralığı Filtresi */}
                   <input
