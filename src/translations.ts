@@ -156,7 +156,7 @@ export const TRANSLATIONS = {
     my_favorites: 'Favorilerim',
     products_count: '{count} Ürün',
     quick_pick: 'Hızlı Seçim',
-    smart_cheapest: 'En Uygunu',
+    smart_cheapest: 'En Uygun Fiyatlı',
     smart_expensive: 'En Yüksek Fiyatlı',
     smart_surprise: 'Sürpriz Seçim',
     smart_all: 'Hepsini Al',
