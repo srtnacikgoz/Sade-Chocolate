@@ -95,45 +95,24 @@ export const Favorites: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <button onClick={() => handleSmartAction('cheapest')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
-                      <span className="text-gray-600 dark:text-gray-300 text-3xl">₺</span>
-                    </div>
+                <button onClick={() => handleSmartAction('cheapest')} className="p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl flex items-center justify-center hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-lg">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_cheapest')}</span>
                 </button>
-                <button onClick={() => handleSmartAction('expensive')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
-                      <span className="text-gray-600 dark:text-gray-300 text-3xl">💎</span>
-                    </div>
+                <button onClick={() => handleSmartAction('expensive')} className="p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl flex items-center justify-center hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-lg">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_expensive')}</span>
                 </button>
-                <button onClick={() => handleSmartAction('aesthetic')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
-                      <span className="text-gray-600 dark:text-gray-300 text-3xl">✨</span>
-                    </div>
+                <button onClick={() => handleSmartAction('aesthetic')} className="p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl flex items-center justify-center hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-lg">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_surprise')}</span>
                 </button>
-                <button onClick={() => handleSmartAction('all')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
-                      <span className="text-gray-600 dark:text-gray-300 text-3xl">📦</span>
-                    </div>
+                <button onClick={() => handleSmartAction('all')} className="p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl flex items-center justify-center hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-lg">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_all')}</span>
                 </button>
                 {/* Featured Curated Action */}
                 <button 
                     onClick={() => handleSmartAction('curated')}
-                    className="col-span-2 lg:col-span-1 p-6 bg-brown-900 dark:bg-white rounded-[32px] shadow-2xl group relative overflow-hidden transition-all hover:scale-[1.02] active:scale-95"
+                    className="col-span-2 lg:col-span-1 p-4 bg-brown-900 dark:bg-white rounded-2xl shadow-xl group relative overflow-hidden transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center"
                 >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 dark:bg-black/5 rounded-full blur-3xl -mr-12 -mt-12"></div>
-                    <div className="flex flex-col items-center justify-center gap-3 relative z-10 text-center">
-                        <div className="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                            <Package size={24} className="text-white dark:text-black" />
-                        </div>
-                        <div>
-                          <span className="block font-display font-bold text-base text-white dark:text-black italic leading-none">{t('smart_curated')}</span>
-                          <span className="font-sans text-[8px] text-white/60 dark:text-black/50 uppercase tracking-[0.3em] mt-1 block">{t('create_custom_box')}</span>
-                        </div>
-                    </div>
+                    <span className="block font-display font-bold text-base text-white dark:text-black italic leading-none">{t('smart_curated')}</span>
                 </button>
             </div>
         </div>
