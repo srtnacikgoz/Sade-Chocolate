@@ -7,7 +7,7 @@ import { QuickViewModal } from '../components/QuickViewModal';
 import { ViewMode, Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
-import { Sparkles } from 'lucide-react'; // Sadece Sparkles kalıyor, diğerleri kaldırıldı
+import { Sparkles, Package } from 'lucide-react'; // Package eklendi
 
 export const Favorites: React.FC = () => {
   const { favorites, addToCart, setIsCartOpen } = useCart();
