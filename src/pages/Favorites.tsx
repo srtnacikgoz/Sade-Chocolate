@@ -7,7 +7,7 @@ import { QuickViewModal } from '../components/QuickViewModal';
 import { ViewMode, Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
-import { Tag, Gem, Sparkles, Grid, Package } from 'lucide-react'; // Yeni ikonlar
+import { Sparkles } from 'lucide-react'; // Sadece Sparkles kalıyor, diğerleri kaldırıldı
 
 export const Favorites: React.FC = () => {
   const { favorites, addToCart, setIsCartOpen } = useCart();
@@ -76,7 +76,7 @@ export const Favorites: React.FC = () => {
   }
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto pt-32 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen">
+    <main className="w-full max-w-screen-xl mx-auto pt-32 pb-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-dark-900 min-h-screen">
         <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-10">
             <div>
               <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Sizin Seçimleriniz</span>
@@ -96,26 +96,26 @@ export const Favorites: React.FC = () => {
             
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <button onClick={() => handleSmartAction('cheapest')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <Tag size={24} className="text-blue-500" />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
+                      <span className="text-gray-600 dark:text-gray-300 text-3xl">₺</span>
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_cheapest')}</span>
                 </button>
                 <button onClick={() => handleSmartAction('expensive')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <Gem size={24} className="text-purple-500" />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
+                      <span className="text-gray-600 dark:text-gray-300 text-3xl">💎</span>
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_expensive')}</span>
                 </button>
                 <button onClick={() => handleSmartAction('aesthetic')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <Sparkles size={24} className="text-orange-500" />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
+                      <span className="text-gray-600 dark:text-gray-300 text-3xl">✨</span>
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_surprise')}</span>
                 </button>
                 <button onClick={() => handleSmartAction('all')} className="p-6 bg-gray-50 dark:bg-dark-800 rounded-[32px] flex flex-col items-center justify-center gap-3 hover:bg-white dark:hover:bg-dark-700 transition-all group border border-transparent hover:border-gray-100 dark:hover:border-gray-700 shadow-sm hover:shadow-luxurious-sm">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm group-hover:scale-110 transition-transform group-hover:rotate-6">
-                      <Grid size={24} className="text-teal-500" />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-dark-900 shadow-sm">
+                      <span className="text-gray-600 dark:text-gray-300 text-3xl">📦</span>
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-300 group-hover:text-brown-900 dark:group-hover:text-gold">{t('smart_all')}</span>
                 </button>
@@ -126,7 +126,7 @@ export const Favorites: React.FC = () => {
                 >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 dark:bg-black/5 rounded-full blur-3xl -mr-12 -mt-12"></div>
                     <div className="flex flex-col items-center justify-center gap-3 relative z-10 text-center">
-                        <div className="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center backdrop-blur-sm group-hover:rotate-12 transition-transform">
+                        <div className="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Package size={24} className="text-white dark:text-black" />
                         </div>
                         <div>
