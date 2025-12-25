@@ -13,7 +13,7 @@ Bu plan, Sade Chocolate ürün kataloğuna gelişmiş filtreleme ve sıralama ö
 ## Faz 2: Filtreleme ve Sıralama Mantığı
 
 - [x] Task: Ürünleri Kategoriye Göre Filtreleme Mantığını Uygula (ProductContext.tsx) [f4c3133]
-- [ ] Task: Ürünleri Fiyata Göre Filtreleme Mantığını Uygula (ProductContext.tsx)
+- [x] Task: Ürünleri Fiyata Göre Filtreleme Mantığını Uygula (ProductContext.tsx) [fa3d13b]
 - [ ] Task: Ürünleri Sıralama Mantığını Uygula (ProductContext.tsx)
 - [ ] Task: Filtre ve Sıralama Seçeneklerini URL ile Senkronize Et
 - [ ] Task: Conductor - User Manual Verification 'Filtreleme ve Sıralama Mantığı' (Protocol in workflow.md)
