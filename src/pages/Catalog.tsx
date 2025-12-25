@@ -132,11 +132,8 @@ export const Catalog: React.FC = () => {
               {searchTerm ? <SearchHeader /> : (
                 <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-10">
                   <div>
-                    <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Sizin Seçimleriniz</span>
+                    <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Size Özel Seçimler</span>
                     <h2 className="font-display text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white italic tracking-tighter">{t('catalog_title')}</h2>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-dark-800 px-6 py-3 rounded-full border border-gray-100 dark:border-gray-700 shadow-sm">
-                     <span className="text-xs font-bold uppercase tracking-widest text-brown-900 dark:text-gold">{t('catalog_subtitle')}</span>
                   </div>
                 </div>
               )}
