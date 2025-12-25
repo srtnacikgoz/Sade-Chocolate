@@ -5,7 +5,7 @@ import { ViewMode, Product } from '../types';
 import { QuickViewModal } from '../components/QuickViewModal';
 import { useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { SlidersHorizontal, LayoutGrid, Rows3 } from 'lucide-react';
+import { SlidersHorizontal, LayoutGrid, Rows3, XCircle } from 'lucide-react';
 
 export const Catalog: React.FC = () => {
   const { products, isLoading } = useProducts();
@@ -14,7 +14,7 @@ export const Catalog: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [minPrice, setMinPrice] = useState<number | ''>('');
   const [maxPrice, setMaxPrice] = useState<number | ''>('');
-  const [sortOrder, setSortOrder] = useState<string>('default'); // Yeni state
+  const [sortOrder, setSortOrder] = useState<string>('default');
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -28,6 +28,17 @@ export const Catalog: React.FC = () => {
     products.forEach(p => p.categories?.forEach(cat => uniqueCategories.add(cat)));
     return ['all', ...Array.from(uniqueCategories)];
   }, [products]);
+
+  const hasActiveFilters = useMemo(() => {
+    return selectedCategory !== 'all' || minPrice !== '' || maxPrice !== '' || sortOrder !== 'default';
+  }, [selectedCategory, minPrice, maxPrice, sortOrder]);
+
+  const handleClearFilters = () => {
+    setSelectedCategory('all');
+    setMinPrice('');
+    setMaxPrice('');
+    setSortOrder('default');
+  };
 
   const sortedAndFilteredProducts = useMemo(() => {
     let currentProducts = products;
@@ -152,6 +163,16 @@ export const Catalog: React.FC = () => {
               <option value="newest">{t('sort_newest') || "En Yeniler"}</option>
               <option value="popular">{t('sort_popular') || "En Popülerler"}</option>
             </select>
+            {/* Filtreleri Temizle Butonu */}
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="flex items-center gap-1 px-3 py-2 rounded-md bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-200 text-sm hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+              >
+                <XCircle size={16} />
+                <span>{t('clear_filters') || "Temizle"}</span>
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setViewMode(ViewMode.GRID)} className={`p-2 rounded-md ${viewMode === ViewMode.GRID ? 'bg-gray-200 dark:bg-dark-700 text-mocha-900 dark:text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-800'}`}>
