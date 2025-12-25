@@ -5,7 +5,7 @@ Bu plan, Sade Chocolate ürün kataloğuna gelişmiş filtreleme ve sıralama ö
 ## Faz 1: Temel Filtreleme ve Sıralama UI'ı
 
 - [x] Task: Kataloğa Kategori Filtreleme UI Elemanlarını Ekle [e16f084]
-- [ ] Task: Kataloğa Fiyat Aralığı Filtreleme UI Elemanlarını Ekle
+- [x] Task: Kataloğa Fiyat Aralığı Filtreleme UI Elemanlarını Ekle [fa3d13b]
 - [ ] Task: Kataloğa Sıralama Seçenekleri UI Elemanlarını Ekle (Fiyata, Yeniliğe, Popülerliğe Göre)
 - [ ] Task: Filtreleri ve Sıralamayı Temizle Butonu Ekle
 - [ ] Task: Conductor - User Manual Verification 'Temel Filtreleme ve Sıralama UI'ı' (Protocol in workflow.md)
