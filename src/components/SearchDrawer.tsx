@@ -78,15 +78,18 @@ export const SearchDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
             /* --- Varsayılan Görünüm (Arama Yokken) --- */
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="space-y-6">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Popüler Aramalar</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{t('popular_searches')}</h3>
                 <div className="flex flex-wrap gap-3">
                   {['MAĞAZA', 'ARTISAN', 'KOLEKSİYONLAR', 'HEDİYELİK'].map(tag => (
                     <button 
                       key={tag} 
-                      onClick={() => setQuery(tag)} 
+                      onClick={() => {
+                        setQuery(tag);
+                        handleViewAll();
+                      }} 
                       className="px-6 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 text-[10px] font-bold uppercase tracking-widest hover:border-mocha-900 dark:hover:border-gold transition-all dark:text-white"
                     >
-                      {tag}
+                      {t(`search_tag_${tag.toLowerCase()}`) || tag}
                     </button>
                   ))}
                 </div>
