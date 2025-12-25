@@ -128,16 +128,20 @@ export const Catalog: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-28 transition-all duration-300">
-      <div className="pt-16">
-        {searchTerm ? <SearchHeader /> : (
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-display text-mocha-900 dark:text-white">{t('catalog_title')}</h1>
-            <p className="text-lg text-gray-500 dark:text-gray-400 mt-2 font-serif italic">{t('catalog_subtitle')}</p>
-          </div>
-        )}
-
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
+              <div className="pt-16">
+              {searchTerm ? <SearchHeader /> : (
+                <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-10">
+                  <div>
+                    <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Sizin Seçimleriniz</span>
+                    <h2 className="font-display text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white italic tracking-tighter">{t('catalog_title')}</h2>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-dark-800 px-6 py-3 rounded-full border border-gray-100 dark:border-gray-700 shadow-sm">
+                     <span className="text-xs font-bold uppercase tracking-widest text-brown-900 dark:text-gold">{t('catalog_subtitle')}</span>
+                  </div>
+                </div>
+              )}
+      
+              <div className="mb-6">          <div className="flex justify-between items-center">
             <button 
               onClick={() => setIsFiltersOpen(!isFiltersOpen)}
               className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-mocha-900 dark:hover:text-gold transition-colors"
@@ -182,7 +186,7 @@ export const Catalog: React.FC = () => {
                     ) : (
                       categories.map(category => (
                         <option key={category} value={category}>
-                          {t(category === 'all' ? 'all_categories' : `category_${category.toLowerCase()}`) || category}
+                          {category === 'all' ? t('all_categories') : category.charAt(0).toUpperCase() + category.slice(1)}
                         </option>
                       ))
                     )}
