@@ -11,7 +11,9 @@ export const Catalog: React.FC = () => {
   const { products, isLoading } = useProducts();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.GRID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Yeni state
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [minPrice, setMinPrice] = useState<number | ''>(''); // Yeni state
+  const [maxPrice, setMaxPrice] = useState<number | ''>(''); // Yeni state
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -42,8 +44,16 @@ export const Catalog: React.FC = () => {
       );
     }
 
+    if (minPrice !== '') {
+      currentProducts = currentProducts.filter(p => p.price >= minPrice);
+    }
+
+    if (maxPrice !== '') {
+      currentProducts = currentProducts.filter(p => p.price <= maxPrice);
+    }
+
     return currentProducts;
-  }, [searchTerm, products, selectedCategory]);
+  }, [searchTerm, products, selectedCategory, minPrice, maxPrice]);
 
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product);
@@ -72,7 +82,7 @@ export const Catalog: React.FC = () => {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <button className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-mocha-900 dark:hover:text-gold transition-colors">
               <SlidersHorizontal size={18} />
               <span>{t('filters')}</span>
@@ -89,6 +99,21 @@ export const Catalog: React.FC = () => {
                 </option>
               ))}
             </select>
+            {/* Fiyat Aralığı Filtresi */}
+            <input
+              type="number"
+              placeholder={t('min_price') || "Min Fiyat"}
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 w-28"
+            />
+            <input
+              type="number"
+              placeholder={t('max_price') || "Max Fiyat"}
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 w-28"
+            />
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setViewMode(ViewMode.GRID)} className={`p-2 rounded-md ${viewMode === ViewMode.GRID ? 'bg-gray-200 dark:bg-dark-700 text-mocha-900 dark:text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-800'}`}>
