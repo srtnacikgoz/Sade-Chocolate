@@ -106,7 +106,7 @@ export const SearchDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
                         onClick={handleTagClick} 
                         className="px-6 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 text-[10px] font-bold uppercase tracking-widest hover:border-mocha-900 dark:hover:border-gold transition-all dark:text-white"
                       >
-                        {t(`search_tag_${tag.toLocaleLowerCase('tr')}`) || tag}
+                        {t(`search_tag_${tag.toLowerCase()}`)}
                       </button>
                     );
                   })}
