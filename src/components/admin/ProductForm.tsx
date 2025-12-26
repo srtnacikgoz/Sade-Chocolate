@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { Product, BoxItem } from '../../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Product, BoxItem, ProductBadge } from '../../types';
 import { PRODUCT_CATEGORIES } from '../../constants';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { Package, DollarSign, Image as ImageIcon, Video, Save, Activity, Info, AlertCircle, MapPin, Upload, X as CloseIcon, Loader2, Milk, Bean, Square, Nut, Cherry, Coffee, Sparkles, Cookie, Flame, IceCream } from 'lucide-react';
 
 // ✅ Senin seçebileceğin ikon kütüphanen
@@ -72,8 +74,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
   });
 
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingAlternate, setIsUploadingAlternate] = useState(false);
   const [uploadingBoxIndex, setUploadingBoxIndex] = useState<number | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [dragActiveAlternate, setDragActiveAlternate] = useState(false);
   const [newAttr, setNewAttr] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('special'); // Varsayılan ikon
   // ✅ Dinamik Lezzet Havuzu (Başlangıçta boş veya temel öğelerle başlayabilir)
@@ -89,10 +93,26 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     return saved ? JSON.parse(saved) : ['Tablet', 'Gift Box', 'Truffle'];
   });
   const [newCollection, setNewCollection] = useState('');
+  const [badges, setBadges] = useState<ProductBadge[]>([]);
 
   React.useEffect(() => {
     localStorage.setItem('sade_collection_pool', JSON.stringify(collectionPool));
   }, [collectionPool]);
+
+  // Fetch badges from Firebase
+  useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        const q = query(collection(db, 'product_badges'), orderBy('priority', 'asc'));
+        const snapshot = await getDocs(q);
+        const badgeData = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as ProductBadge[];
+        setBadges(badgeData.filter(b => b.active)); // Only show active badges
+      } catch (error) {
+        console.error('Badge verileri yüklenemedi:', error);
+      }
+    };
+    fetchBadges();
+  }, []);
 
   // Kategori seçim/kaldırma (Checkbox mantığı)
   const toggleCategory = (cat: string) => {
@@ -179,8 +199,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     setFormData({ ...formData, attributes: next });
   };
 
- 
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const alternateFileInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ GERÇEK YÜKLEME FONKSİYONU
   const uploadImage = async (file: File) => {
@@ -189,7 +210,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
       const storageRef = ref(storage, `products/${Date.now()}-${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      
+
       setFormData((prev: any) => ({ ...prev, image: downloadURL }));
       toast.success("Görsel buluta başarıyla yüklendi! ☁️");
     } catch (error) {
@@ -197,6 +218,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
       console.error(error);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // ✅ ALTERNATİF GÖRSEL YÜKLEME FONKSİYONU
+  const uploadAlternateImage = async (file: File) => {
+    try {
+      setIsUploadingAlternate(true);
+      const storageRef = ref(storage, `products/alternate/${Date.now()}-${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      setFormData((prev: any) => ({ ...prev, alternateImage: downloadURL }));
+      toast.success("Alternatif görsel yüklendi! 🎨");
+    } catch (error) {
+      toast.error("Alternatif görsel yüklenemedi.");
+      console.error(error);
+    } finally {
+      setIsUploadingAlternate(false);
     }
   };
 
@@ -219,6 +258,29 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       uploadImage(e.target.files[0]); // ✅ Seçilen dosyayı direkt buluta gönder
+    }
+  };
+
+  // Alternate image handlers
+  const handleDragAlternate = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActiveAlternate(true);
+    else if (e.type === "dragleave") setDragActiveAlternate(false);
+  };
+
+  const handleDropAlternate = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActiveAlternate(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      uploadAlternateImage(e.dataTransfer.files[0]);
+    }
+  };
+
+  const onAlternateFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      uploadAlternateImage(e.target.files[0]);
     }
   };
 
@@ -268,8 +330,9 @@ const addAttribute = () => {
       
       <div className="grid grid-cols-12 gap-12 items-start">
         {/* Sol: Görsel Yükleme */}
-        <div className="col-span-4">
-          <div 
+        <div className="col-span-4 space-y-6">
+          {/* Ana Görsel */}
+          <div
             onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
             onClick={() => !isUploading && fileInputRef.current?.click()}
             className={`relative group h-64 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
@@ -287,6 +350,27 @@ const addAttribute = () => {
               </p>
             </div>
           </div>
+
+          {/* Alternatif Görsel (Hover) */}
+          <div
+            onDragEnter={handleDragAlternate} onDragLeave={handleDragAlternate} onDragOver={handleDragAlternate} onDrop={handleDropAlternate}
+            onClick={() => !isUploadingAlternate && alternateFileInputRef.current?.click()}
+            className={`relative group h-48 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
+              ${dragActiveAlternate ? 'border-gold bg-gold/5' : 'border-slate-200 bg-slate-50 hover:border-gold/50'}
+              ${isUploadingAlternate ? 'cursor-wait opacity-70' : ''}`}
+          >
+            <input ref={alternateFileInputRef} type="file" className="hidden" accept="image/*" onChange={onAlternateFileChange} />
+            {formData.alternateImage && <img src={formData.alternateImage} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
+            <div className="relative z-10 text-center">
+              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-2">
+                {isUploadingAlternate ? <Loader2 className="animate-spin text-gold" /> : <Upload className="text-slate-400" size={18} />}
+              </div>
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                {isUploadingAlternate ? 'YÜKLENİYOR...' : 'HOVER GÖRSELI'}
+              </p>
+              <p className="text-[7px] text-slate-300 mt-1">İsteğe bağlı</p>
+            </div>
+          </div>
         </div>
 
         {/* Sağ: Temel Bilgiler */}
@@ -302,6 +386,36 @@ const addAttribute = () => {
                 <input type="number" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} className="flex-1 p-4 bg-slate-50 rounded-[20px] text-sm" required />
                 <input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} placeholder="Ülke" className="flex-1 p-4 bg-slate-50 rounded-[20px] text-sm" />
               </div>
+            </div>
+          </div>
+
+          {/* --- ROZET SEÇİCİ --- */}
+          <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ürün Rozeti</label>
+            <div className="flex items-center gap-4">
+              <select
+                value={formData.badge || ''}
+                onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                className="flex-1 p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-brown-900/20"
+              >
+                <option value="">Rozet Yok</option>
+                {badges.map(badge => (
+                  <option key={badge.id} value={badge.id}>
+                    {badge.name.tr} / {badge.name.en} / {badge.name.ru}
+                  </option>
+                ))}
+              </select>
+              {formData.badge && badges.find(b => b.id === formData.badge) && (
+                <div
+                  className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded"
+                  style={{
+                    backgroundColor: badges.find(b => b.id === formData.badge)!.bgColor,
+                    color: badges.find(b => b.id === formData.badge)!.textColor
+                  }}
+                >
+                  {badges.find(b => b.id === formData.badge)!.name.tr}
+                </div>
+              )}
             </div>
           </div>
 

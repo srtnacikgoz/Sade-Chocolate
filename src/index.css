@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', sans-serif;
+  --header-height: 80px; /* Masaüstü standart yüksekliğimiz */
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --header-height: 64px; /* Mobil standart yüksekliğimiz */
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  /* Mocha Mousse: Sıcak Krem Zemin */
+  @apply bg-cream-100 text-mocha-900 antialiased;
+  transition: background-color 0.5s ease;
+}
+
+/* Lüks Scrollbar: İnce ve Kahve Tonlu */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-cream-200;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-mocha-200/50 rounded-full hover:bg-gold;
+}
+
+.dark body {
+  background-color: #0a0a0a;
+}
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0; /* Slate-200 */
+    border-radius: 20px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Slate-400 */
+  }
+}
+@layer utilities {
+  /* Scrollbar gizleme motoru */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none; /* IE ve Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+@layer components {
+  /* 🍫 Sade Standart Konteyner: Ürünler ve metinler burada toplanır */
+  .sade-container {
+    @apply w-full max-w-screen-xl mx-auto px-6 lg:px-12;
+  }
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 12s linear infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

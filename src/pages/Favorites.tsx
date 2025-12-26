@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { ProductCard } from '../components/ProductCard';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { Footer } from '../components/Footer';
 import { ViewMode, Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
@@ -40,9 +41,9 @@ export const Favorites: React.FC = () => {
             if (targetProduct) addToCart(targetProduct);
             break;
         case 'aesthetic':
-            targetProduct = favoriteProducts.find(p => p.category === 'gift-box') 
-                         || favoriteProducts.find(p => p.category === 'truffle')
-                         || favoriteProducts[Math.floor(Math.random() * favoriteProducts.length)];
+            // Tamamen random seçim
+            const randomIndex = Math.floor(Math.random() * favoriteProducts.length);
+            targetProduct = favoriteProducts[randomIndex];
             if (targetProduct) addToCart(targetProduct);
             break;
         case 'all':
@@ -57,7 +58,7 @@ export const Favorites: React.FC = () => {
 
   if (favorites.length === 0) {
     return (
-        <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen flex flex-col items-center justify-center text-center animate-fade-in">
+        <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen flex flex-col items-center justify-center text-center animate-fade-in">
             <div className="w-40 h-40 bg-gray-50 dark:bg-dark-800 rounded-full flex items-center justify-center mb-10 shadow-inner">
                 <span className="material-icons-outlined text-7xl text-gray-200 dark:text-gray-700">favorite_border</span>
             </div>
@@ -139,6 +140,8 @@ export const Favorites: React.FC = () => {
             onClose={() => setIsCuratedBoxModalOpen(false)}
             favoriteProducts={favoriteProducts}
         />
+
+        <Footer />
     </main>
   );
 };

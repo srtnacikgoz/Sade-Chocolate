@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [ ] Track: Ürün Kataloğu: Gelişmiş Filtreleme ve Sıralama Özellikleri Ekleme
-*Link: [./conductor/tracks/urun_katalogu_gelismis_filtreleme_ve_siralama_ozellikleri_ekleme_20251225/](./conductor/tracks/urun_katalogu_gelismis_filtreleme_ve_siralama_ozellikleri_ekleme_20251225/)*
+## [~] Track: Ürün Kataloğu: Gelişmiş Filtreleme ve Sıralama Özellikleri Ekleme
+*Link: [./conductor/tracks/urun_katalogu_filtreleme_20251225/](./conductor/tracks/urun_katalogu_filtreleme_20251225/)*

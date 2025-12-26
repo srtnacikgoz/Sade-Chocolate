@@ -3,6 +3,7 @@ import { useProducts } from '../context/ProductContext';
 import { ProductCard } from '../components/ProductCard';
 import { ViewMode, Product } from '../types';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { Footer } from '../components/Footer';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown } from 'lucide-react';
@@ -257,6 +258,8 @@ export const Catalog: React.FC = () => {
           onClose={closeQuickView}
         />
       )}
+
+      <Footer />
     </div>
   );
 };

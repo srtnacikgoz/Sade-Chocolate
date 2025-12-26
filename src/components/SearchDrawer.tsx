@@ -102,7 +102,7 @@ export const SearchDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
 
                     const getTranslationKey = (tag: string) => {
                       switch (tag) {
-                        case 'MAĞAZA': return 'search_tag_magaza';
+                        case 'MAĞAZA': return 'search_tag_mağaza';
                         case 'ARTISAN': return 'search_tag_artisan';
                         case 'KOLEKSİYONLAR': return 'search_tag_koleksiyonlar';
                         case 'HEDİYELİK': return 'search_tag_hediyelik';
