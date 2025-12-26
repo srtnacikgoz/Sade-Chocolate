@@ -138,6 +138,27 @@ export const Admin = () => {
     fetchNewsletterSubscribers();
   }, []);
 
+  // Birleştirilmiş Müşteri Listesi (users + newsletter_subscribers)
+  const allCustomers = useMemo(() => {
+    // Önce tüm users'ı al
+    const customerEmails = new Set(customers.map((c: any) => c.email));
+
+    // Newsletter'a abone olup users'da olmayan kişileri bul
+    const newsletterOnlySubscribers = newsletterSubscribers
+      .filter((sub: any) => !customerEmails.has(sub.email))
+      .map((sub: any) => ({
+        id: sub.id,
+        email: sub.email,
+        displayName: null, // Newsletter'dan sadece email gelir
+        photoURL: null,
+        createdAt: sub.subscribedAt, // Kayıt tarihi olarak abone olma tarihini kullan
+        source: 'newsletter' // Bu kişinin nereden geldiğini işaretle
+      }));
+
+    // İki listeyi birleştir
+    return [...customers, ...newsletterOnlySubscribers];
+  }, [customers, newsletterSubscribers]);
+
   // Product Badges Snapshot
   useEffect(() => {
     const fetchBadges = async () => {
@@ -943,7 +964,7 @@ export const Admin = () => {
             {[
               {
                 label: 'Toplam Müşteri',
-                val: customers.length,
+                val: allCustomers.length,
                 icon: Users,
                 color: 'blue'
               },
@@ -955,7 +976,7 @@ export const Admin = () => {
               },
               {
                 label: 'Son 7 Gün',
-                val: customers.filter((c: any) => {
+                val: allCustomers.filter((c: any) => {
                   const createdAt = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
                   const weekAgo = new Date();
                   weekAgo.setDate(weekAgo.getDate() - 7);
@@ -966,7 +987,7 @@ export const Admin = () => {
               },
               {
                 label: 'Kayıt Oranı',
-                val: customers.length > 0 ? `%${Math.round((newsletterSubscribers.filter(sub => customers.some(c => c.email === sub.email)).length / customers.length) * 100)}` : '%0',
+                val: allCustomers.length > 0 ? `%${Math.round((newsletterSubscribers.filter(sub => allCustomers.some(c => c.email === sub.email)).length / allCustomers.length) * 100)}` : '%0',
                 icon: TrendingUp,
                 color: 'red'
               }
@@ -1018,7 +1039,7 @@ export const Admin = () => {
           {/* Customer List */}
           <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
             <div className="divide-y divide-gray-50 dark:divide-gray-800">
-              {customers
+              {allCustomers
                 .filter((customer: any) => {
                   // Search filter
                   const searchMatch = customerSearchQuery === '' ||
@@ -1055,7 +1076,7 @@ export const Admin = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-1">
                             <h4 className="font-display font-bold text-base text-gray-900 dark:text-white">
-                              {customer.displayName || 'İsimsiz Kullanıcı'}
+                              {customer.displayName || (customer.source === 'newsletter' ? 'Newsletter Abonesi' : 'İsimsiz Kullanıcı')}
                             </h4>
                             {isSubscribed && (
                               <span className="flex items-center gap-1.5 text-[9px] bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full font-black uppercase tracking-wider">
@@ -1090,7 +1111,7 @@ export const Admin = () => {
                 })}
 
               {/* Empty State */}
-              {customers.length === 0 && (
+              {allCustomers.length === 0 && (
                 <div className="p-20 text-center">
                   <Users size={48} className="mx-auto text-gray-200 dark:text-gray-700 mb-4" />
                   <p className="text-gray-400 dark:text-gray-500 font-display text-lg">Henüz kayıtlı müşteri yok</p>
