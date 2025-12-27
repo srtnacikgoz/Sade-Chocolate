@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, AlertTriangle, LayoutGrid, TrendingUp, Search, Plus, Minus, Edit3, Trash2, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -11,6 +11,8 @@ import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
 import { ProductForm } from '../components/admin/ProductForm';
 import { ImageUpload } from '../components/admin/ImageUpload';
+import { InventoryTab } from '../components/admin/tabs/InventoryTab';
+import { OrdersTab } from '../components/admin/tabs/OrdersTab';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -31,15 +33,14 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'cms' | 'ai' | 'customers' | 'badges'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'cms' | 'ai' | 'customers' | 'badges'>('inventory');
+  const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
     persona: { tone: 'friendly', greeting: '', expertise: '' },
     questions: [],
     rules: []
   });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Tümü');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [cmsData, setCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
@@ -49,6 +50,8 @@ export const Admin = () => {
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<any[]>([]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [filterByNewsletter, setFilterByNewsletter] = useState<'all' | 'subscribed' | 'not-subscribed'>('all');
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
   const [isAddingBadge, setIsAddingBadge] = useState(false);
   const [isBadgeInfoOpen, setIsBadgeInfoOpen] = useState(false);
@@ -178,11 +181,49 @@ export const Admin = () => {
     fetchBadges();
   }, []);
 
-  const handleStockUpdate = async (id: string, currentStock: number, delta: number) => {
-    try { 
-      await updateProduct(id, { locationStock: { yesilbahce: Math.max(0, currentStock + delta) } }); 
-    } catch (err) { 
-      toast.error("Stok güncellenemedi."); 
+  // Orders Snapshot
+  useEffect(() => {
+    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const orderData = snapshot.docs.map((doc: any) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setOrders(orderData);
+    }, (error) => {
+      console.error('Sipariş verileri yüklenemedi:', error);
+    });
+
+    return () => unsub();
+  }, []);
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status,
+        updatedAt: serverTimestamp()
+      });
+      toast.success('Sipariş durumu güncellendi');
+    } catch (error) {
+      console.error('Sipariş durumu güncellenemedi:', error);
+      toast.error('Sipariş durumu güncellenemedi');
+    }
+  };
+
+  const handleCustomerUpdate = async () => {
+    if (!editingCustomer) return;
+
+    try {
+      await updateDoc(doc(db, 'users', editingCustomer.id), {
+        displayName: editingCustomer.displayName,
+        updatedAt: serverTimestamp()
+      });
+      toast.success('Müşteri bilgileri güncellendi');
+      setIsCustomerModalOpen(false);
+      setEditingCustomer(null);
+    } catch (error) {
+      console.error('Müşteri güncellenemedi:', error);
+      toast.error('Müşteri güncellenemedi');
     }
   };
 
@@ -286,18 +327,6 @@ export const Admin = () => {
     }
   };
 
-  const stats = useMemo(() => ({
-    total: products.length,
-    outOfStock: products.filter(p => (p.locationStock?.yesilbahce || 0) === 0).length,
-    categories: [...new Set(products.map(p => p.category))].length,
-    totalValue: products.reduce((acc, p) => acc + (p.price * (p.locationStock?.yesilbahce || 0)), 0)
-  }), [products]);
-
-  const filteredProducts = products.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'Tümü' || p.category?.toLowerCase() === activeCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
 
   if (loading) return (
     <main className="max-w-7xl mx-auto px-8 pt-32 animate-pulse space-y-8">
@@ -318,12 +347,13 @@ export const Admin = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-dark-800 p-6 rounded-[40px] border border-gray-200/60 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="p-3.5 bg-brown-900 text-white rounded-[20px]">
-            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : <Type size={26} />}
+            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'orders' ? <ShoppingCart size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : <Type size={26} />}
           </div>
           <div>
             <h1 className="text-xl font-display font-bold italic">Komuta Merkezi</h1>
             <div className="flex gap-2 mt-2">
               <button onClick={() => setActiveTab('inventory')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'inventory' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ENVANTER</button>
+              <button onClick={() => setActiveTab('orders')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'orders' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SİPARİŞLER</button>
               <button onClick={() => setActiveTab('cms')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'cms' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>İÇERİK (CMS)</button>
               <button onClick={() => setActiveTab('ai')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'ai' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI SOMMELIER</button>
               <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
@@ -360,120 +390,18 @@ export const Admin = () => {
 
       {/* --- ANA İÇERİK ALANI (✅ FIXED TERNARY LOGIC) --- */}
       {activeTab === 'inventory' ? (
-        <div className="space-y-8 animate-in fade-in duration-500">
-         {/* --- LOJİSTİK STRATEJİSİ KUTUSU --- */}
-    <div className="mb-8 p-8 bg-gold/5 rounded-[32px] border border-gold/15 flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
-      <div className="flex items-center gap-5">
-        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gold shadow-sm border border-gold/10">
-          <TrendingUp size={24} />
-        </div>
-        <div>
-          <h3 className="font-display text-xl font-bold italic text-brown-900">Lojistik Stratejisi</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Ücretsiz kargo için gereken minimum sepet tutarı</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gold/10 shadow-sm">
-        <div className="flex items-center px-4 font-display font-bold text-brown-900">₺</div>
-        <input 
-          type="number" 
-          defaultValue={1500}
-          className="w-24 p-2 font-display font-bold text-lg outline-none bg-transparent"
+        <InventoryTab
+          products={products}
+          updateProduct={updateProduct}
+          deleteProduct={deleteProduct}
+          setEditingProduct={setEditingProduct}
+          setIsFormOpen={setIsFormOpen}
         />
-        <button 
-          className="bg-brown-900 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gold transition-all shadow-md active:scale-95"
-          onClick={() => toast.success('Kargo limiti güncellendi! (Simülasyon)')}
-        >
-          GÜNCELLE
-        </button>
-      </div>
-    </div>
-    {/* --- LOJİSTİK STRATEJİSİ KUTUSU BİTTİ --- */} 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-            {[ 
-              { label: 'Ürün Sayısı', val: stats.total, icon: Package, color: 'blue' }, 
-              { label: 'Stok Kritik', val: stats.outOfStock, icon: AlertTriangle, color: 'red', critical: stats.outOfStock > 0 }, 
-              { label: 'Koleksiyonlar', val: stats.categories, icon: LayoutGrid, color: 'purple' }, 
-              { label: 'Tahmini Değer', val: `₺${stats.totalValue.toLocaleString()}`, icon: TrendingUp, color: 'emerald' } 
-            ].map((item, idx) => (
-              <div key={idx} className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm relative overflow-hidden group">
-                {item.critical && <div className="absolute top-3 right-3 bg-red-500 text-white text-[9px] font-black px-3 py-1 rounded-full animate-pulse z-10">ACİL</div>}
-                <div className={`w-12 h-12 ${colorMap[item.color]} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                  <item.icon size={24} />
-                </div>
-                <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">{item.val}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">{item.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Ürün Listesi Tablosu */}
-          <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
-             <div className="p-6 border-b flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-50/30">
-                <div className="flex gap-1 bg-slate-100 p-1.5 rounded-2xl">
-                  {['Tümü', ...PRODUCT_CATEGORIES.map(cat => cat.id)].map(c => (
-                    <button key={c} onClick={() => setActiveCategory(c)} className={`px-7 py-2.5 text-[10px] font-black rounded-xl transition-all ${activeCategory === c ? 'bg-white shadow-md text-brown-900' : 'text-gray-400 hover:text-slate-600'}`}>
-                      {c === 'Tümü' ? 'TÜMÜ' : PRODUCT_CATEGORIES.find(cat => cat.id === c)?.label.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <div className="relative w-full md:max-w-sm">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="text" placeholder="Ürün Ara..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl text-xs focus:ring-2 focus:ring-brown-900/10 outline-none" />
-                </div>
-             </div>
-             <div className="divide-y divide-gray-50">
-               {filteredProducts.map(product => (
-                 <div key={product.id} className="p-6 hover:bg-slate-50/50 flex items-center justify-between group transition-all">
-                    <div className="flex items-center gap-6">
-                      <div className="relative w-16 h-16 rounded-[24px] overflow-hidden border shadow-sm shrink-0 bg-slate-50 flex items-center justify-center">
-                        {product.image ? (
-                          <img src={product.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={product.title} />
-                        ) : (
-                          <Package size={24} className="text-slate-200" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-display font-bold text-base italic text-gray-900 dark:text-white">{product.title}</h4>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <span className="text-[10px] text-brown-900 dark:text-gold font-black bg-brown-50 dark:bg-brown-900/20 px-2.5 py-0.5 rounded uppercase tracking-wider">{PRODUCT_CATEGORIES.find(cat => cat.id === product.category)?.label}</span>
-                          <span className="text-sm font-mono font-bold text-gray-400 italic">₺{product.price.toFixed(2)}</span>
-                          {(product.locationStock?.yesilbahce || 0) === 0 && <span className="text-[8px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">STOK YOK</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-14">
-                      <div className="hidden md:flex flex-col items-center gap-2">
-                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Envanter</span>
-                        <div className="flex items-center gap-5 bg-slate-50 dark:bg-dark-900 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner">
-                          <button onClick={() => handleStockUpdate(product.id, product.locationStock?.yesilbahce || 0, -1)} className="w-9 h-9 hover:bg-white dark:hover:bg-dark-800 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 transition-all active:scale-90"><Minus size={16} /></button>
-                          <span className="text-xl font-display font-bold w-6 text-center text-gray-900 dark:text-white">{product.locationStock?.yesilbahce || 0}</span>
-                          <button onClick={() => handleStockUpdate(product.id, product.locationStock?.yesilbahce || 0, 1)} className="w-9 h-9 hover:bg-white dark:hover:bg-dark-800 rounded-xl flex items-center justify-center text-gray-400 hover:text-emerald-500 transition-all active:scale-90"><Plus size={16} /></button>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditingProduct(product); setIsFormOpen(true); }} className="p-4 text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-[20px] transition-all"><Edit3 size={22} /></button>
-                        <AlertDialog.Root>
-                          <AlertDialog.Trigger asChild><button className="p-4 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-[20px] transition-all"><Trash2 size={22} /></button></AlertDialog.Trigger>
-                          <AlertDialog.Portal>
-                            <AlertDialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] animate-in fade-in" />
-                            <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-800 p-10 rounded-[48px] shadow-2xl z-[131] w-full max-w-md animate-in zoom-in-95">
-                              <AlertDialog.Title className="text-2xl font-display font-bold mb-2 italic text-gray-900 dark:text-white">Ürünü Sil</AlertDialog.Title>
-                              <AlertDialog.Description className="text-sm text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Bu ürünü koleksiyondan kalıcı olarak kaldırılacak. Emin misiniz?</AlertDialog.Description>
-                              <div className="flex justify-end gap-3">
-                                <AlertDialog.Cancel asChild><button className="px-8 py-4 text-[10px] font-black text-gray-400 bg-gray-50 dark:bg-dark-900 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-700">VAZGEÇ</button></AlertDialog.Cancel>
-                                <AlertDialog.Action asChild><button onClick={() => deleteProduct(product.id)} className="px-8 py-4 text-[10px] font-black text-white bg-red-600 rounded-2xl shadow-lg hover:bg-red-700">SİL</button></AlertDialog.Action>
-                              </div>
-                            </AlertDialog.Content>
-                          </AlertDialog.Portal>
-                        </AlertDialog.Root>
-                      </div>
-                    </div>
-                 </div>
-               ))}
-             </div>
-          </div>
-        </div>
-        
+      ) : activeTab === 'orders' ? (
+        <OrdersTab
+          orders={orders}
+          updateOrderStatus={updateOrderStatus}
+        />
       ) : activeTab === 'cms' ? (
         <div className="space-y-8 animate-in slide-in-from-bottom-3 duration-700">
         {/* Sayfa Seçici */}
@@ -1100,9 +1028,15 @@ export const Admin = () => {
                         </div>
                       </div>
 
-                      {/* Actions - Placeholder for future features */}
+                      {/* Actions */}
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-3 text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-all">
+                        <button
+                          onClick={() => {
+                            setEditingCustomer(customer);
+                            setIsCustomerModalOpen(true);
+                          }}
+                          className="p-3 text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-all"
+                        >
                           <Edit3 size={18} />
                         </button>
                       </div>
@@ -1119,6 +1053,73 @@ export const Admin = () => {
               )}
             </div>
           </div>
+
+          {/* Customer Edit Modal */}
+          {isCustomerModalOpen && editingCustomer && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[140] flex items-center justify-center animate-in fade-in">
+              <div className="bg-white dark:bg-dark-800 p-10 rounded-[48px] shadow-2xl w-full max-w-md animate-in zoom-in-95">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-display font-bold italic text-gray-900 dark:text-white">Müşteri Düzenle</h2>
+                  <button
+                    onClick={() => {
+                      setIsCustomerModalOpen(false);
+                      setEditingCustomer(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-dark-900 rounded-xl transition-all"
+                  >
+                    <X size={24} className="text-gray-400" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Display Name */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      İsim Soyisim
+                    </label>
+                    <input
+                      type="text"
+                      value={editingCustomer.displayName || ''}
+                      onChange={(e) => setEditingCustomer({ ...editingCustomer, displayName: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white"
+                      placeholder="Müşteri adı..."
+                    />
+                  </div>
+
+                  {/* Email (Read-only) */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Email (Değiştirilemez)
+                    </label>
+                    <input
+                      type="email"
+                      value={editingCustomer.email || ''}
+                      disabled
+                      className="w-full px-4 py-3 bg-gray-100 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-8">
+                  <button
+                    onClick={() => {
+                      setIsCustomerModalOpen(false);
+                      setEditingCustomer(null);
+                    }}
+                    className="px-8 py-4 text-[10px] font-black text-gray-400 bg-gray-50 dark:bg-dark-900 rounded-2xl hover:bg-gray-100 dark:hover:bg-dark-700 transition-all"
+                  >
+                    İPTAL
+                  </button>
+                  <button
+                    onClick={handleCustomerUpdate}
+                    className="px-8 py-4 text-[10px] font-black text-white bg-brown-900 rounded-2xl shadow-lg hover:bg-black transition-all"
+                  >
+                    KAYDET
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : activeTab === 'badges' ? (
         <div className="space-y-8 animate-in slide-in-from-bottom-3 duration-700">

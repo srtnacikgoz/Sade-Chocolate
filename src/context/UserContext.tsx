@@ -8,7 +8,7 @@ import {
   browserLocalPersistence, 
   browserSessionPersistence 
 } from 'firebase/auth';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction } from 'firebase/firestore';
 
 export interface UserAddress {
   id: number;
@@ -48,9 +48,24 @@ export interface UserProfile {
 export interface Order {
   id: string;
   date: string;
-  status: string;
+  status: 'pending' | 'preparing' | 'shipped' | 'delivered'; // Statüleri netleştirdik
   total: number;
   items: any[];
+  userId?: string;
+  customerName?: string;
+  createdAt?: any;
+  
+  // ✨ Lüks Operasyon Alanları
+  giftDetails?: {
+    isGift: boolean;
+    note: string;
+    fontFamily: string;
+    recipientName: string;
+  };
+  weatherAlert?: {
+    temp: number;
+    requiresIce: boolean;
+  };
 }
 
 interface UserContextType {
@@ -62,22 +77,21 @@ interface UserContextType {
   register: (profile: Omit<UserProfile, 'uid'>, pass: string) => void;
   logout: () => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
-  addOrder: (order: Order) => Promise<void>; // ✅ Yeni eklendi
+  addOrder: (order: Omit<Order, 'id' | 'date'>) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true); // ✅ Varsayılan true
+  const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // ✅ CANLI TAKİP: Firebase Auth ve Firestore Senkronizasyonu
-useEffect(() => {
+  useEffect(() => {
     let unsubscribeDoc: (() => void) | undefined;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      if (unsubscribeDoc) unsubscribeDoc(); // Önceki dinleyiciyi temizle
+      if (unsubscribeDoc) unsubscribeDoc();
 
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
@@ -105,7 +119,6 @@ useEffect(() => {
   }, []);
 
   const login = async (email: string, pass: string, rememberMe: boolean = true) => {
-    // Beni hatırla seçiliyse LOCAL (kalıcı), değilse SESSION (sekme kapanınca silinir)
     const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
     await setPersistence(auth, persistence);
     await signInWithEmailAndPassword(auth, email, pass);
@@ -125,17 +138,49 @@ useEffect(() => {
     const userRef = doc(db, 'users', user.uid);
     await updateDoc(userRef, data);
   };
-const addOrder = async (order: Order) => {
-    if (!user?.uid) return;
+
+  const addOrder = async (order: Omit<Order, 'id' | 'date'>) => {
+    if (!user?.uid || !user.firstName || !user.lastName) {
+        console.error("Sipariş oluşturmak için kullanıcı bilgileri eksik.");
+        return;
+    }
+
+    const newOrderRef = doc(collection(db, "orders"));
     const userRef = doc(db, 'users', user.uid);
-    const updatedOrders = [order, ...orders];
-    await updateDoc(userRef, { orders: updatedOrders });
-    // onSnapshot otomatik olarak setOrders(updatedOrders) yapacaktır.
-  };
+
+    const newOrder: Order = {
+        ...order,
+        id: newOrderRef.id,
+        date: new Date().toISOString(),
+        userId: user.uid,
+        customerName: `${user.firstName} ${user.lastName}`,
+        createdAt: serverTimestamp()
+    };
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            transaction.set(newOrderRef, newOrder);
+
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists()) {
+                throw "Kullanıcı bulunamadı!";
+            }
+            const existingOrders = userDoc.data().orders || [];
+            const updatedOrders = [newOrder, ...existingOrders];
+            transaction.update(userRef, { orders: updatedOrders });
+        });
+        
+        setOrders(prevOrders => [newOrder, ...prevOrders]);
+
+    } catch (error) {
+        console.error("Sipariş oluşturma hatası: ", error);
+    }
+};
+
   return (
     <UserContext.Provider value={{
       user, isLoggedIn: !!user, loading, orders,
-      login, register, logout, updateProfile, addOrder // ✅ addOrder eklendi
+      login, register, logout, updateProfile, addOrder
     }}>
       {children}
     </UserContext.Provider>
