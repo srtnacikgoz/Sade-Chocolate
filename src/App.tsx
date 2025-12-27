@@ -10,13 +10,13 @@ import { Admin } from './pages/Admin';
 import { Legal } from './pages/Legal';
 import { Checkout } from './pages/Checkout';
 import { ProductDetail } from './pages/ProductDetail';
+import { SeedData } from './pages/SeedData';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { Menu } from './components/Menu';
 import { CartProvider } from './context/CartContext';
 import { ProductProvider } from './context/ProductContext';
 import { CartDrawer } from './components/CartDrawer';
-import { GiftAssistant } from './components/GiftAssistant';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { UserProvider } from './context/UserContext';
 import { Toaster } from 'sonner';
@@ -30,11 +30,10 @@ import { NewsletterPopup } from './components/NewsletterPopup';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const isSplash = location.pathname === '/';
-  const isAdmin = location.pathname === '/admin';
+  const isAdmin = location.pathname === '/admin' || location.pathname === '/seed-data';
   const isCheckout = location.pathname === '/checkout';
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { t } = useLanguage();
 
@@ -66,28 +65,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {!isSplash && !isAdmin && !isCheckout && <BottomNav />}
       
-      {/* 🪄 Global Hediye Asistanı Butonu - Sağ Alt Köşe */}
-      {!isSplash && (
-        <>
-          <button 
-            onClick={() => setIsAssistantOpen(true)}
-            className="fixed bottom-24 right-8 lg:right-12 z-[80] bg-brown-900 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-all border-2 border-gold/20 group"
-            aria-label="Gift Assistant"
-          >
-            <span className="material-icons-outlined text-2xl group-hover:rotate-12 transition-transform text-gold">auto_awesome</span>
-            
-            {/* Tooltip - Sadece Desktop tarafında görünür */}
-            <span className="absolute right-full mr-4 bg-white dark:bg-dark-800 text-brown-900 dark:text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity shadow-xl pointer-events-none border border-gray-100 dark:border-gray-700 whitespace-nowrap">
-              {t('gift_assistant')}
-            </span>
-          </button>
-
-          <GiftAssistant 
-            isOpen={isAssistantOpen} 
-            onClose={() => setIsAssistantOpen(false)} 
-          />
-        </>
-      )}
+      {/* 🪄 Global Hediye Asistanı Butonu kaldırıldı */}
 
       <CartDrawer />
       <SearchDrawer isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
@@ -125,6 +103,7 @@ const App: React.FC = () => {
                   <Route path="/account" element={<Account />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/seed-data" element={<SeedData />} />
                   <Route path="/legal/:type" element={<Legal />} />
                   <Route path="/cart" element={<Cart />} />
 <Route path="/login-gateway" element={<LoginGateway />} />

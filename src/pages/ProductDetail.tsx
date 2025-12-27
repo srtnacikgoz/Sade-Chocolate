@@ -13,7 +13,9 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, 
   ResponsiveContainer 
 } from 'recharts';
-import { ChevronLeft, ChevronRight, Milk, Bean, Square, Nut, Cherry, Coffee, Sparkles, Cookie, Flame, IceCream } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Milk, Bean, Square, Nut, Cherry, Coffee, Sparkles, Cookie, Flame, IceCream, Wand2, Heart, Gift as GiftIcon, Star } from 'lucide-react';
+import { giftNoteTemplates, Emotion } from '../constants/giftNoteTemplates';
+import { generateGiftNotes } from '../utils/giftNoteGenerator';
 
 // İkon Eşleştirme Yardımcısı
 const AttributeIcon = ({ iconId }: { iconId: string }) => {
@@ -66,6 +68,9 @@ export const ProductDetail: React.FC = () => {
   const { addToCart, toggleFavorite, isFavorite, setIsGift, setGiftMessage, isGift, giftMessage } = useCart();
   const [showGiftForm, setShowGiftForm] = useState(false);
   const { t } = useLanguage();
+  const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(null);
+  const [generatedNotes, setGeneratedNotes] = useState<Record<string, string> | null>(null);
+  
   
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'ingredients' | 'shipping'>('desc');
@@ -239,19 +244,24 @@ export const ProductDetail: React.FC = () => {
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
-                {/* 🪄 Hediye Modu: İnteraktif Not Alanı ve Önizleme */}
+                {/* 🪄 Duygu Küratörü: Hediye Notu Asistanı */}
 <div className="mt-12 space-y-6">
   <div 
     onClick={() => {
       const newStatus = !showGiftForm;
       setShowGiftForm(newStatus);
       setIsGift(newStatus);
+      // Hediye modu kapandığında state'leri sıfırla
+      if (!newStatus) {
+        setSelectedEmotion(null);
+        setGeneratedNotes(null);
+      }
     }}
     className={`p-8 border rounded-[40px] flex items-center justify-between group cursor-pointer transition-all duration-500 ${showGiftForm ? 'border-gold bg-white shadow-luxurious' : 'border-gold/20 bg-cream-50 hover:bg-gold/5'}`}
   >
     <div className="flex items-center gap-6">
       <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${showGiftForm ? 'bg-gold text-white' : 'bg-white text-gold shadow-sm'}`}>
-        <span className="material-icons-outlined">{showGiftForm ? 'check' : 'card_giftcard'}</span>
+        <GiftIcon size={20} />
       </div>
       <div>
         <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-mocha-900">Bu bir hediye mi?</h4>
@@ -264,37 +274,87 @@ export const ProductDetail: React.FC = () => {
   </div>
 
 {showGiftForm && (
-  <div className="space-y-8 animate-in fade-in slide-in-from-top-6 duration-1000">
-    <div className="px-4 space-y-6">
-      <div>
-        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">Hediye Notunuz</label>
-        <textarea 
-          value={giftMessage}
-          onChange={(e) => setGiftMessage(e.target.value)}
-          placeholder="Duygularınızı buraya fısıldayın..."
-          className="w-full bg-white border border-gold/10 rounded-[25px] p-6 text-sm italic focus:ring-4 focus:ring-gold/5 outline-none text-mocha-900 transition-all shadow-inner"
-          rows={3}
-        />
+  <div className="space-y-12 animate-in fade-in slide-in-from-top-6 duration-1000 p-4">
+    
+    {/* Adım 1: Duygu Seçimi */}
+    {!generatedNotes && (
+      <div className="text-center animate-in fade-in duration-500">
+        <h5 className="flex items-center justify-center gap-3 text-sm font-bold text-gray-500 mb-6 tracking-widest uppercase"><Wand2 size={16} className="text-gold" /> AI Sommelier Soruyor</h5>
+        <p className="font-display text-2xl italic mb-8">Kime ve hangi duyguyla gönderiyorsunuz?</p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          {(Object.keys(giftNoteTemplates) as Emotion[]).map((emotion) => {
+            const emotionData = {
+              love: { label: 'Aşk & Tutku', icon: <Heart size={18}/> },
+              gratitude: { label: 'Teşekkür & Minnet', icon: <GiftIcon size={18}/> },
+              celebration: { label: 'Kutlama & Başarı', icon: <Star size={18}/> },
+            }[emotion];
+            
+            return (
+              <button 
+                key={emotion}
+                onClick={() => {
+                  setSelectedEmotion(emotion);
+                  setGeneratedNotes(generateGiftNotes(product, emotion));
+                }}
+                className="flex-1 p-6 bg-white dark:bg-dark-800 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:border-gold/30 dark:hover:border-gold/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-4"
+              >
+                <span className="text-gold">{emotionData.icon}</span>
+                <span className="font-bold text-sm text-mocha-900 dark:text-gray-200">{emotionData.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    )}
 
-    {/* 📜 Dijital Kanvas - Daha küçük ve tam merkezli kart önizlemesi */}
-    <div className="max-w-sm mx-auto">
-      <div className="relative aspect-[4/3] bg-[#FFFEFA] border border-gold/15 shadow-xl rounded-sm -rotate-1 overflow-hidden transform hover:rotate-0 transition-transform duration-700 flex flex-col items-center justify-center p-8 cursor-default">
+    {/* Adım 2: Öneri ve Düzenleme */}
+    {selectedEmotion && generatedNotes && (
+       <div className="animate-in fade-in duration-700 space-y-12">
+        <div>
+          <h5 className="flex items-center justify-center gap-3 text-sm font-bold text-gray-500 mb-6 tracking-widest uppercase"><Wand2 size={16} className="text-gold" /> AI Sommelier Öneriyor</h5>
+          <p className="font-display text-center text-xl italic mb-8">Sizin için 3 farklı üslupta not taslağı hazırladım:</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.entries(generatedNotes).map(([persona, note]) => (
+              <div 
+                key={persona} 
+                onClick={() => setGiftMessage(note)}
+                className="p-8 rounded-3xl border bg-white dark:bg-dark-800 dark:border-gray-800 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all"
+              >
+                <h6 className="font-bold text-xs uppercase tracking-widest text-gold mb-4">{persona}</h6>
+                <p className="text-sm italic text-gray-600 dark:text-gray-300">"{note}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">Hediye Notunuz (Düzenleyebilirsiniz)</label>
+          <textarea 
+            value={giftMessage}
+            onChange={(e) => setGiftMessage(e.target.value)}
+            placeholder="Duygularınızı buraya fısıldayın..."
+            className="w-full bg-white dark:bg-dark-800 border border-gold/10 rounded-[25px] p-6 text-sm italic focus:ring-4 focus:ring-gold/10 outline-none text-mocha-900 dark:text-gray-200 transition-all shadow-inner"
+            rows={4}
+          />
+        </div>
+       </div>
+    )}
+
+    {/* 📜 Dijital Kanvas - Her zaman göster */}
+    <div className="max-w-sm mx-auto pt-8 border-t border-gray-100 dark:border-gray-800">
+      <h6 className="text-center text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Not Kartı Önizlemesi</h6>
+      <div className="relative aspect-[4/3] bg-[#FFFEFA] dark:bg-dark-800/50 border border-gold/15 shadow-xl rounded-sm -rotate-1 overflow-hidden transform hover:rotate-0 transition-transform duration-700 flex flex-col items-center justify-center p-8 cursor-default">
         {/* Kart Dokusu Efekti */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')] opacity-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/handmade-paper.png')] opacity-10 dark:opacity-5 pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-1 bg-gold/20" />
         
-        {/* Merkezlenmiş Yazı Alanı */}
         <div className="relative z-10 w-full text-center py-4">
-          <p className="text-xl text-mocha-900 leading-relaxed italic font-display break-words">
+          <p className="text-lg text-mocha-900 dark:text-gray-200 leading-relaxed italic font-serif break-words">
             {giftMessage || "Zarif bir dokunuş, unutulmaz bir an..."}
           </p>
         </div>
 
-        {/* Alt Bilgi */}
-        <div className="mt-6 pt-4 border-t border-gold/10 w-1/2 flex flex-col items-center opacity-60">
-          <span className="material-icons-outlined text-gold text-[14px] mb-1">auto_awesome</span>
+        <div className="mt-auto pt-4 w-full flex flex-col items-center opacity-60">
           <p className="text-[8px] font-black uppercase tracking-[0.4em] text-gold">Sade Chocolate</p>
         </div>
       </div>

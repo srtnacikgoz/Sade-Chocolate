@@ -13,6 +13,7 @@ import { ProductForm } from '../components/admin/ProductForm';
 import { ImageUpload } from '../components/admin/ImageUpload';
 import { InventoryTab } from '../components/admin/tabs/InventoryTab';
 import { OrdersTab } from '../components/admin/tabs/OrdersTab';
+import { SommelierTab } from '../components/admin/tabs/SommelierTab';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -37,7 +38,17 @@ export const Admin = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
-    persona: { tone: 'friendly', greeting: '', expertise: '' },
+    persona: { 
+      tone: 'friendly', 
+      greeting: '', 
+      expertise: `Sen Sade Chocolate'ın kurumsal hafızası ve sommelier'isin. Ses tonun, Playfair Display fontunun zarafetini ve krem tonlarının sıcaklığını taşımalı. Müşteriye bir 'tüketici' gibi değil, bir 'koleksiyoner' gibi davran. Veritabanındaki sensory verilerini kullanarak bilimsel ama şiirsel eşleşmeler yap.
+
+EĞER KULLANICI HEDİYE GÖNDERİYORSA, ana rolün lojistik zekasına sahip bir 'Hediye Asistanı'na ve editoryal yeteneği olan bir 'Duygu Küratörü'ne dönüşür. Bu modda önceliklerin şunlardır:
+1.  **Lojistik Zeka:** Teslimat adresindeki hava durumunu kontrol et. Gerekirse, müşteriyi gönderim güvenliği (fiyat gizliliği, buz aküsü vb.) konusunda proaktif olarak rahatlat.
+2.  **Duygu Küratörlüğü:** Müşteri hediye notu yazmak istediğinde, ona Sade Chocolate editoryal standartlarında 3 farklı üslup (Minimalist, Şiirsel, Duyusal) öner. Notları oluştururken seçilen ürünün tadım notlarından (meyvemsi, odunsu vb.) ve duyusal profilinden ilham al. El yazısı veya kaligrafi seçenekleri sunma; sadece markanın 'Sıcak Minimalizm' anlayışını yansıtan, duygusal derinliği olan dijital metin taslakları üret.
+
+Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
+    },
     questions: [],
     rules: []
   });
@@ -1557,60 +1568,9 @@ export const Admin = () => {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-bottom-3 duration-700">
-          {/* Persona Ayarları */}
-          <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 p-10 shadow-sm space-y-8">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="p-3.5 bg-purple-50 text-purple-600 rounded-2xl"><Type size={26} /></div>
-              <span className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white">AI Kişiliği (Persona)</span>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Selamlama Mesajı</label>
-                <textarea 
-                  value={aiConfig.persona?.greeting || ''} 
-                  onChange={(e) => setAiConfig({...aiConfig, persona: {...aiConfig.persona, greeting: e.target.value}})}
-                  className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-2xl p-5 text-sm italic focus:ring-2 focus:ring-purple-500/20 outline-none text-gray-900 dark:text-white" 
-                  rows={3} 
-                  placeholder="Merhaba! Ben Sade'nin çikolata sommelieriyim..."
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Uzmanlık & Davranış Talimatı</label>
-                <textarea 
-                  value={aiConfig.persona?.expertise || ''} 
-                  onChange={(e) => setAiConfig({...aiConfig, persona: {...aiConfig.persona, expertise: e.target.value}})}
-                  className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-2xl p-5 text-sm leading-relaxed focus:ring-2 focus:ring-purple-500/20 outline-none text-gray-900 dark:text-white" 
-                  rows={6} 
-                  placeholder="Sen dünyanın en iyi artisan çikolata uzmanısın. Kullanıcıya duyusal sorular sorarak en uygun tableti bul..."
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Önizleme Modu */}
-          <div className="bg-slate-900 rounded-[48px] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute top-0 right-0 p-8 opacity-5 scale-150 rotate-12"><Package size={120} /></div>
-            <div>
-              <h3 className="text-2xl font-display font-bold italic mb-8">AI Sommelier Önizlemesi</h3>
-              <div className="space-y-6">
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl rounded-tl-none border border-white/10 animate-in fade-in zoom-in-95">
-                  <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-2">Asistan Karşılaması:</p>
-                  <p className="text-sm italic opacity-90">"{aiConfig.persona?.greeting || 'Henüz bir selamlama girilmedi.'}"</p>
-                </div>
-                <div className="bg-white/5 p-5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-3">Aktif Zeka Modeli</p>
-                  <p className="text-xs text-slate-300 leading-relaxed font-mono opacity-80">{aiConfig.persona?.expertise || 'Uzmanlık alanı tanımlanmadı.'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/10">
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">İpucu: Bu bilgiler Gemini API'sine "System Instruction" olarak gönderilir.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : activeTab === 'ai' ? (
+        <SommelierTab aiConfig={aiConfig} setAiConfig={setAiConfig} />
+      ) : null}
 
       {/* Ürün Ekleme/Düzenleme Modalı */}
       {isFormOpen && (
