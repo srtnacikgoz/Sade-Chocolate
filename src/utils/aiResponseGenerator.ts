@@ -51,7 +51,18 @@ const isGiftRelated = (text: string): boolean => {
 
 // ✨ SMART ENTRY: İlk mesajı seçeneklerle otomatik eşleştir
 // Stopwords: Genel sıfatlar, kullanıcı ismini kastetmiyor
-const STOPWORDS = ['sevgili', 'değerli', 'canım', 'tatlım', 'güzel', 'özel', 'yakın', 'iyi'];
+// NOT: "sevgili" kaldırıldı - seçeneklerde "sevgilim" var!
+const STOPWORDS = ['değerli', 'canım', 'tatlım', 'güzel', 'yakın', 'iyi', 'bir'];
+
+// ✨ Target Label Temizleme: "için" tekrarını önle
+const cleanTargetLabel = (label: string): string => {
+  return label
+    .replace(/\s+için\.?\s*$/i, '') // Son "için"ü kaldır (noktalı veya noktalı olmayan)
+    .replace(/^değerli bir /i, '') // Başındaki "değerli bir"
+    .replace(/^hayat arkadaşım veya /i, '') // "hayat arkadaşım veya" → "sevgilim"
+    .replace(/\.+$/, '') // Sondaki fazla noktaları temizle
+    .trim();
+};
 
 const findSmartEntry = (
   flow: ConversationFlow,
@@ -206,6 +217,59 @@ const findQuestionAnswer = (text: string, knowledgeBase: any[]): any | null => {
   return partialMatch || null;
 };
 
+// ✨ SENSORY SCORING: Ürünün kullanıcının duyusal profiliyle ne kadar eşleştiğini hesapla
+const calculateSensoryMatch = (product: Product, accumulatedSensory: any): number => {
+  // Basit eşleştirme mantığı: Ürün başlığı ve açıklamasından anahtar kelimelere göre puan ver
+  // Gerçek uygulamada, Product tipine sensoryProfile alanı eklenebilir
+
+  const text = `${product.title} ${product.detailedDescription || ''}`.toLowerCase();
+  let score = 0;
+
+  // Yoğunluk (intensity)
+  if (accumulatedSensory.intensity > 0) {
+    if (text.includes('dark') || text.includes('bitter') || text.includes('%70') || text.includes('%80') || text.includes('%85')) {
+      score += accumulatedSensory.intensity * 10;
+    }
+  }
+
+  // Tatlılık (sweetness)
+  if (accumulatedSensory.sweetness > 0) {
+    if (text.includes('milk') || text.includes('sütlü') || text.includes('sweet') || text.includes('tatlı')) {
+      score += accumulatedSensory.sweetness * 10;
+    }
+  }
+
+  // Kremalılık (creaminess)
+  if (accumulatedSensory.creaminess > 0) {
+    if (text.includes('cremeux') || text.includes('kremalı') || text.includes('smooth') || text.includes('yumuşak')) {
+      score += accumulatedSensory.creaminess * 10;
+    }
+  }
+
+  // Meyvemsilik (fruitiness)
+  if (accumulatedSensory.fruitiness > 0) {
+    if (text.includes('fruity') || text.includes('meyveli') || text.includes('berry') || text.includes('citrus')) {
+      score += accumulatedSensory.fruitiness * 10;
+    }
+  }
+
+  // Ekşilik (acidity)
+  if (accumulatedSensory.acidity > 0) {
+    if (text.includes('tangy') || text.includes('citrus') || text.includes('ekşi')) {
+      score += accumulatedSensory.acidity * 10;
+    }
+  }
+
+  // Çıtırlık (crunch)
+  if (accumulatedSensory.crunch > 0) {
+    if (text.includes('crunchy') || text.includes('fındık') || text.includes('badem') || text.includes('hazelnut') || text.includes('almond')) {
+      score += accumulatedSensory.crunch * 10;
+    }
+  }
+
+  return score;
+};
+
 // Conversation Flow Helpers
 const findMatchingFlow = (text: string, flows: ConversationFlow[] = []): ConversationFlow | null => {
   const normalized = normalizeText(text);
@@ -241,7 +305,9 @@ const findMatchingFlow = (text: string, flows: ConversationFlow[] = []): Convers
 const processFlowStep = (
   flow: ConversationFlow,
   currentStepId: string,
-  lang: string = 'tr'
+  lang: string = 'tr',
+  accumulatedSensory?: any,
+  products?: Product[]
 ): {
   message: string;
   nextStepId: string | null;
@@ -289,6 +355,57 @@ const processFlowStep = (
     // Sonuç tipinde: sonucu göster ve bitir
     let resultMessage = getLocaleText(step.resultMessage, lang) || (lang === 'tr' ? 'İşlem tamamlandı.' : 'Completed.');
 
+    // ✨ DUYUSAL SKORA DAYALI ÜRÜN FİLTRELEME
+    let finalRecommendations = step.productRecommendations;
+
+    if (accumulatedSensory && products && step.productRecommendations && step.productRecommendations.length > 0) {
+      // Duyusal profil varsa, ürünleri akıllı sırala
+      const scoredProducts = step.productRecommendations
+        .map(productId => {
+          const product = products.find(p => p.id === productId);
+          if (!product) return null;
+
+          // Basit sensory matching: Her ürünün sensory özelliklerini varsayılan değerlerle eşleştir
+          // (Gerçek uygulamada, Product tipine sensoryProfile eklenmeli)
+          const matchScore = calculateSensoryMatch(product, accumulatedSensory);
+
+          return { productId, matchScore };
+        })
+        .filter(item => item !== null)
+        .sort((a, b) => (b?.matchScore || 0) - (a?.matchScore || 0))
+        .map(item => item!.productId);
+
+      finalRecommendations = scoredProducts.slice(0, 3);
+
+      // ✨ INVISIBLE INTELLIGENCE: Duyusal profil açıklaması
+      const topSensory = Object.entries(accumulatedSensory)
+        .filter(([_, value]) => (value as number) > 0)
+        .sort((a, b) => (b[1] as number) - (a[1] as number))
+        .slice(0, 2);
+
+      if (topSensory.length > 0) {
+        const sensoryLabels: { [key: string]: { tr: string; en: string; ru: string } } = {
+          intensity: { tr: 'yoğun', en: 'intense', ru: 'интенсивный' },
+          sweetness: { tr: 'tatlı', en: 'sweet', ru: 'сладкий' },
+          creaminess: { tr: 'kremsi', en: 'creamy', ru: 'кремовый' },
+          fruitiness: { tr: 'meyveli', en: 'fruity', ru: 'фруктовый' },
+          acidity: { tr: 'ekşimsi', en: 'acidic', ru: 'кислый' },
+          crunch: { tr: 'çıtır', en: 'crunchy', ru: 'хрустящий' }
+        };
+
+        const trait1 = sensoryLabels[topSensory[0][0]]?.[lang] || topSensory[0][0];
+        const trait2 = topSensory[1] ? (sensoryLabels[topSensory[1][0]]?.[lang] || topSensory[1][0]) : '';
+
+        const sensoryExplanations = {
+          tr: `\n\n✨ Seçimleriniz ${trait1}${trait2 ? ' ve ' + trait2 : ''} profil gösteriyor. Size en uygun ürünleri özenle seçtim.`,
+          en: `\n\n✨ Your choices show ${trait1}${trait2 ? ' and ' + trait2 : ''} profile. I've carefully selected the most suitable products for you.`,
+          ru: `\n\n✨ Ваш выбор показывает ${trait1}${trait2 ? ' и ' + trait2 : ''} профиль. Я тщательно подобрал для вас наиболее подходящие продукты.`
+        };
+
+        resultMessage += sensoryExplanations[lang as keyof typeof sensoryExplanations] || sensoryExplanations.tr;
+      }
+    }
+
     // ✨ OPERASYONEL TETİKLEYİCİLER
 
     // 1. Hediye Modu Aktivasyonu
@@ -325,7 +442,7 @@ const processFlowStep = (
       nextStepId: null,
       isComplete: true,
       metadata: step.metadata,
-      recommendations: step.productRecommendations,
+      recommendations: finalRecommendations,
       giftModeActive
     };
   }
@@ -385,31 +502,105 @@ export const generateAIResponse = async (
   // 🎯 ÖNCELİK 0: Conversation Flow kontrolü
   // Eğer kullanıcı bir flow içindeyse, flow'u devam ettir
   if (conversationState) {
+    // ✨ YENİ FLOW TETİKLEME KONTROLÜ: Kullanıcı başka bir konuya mı geçiyor?
+    const newFlowMatch = findMatchingFlow(userMessage, conversationFlows);
+
+    // 🐛 DEBUG: Flow geçişi kontrolü
+    if (import.meta.env.DEV) {
+      console.log('🔍 Flow Switch Check:', {
+        currentFlow: conversationState.flowId,
+        newFlowMatched: newFlowMatch?.id || 'none',
+        willSwitch: newFlowMatch && newFlowMatch.id !== conversationState.flowId
+      });
+    }
+
+    if (newFlowMatch && newFlowMatch.id !== conversationState.flowId) {
+      // Kullanıcı yeni bir flow başlatıyor, mevcut flow'u sıfırla
+      const smartEntryStepId = findSmartEntry(newFlowMatch, userMessage, lang);
+
+      if (smartEntryStepId) {
+        // Smart Entry ile yeni flow'u başlat
+        const result = processFlowStep(newFlowMatch, smartEntryStepId, lang, {}, products);
+        const startStep = newFlowMatch.steps.find(s => s.id === newFlowMatch.startStepId);
+        const matchedOption = startStep?.options?.find(opt => opt.nextStepId === smartEntryStepId);
+        const targetLabel = matchedOption ? cleanTargetLabel(getLocaleText(matchedOption.label, lang)) : '';
+
+        const switchFlowMessages = {
+          tr: `Anladım, başka bir hediye arıyorsunuz! ${targetLabel} için en zarif seçimi yapmanıza yardımcı olacağım.\n\n${result.message}`,
+          en: `I understand, you're looking for another gift! I'll help you find the most elegant choice for ${targetLabel}.\n\n${result.message}`,
+          ru: `Понимаю, вы ищете другой подарок! Я помогу вам найти самый элегантный выбор для ${targetLabel}.\n\n${result.message}`
+        };
+
+        return Object.assign(switchFlowMessages[lang as keyof typeof switchFlowMessages] || switchFlowMessages['tr'], {
+          flowState: {
+            flowId: newFlowMatch.id,
+            nextStepId: result.nextStepId,
+            detectedPersona: newFlowMatch.personaType
+          },
+          recommendations: result.recommendations || []
+        });
+      } else {
+        // Normal başlangıç (Smart Entry yok)
+        const result = processFlowStep(newFlowMatch, newFlowMatch.startStepId, lang, {}, products);
+        const switchFlowMessages = {
+          tr: `Anladım, başka bir şey arıyorsunuz! Hemen yardımcı olayım.\n\n${result.message}`,
+          en: `I understand, you're looking for something else! Let me help you right away.\n\n${result.message}`,
+          ru: `Понимаю, вы ищете что-то другое! Давайте я вам помогу.\n\n${result.message}`
+        };
+
+        return Object.assign(switchFlowMessages[lang as keyof typeof switchFlowMessages] || switchFlowMessages['tr'], {
+          flowState: {
+            flowId: newFlowMatch.id,
+            nextStepId: result.nextStepId,
+            detectedPersona: newFlowMatch.personaType
+          }
+        });
+      }
+    }
+
     const currentFlow = conversationFlows.find(f => f.id === conversationState.flowId);
 
     if (currentFlow) {
       const nextStepId = findNextStep(currentFlow, conversationState.currentStepId, userMessage, lang);
 
       if (nextStepId) {
+        // ✨ SENSORY SCORING: Seçilen seçeneğin duyusal skorunu akümüle et
+        const currentStep = currentFlow.steps.find(s => s.id === conversationState.currentStepId);
+        const matchedOption = currentStep?.options?.find(opt => opt.nextStepId === nextStepId);
+
+        let accumulatedSensory = conversationState.accumulatedSensory || {};
+        if (matchedOption?.sensoryScore) {
+          accumulatedSensory = {
+            intensity: (accumulatedSensory.intensity || 0) + (matchedOption.sensoryScore.intensity || 0),
+            sweetness: (accumulatedSensory.sweetness || 0) + (matchedOption.sensoryScore.sweetness || 0),
+            creaminess: (accumulatedSensory.creaminess || 0) + (matchedOption.sensoryScore.creaminess || 0),
+            fruitiness: (accumulatedSensory.fruitiness || 0) + (matchedOption.sensoryScore.fruitiness || 0),
+            acidity: (accumulatedSensory.acidity || 0) + (matchedOption.sensoryScore.acidity || 0),
+            crunch: (accumulatedSensory.crunch || 0) + (matchedOption.sensoryScore.crunch || 0)
+          };
+        }
+
         const step = currentFlow.steps.find(s => s.id === nextStepId);
         if (step) {
           if (step.type === 'question') {
-            const result = processFlowStep(currentFlow, nextStepId, lang);
+            const result = processFlowStep(currentFlow, nextStepId, lang, accumulatedSensory, products);
             return Object.assign(result.message, {
               flowState: {
                 flowId: currentFlow.id,
                 nextStepId: result.nextStepId,
-                detectedPersona: currentFlow.personaType
+                detectedPersona: currentFlow.personaType,
+                accumulatedSensory
               }
             });
           } else if (step.type === 'result') {
-            const result = processFlowStep(currentFlow, nextStepId, lang);
+            const result = processFlowStep(currentFlow, nextStepId, lang, accumulatedSensory, products);
             return Object.assign(result.message, {
               flowState: {
                 flowId: currentFlow.id,
                 nextStepId: null, // Flow sona erdi
                 giftModeActive: result.giftModeActive,
-                detectedPersona: currentFlow.personaType
+                detectedPersona: currentFlow.personaType,
+                accumulatedSensory
               },
               recommendations: result.recommendations || []
             });
@@ -441,12 +632,12 @@ export const generateAIResponse = async (
     if (smartEntryStepId) {
       // Kullanıcı zaten cevabı vermiş (örn: "öğretmenime hediye")
       // İlk soruyu atla, direkt nextStepId'ye git
-      const result = processFlowStep(matchingFlow, smartEntryStepId, lang);
+      const result = processFlowStep(matchingFlow, smartEntryStepId, lang, {}, products);
 
       // Zarif karşılama mesajı ekle
       const startStep = matchingFlow.steps.find(s => s.id === matchingFlow.startStepId);
       const matchedOption = startStep?.options?.find(opt => opt.nextStepId === smartEntryStepId);
-      const targetLabel = matchedOption ? getLocaleText(matchedOption.label, lang) : '';
+      const targetLabel = matchedOption ? cleanTargetLabel(getLocaleText(matchedOption.label, lang)) : '';
 
       const greetingMessages = {
         tr: `Harika! ${targetLabel} için en zarif seçimi yapmanıza yardımcı olacağım.\n\n${result.message}`,
@@ -465,7 +656,7 @@ export const generateAIResponse = async (
     }
 
     // Normal başlangıç (ilk mesajda cevap yok)
-    const result = processFlowStep(matchingFlow, matchingFlow.startStepId, lang);
+    const result = processFlowStep(matchingFlow, matchingFlow.startStepId, lang, {}, products);
     return Object.assign(result.message, {
       flowState: {
         flowId: matchingFlow.id,

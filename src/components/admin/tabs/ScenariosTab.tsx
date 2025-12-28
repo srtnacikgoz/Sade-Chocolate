@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { GitBranch, Plus, Trash2, Edit3, Save, X, MessageCircle, CheckCircle, AlertCircle, GripVertical, Package } from 'lucide-react';
+import { GitBranch, Plus, Trash2, Edit3, Save, X, MessageCircle, CheckCircle, AlertCircle, GripVertical, Package, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConversationFlow, ConversationStep } from '../../../types/conversationFlow';
 import { useProducts } from '../../../context/ProductContext';
@@ -209,6 +209,27 @@ export const ScenariosTab: React.FC = () => {
     }
   };
 
+  const handleDuplicateScenario = async (scenario: ConversationFlow) => {
+    try {
+      // Senaryoyu kopyala (ID hariç)
+      const { id, createdAt, updatedAt, ...scenarioData } = scenario;
+
+      // Kopyalanan senaryoyu yeni bir isimle kaydet
+      await addDoc(collection(db, 'conversation_flows'), {
+        ...scenarioData,
+        name: `${scenario.name} (Kopya)`,
+        active: false, // Güvenlik için kopyalar pasif başlar
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      toast.success('✓ Senaryo çoğaltıldı! Tetikleyicileri düzenlemeyi unutmayın.');
+    } catch (error) {
+      console.error("Error duplicating scenario:", error);
+      toast.error('Senaryo çoğaltılamadı.');
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
@@ -284,14 +305,23 @@ export const ScenariosTab: React.FC = () => {
                   {scenario.active ? 'Devre Dışı Bırak' : 'Aktif Et'}
                 </button>
                 <button
+                  onClick={() => handleDuplicateScenario(scenario)}
+                  className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-100 transition-all"
+                  title="Senaryo Çoğalt"
+                >
+                  <Copy size={16} />
+                </button>
+                <button
                   onClick={() => handleEditScenario(scenario)}
                   className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all"
+                  title="Düzenle"
                 >
                   <Edit3 size={16} />
                 </button>
                 <button
                   onClick={() => handleDeleteScenario(scenario.id)}
                   className="px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all"
+                  title="Sil"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -661,26 +691,35 @@ export const ScenariosTab: React.FC = () => {
             </button>
           </div>
 
-          {/* Save Button */}
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => {
-                setIsCreating(false);
-                setEditingScenario(null);
-              }}
-              className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all"
-            >
-              İptal
-            </button>
-            <button
-              onClick={handleSaveScenario}
-              className="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all flex items-center gap-2"
-            >
-              <Save size={18} /> Senaryoyu Kaydet
-            </button>
-          </div>
         </div>
       )}
+
+      {/* Floating Action Buttons (Scenario Builder) - Right Side */}
+      {isCreating && (
+        <div className="fixed bottom-8 right-24 z-40 flex flex-col gap-2">
+          {/* Save Button */}
+          <button
+            onClick={handleSaveScenario}
+            className="group w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center"
+            title="Senaryoyu Kaydet"
+          >
+            <Save size={18} className="group-hover:rotate-12 transition-transform" />
+          </button>
+
+          {/* Cancel Button */}
+          <button
+            onClick={() => {
+              setIsCreating(false);
+              setEditingScenario(null);
+            }}
+            className="group w-10 h-10 bg-gray-600 text-white rounded-full shadow-lg hover:shadow-gray-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center"
+            title="İptal"
+          >
+            <X size={16} className="group-hover:rotate-90 transition-transform" />
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };

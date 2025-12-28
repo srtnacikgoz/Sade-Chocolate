@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -15,6 +15,7 @@ import { InventoryTab } from '../components/admin/tabs/InventoryTab';
 import { OrdersTab } from '../components/admin/tabs/OrdersTab';
 import { SommelierTab } from '../components/admin/tabs/SommelierTab';
 import { ScenariosTab } from '../components/admin/tabs/ScenariosTab';
+import { ConversationAnalyticsTab } from '../components/admin/tabs/ConversationAnalyticsTab';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'cms' | 'ai' | 'scenarios' | 'customers' | 'badges'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'customers' | 'badges'>('inventory');
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
@@ -369,6 +370,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
               <button onClick={() => setActiveTab('cms')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'cms' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>İÇERİK (CMS)</button>
               <button onClick={() => setActiveTab('ai')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'ai' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI SOMMELIER</button>
               <button onClick={() => setActiveTab('scenarios')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'scenarios' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SENARYOLAR</button>
+              <button onClick={() => setActiveTab('analytics')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'analytics' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ANALİZ</button>
               <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
               <button onClick={() => setActiveTab('badges')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'badges' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ROZETLER</button>
             </div>
@@ -381,22 +383,23 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
             <Button onClick={() => { setEditingProduct(null); setIsFormOpen(true); }} className="bg-brown-900 text-white gap-2 text-[11px] font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-black transition-all">
               <Plus size={18} /> YENİ ÜRÜN EKLE
             </Button>
-          ) : (
-            <Button
+          ) : activeTab !== 'customers' && activeTab !== 'badges' && activeTab !== 'analytics' && activeTab !== 'scenarios' && activeTab !== 'orders' ? (
+            <button
               onClick={activeTab === 'ai' ? handleAiSave : handleCmsSave}
-              className={`${activeTab === 'ai' ? 'bg-purple-600' : 'bg-emerald-600'} text-white gap-2 text-[11px] font-bold px-8 py-4 rounded-2xl shadow-xl hover:opacity-90 transition-all`}
+              className={`${activeTab === 'ai' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white p-3 rounded-xl shadow-lg hover:scale-110 transition-all`}
+              title={activeTab === 'ai' ? 'Stratejiyi Yayınla' : 'Değişiklikleri Yayınla'}
             >
-              <Save size={18} /> {activeTab === 'ai' ? 'STRATEJİYİ YAYINLA' : 'DEĞİŞİKLİKLERİ YAYINLA'}
-            </Button>
-          )}
+              <Save size={20} />
+            </button>
+          ) : null}
 
-          {/* Çıkış Butonu */}
+          {/* Çıkış Butonu - Sadece İkon */}
           <button
             onClick={handleLogout}
-            className="px-6 py-4 bg-red-50 text-red-600 rounded-2xl text-[10px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center gap-2"
+            className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm hover:scale-110"
+            title="Çıkış Yap"
           >
-            <span className="material-icons-outlined text-lg">logout</span>
-            ÇIKIŞ
+            <LogOut size={20} />
           </button>
         </div>
       </div>
@@ -1574,6 +1577,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <SommelierTab aiConfig={aiConfig} setAiConfig={setAiConfig} />
       ) : activeTab === 'scenarios' ? (
         <ScenariosTab />
+      ) : activeTab === 'analytics' ? (
+        <ConversationAnalyticsTab />
       ) : null}
 
       {/* Ürün Ekleme/Düzenleme Modalı */}

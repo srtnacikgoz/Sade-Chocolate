@@ -8,6 +8,7 @@ import { generateAIResponse } from '../utils/aiResponseGenerator';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
 import { ConversationFlow, ConversationState } from '../types/conversationFlow';
+import { getOrCreateSessionId, startConversationLog, logMessage, completeConversationLog } from '../utils/conversationLogger';
 
 interface Message {
   id: string;
@@ -34,7 +35,8 @@ export const AIAssistant: React.FC = () => {
   const [guidingQuestions, setGuidingQuestions] = useState<any[]>([]);
   const [conversationFlows, setConversationFlows] = useState<ConversationFlow[]>([]);
   const [conversationState, setConversationState] = useState<ConversationState | null>(null);
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [sessionId] = useState(() => getOrCreateSessionId()); // ✨ localStorage'dan session ID
+  const [conversationLogId, setConversationLogId] = useState<string | null>(null); // ✨ Analytics log ID
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { products } = useProducts();
   const { language } = useLanguage();
@@ -110,6 +112,13 @@ export const AIAssistant: React.FC = () => {
     if (!content.trim()) return;
 
     try {
+      // ✨ İlk mesajda conversation log başlat
+      let currentLogId = conversationLogId;
+      if (!currentLogId && role === 'user') {
+        currentLogId = await startConversationLog(sessionId, language);
+        setConversationLogId(currentLogId);
+      }
+
       // Mesajı Firestore'a kaydet
       await addDoc(collection(db, 'ai_conversations'), {
         sessionId,
@@ -128,7 +137,20 @@ export const AIAssistant: React.FC = () => {
           { aiConfig, knowledgeBase, products, conversationFlows, conversationState, currentLanguage: language }
         );
 
+        // ✨ User mesajını logla
+        const isFallback = typeof response === 'string' && response.includes('yardımcı olmak isterim');
+        if (currentLogId) {
+          await logMessage(currentLogId, {
+            role: 'user',
+            content: content.trim(),
+            wasUnderstood: !isFallback,
+            triggeredFlow: response.flowState?.flowId,
+            flowState: response.flowState
+          });
+        }
+
         // Flow state'i güncelle (eğer varsa)
+        let flowCompleted = false;
         if (response.flowState) {
           if (response.flowState.nextStepId) {
             setConversationState({
@@ -144,11 +166,24 @@ export const AIAssistant: React.FC = () => {
               ],
               // ✨ Metadata tetikleyicileri
               giftModeActive: response.flowState.giftModeActive || conversationState?.giftModeActive,
-              detectedPersona: response.flowState.detectedPersona || conversationState?.detectedPersona
+              detectedPersona: response.flowState.detectedPersona || conversationState?.detectedPersona,
+              accumulatedSensory: response.flowState.accumulatedSensory
             });
           } else {
             // Flow sona erdi, state'i temizle
+            flowCompleted = true;
             setConversationState(null);
+
+            // ✨ Flow tamamlandı, log'u güncelle
+            if (currentLogId) {
+              await completeConversationLog(currentLogId, {
+                completedFlow: true,
+                flowId: response.flowState.flowId,
+                detectedPersona: response.flowState.detectedPersona,
+                accumulatedSensory: response.flowState.accumulatedSensory,
+                recommendedProducts: response.recommendations || []
+              });
+            }
           }
         }
 
@@ -167,6 +202,15 @@ export const AIAssistant: React.FC = () => {
         }
 
         await addDoc(collection(db, 'ai_conversations'), messageData);
+
+        // ✨ Assistant mesajını logla
+        if (currentLogId) {
+          await logMessage(currentLogId, {
+            role: 'assistant',
+            content: responseText,
+            type: isFallback ? 'fallback' : (response.flowState ? 'flow-response' : 'knowledge-base')
+          });
+        }
 
         setIsLoading(false);
       }
