@@ -4,7 +4,12 @@
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
       "Bash(npm install:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

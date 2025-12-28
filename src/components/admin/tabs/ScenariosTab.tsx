@@ -387,7 +387,7 @@ export const ScenariosTab: React.FC = () => {
                       <CheckCircle className="text-green-500" size={20} />
                     )}
                     <span className="font-bold text-sm uppercase tracking-wider text-gray-500">
-                      {step.id} - {step.type === 'question' ? 'Soru' : 'Sonuç'}
+                      {step.displayName || `${step.id} - ${step.type === 'question' ? 'Soru' : 'Sonuç'}`}
                     </span>
                   </div>
                   <button
@@ -400,6 +400,13 @@ export const ScenariosTab: React.FC = () => {
 
                 {step.type === 'question' ? (
                   <>
+                    <input
+                      type="text"
+                      placeholder="Bu adıma özel isim verin (örn: 'Romantik Partner Seçimi', 'Hediye Alıcısı Sorusu')"
+                      value={step.displayName || ''}
+                      onChange={(e) => handleUpdateStep(step.id, { displayName: e.target.value })}
+                      className="w-full px-4 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 mb-3 focus:ring-2 focus:ring-purple-500/20 outline-none placeholder:text-purple-400 placeholder:font-normal"
+                    />
                     <input
                       type="text"
                       placeholder="Soruyu buraya yazın..."
@@ -441,6 +448,13 @@ export const ScenariosTab: React.FC = () => {
                   </>
                 ) : (
                   <>
+                    <input
+                      type="text"
+                      placeholder="Bu sonuç adımına özel isim verin (örn: 'Romantik Partner Önerisi', 'Öğretmen İçin Truffle Sonucu')"
+                      value={step.displayName || ''}
+                      onChange={(e) => handleUpdateStep(step.id, { displayName: e.target.value })}
+                      className="w-full px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-xs font-bold text-green-700 dark:text-green-300 mb-3 focus:ring-2 focus:ring-green-500/20 outline-none placeholder:text-green-400 placeholder:font-normal"
+                    />
                     <textarea
                       placeholder="Sonuç mesajını buraya yazın (AI müşteriye bunu gönderecek)..."
                       value={step.resultMessage}

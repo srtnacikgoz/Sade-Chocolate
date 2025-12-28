@@ -35,6 +35,7 @@ export interface StepMetadata {
 export interface ConversationStep {
   id: string;
   type: StepType;
+  displayName?: string; // ✨ Admin panelde görünecek açıklayıcı isim (opsiyonel)
   question?: LocalizedString | string; // type=question için
   options?: StepOption[]; // type=question için
   resultMessage?: LocalizedString | string; // type=result için
