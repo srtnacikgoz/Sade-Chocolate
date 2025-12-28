@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { GitBranch, Plus, Trash2, Edit3, Save, X, MessageCircle, CheckCircle, AlertCircle } from 'lucide-react';
+import { GitBranch, Plus, Trash2, Edit3, Save, X, MessageCircle, CheckCircle, AlertCircle, GripVertical, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConversationFlow, ConversationStep } from '../../../types/conversationFlow';
+import { useProducts } from '../../../context/ProductContext';
 
 export const ScenariosTab: React.FC = () => {
+  const { products } = useProducts();
   const [scenarios, setScenarios] = useState<ConversationFlow[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingScenario, setEditingScenario] = useState<ConversationFlow | null>(null);
@@ -432,9 +434,15 @@ export const ScenariosTab: React.FC = () => {
                             className="px-4 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                           >
                             <option value="">Sonuç (Bitir)</option>
-                            {newScenario.steps?.filter(s => s.id !== step.id).map(s => (
-                              <option key={s.id} value={s.id}>{s.id}</option>
-                            ))}
+                            {newScenario.steps?.filter(s => s.id !== step.id).map(s => {
+                              const emoji = s.type === 'question' ? '🟣' : '🟢';
+                              const label = s.displayName || `${s.id} - ${s.type === 'question' ? 'Soru' : 'Sonuç'}`;
+                              return (
+                                <option key={s.id} value={s.id}>
+                                  {emoji} {label} ({s.id})
+                                </option>
+                              );
+                            })}
                           </select>
                         </div>
                       ))}
@@ -462,6 +470,126 @@ export const ScenariosTab: React.FC = () => {
                       rows={4}
                       className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-green-500/20 outline-none"
                     />
+
+                    {/* Görsel Ürün Seçici */}
+                    <div className="mt-4 p-6 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Package className="text-amber-600" size={20} />
+                        <h4 className="font-bold text-sm text-amber-900 dark:text-amber-100">🎁 ÖNERİLEN ÜRÜNLER SEÇİN</h4>
+                      </div>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mb-4">
+                        AI bu adıma ulaşan müşterilere aşağıdaki ürünleri interaktif kartlar olarak gösterecek. Sürükleyerek sıralayabilirsiniz.
+                      </p>
+
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {products.map((product, index) => {
+                          const isSelected = step.productRecommendations?.includes(product.id);
+                          const selectedIndex = step.productRecommendations?.indexOf(product.id) ?? -1;
+
+                          return (
+                            <div
+                              key={product.id}
+                              draggable={isSelected}
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.setData('productId', product.id);
+                              }}
+                              onDragOver={(e) => {
+                                if (isSelected) {
+                                  e.preventDefault();
+                                  e.dataTransfer.dropEffect = 'move';
+                                }
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const draggedId = e.dataTransfer.getData('productId');
+                                const currentRecs = step.productRecommendations || [];
+                                const draggedIndex = currentRecs.indexOf(draggedId);
+                                const dropIndex = currentRecs.indexOf(product.id);
+
+                                if (draggedIndex !== -1 && dropIndex !== -1) {
+                                  const newRecs = [...currentRecs];
+                                  newRecs.splice(draggedIndex, 1);
+                                  newRecs.splice(dropIndex, 0, draggedId);
+                                  handleUpdateStep(step.id, { productRecommendations: newRecs });
+                                }
+                              }}
+                              className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group ${
+                                isSelected
+                                  ? 'border-amber-500 bg-amber-100 dark:bg-amber-900/30 shadow-md'
+                                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-amber-300'
+                              }`}
+                              onClick={() => {
+                                const currentRecs = step.productRecommendations || [];
+                                const newRecs = isSelected
+                                  ? currentRecs.filter(id => id !== product.id)
+                                  : [...currentRecs, product.id];
+                                handleUpdateStep(step.id, { productRecommendations: newRecs });
+                              }}
+                            >
+                              {/* Drag Handle */}
+                              {isSelected && (
+                                <div className="cursor-grab active:cursor-grabbing text-amber-400">
+                                  <GripVertical size={20} />
+                                </div>
+                              )}
+
+                              {/* Checkbox */}
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}} // onClick handles it
+                                className="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                              />
+
+                              {/* Product Image */}
+                              <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50">
+                                {product.image ? (
+                                  <img
+                                    src={product.image}
+                                    alt={product.title}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Package size={24} className="text-gray-300" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Product Info */}
+                              <div className="flex-1 min-w-0">
+                                <h5 className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                                  {product.title}
+                                </h5>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                  {product.description}
+                                </p>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-sm font-bold text-amber-600">
+                                    {product.currency || '₺'}{product.price.toFixed(2)}
+                                  </span>
+                                  {isSelected && (
+                                    <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold">
+                                      #{selectedIndex + 1}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {step.productRecommendations && step.productRecommendations.length > 0 && (
+                        <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/40 rounded-xl border border-amber-300 dark:border-amber-700">
+                          <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                            ✓ {step.productRecommendations.length} ürün seçildi
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
                       <label className="flex items-center gap-3 cursor-pointer">
                         <input
