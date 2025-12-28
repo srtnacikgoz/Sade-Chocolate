@@ -15,7 +15,7 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
   const [activeSubTab, setActiveSubTab] = useState<SommelierSubTab>('persona');
   
   const [knowledgeBaseItems, setKnowledgeBaseItems] = useState<any[]>([]);
-  const [newRule, setNewRule] = useState({ type: 'Eşleştirme', key: '', value: '' });
+  const [newRule, setNewRule] = useState({ type: 'Soru-Cevap', key: '', value: '' });
 
   const [guidingQuestions, setGuidingQuestions] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -55,7 +55,7 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
         createdAt: serverTimestamp(),
       });
       toast.success('Yeni kural bilgi bankasına eklendi.');
-      setNewRule({ type: 'Eşleştirme', key: '', value: '' });
+      setNewRule({ type: 'Soru-Cevap', key: '', value: '' });
     } catch (error) {
       toast.error('Kural eklenirken bir hata oluştu.');
       console.error("Error adding rule: ", error);
@@ -162,31 +162,36 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Kural Tipi</label>
-                  <select 
+                  <select
                     value={newRule.type}
                     onChange={(e) => setNewRule({...newRule, type: e.target.value})}
                     className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                   >
+                    <option>Soru-Cevap</option>
                     <option>Eşleştirme</option>
                     <option>Yasaklı Kelime</option>
                     <option>Marka Hikayesi</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Anahtar</label>
-                  <input 
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                    {newRule.type === 'Soru-Cevap' ? 'Soru' : 'Anahtar'}
+                  </label>
+                  <input
                     type="text"
-                    placeholder="Örn: %85 Ecuador"
+                    placeholder={newRule.type === 'Soru-Cevap' ? 'Örn: Sevgilime ne alsam?' : 'Örn: %85 Ecuador'}
                     value={newRule.key}
                     onChange={(e) => setNewRule({...newRule, key: e.target.value})}
                     className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Değer</label>
-                  <input 
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                    {newRule.type === 'Soru-Cevap' ? 'Cevap' : 'Değer'}
+                  </label>
+                  <input
                     type="text"
-                    placeholder="Örn: Cabernet Sauvignon"
+                    placeholder={newRule.type === 'Soru-Cevap' ? 'Örn: Sevgiliniz için özel kutularımızı öneriyorum...' : 'Örn: Cabernet Sauvignon'}
                     value={newRule.value}
                     onChange={(e) => setNewRule({...newRule, value: e.target.value})}
                     className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"

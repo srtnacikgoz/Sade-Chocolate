@@ -14,6 +14,7 @@ import { ImageUpload } from '../components/admin/ImageUpload';
 import { InventoryTab } from '../components/admin/tabs/InventoryTab';
 import { OrdersTab } from '../components/admin/tabs/OrdersTab';
 import { SommelierTab } from '../components/admin/tabs/SommelierTab';
+import { ScenariosTab } from '../components/admin/tabs/ScenariosTab';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'cms' | 'ai' | 'customers' | 'badges'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'cms' | 'ai' | 'scenarios' | 'customers' | 'badges'>('inventory');
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
@@ -270,7 +271,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   const handleAiSave = async () => {
     try {
       validateAIConfig(aiConfig);
-      await setDoc(doc(db, 'ai_config', 'default'), aiConfig, { merge: true });
+      await setDoc(doc(db, 'settings', 'ai'), aiConfig, { merge: true });
       toast.success("AI Sommelier eğitildi ve yayına alındı! 🧠");
     } catch (err: any) {
       toast.error(err.message || "Kaydedilemedi.");
@@ -367,6 +368,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
               <button onClick={() => setActiveTab('orders')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'orders' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SİPARİŞLER</button>
               <button onClick={() => setActiveTab('cms')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'cms' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>İÇERİK (CMS)</button>
               <button onClick={() => setActiveTab('ai')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'ai' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI SOMMELIER</button>
+              <button onClick={() => setActiveTab('scenarios')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'scenarios' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SENARYOLAR</button>
               <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
               <button onClick={() => setActiveTab('badges')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'badges' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ROZETLER</button>
             </div>
@@ -1570,6 +1572,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         </div>
       ) : activeTab === 'ai' ? (
         <SommelierTab aiConfig={aiConfig} setAiConfig={setAiConfig} />
+      ) : activeTab === 'scenarios' ? (
+        <ScenariosTab />
       ) : null}
 
       {/* Ürün Ekleme/Düzenleme Modalı */}

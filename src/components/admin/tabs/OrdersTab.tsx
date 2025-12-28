@@ -134,7 +134,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({ orders, updateOrderStatus 
             </div>
           ) : (
             filteredOrders.map(order => {
-              const StatusIcon = statusConfig[order.status].icon;
+              const statusInfo = statusConfig[order.status] || statusConfig.pending;
+              const StatusIcon = statusInfo.icon;
               const orderDate = order.createdAt?.toDate?.() || new Date(order.createdAt);
               const isExpanded = expandedOrderId === order.id;
 
@@ -150,8 +151,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({ orders, updateOrderStatus 
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-3">
                             <span className="font-mono text-sm font-bold text-gray-400">#{order.id.slice(0, 8)}</span>
-                            <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${statusConfig[order.status].color}`}>
-                              {statusConfig[order.status].label.toUpperCase()}
+                            <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${statusInfo.color}`}>
+                              {statusInfo.label.toUpperCase()}
                             </span>
                           </div>
                           <div className="flex items-center gap-4 text-xs text-gray-500">

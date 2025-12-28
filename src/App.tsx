@@ -26,6 +26,7 @@ import { LoginGateway } from './pages/LoginGateway'; // Birazdan oluşturacağı
 import { Register } from './pages/Register';
 import { SearchDrawer } from './components/SearchDrawer';
 import { NewsletterPopup } from './components/NewsletterPopup';
+import { AIAssistant } from './components/AIAssistant';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -64,8 +65,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </div>
 
       {!isSplash && !isAdmin && !isCheckout && <BottomNav />}
-      
-      {/* 🪄 Global Hediye Asistanı Butonu kaldırıldı */}
+
+      {/* AI Asistan - Tüm sitede erişilebilir */}
+      {!isSplash && !isAdmin && !isCheckout && <AIAssistant />}
 
       <CartDrawer />
       <SearchDrawer isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
