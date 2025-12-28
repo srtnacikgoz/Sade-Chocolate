@@ -49,6 +49,51 @@ const isGiftRelated = (text: string): boolean => {
   ]);
 };
 
+// ✨ SMART ENTRY: İlk mesajı seçeneklerle otomatik eşleştir
+// Stopwords: Genel sıfatlar, kullanıcı ismini kastetmiyor
+const STOPWORDS = ['sevgili', 'değerli', 'canım', 'tatlım', 'güzel', 'özel', 'yakın', 'iyi'];
+
+const findSmartEntry = (
+  flow: ConversationFlow,
+  userMessage: string,
+  lang: string = 'tr'
+): string | null => {
+  const startStep = flow.steps.find(s => s.id === flow.startStepId);
+  if (!startStep || startStep.type !== 'question' || !startStep.options) return null;
+
+  const normalized = normalizeText(userMessage);
+
+  // Tüm seçenekleri eşleştir
+  const matches = startStep.options
+    .map(opt => {
+      const label = normalizeText(getLocaleText(opt.label, lang));
+      const words = label.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.includes(w));
+
+      // Her kelimeyi kontrol et
+      const matchedWords = words.filter(word => normalized.includes(word));
+
+      return {
+        option: opt,
+        matchCount: matchedWords.length,
+        longestMatch: matchedWords.length > 0 ? Math.max(...matchedWords.map(w => w.length)) : 0,
+        label: label
+      };
+    })
+    .filter(m => m.matchCount > 0);
+
+  if (matches.length === 0) return null;
+
+  // Çoklu eşleşme varsa: En spesifik kelimeye öncelik ver
+  // 1. En çok kelime eşleşeni
+  // 2. Eşitlik varsa, en uzun kelimeyi
+  matches.sort((a, b) => {
+    if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+    return b.longestMatch - a.longestMatch;
+  });
+
+  return matches[0].option.nextStepId;
+};
+
 // Ürün öneri sorguları
 const isProductRecommendation = (text: string): boolean => {
   return containsKeywords(text, [
@@ -390,6 +435,36 @@ export const generateAIResponse = async (
   // Yeni flow başlatma kontrolü
   const matchingFlow = findMatchingFlow(userMessage, conversationFlows);
   if (matchingFlow) {
+    // ✨ SMART ENTRY: İlk mesajda cevap var mı kontrol et
+    const smartEntryStepId = findSmartEntry(matchingFlow, userMessage, lang);
+
+    if (smartEntryStepId) {
+      // Kullanıcı zaten cevabı vermiş (örn: "öğretmenime hediye")
+      // İlk soruyu atla, direkt nextStepId'ye git
+      const result = processFlowStep(matchingFlow, smartEntryStepId, lang);
+
+      // Zarif karşılama mesajı ekle
+      const startStep = matchingFlow.steps.find(s => s.id === matchingFlow.startStepId);
+      const matchedOption = startStep?.options?.find(opt => opt.nextStepId === smartEntryStepId);
+      const targetLabel = matchedOption ? getLocaleText(matchedOption.label, lang) : '';
+
+      const greetingMessages = {
+        tr: `Harika! ${targetLabel} için en zarif seçimi yapmanıza yardımcı olacağım.\n\n${result.message}`,
+        en: `Perfect! I'll help you find the most elegant choice for ${targetLabel}.\n\n${result.message}`,
+        ru: `Отлично! Я помогу вам найти самый элегантный выбор для ${targetLabel}.\n\n${result.message}`
+      };
+
+      return Object.assign(greetingMessages[lang as keyof typeof greetingMessages] || greetingMessages['tr'], {
+        flowState: {
+          flowId: matchingFlow.id,
+          nextStepId: result.nextStepId,
+          detectedPersona: matchingFlow.personaType
+        },
+        recommendations: result.recommendations || []
+      });
+    }
+
+    // Normal başlangıç (ilk mesajda cevap yok)
     const result = processFlowStep(matchingFlow, matchingFlow.startStepId, lang);
     return Object.assign(result.message, {
       flowState: {
