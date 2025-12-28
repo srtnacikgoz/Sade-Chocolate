@@ -11,6 +11,7 @@ export const ScenariosTab: React.FC = () => {
   const [scenarios, setScenarios] = useState<ConversationFlow[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingScenario, setEditingScenario] = useState<ConversationFlow | null>(null);
+  const [isFloatingMenuOpen, setIsFloatingMenuOpen] = useState(false);
 
   const [newScenario, setNewScenario] = useState<Partial<ConversationFlow>>({
     name: '',
@@ -65,6 +66,20 @@ export const ScenariosTab: React.FC = () => {
       ...newScenario,
       steps: [...(newScenario.steps || []), newStep]
     });
+  };
+
+  const handleAddStepFloating = (type: 'question' | 'result') => {
+    handleAddStep(type);
+    setIsFloatingMenuOpen(false);
+
+    // Scroll to new step after it's added
+    setTimeout(() => {
+      const steps = document.querySelectorAll('[data-step-card]');
+      const lastStep = steps[steps.length - 1];
+      lastStep?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+
+    toast.success(`✓ Yeni ${type === 'question' ? 'soru' : 'sonuç'} adımı eklendi!`);
   };
 
   const handleRemoveStep = (stepId: string) => {
@@ -380,7 +395,7 @@ export const ScenariosTab: React.FC = () => {
             </div>
 
             {newScenario.steps?.map((step, stepIndex) => (
-              <div key={step.id} className="bg-gray-50 dark:bg-dark-900 rounded-2xl p-6 border-l-4 border-purple-500">
+              <div key={step.id} data-step-card className="bg-gray-50 dark:bg-dark-900 rounded-2xl p-6 border-l-4 border-purple-500">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     {step.type === 'question' ? (
@@ -610,6 +625,40 @@ export const ScenariosTab: React.FC = () => {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Floating Add Button */}
+          <div className="fixed bottom-8 right-8 z-50">
+            {/* Mini Menu */}
+            {isFloatingMenuOpen && (
+              <div className="absolute bottom-20 right-0 bg-white dark:bg-dark-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-2 w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <button
+                  onClick={() => handleAddStepFloating('question')}
+                  className="w-full px-4 py-3 text-left text-sm font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all flex items-center gap-2"
+                >
+                  <MessageCircle size={16} />
+                  🟣 Soru Adımı Ekle
+                </button>
+                <button
+                  onClick={() => handleAddStepFloating('result')}
+                  className="w-full px-4 py-3 text-left text-sm font-bold text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-all flex items-center gap-2 mt-1"
+                >
+                  <CheckCircle size={16} />
+                  🟢 Sonuç Adımı Ekle
+                </button>
+              </div>
+            )}
+
+            {/* Main Floating Button */}
+            <button
+              onClick={() => setIsFloatingMenuOpen(!isFloatingMenuOpen)}
+              className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full shadow-2xl hover:scale-110 hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center group"
+            >
+              <Plus
+                size={28}
+                className={`transition-transform duration-300 ${isFloatingMenuOpen ? 'rotate-45' : 'rotate-0'}`}
+              />
+            </button>
           </div>
 
           {/* Save Button */}
