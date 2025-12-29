@@ -29,6 +29,15 @@ export default {
           900: "#0a0a0a",
           800: "#1a1a1a",
         },
+        // Sade Chocolate Kurumsal Renk Paleti
+        brand: {
+          blue: "#a4d1e8",
+          yellow: "#e7c57d",
+          mustard: "#d4a945",
+          green: "#a4d4bc",
+          peach: "#f3d1c8",
+          orange: "#e59a77",
+        },
       },
       fontFamily: {
         // Zanaatkar Serif ve Modern Sans-Serif birlikteliği

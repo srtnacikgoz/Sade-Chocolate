@@ -43,3 +43,188 @@ Admin panelindeki (Financial Command Center) müşteri tanıma sayfasına şu mo
     
 
 Bu yapı sayesinde müşterin daha "Ödeme Yap" butonuna basmadan, onun neyi sevdiğini, neden çekindiğini ve hangi hikayeden etkilendiğini biliyor olacaksın. Bu, lüksün "veriyle harmanlanmış empati" halidir.
+
+---
+
+## 🍫 Brand-Specific UI Bileşenleri
+
+Sade Chocolate'ın kendi özel, çikolata-temalı UI bileşenleri olmalı. Bu bileşenler markayı farklılaştırır ve unutulmaz bir kullanıcı deneyimi yaratır.
+
+### 1. **Chocolate Bar Alert** 🍫
+Çikolata tableti şeklinde alert/notification bileşeni.
+
+**Konsept:**
+```
+┌─┬─┬─┬─┬─┐
+│✓│S│i│p│a│  ← Her kare bir harf/ikon
+├─┼─┼─┼─┼─┤
+│r│i│ş│  │✅│
+└─┴─┴─┴─┴─┘
+"Sipariş Başarılı!"
+```
+
+**Özellikler:**
+- Her kare bir harf veya ikon içerir
+- Tıklandığında "kırılma" efekti
+- Farklı tatlar = farklı renkler (bitter, sütlü, beyaz)
+- Smooth açılma animasyonu
+
+---
+
+### 2. **Truffle Loading Spinner** 🌰
+Yükleme durumları için çikolata-temalı spinner.
+
+**Konsept:**
+- Dönen kakao çekirdeği veya truffle
+- "Hazırlanıyor..." metni
+- Çikolatanın erime efekti
+- Opsiyonel: Servisten kalkan buhar animasyonu
+
+**Kullanım Alanları:**
+- Sipariş işleme
+- Ödeme bekleme
+- Sayfa yükleme
+
+---
+
+### 3. **Bean-to-Bar Progress Bar** 📊
+Sipariş durumu için temalaştırılmış ilerleme çubuğu.
+
+**Konsept:**
+```
+[🌱 Kakao] → [🔥 Kavurma] → [🍫 Tablet] → [📦 Paketleme]
+     ████████████░░░░░░░░░░  60%
+```
+
+**Özellikler:**
+- Her aşama kakao üretim sürecini temsil eder
+- Animasyonlu geçişler
+- Mevcut aşama vurgulanır
+- Timeline benzeri görünüm
+
+**Kullanım Alanları:**
+- Sipariş takibi
+- Üretim süreci gösterimi
+- Onboarding/tutorial adımları
+
+---
+
+### 4. **Chocolate Drip Buttons** 💧
+Hover efektli, çikolata damlayan butonlar.
+
+**Özellikler:**
+- Hover'da çikolata damlası efekti (CSS animation)
+- Tıklandığında "erime" animasyonu
+- Farklı çikolata tipleri için farklı renkler
+- Micro-interactions
+
+---
+
+### 5. **Cocoa Pod Checkbox** ☑️
+Kakao meyvesi şeklinde özel checkbox.
+
+**Konsept:**
+- Unchecked: Kapalı kakao meyvesi 🟤
+- Checked: Açılmış meyve, içinde çekirdekler ✅
+- Smooth açılma/kapanma animasyonu
+- Organic, doğal görünüm
+
+**Kullanım Alanları:**
+- Form seçimleri
+- Ürün filtreleme
+- Sipariş tercihleri
+
+---
+
+### 6. **Melting Toast Notification** 🔔
+Üstten eriyerek akan toast bildirimleri.
+
+**Konsept:**
+- Üstten çikolata gibi "akıyor" (slide-down + melt effect)
+- Servisten kalkan buhar efekti (opsiyonel)
+- Farklı tipler:
+  - Success: Süt çikolatası rengi
+  - Error: Bitter çikolata (koyu kahve)
+  - Info: Beyaz çikolata
+  - Warning: Karamel tonları
+
+---
+
+### 7. **Artisan Slider** 🎚️
+Zanaatkar dokunuş için özel slider bileşeni.
+
+**Konsept:**
+- Handle kakao çekirdeği veya truffle şeklinde
+- Track çikolata tablet deseni
+- Smooth, buttery kayma efekti
+- Değer göstergesi zarif typography ile
+
+**Kullanım Alanları:**
+- Fiyat aralığı filtresi
+- Kakao oranı seçimi (%70, %85, %99)
+- Ürün miktarı ayarı
+
+---
+
+### 8. **Packaging Animation** 📦
+Sipariş tamamlandığında hediye paketi açılma animasyonu.
+
+**Konsept:**
+- 3D CSS ile hediye kutusu
+- Kurdele çözülmesi
+- Kapak açılması
+- İçinden "ışık" efekti
+- Confetti animasyonu
+
+---
+
+### 9. **Temperature Alert** 🌡️
+Hava durumu uyarıları için termometre bileşeni.
+
+**Konsept:**
+```
+    🌡️
+   ┌──┐
+   │██│ ← Sıcaklık göstergesi
+   │██│
+   │░░│
+   └──┘
+   25°C
+"Soğuk paket öneriliyor"
+```
+
+**Özellikler:**
+- Canlı sıcaklık göstergesi
+- Erime riski uyarısı
+- Öneri sistemi (buz aküsü vs.)
+
+---
+
+### 10. **Batch/Lot Number Display** 🏷️
+Şık lot numarası gösterimi.
+
+**Konsept:**
+- Vintage etiket tasarımı
+- QR kod entegrasyonu
+- Üretim tarihi timeline'ı
+- Taze olduğunu vurgulayan animasyonlar
+
+---
+
+## 🎯 Öncelik Sırası
+
+1. **Chocolate Bar Alert** - En eğlenceli, marka kimliğine en uygun
+2. **Bean-to-Bar Progress** - Sipariş takibi için kritik
+3. **Truffle Loading** - Her yerde kullanılabilir
+4. **Melting Toast** - Mevcut toast sistemini upgrade eder
+5. **Diğerleri** - İhtiyaca göre
+
+---
+
+## 💭 Notlar
+
+- Tüm bileşenler Sade Chocolate kurumsal renk paletini kullanmalı
+- Nordic Noir estetik korunmalı
+- Accessibility (a11y) ihmal edilmemeli
+- Performance optimize edilmeli (CSS > JS animasyonlar)
+- Dark mode desteği şart

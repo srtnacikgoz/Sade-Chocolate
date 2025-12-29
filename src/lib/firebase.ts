@@ -1,6 +1,6 @@
 // src/lib/firebase.ts
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
@@ -18,8 +18,16 @@ const firebaseConfig = {
 // Uygulamayı Başlat
 const app = initializeApp(firebaseConfig);
 
-// Servisleri Dışa Aktar
-export const db = getFirestore(app);
+// Firestore'u Offline Persistence ile Başlat (Yeni API)
+// Bu sayede:
+// - Birden fazla sekmede persistence çalışır
+// - Internet kesilse bile veriler görüntülenebilir
+// - Değişiklikler cache'lenir ve bağlantı gelince senkronize edilir
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
