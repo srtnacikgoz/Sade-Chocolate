@@ -1,5 +1,5 @@
 import React from 'react';
-import { Order } from '../../context/UserContext';
+import { Order } from './tabs/OrdersTab';
 import { X, MapPin, FileText, Package, Droplets, Gift, Sparkles, Box } from 'lucide-react';
 
 interface OrderDetailCardProps {
@@ -48,11 +48,24 @@ export const OrderDetailCard: React.FC<OrderDetailCardProps> = ({ order, onClose
             {/* Sol Sütun: Operasyonel Güvenlik */}
             <div className="space-y-8">
               <div>
-                <h3 className="font-display font-bold italic text-lg mb-4 flex items-center gap-2 text-gray-700"><MapPin size={18}/> Adres & Fatura</h3>
-                <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border">
-                   {/* Buraya adres ve fatura bilgileri gelecek */}
-                   <p className="text-sm text-gray-600">Teslimat Adresi: [Adres Bilgisi]</p>
-                   <p className="text-sm text-gray-600">Fatura Adresi: [Fatura Bilgisi]</p>
+                <h3 className="font-display font-bold italic text-lg mb-4 flex items-center gap-2 text-gray-700"><MapPin size={18}/> Adres & Müşteri</h3>
+                <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border">
+                   <div>
+                     <p className="text-xs font-bold text-gray-500 mb-1">Müşteri</p>
+                     <p className="text-sm text-gray-800 font-medium">{order.customerInfo.name}</p>
+                   </div>
+                   <div>
+                     <p className="text-xs font-bold text-gray-500 mb-1">Email</p>
+                     <p className="text-sm text-gray-800">{order.customerInfo.email}</p>
+                   </div>
+                   <div>
+                     <p className="text-xs font-bold text-gray-500 mb-1">Telefon</p>
+                     <p className="text-sm text-gray-800">{order.customerInfo.phone}</p>
+                   </div>
+                   <div>
+                     <p className="text-xs font-bold text-gray-500 mb-1">Teslimat Adresi</p>
+                     <p className="text-sm text-gray-800">{order.customerInfo.address}</p>
+                   </div>
                 </div>
               </div>
               <div>
@@ -86,10 +99,26 @@ export const OrderDetailCard: React.FC<OrderDetailCardProps> = ({ order, onClose
                 </div>
               </div>
                <div>
-                <h3 className="font-display font-bold italic text-lg mb-4 flex items-center gap-2 text-gray-700"><Box size={18}/> Ürün Varyantları</h3>
-                <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border">
-                   {/* Kutu boyutu ve ürün listesi */}
-                   <p className="text-sm text-gray-600">Kutu Boyutu: [Grid/List]</p>
+                <h3 className="font-display font-bold italic text-lg mb-4 flex items-center gap-2 text-gray-700"><Box size={18}/> Sipariş Ürünleri</h3>
+                <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border">
+                   {order.items.map((item, idx) => (
+                     <div key={idx} className="flex items-center justify-between pb-3 border-b last:border-b-0 last:pb-0">
+                       <div className="flex items-center gap-3">
+                         {item.image && (
+                           <img src={item.image} alt={item.title} className="w-12 h-12 rounded-lg object-cover" />
+                         )}
+                         <div>
+                           <p className="text-sm font-bold text-gray-800">{item.title}</p>
+                           <p className="text-xs text-gray-500">x{item.quantity}</p>
+                         </div>
+                       </div>
+                       <p className="text-sm font-bold text-gray-700">₺{(item.price * item.quantity).toFixed(2)}</p>
+                     </div>
+                   ))}
+                   <div className="pt-3 border-t-2 flex justify-between items-center">
+                     <span className="font-bold text-gray-700">Toplam</span>
+                     <span className="text-lg font-display font-bold text-brown-900">₺{order.total.toFixed(2)}</span>
+                   </div>
                 </div>
               </div>
             </div>

@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { ShoppingCart, Package, Clock, CheckCircle, XCircle, Search, ChevronDown, User, Phone, Mail, MapPin, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { UnifiedOrderModal } from '../UnifiedOrderModal';
 
-interface Order {
+export interface Order {
   id: string;
   userId: string;
   customerInfo: {
@@ -24,6 +25,23 @@ interface Order {
   paymentMethod: string;
   createdAt: any;
   updatedAt?: any;
+  giftDetails?: {
+    isGift: boolean;
+    note: string;
+    fontFamily: string;
+    recipientName: string;
+  };
+  weatherAlert?: {
+    temp: number;
+    requiresIce: boolean;
+  };
+  logistics?: {
+    trackingNumber?: string;
+    carrier?: string;
+    estimatedDeliveryDate?: Date;
+    actualDeliveryDate?: Date;
+    shippedAt?: Date;
+  };
 }
 
 interface OrdersTabProps {
@@ -35,6 +53,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({ orders, updateOrderStatus 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | Order['status']>('all');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const statusConfig = {
     pending: { label: 'Beklemede', color: 'bg-yellow-50 text-yellow-600 border-yellow-200', icon: Clock },
@@ -134,8 +153,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({ orders, updateOrderStatus 
             </div>
           ) : (
             filteredOrders.map(order => {
-              const statusInfo = statusConfig[order.status] || statusConfig.pending;
-              const StatusIcon = statusInfo.icon;
+              const config = statusConfig[order.status] || statusConfig.pending;
+              const StatusIcon = config.icon;
               const orderDate = order.createdAt?.toDate?.() || new Date(order.createdAt);
               const isExpanded = expandedOrderId === order.id;
 
@@ -150,13 +169,27 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({ orders, updateOrderStatus 
                       <div className="flex items-center gap-6 flex-1">
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-3">
-                            <span className="font-mono text-sm font-bold text-gray-400">#{order.id.slice(0, 8)}</span>
-                            <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${statusInfo.color}`}>
-                              {statusInfo.label.toUpperCase()}
+                            <span
+                              className="font-mono text-sm font-bold text-gray-400 hover:text-brown-900 cursor-pointer transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                              }}
+                            >
+                              #{order.id.slice(0, 8)}
+                            </span>
+                            <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${config.color}`}>
+                              {config.label.toUpperCase()}
                             </span>
                           </div>
                           <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
+                            <span
+                              className="flex items-center gap-1 hover:text-brown-900 cursor-pointer transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                              }}
+                            >
                               <User size={14} />
                               {order.customerInfo.name}
                             </span>
@@ -271,6 +304,16 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({ orders, updateOrderStatus 
           )}
         </div>
       </div>
+
+      {/* Unified Order & Customer Modal */}
+      {selectedOrder && (
+        <UnifiedOrderModal
+          order={selectedOrder}
+          allOrders={orders}
+          onClose={() => setSelectedOrder(null)}
+          onUpdateStatus={updateOrderStatus}
+        />
+      )}
     </div>
   );
 };
