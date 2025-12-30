@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Sparkles } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -12,10 +12,12 @@ import { toast } from 'sonner';
 import { ProductForm } from '../components/admin/ProductForm';
 import { ImageUpload } from '../components/admin/ImageUpload';
 import { InventoryTab } from '../components/admin/tabs/InventoryTab';
-import { OrdersTab } from '../components/admin/tabs/OrdersTab';
 import { SommelierTab } from '../components/admin/tabs/SommelierTab';
 import { ScenariosTab } from '../components/admin/tabs/ScenariosTab';
 import { ConversationAnalyticsTab } from '../components/admin/tabs/ConversationAnalyticsTab';
+import { BehaviorTrackingTab } from '../components/admin/tabs/BehaviorTrackingTab';
+import { OrderManagementTab } from '../components/admin/tabs/OrderManagementTab';
+import { LoyaltySettingsPanel } from '../components/admin/LoyaltySettingsPanel';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'orders' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'customers' | 'badges'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings'>('inventory');
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
@@ -279,6 +281,45 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     }
   };
 
+  const handleAddExampleBadges = async () => {
+    try {
+      const exampleBadges = [
+        { name: { tr: 'YENİ', en: 'NEW', ru: 'НОВИНКА' }, bgColor: '#D4AF37', textColor: '#000000', priority: 1 },
+        { name: { tr: 'RAMAZAN ÖZEL', en: 'RAMADAN SPECIAL', ru: 'РАМАДАН СПЕЦИАЛЬНЫЙ' }, bgColor: '#059669', textColor: '#FFFFFF', priority: 2 },
+        { name: { tr: 'SINIRLI ÜRETİM', en: 'LIMITED EDITION', ru: 'ОГРАНИЧЕННАЯ СЕРИЯ' }, bgColor: '#1a1a1a', textColor: '#D4AF37', priority: 3 },
+        { name: { tr: 'BESTSELLER', en: 'BESTSELLER', ru: 'БЕСТСЕЛЛЕР' }, bgColor: '#78350f', textColor: '#FFFFFF', priority: 4 },
+        { name: { tr: 'İNDİRİM', en: 'SALE', ru: 'СКИДКА' }, bgColor: '#dc2626', textColor: '#FFFFFF', priority: 5 },
+        { name: { tr: 'SON FIRSAT', en: 'LAST CHANCE', ru: 'ПОСЛЕДНИЙ ШАНС' }, bgColor: '#ea580c', textColor: '#FFFFFF', priority: 6 },
+        { name: { tr: 'VEGAN', en: 'VEGAN', ru: 'ВЕГАН' }, bgColor: '#16a34a', textColor: '#FFFFFF', priority: 7 },
+        { name: { tr: 'SEVGİLİLER GÜNÜ', en: 'VALENTINE\'S DAY', ru: 'ДЕНЬ СВЯТОГО ВАЛЕНТИНА' }, bgColor: '#ec4899', textColor: '#FFFFFF', priority: 8 },
+        { name: { tr: 'ORGANİK', en: 'ORGANIC', ru: 'ОРГАНИЧЕСКИЙ' }, bgColor: '#2563eb', textColor: '#FFFFFF', priority: 9 },
+        { name: { tr: 'EL YAPIMI', en: 'HANDMADE', ru: 'РУЧНАЯ РАБОТА' }, bgColor: '#9333ea', textColor: '#FFFFFF', priority: 10 }
+      ];
+
+      for (const badge of exampleBadges) {
+        await addDoc(collection(db, 'product_badges'), {
+          ...badge,
+          icon: '',
+          active: true,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      toast.success('10 örnek rozet başarıyla eklendi! 🎉');
+
+      // Refresh badges
+      const q = query(collection(db, 'product_badges'), orderBy('priority', 'asc'));
+      const snapshot = await getDocs(q);
+      const badgeData = snapshot.docs.map((doc: any) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setBadges(badgeData);
+    } catch (error: any) {
+      toast.error('Rozetler eklenirken hata oluştu: ' + error.message);
+    }
+  };
+
   const handleAddBadge = async () => {
     try {
       if (!newBadge.name.tr || !newBadge.name.en || !newBadge.name.ru) {
@@ -360,19 +401,21 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-dark-800 p-6 rounded-[40px] border border-gray-200/60 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="p-3.5 bg-brown-900 text-white rounded-[20px]">
-            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'orders' ? <ShoppingCart size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : <Type size={26} />}
+            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'operations' ? <ShoppingCart size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : activeTab === 'journey' ? <TrendingUp size={26} /> : <Type size={26} />}
           </div>
           <div>
             <h1 className="text-xl font-display font-bold italic">Komuta Merkezi</h1>
             <div className="flex gap-2 mt-2">
               <button onClick={() => setActiveTab('inventory')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'inventory' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ENVANTER</button>
-              <button onClick={() => setActiveTab('orders')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'orders' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SİPARİŞLER</button>
+              <button onClick={() => setActiveTab('operations')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'operations' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SİPARİŞ YÖNETİMİ</button>
               <button onClick={() => setActiveTab('cms')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'cms' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>İÇERİK (CMS)</button>
               <button onClick={() => setActiveTab('ai')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'ai' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI SOMMELIER</button>
               <button onClick={() => setActiveTab('scenarios')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'scenarios' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SENARYOLAR</button>
-              <button onClick={() => setActiveTab('analytics')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'analytics' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ANALİZ</button>
+              <button onClick={() => setActiveTab('analytics')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'analytics' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI KONUŞMA LOGLARI</button>
+              <button onClick={() => setActiveTab('journey')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'journey' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİ YOLCULUK TAKİBİ</button>
               <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
               <button onClick={() => setActiveTab('badges')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'badges' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ROZETLER</button>
+              <button onClick={() => setActiveTab('loyalty-settings')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'loyalty-settings' ? 'bg-brand-orange text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SADAKAT SİSTEMİ</button>
             </div>
           </div>
         </div>
@@ -383,7 +426,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
             <Button onClick={() => { setEditingProduct(null); setIsFormOpen(true); }} className="bg-brown-900 text-white gap-2 text-[11px] font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-black transition-all">
               <Plus size={18} /> YENİ ÜRÜN EKLE
             </Button>
-          ) : activeTab !== 'customers' && activeTab !== 'badges' && activeTab !== 'analytics' && activeTab !== 'scenarios' && activeTab !== 'orders' ? (
+          ) : activeTab !== 'customers' && activeTab !== 'badges' && activeTab !== 'analytics' && activeTab !== 'scenarios' && activeTab !== 'journey' && activeTab !== 'operations' ? (
             <button
               onClick={activeTab === 'ai' ? handleAiSave : handleCmsSave}
               className={`${activeTab === 'ai' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white p-3 rounded-xl shadow-lg hover:scale-110 transition-all`}
@@ -413,11 +456,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
           setEditingProduct={setEditingProduct}
           setIsFormOpen={setIsFormOpen}
         />
-      ) : activeTab === 'orders' ? (
-        <OrdersTab
-          orders={orders}
-          updateOrderStatus={updateOrderStatus}
-        />
+      ) : activeTab === 'operations' ? (
+        <OrderManagementTab />
       ) : activeTab === 'cms' ? (
         <div className="space-y-8 animate-in slide-in-from-bottom-3 duration-700">
         {/* Sayfa Seçici */}
@@ -1353,13 +1393,22 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
           {/* Add Badge Button */}
           <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm p-6">
             {!isAddingBadge ? (
-              <button
-                onClick={() => setIsAddingBadge(true)}
-                className="w-full py-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl hover:border-brown-900 dark:hover:border-gold hover:bg-brown-50 dark:hover:bg-dark-900/50 transition-all flex items-center justify-center gap-3 text-gray-400 hover:text-brown-900 dark:hover:text-gold"
-              >
-                <Plus size={24} />
-                <span className="font-display text-lg font-bold">Yeni Rozet Ekle</span>
-              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setIsAddingBadge(true)}
+                  className="flex-1 py-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-3xl hover:border-brown-900 dark:hover:border-gold hover:bg-brown-50 dark:hover:bg-dark-900/50 transition-all flex items-center justify-center gap-3 text-gray-400 hover:text-brown-900 dark:hover:text-gold"
+                >
+                  <Plus size={24} />
+                  <span className="font-display text-lg font-bold">Yeni Rozet Ekle</span>
+                </button>
+                <button
+                  onClick={handleAddExampleBadges}
+                  className="px-8 py-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-3xl text-sm font-bold uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-3"
+                >
+                  <Sparkles size={20} />
+                  <span className="font-display text-lg">Örnek Rozetleri Ekle</span>
+                </button>
+              </div>
             ) : (
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-4">
@@ -1579,6 +1628,10 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <ScenariosTab />
       ) : activeTab === 'analytics' ? (
         <ConversationAnalyticsTab />
+      ) : activeTab === 'journey' ? (
+        <BehaviorTrackingTab />
+      ) : activeTab === 'loyalty-settings' ? (
+        <LoyaltySettingsPanel />
       ) : null}
 
       {/* Ürün Ekleme/Düzenleme Modalı */}

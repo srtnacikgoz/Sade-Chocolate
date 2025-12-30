@@ -92,7 +92,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
           <img
             src={currentImage}
             alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-[1.5s] ease-out relative z-10"
+            className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-300 ease-out relative z-10"
           />
 {/* Altına şu katmanı ekle: Üzerine gelince oluşan sıcak bir iç gölge */}
 <div className="absolute inset-0 bg-mocha-900/0 group-hover:bg-mocha-900/5 transition-colors duration-700 z-15" />
@@ -180,7 +180,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
           <img
             src={currentImage}
             alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 z-10"
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
           />
 
           {/* Liste Görünümü Butonları */}
@@ -250,7 +250,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
           <img
             src={currentImage}
             alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 z-10"
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
           />
           {/* Küçük Liste Görünümü Butonları */}
           <div className="absolute top-1 right-1 flex flex-col gap-1 z-30">
