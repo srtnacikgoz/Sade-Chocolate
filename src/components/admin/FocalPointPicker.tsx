@@ -39,7 +39,7 @@ export const FocalPointPicker: React.FC<FocalPointPickerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-8 animate-in fade-in duration-300">
       <div className="bg-white dark:bg-dark-800 rounded-[32px] p-8 max-w-4xl w-full shadow-2xl animate-in zoom-in-95 duration-500">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

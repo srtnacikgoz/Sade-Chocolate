@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safari z-index fix - modal açıkken header'ı düzelt */
+body:has([class*="z-[9999]"]) header {
+  z-index: 40 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: white !important;
+}
+
+.dark body:has([class*="z-[9999]"]) header {
+  background: #0a0a0a !important;
+}
+
 :root {
   font-family: 'Inter', sans-serif;
   --header-height: 80px; /* Masaüstü standart yüksekliğimiz */

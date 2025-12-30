@@ -36,11 +36,11 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen,
 
   return (
     <>
-      <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] transition-opacity animate-fade-in"
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998] transition-opacity animate-fade-in"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <div className="bg-white dark:bg-dark-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden pointer-events-auto animate-fade-in transform transition-all scale-100 max-h-[90vh] overflow-y-auto">
             <div className="relative">
                 <button 

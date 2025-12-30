@@ -35,7 +35,7 @@ export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClos
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl w-full max-w-2xl p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">{t('create_custom_box')}</h2>

@@ -256,7 +256,7 @@ const handleSave = async (e: React.FormEvent) => {
       )}
       {/* 🛡️ SADE ARTISAN ONAY MODALI */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 animate-fade-in">
           <div className="absolute inset-0 bg-brown-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}></div>
           <div className="relative bg-white dark:bg-dark-900 w-full max-w-md p-10 shadow-2xl border border-gray-100 dark:border-gray-800 rounded-[40px] animate-scale-in">
             <div className="flex flex-col items-center text-center space-y-6">

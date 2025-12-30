@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Clock,
   AlertTriangle,
@@ -69,7 +70,7 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -128,8 +129,8 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
                 <div className="space-y-3 mb-4">
                   {(order.items || []).map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center text-xl shadow-sm">
-                        {item.image}
+                      <div className="w-10 h-10 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
+                        {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : '🍫'}
                       </div>
                       <div className="flex-1">
                         <p className="text-xs font-medium text-brown-900 dark:text-white">{item.name}</p>
@@ -338,7 +339,7 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
   const isConfirmValid = confirmChecked && cancelReason;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -566,7 +567,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
   const isPartialRefund = refundAmount < (order.payment?.total || 0);
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -770,7 +771,7 @@ const EditOrderModal = ({ order, onClose, onSave }: { order: Order; onClose: () 
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -948,7 +949,7 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
   const activeColor = colors.find(c => c.name === selectedColor) || colors[0];
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -1176,7 +1177,7 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -1324,7 +1325,7 @@ const TrackingNumberModal = ({ order, onClose, onSave }: { order: Order; onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -1554,7 +1555,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
   };
 
   return (
-    <div id="print-order-modal" className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
+    <div id="print-order-modal" className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm print:hidden" onClick={onClose}></div>
 
@@ -1628,7 +1629,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
               <tbody>
                 {(order.items || []).map((item) => (
                   <tr key={item.id}>
-                    <td>{item.image} {item.name}</td>
+                    <td><span className="inline-flex items-center gap-2">{item.image ? <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" /> : '🍫'} {item.name}</span></td>
                     <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                     <td style={{ textAlign: 'right' }}>₺{item.price.toLocaleString('tr-TR')}</td>
                     <td style={{ textAlign: 'right' }}><strong>₺{(item.price * item.quantity).toLocaleString('tr-TR')}</strong></td>
@@ -1782,7 +1783,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                   <tr key={item.id} className="border-b border-gray-100">
                     <td className="py-3 text-sm text-brown-900">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{item.image}</span>
+                        {item.image ? <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" /> : <span className="text-lg">🍫</span>}
                         <span>{item.name}</span>
                       </div>
                     </td>
@@ -1890,7 +1891,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
   );
 };
 
-// --- ORDER DETAIL MODAL ---
+// --- ORDER DETAIL MODAL (Portal ile body'ye render edilir) ---
 const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => void }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -2022,8 +2023,8 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
 
@@ -2057,8 +2058,8 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
             <div className="space-y-3">
               {(order.items || []).map((item) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl">
-                  <div className="w-12 h-12 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center text-2xl">
-                    {item.image}
+                  <div className="w-12 h-12 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center overflow-hidden">
+                    {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <span className="text-2xl">🍫</span>}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-brown-900 dark:text-white">{item.name}</p>
@@ -2504,7 +2505,8 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
-    </div>
+    </div>,
+    document.body
   );
 };
 

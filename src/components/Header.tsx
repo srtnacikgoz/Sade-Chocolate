@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-dark-900/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 transition-all duration-300">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 border-b border-gray-100 dark:border-gray-800 transition-all duration-300">
       <div className="w-full px-8 lg:px-12 h-16 lg:h-20 flex items-center justify-between">
 
         {/* Mobile Menu Button */}

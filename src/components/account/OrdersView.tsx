@@ -110,7 +110,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
 
       {/* 🛡️ SADE ARTISAN SİPARİŞ DETAY MODALI */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10 animate-fade-in">
           <div className="absolute inset-0 bg-brown-900/60 backdrop-blur-md" onClick={() => setSelectedOrder(null)}></div>
           <div className="relative bg-white dark:bg-dark-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[40px] shadow-2xl animate-scale-in">
             

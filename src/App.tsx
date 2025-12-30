@@ -48,10 +48,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {!isSplash && (
         <div className="relative">
           <TopBar />
-          {/* transform: translateY kullanımı, içindeki Header 'fixed' olsa bile onu aşağı iter */}
-          <div 
-            className="fixed left-0 right-0 z-[120] transition-all duration-500" 
-            style={{ 
+          <div
+            className="fixed left-0 right-0 z-[120] transition-all duration-500"
+            style={{
               transform: 'translateY(var(--top-bar-height, 0px))',
               pointerEvents: 'auto'
             }}
