@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth, db } from '../lib/firebase';
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  setPersistence, 
-  browserLocalPersistence, 
-  browserSessionPersistence 
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { createOrderWithLoyalty } from '../services/orderService';
+import type { Order as LoyaltyOrder } from '../types/order';
 
 export interface UserAddress {
   id: number;
@@ -140,40 +142,75 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const addOrder = async (order: Omit<Order, 'id' | 'date'>) => {
-    if (!user?.uid || !user.firstName || !user.lastName) {
+    if (!user?.uid || !user.firstName || !user.lastName || !user.email) {
         console.error("Sipariş oluşturmak için kullanıcı bilgileri eksik.");
         return;
     }
 
-    const newOrderRef = doc(collection(db, "orders"));
-    const userRef = doc(db, 'users', user.uid);
-
-    const newOrder: Order = {
-        ...order,
-        id: newOrderRef.id,
-        date: new Date().toISOString(),
-        userId: user.uid,
-        customerName: `${user.firstName} ${user.lastName}`,
-        createdAt: serverTimestamp()
-    };
-
     try {
-        await runTransaction(db, async (transaction) => {
-            transaction.set(newOrderRef, newOrder);
+        // Convert checkout order to full Order format for loyalty system
+        const customerAddress = user.addresses?.find((a: any) => a.isDefault) || user.addresses?.[0];
 
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) {
-                throw "Kullanıcı bulunamadı!";
-            }
-            const existingOrders = userDoc.data().orders || [];
-            const updatedOrders = [newOrder, ...existingOrders];
-            transaction.update(userRef, { orders: updatedOrders });
-        });
-        
+        const fullOrderData: Omit<LoyaltyOrder, 'id'> = {
+            customer: {
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+                phone: user.phone || '',
+                address: customerAddress?.address || ''
+            },
+            items: order.items.map((item: any) => ({
+                productId: item.id || item.productId || '',
+                name: item.name || item.title || '',
+                quantity: item.quantity || 1,
+                price: item.price || 0,
+                image: item.image || ''
+            })),
+            payment: {
+                method: order.status === 'pending' ? 'eft' : 'card',
+                subtotal: order.total,
+                shipping: 0,
+                tax: 0,
+                total: order.total,
+                status: order.status === 'pending' ? 'pending' : 'paid'
+            },
+            shipping: {
+                address: customerAddress?.address || '',
+                city: customerAddress?.city || '',
+                method: 'standard',
+                estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+            },
+            status: order.status === 'pending' ? 'pending' : 'processing',
+            createdAt: new Date().toLocaleString('tr-TR'),
+            tags: [],
+            timeline: [
+                {
+                    status: order.status === 'pending' ? 'pending' : 'processing',
+                    time: new Date().toLocaleString('tr-TR'),
+                    note: order.status === 'pending' ? 'Ödeme bekleniyor' : 'Sipariş alındı'
+                }
+            ]
+        };
+
+        // Create order with loyalty integration
+        console.log('🎁 Creating order with loyalty for:', user.email);
+        const orderId = await createOrderWithLoyalty(fullOrderData, user.email);
+
+        console.log('✅ Order created with loyalty:', orderId);
+
+        // Add to local state for UI
+        const newOrder: Order = {
+            ...order,
+            id: orderId,
+            date: new Date().toISOString(),
+            userId: user.uid,
+            customerName: `${user.firstName} ${user.lastName}`
+        };
+
         setOrders(prevOrders => [newOrder, ...prevOrders]);
 
     } catch (error) {
-        console.error("Sipariş oluşturma hatası: ", error);
+        console.error("❌ Sipariş oluşturma hatası:", error);
+        throw error;
     }
 };
 

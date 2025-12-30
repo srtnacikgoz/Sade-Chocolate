@@ -200,7 +200,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
       const updatedOrder: Partial<Order> = {
         status: newStatus,
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: `Durum güncellendi: ${newStatus}`,
             time: new Date().toLocaleString('tr-TR', {
@@ -245,7 +245,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         },
         status: 'Shipped',
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: `Takip numarası eklendi: ${trackingNumber}`,
             time: new Date().toLocaleString('tr-TR'),
@@ -280,7 +280,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
           }
         ],
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: `Etiket eklendi: ${label}`,
             time: new Date().toLocaleString('tr-TR')
@@ -310,7 +310,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
       const updatedOrder: Partial<Order> = {
         tags: newTags.length > 0 ? newTags : undefined,
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: `Etiket kaldırıldı: ${removedTag.label}`,
             time: new Date().toLocaleString('tr-TR')
@@ -339,43 +339,38 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
       let updatedOrderData: Partial<Order> = {};
 
-      // Track phone changes
-      if (updates.customer?.phone && updates.customer.phone !== order.customer.phone) {
-        newEdits.push({
-          field: 'customer.phone',
-          oldValue: order.customer.phone,
-          newValue: updates.customer.phone,
-          editedAt: new Date().toLocaleString('tr-TR')
-        });
-        updatedOrderData.customer = { ...order.customer, phone: updates.customer.phone };
+      // Track and update customer if provided
+      if (updates.customer) {
+        if (updates.customer.phone !== order.customer.phone) {
+          newEdits.push({
+            field: 'customer.phone',
+            oldValue: order.customer.phone,
+            newValue: updates.customer.phone,
+            editedAt: new Date().toLocaleString('tr-TR')
+          });
+        }
+        updatedOrderData.customer = updates.customer;
       }
 
-      // Track address changes
-      if (updates.shipping?.address && updates.shipping.address !== order.shipping.address) {
-        newEdits.push({
-          field: 'shipping.address',
-          oldValue: order.shipping.address,
-          newValue: updates.shipping.address,
-          editedAt: new Date().toLocaleString('tr-TR')
-        });
-        updatedOrderData.shipping = {
-          ...order.shipping,
-          address: updates.shipping.address
-        };
-      }
-
-      // Track city changes
-      if (updates.shipping?.city && updates.shipping.city !== order.shipping.city) {
-        newEdits.push({
-          field: 'shipping.city',
-          oldValue: order.shipping.city,
-          newValue: updates.shipping.city,
-          editedAt: new Date().toLocaleString('tr-TR')
-        });
-        updatedOrderData.shipping = {
-          ...(updatedOrderData.shipping || order.shipping),
-          city: updates.shipping.city
-        };
+      // Track and update shipping if provided
+      if (updates.shipping) {
+        if (updates.shipping.address !== order.shipping.address) {
+          newEdits.push({
+            field: 'shipping.address',
+            oldValue: order.shipping.address,
+            newValue: updates.shipping.address,
+            editedAt: new Date().toLocaleString('tr-TR')
+          });
+        }
+        if (updates.shipping.city !== order.shipping.city) {
+          newEdits.push({
+            field: 'shipping.city',
+            oldValue: order.shipping.city,
+            newValue: updates.shipping.city,
+            editedAt: new Date().toLocaleString('tr-TR')
+          });
+        }
+        updatedOrderData.shipping = updates.shipping;
       }
 
       // Track gift note changes
@@ -386,20 +381,51 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
           newValue: updates.giftNote,
           editedAt: new Date().toLocaleString('tr-TR')
         });
-        updatedOrderData.giftNote = updates.giftNote;
+        updatedOrderData.giftNote = updates.giftNote || null;
       }
 
-      updatedOrderData.editHistory = [...editHistory, ...newEdits];
-      updatedOrderData.timeline = [
-        ...order.timeline,
-        {
-          action: 'Sipariş bilgileri güncellendi',
-          time: new Date().toLocaleString('tr-TR'),
-          note: `${newEdits.length} alan değiştirildi`
-        }
-      ];
+      // Track special notes changes
+      if (updates.specialNotes !== undefined && updates.specialNotes !== order.specialNotes) {
+        newEdits.push({
+          field: 'specialNotes',
+          oldValue: order.specialNotes,
+          newValue: updates.specialNotes,
+          editedAt: new Date().toLocaleString('tr-TR')
+        });
+        updatedOrderData.specialNotes = updates.specialNotes || null;
+      }
 
-      await updateOrder(orderId, updatedOrderData);
+      // Only update history and timeline if there are actual changes
+      if (newEdits.length > 0) {
+        updatedOrderData.editHistory = [...editHistory, ...newEdits];
+        updatedOrderData.timeline = [
+          ...(order.timeline || []),
+          {
+            action: 'Sipariş bilgileri güncellendi',
+            time: new Date().toLocaleString('tr-TR'),
+            note: `${newEdits.length} alan değiştirildi`
+          }
+        ];
+      }
+
+      // Deep clean undefined values from nested objects
+      const cleanNestedObject = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(cleanNestedObject);
+
+        const cleaned: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (value !== undefined) {
+            cleaned[key] = cleanNestedObject(value);
+          }
+        }
+        return cleaned;
+      };
+
+      const cleanedUpdates = cleanNestedObject(updatedOrderData);
+
+      await updateOrder(orderId, cleanedUpdates);
     } catch (error: any) {
       console.error('❌ Error editing order:', error);
       set({ error: error.message });
@@ -427,7 +453,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ],
         status: refundData.percentage === 100 ? 'Refunded' : order.status,
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: `İade başlatıldı: ₺${refundData.amount.toLocaleString('tr-TR')}`,
             time: new Date().toLocaleString('tr-TR'),
@@ -459,7 +485,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         },
         status: 'Cancelled',
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: 'Sipariş iptal edildi',
             time: new Date().toLocaleString('tr-TR'),
@@ -486,11 +512,11 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
     try {
       const updatedOrder: Partial<Order> = {
         timeline: [
-          ...order.timeline,
+          ...(order.timeline || []),
           {
             action: 'Sipariş onay e-postası gönderildi',
             time: new Date().toLocaleString('tr-TR'),
-            note: order.customer.email
+            note: order.customer?.email || 'Email yok'
           }
         ]
       };

@@ -99,4 +99,11 @@ export interface Order {
   refunds?: RefundRecord[];
   cancellation?: CancellationRecord;
   editHistory?: EditRecord[];
+  specialNotes?: string;
+
+  // Loyalty System Fields
+  customerId?: string;           // Reference to customers collection
+  loyaltyPointsEarned?: number;  // Points earned from this order
+  loyaltyPointsRedeemed?: number; // Points used in this order
+  customerTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum'; // Customer tier at order time
 }

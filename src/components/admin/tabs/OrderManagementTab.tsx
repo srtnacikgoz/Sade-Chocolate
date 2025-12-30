@@ -29,6 +29,10 @@ import type { Order } from '../../../types/order';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { ToastContainer } from '../../ui/Toast';
 import { useToast } from '../../../hooks/useToast';
+import { cleanupInvalidOrders } from '../../../services/cleanupOrders';
+import { seedMockOrders } from '../../../services/seedOrders';
+import { TierBadge } from '../../ui/TierBadge';
+import type { LoyaltyTier } from '../../../types/loyalty';
 
 // --- STATUS BADGE ---
 const StatusBadge = ({ status }: { status: Order['status'] }) => {
@@ -122,7 +126,7 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
                 </div>
 
                 <div className="space-y-3 mb-4">
-                  {order.items.map((item) => (
+                  {(order.items || []).map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center text-xl shadow-sm">
                         {item.image}
@@ -158,9 +162,9 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
                   <Truck size={20} className="text-brand-blue shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-xs font-bold text-brown-900 dark:text-white mb-1">Teslimat Bilgileri</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{order.shipping.address}, {order.shipping.city}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{order.shipping?.address || 'Adres yok'}, {order.shipping?.city || 'Şehir yok'}</p>
                     <p className="text-xs text-brand-blue font-medium">
-                      Tahmini Teslimat: {order.shipping.estimatedDate}
+                      Tahmini Teslimat: {order.shipping?.estimatedDate || 'Belirtilmemiş'}
                     </p>
                   </div>
                 </div>
@@ -197,6 +201,19 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
                     <div className="flex-1">
                       <p className="text-xs font-bold text-brand-orange mb-1">Hediye Notu</p>
                       <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{order.giftNote}"</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Special Notes */}
+              {order.specialNotes && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-3">
+                    <FileText size={20} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">Özel Not / Talimat</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-300">{order.specialNotes}</p>
                     </div>
                   </div>
                 </div>
@@ -288,7 +305,8 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
   const [notifyCustomer, setNotifyCustomer] = useState(true);
   const [refundPayment, setRefundPayment] = useState(true);
   const [notes, setNotes] = useState('');
-  const [confirmText, setConfirmText] = useState('');
+  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [showError, setShowError] = useState(false);
 
   const cancelReasons = [
     'Stok Yetersizliği',
@@ -302,11 +320,7 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
 
   const handleCancel = () => {
     if (!cancelReason) {
-      alert('⚠️ Lütfen iptal nedeni seçin');
-      return;
-    }
-    if (confirmText !== 'İPTAL ET') {
-      alert('⚠️ Onaylamak için "İPTAL ET" yazın');
+      setShowError(true);
       return;
     }
 
@@ -321,7 +335,7 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
     onClose();
   };
 
-  const isConfirmValid = confirmText === 'İPTAL ET';
+  const isConfirmValid = confirmChecked && cancelReason;
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
@@ -390,14 +404,27 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
             </label>
             <select
               value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              onChange={(e) => {
+                setCancelReason(e.target.value);
+                setShowError(false);
+              }}
+              className={`w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                showError && !cancelReason
+                  ? 'border-red-500 dark:border-red-500'
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}
             >
               <option value="">Neden seçin...</option>
               {cancelReasons.map((reason) => (
                 <option key={reason} value={reason}>{reason}</option>
               ))}
             </select>
+            {showError && !cancelReason && (
+              <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <AlertTriangle size={12} />
+                Lütfen iptal nedeni seçin
+              </p>
+            )}
           </div>
 
           {/* Options */}
@@ -424,7 +451,7 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
               />
               <div className="flex-1">
                 <p className="text-sm font-medium text-brown-900 dark:text-white">Otomatik İade Başlat</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">₺{order.payment.total.toLocaleString('tr-TR')} iade edilecek</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">₺{(order.payment?.total || 0).toLocaleString('tr-TR')} iade edilecek</p>
               </div>
             </label>
           </div>
@@ -443,25 +470,24 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
             />
           </div>
 
-          {/* Confirmation Input */}
+          {/* Confirmation Checkbox */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-3">
-              Onay İçin "İPTAL ET" Yazın *
+            <label className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border-2 border-red-500 dark:border-red-700 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+              <input
+                type="checkbox"
+                checked={confirmChecked}
+                onChange={(e) => setConfirmChecked(e.target.checked)}
+                className="w-5 h-5 mt-0.5 rounded border-red-300 text-red-600 focus:ring-red-500 cursor-pointer"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-red-900 dark:text-red-400">
+                  Evet, bu siparişi iptal etmek istiyorum
+                </p>
+                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                  Bu işlemin geri alınamayacağını anlıyorum
+                </p>
+              </div>
             </label>
-            <input
-              type="text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
-              placeholder="İPTAL ET"
-              className={`w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border-2 rounded-2xl text-sm font-bold text-center uppercase focus:outline-none focus:ring-2 ${
-                isConfirmValid
-                  ? 'border-red-500 text-red-600 focus:ring-red-500'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-400 focus:ring-gray-300'
-              }`}
-            />
-            {!isConfirmValid && confirmText && (
-              <p className="mt-2 text-xs text-red-600">⚠️ Tam olarak "İPTAL ET" yazmalısınız</p>
-            )}
           </div>
         </div>
 
@@ -514,11 +540,13 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
   ];
 
   const handleSave = () => {
+    const orderTotal = order.payment?.total || 0;
+
     if (!refundReason) {
       alert('⚠️ Lütfen iade nedeni seçin');
       return;
     }
-    if (refundAmount <= 0 || refundAmount > order.payment.total) {
+    if (refundAmount <= 0 || refundAmount > orderTotal) {
       alert('⚠️ Geçersiz iade tutarı');
       return;
     }
@@ -528,14 +556,14 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
       amount: refundAmount,
       method: refundMethod,
       notes,
-      percentage: ((refundAmount / order.payment.total) * 100).toFixed(0)
+      percentage: orderTotal > 0 ? ((refundAmount / orderTotal) * 100).toFixed(0) : '0'
     };
 
     onSave(refundData);
     onClose();
   };
 
-  const isPartialRefund = refundAmount < order.payment.total;
+  const isPartialRefund = refundAmount < (order.payment?.total || 0);
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-fade-in">
@@ -552,7 +580,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
               <X size={20} className="text-gray-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id} • Toplam: ₺{order.payment.total.toLocaleString('tr-TR')}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id} • Toplam: ₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</p>
         </div>
 
         {/* Content */}
@@ -585,7 +613,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
                 value={refundAmount}
                 onChange={(e) => setRefundAmount(Number(e.target.value))}
                 min="0"
-                max={order.payment.total}
+                max={order.payment?.total || 0}
                 step="0.01"
                 className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard"
               />
@@ -593,13 +621,13 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
             </div>
             <div className="mt-3 flex gap-2">
               <button
-                onClick={() => setRefundAmount(order.payment.total / 2)}
+                onClick={() => setRefundAmount((order.payment?.total || 0) / 2)}
                 className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
               >
                 50%
               </button>
               <button
-                onClick={() => setRefundAmount(order.payment.total)}
+                onClick={() => setRefundAmount(order.payment?.total || 0)}
                 className="px-3 py-1.5 text-xs bg-brand-mustard/20 text-brand-mustard rounded-lg hover:bg-brand-mustard/30 transition-colors"
               >
                 Tam İade
@@ -607,7 +635,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
             </div>
             {isPartialRefund && (
               <p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
-                ⚠️ Kısmi iade: %{((refundAmount / order.payment.total) * 100).toFixed(0)}
+                ⚠️ Kısmi iade: %{(order.payment?.total || 0) > 0 ? ((refundAmount / (order.payment?.total || 1)) * 100).toFixed(0) : '0'}
               </p>
             )}
           </div>
@@ -669,7 +697,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
                   {isPartialRefund && (
                     <div className="pt-2 border-t border-orange-200 dark:border-orange-700 flex justify-between">
                       <span>Kalan Bakiye:</span>
-                      <span className="font-bold text-green-600">₺{(order.payment.total - refundAmount).toLocaleString('tr-TR')}</span>
+                      <span className="font-bold text-green-600">₺{((order.payment?.total || 0) - refundAmount).toLocaleString('tr-TR')}</span>
                     </div>
                   )}
                 </div>
@@ -705,22 +733,38 @@ const EditOrderModal = ({ order, onClose, onSave }: { order: Order; onClose: () 
   const [shippingCity, setShippingCity] = useState(order.shipping?.city || '');
   const [customerPhone, setCustomerPhone] = useState(order.customer?.phone || '');
   const [giftNote, setGiftNote] = useState(order.giftNote || '');
-  const [specialNotes, setSpecialNotes] = useState('');
+  const [specialNotes, setSpecialNotes] = useState(order.specialNotes || '');
 
   const handleSave = () => {
-    const updates = {
-      shipping: {
-        ...order.shipping,
-        address: shippingAddress,
-        city: shippingCity,
-      },
-      customer: {
-        ...order.customer,
-        phone: customerPhone,
-      },
-      giftNote: giftNote || null,
-      specialNotes,
-    };
+    const updates: any = {};
+
+    // Build shipping object with only defined values
+    if (shippingAddress || shippingCity) {
+      const shippingUpdate: any = {};
+      if (order.shipping?.method) shippingUpdate.method = order.shipping.method;
+      if (shippingAddress) shippingUpdate.address = shippingAddress;
+      if (shippingCity) shippingUpdate.city = shippingCity;
+      if (order.shipping?.estimatedDate) shippingUpdate.estimatedDate = order.shipping.estimatedDate;
+      updates.shipping = shippingUpdate;
+    }
+
+    // Build customer object with only defined values
+    if (customerPhone) {
+      const customerUpdate: any = {};
+      if (order.customer?.name) customerUpdate.name = order.customer.name;
+      if (order.customer?.email) customerUpdate.email = order.customer.email;
+      if (customerPhone) customerUpdate.phone = customerPhone;
+      updates.customer = customerUpdate;
+    }
+
+    if (giftNote !== undefined) {
+      updates.giftNote = giftNote || null;
+    }
+
+    if (specialNotes !== undefined) {
+      updates.specialNotes = specialNotes || null;
+    }
+
     onSave(updates);
     onClose();
   };
@@ -1539,7 +1583,9 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '11px', color: '#999', marginBottom: '4px' }}>Sipariş Belgesi</p>
                 <p style={{ fontSize: '24px', fontWeight: 'bold' }}>#{order.id}</p>
-                <p style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>{order.createdAt}</p>
+                <p style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                  {order.createdAt || new Date().toLocaleString('tr-TR')}
+                </p>
               </div>
             </div>
           </div>
@@ -1560,10 +1606,10 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             </div>
             <div>
               <div className="section-title">Teslimat Adresi</div>
-              <div className="info-line"><strong>{order.shipping.method}</strong></div>
-              <div className="info-line">{order.shipping.address}</div>
-              <div className="info-line">{order.shipping.city}</div>
-              <div className="info-line" style={{ marginTop: '8px', color: '#d4a945' }}>Tahmini: {order.shipping.estimatedDate}</div>
+              <div className="info-line"><strong>{order.shipping?.method || 'Belirtilmemiş'}</strong></div>
+              <div className="info-line">{order.shipping?.address || 'Adres yok'}</div>
+              <div className="info-line">{order.shipping?.city || 'Şehir yok'}</div>
+              <div className="info-line" style={{ marginTop: '8px', color: '#d4a945' }}>Tahmini: {order.shipping?.estimatedDate || 'Belirtilmemiş'}</div>
             </div>
           </div>
 
@@ -1580,7 +1626,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 </tr>
               </thead>
               <tbody>
-                {order.items.map((item) => (
+                {(order.items || []).map((item) => (
                   <tr key={item.id}>
                     <td>{item.image} {item.name}</td>
                     <td style={{ textAlign: 'center' }}>{item.quantity}</td>
@@ -1596,15 +1642,15 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
           <div className="total-box">
             <div className="total-line">
               <span>Ara Toplam:</span>
-              <span>₺{order.payment.subtotal.toLocaleString('tr-TR')}</span>
+              <span>₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
             </div>
             <div className="total-line">
               <span>Kargo:</span>
-              <span>₺{order.payment.shipping.toLocaleString('tr-TR')}</span>
+              <span>₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
             </div>
             <div className="total-line grand">
               <span>Genel Toplam:</span>
-              <span style={{ color: '#d4a945' }}>₺{order.payment.total.toLocaleString('tr-TR')}</span>
+              <span style={{ color: '#d4a945' }}>₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
             </div>
           </div>
 
@@ -1629,7 +1675,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             </div>
             {order.logistics?.weatherAlert && (
               <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e5e5', color: '#ea580c' }}>
-                🌡️ {order.logistics.weatherAlert}
+                🌡️ {order.logistics?.weatherAlert}
               </div>
             )}
           </div>
@@ -1639,6 +1685,14 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             <div style={{ background: '#fef3f0', padding: '16px', border: '1px solid #f3d1c8', marginTop: '20px' }}>
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#e59a77', marginBottom: '8px' }}>🎁 HEDİYE NOTU</div>
               <div style={{ fontStyle: 'italic' }}>"{order.giftNote}"</div>
+            </div>
+          )}
+
+          {/* Special Notes */}
+          {order.specialNotes && (
+            <div style={{ background: '#eff6ff', padding: '16px', border: '1px solid #bfdbfe', marginTop: '20px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#2563eb', marginBottom: '8px' }}>📝 ÖZEL NOT / TALİMAT</div>
+              <div>{order.specialNotes}</div>
             </div>
           )}
 
@@ -1661,7 +1715,9 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
               <div className="text-right">
                 <p className="text-xs text-gray-500 mb-1">Sipariş Belgesi</p>
                 <p className="text-2xl font-bold text-brown-900">#{order.id}</p>
-                <p className="text-xs text-gray-500 mt-1">{order.createdAt}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {order.createdAt || new Date().toLocaleString('tr-TR')}
+                </p>
               </div>
             </div>
           </div>
@@ -1704,7 +1760,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 <p className="font-medium text-brown-900">{order.shipping?.method || 'Standart Teslimat'}</p>
                 <p className="text-gray-600">{order.shipping?.address || 'Adres Yok'}</p>
                 <p className="text-gray-600">{order.shipping?.city || ''}</p>
-                <p className="text-brand-mustard font-medium mt-2">Tahmini: {order.shipping.estimatedDate}</p>
+                <p className="text-brand-mustard font-medium mt-2">Tahmini: {order.shipping?.estimatedDate || 'Belirtilmemiş'}</p>
               </div>
             </div>
           </div>
@@ -1722,7 +1778,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 </tr>
               </thead>
               <tbody>
-                {order.items.map((item) => (
+                {(order.items || []).map((item) => (
                   <tr key={item.id} className="border-b border-gray-100">
                     <td className="py-3 text-sm text-brown-900">
                       <div className="flex items-center gap-2">
@@ -1744,15 +1800,15 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             <div className="w-80 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Ara Toplam:</span>
-                <span className="text-brown-900">₺{order.payment.subtotal.toLocaleString('tr-TR')}</span>
+                <span className="text-brown-900">₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Kargo:</span>
-                <span className="text-brown-900">₺{order.payment.shipping.toLocaleString('tr-TR')}</span>
+                <span className="text-brown-900">₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
               </div>
               <div className="flex justify-between text-base font-bold pt-2 border-t-2 border-gray-200">
                 <span className="text-brown-900">Genel Toplam:</span>
-                <span className="text-brand-mustard">₺{order.payment.total.toLocaleString('tr-TR')}</span>
+                <span className="text-brand-mustard">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
               </div>
             </div>
           </div>
@@ -1778,7 +1834,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
               <div className="mt-3 pt-3 border-t border-gray-200">
                 <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
                   <Thermometer size={14} />
-                  {order.logistics.weatherAlert}
+                  {order.logistics?.weatherAlert}
                 </p>
               </div>
             )}
@@ -1792,6 +1848,17 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 Hediye Notu
               </h4>
               <p className="text-sm text-gray-700 italic">"{order.giftNote}"</p>
+            </div>
+          )}
+
+          {/* Special Notes */}
+          {order.specialNotes && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2 flex items-center gap-2">
+                <FileText size={14} />
+                Özel Not / Talimat
+              </h4>
+              <p className="text-sm text-gray-700">{order.specialNotes}</p>
             </div>
           )}
 
@@ -1904,7 +1971,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const handleEmailSent = async () => {
     try {
       await sendEmail(order.id);
-      success(`Sipariş onay e-postası ${order.customer.email} adresine gönderildi`);
+      success(`Sipariş onay e-postası ${order.customer?.email || 'müşteri'} adresine gönderildi`);
     } catch (err: any) {
       error(`E-posta gönderilemedi: ${err.message}`);
     }
@@ -2152,6 +2219,11 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-brown-900 dark:text-white truncate">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                  {order.customerTier && (
+                    <div className="mt-1">
+                      <TierBadge tier={order.customerTier as LoyaltyTier} size="sm" />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
@@ -2283,6 +2355,30 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
             </div>
           )}
 
+          {/* Special Notes */}
+          {order.specialNotes && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText size={14} className="text-blue-600 dark:text-blue-400" />
+                <h4 className="text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-bold">Özel Not / Talimat</h4>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{order.specialNotes}</p>
+            </div>
+          )}
+
+          {/* Loyalty Points Earned */}
+          {order.loyaltyPointsEarned && order.loyaltyPointsEarned > 0 && (
+            <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⭐</span>
+                <div className="flex-1">
+                  <h4 className="text-[10px] uppercase tracking-widest text-green-600 dark:text-green-400 font-bold mb-1">Kazanılan Sadakat Puanı</h4>
+                  <p className="text-lg font-bold text-green-700 dark:text-green-300">{order.loyaltyPointsEarned} Puan</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Alerts */}
           {order.tempAlert && (
             <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-200 dark:border-orange-800">
@@ -2315,7 +2411,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
                   <p className="text-brand-orange font-medium flex items-center gap-1">
                     <Thermometer size={12} />
-                    {order.logistics.weatherAlert}
+                    {order.logistics?.weatherAlert}
                   </p>
                 </div>
               )}
@@ -2527,6 +2623,11 @@ export const OrderManagementTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'logistics'>('orders');
   const [filter, setFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [isSeedingOrders, setIsSeedingOrders] = useState(false);
+
+  // Toast system
+  const { toasts, removeToast, success, error: toastError, info } = useToast();
 
   // Get data from Zustand store
   const orders = useOrderStore((state) => state.orders);
@@ -2541,6 +2642,47 @@ export const OrderManagementTab: React.FC = () => {
       initialize();
     }
   }, [initialize, isInitialized]);
+
+  // 🧹 Cleanup invalid orders
+  const handleCleanup = async () => {
+    if (!window.confirm('⚠️ Geçersiz siparişler silinecek. Devam etmek istiyor musunuz?')) {
+      return;
+    }
+
+    setIsCleaningUp(true);
+    info('Boş siparişler taranıyor...');
+
+    try {
+      const result = await cleanupInvalidOrders();
+      success(`✅ Temizlik tamamlandı! ${result.deleted} geçersiz sipariş silindi.`);
+
+      // Firestore listener otomatik güncellenir
+      if (result.deleted > 0) {
+        setTimeout(() => {
+          info(`${result.total - result.deleted} geçerli sipariş kaldı.`);
+        }, 2000);
+      }
+    } catch (err: any) {
+      toastError(`❌ Temizlik başarısız: ${err.message}`);
+    } finally {
+      setIsCleaningUp(false);
+    }
+  };
+
+  // 🌱 Seed mock orders for testing
+  const handleSeedOrders = async () => {
+    setIsSeedingOrders(true);
+    info('Mock siparişler ekleniyor...');
+
+    try {
+      const added = await seedMockOrders();
+      success(`✅ ${added} örnek sipariş eklendi!`);
+    } catch (err: any) {
+      toastError(`❌ Sipariş eklenemedi: ${err.message}`);
+    } finally {
+      setIsSeedingOrders(false);
+    }
+  };
 
   const stats = {
     total: orders.length,
@@ -2658,15 +2800,38 @@ export const OrderManagementTab: React.FC = () => {
             </button>
           ))}
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-          <input
-            type="text"
-            placeholder="Sipariş Ara..."
-            className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-mustard outline-none text-xs uppercase tracking-widest dark:text-white"
-          />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSeedOrders}
+            disabled={isSeedingOrders}
+            className="px-4 py-2 bg-brand-mustard hover:bg-brand-mustard/80 disabled:bg-brand-mustard/50 text-brown-900 text-[10px] uppercase tracking-widest font-bold rounded-2xl transition-colors flex items-center gap-2"
+            title="Test için örnek siparişler ekle"
+          >
+            <Package size={14} />
+            {isSeedingOrders ? 'Ekleniyor...' : '3 Örnek Sipariş Ekle'}
+          </button>
+          <button
+            onClick={handleCleanup}
+            disabled={isCleaningUp}
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-[10px] uppercase tracking-widest font-bold rounded-2xl transition-colors flex items-center gap-2"
+            title="Geçersiz siparişleri temizle"
+          >
+            <XCircle size={14} />
+            {isCleaningUp ? 'Temizleniyor...' : 'Boş Siparişleri Temizle'}
+          </button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Sipariş Ara..."
+              className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-mustard outline-none text-xs uppercase tracking-widest dark:text-white"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       {/* Orders Table/List */}
       <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -2694,8 +2859,15 @@ export const OrderManagementTab: React.FC = () => {
                     <span className="text-sm font-display text-brown-900 dark:text-white italic">{order.id}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-brown-900 dark:text-white font-medium">{order.customer?.name || 'İsimsiz Müşteri'}</p>
-                    <p className="text-xs text-gray-400">{order.customer?.email || 'Email yok'}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <p className="text-sm text-brown-900 dark:text-white font-medium">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                        <p className="text-xs text-gray-400">{order.customer?.email || 'Email yok'}</p>
+                      </div>
+                      {order.customerTier && (
+                        <TierBadge tier={order.customerTier} size="sm" showLabel={false} />
+                      )}
+                    </div>
                     {/* Tags */}
                     {order.tags && order.tags.length > 0 && (
                       <div className="flex items-center gap-1.5 mt-2 flex-wrap">

@@ -17,6 +17,7 @@ import { ScenariosTab } from '../components/admin/tabs/ScenariosTab';
 import { ConversationAnalyticsTab } from '../components/admin/tabs/ConversationAnalyticsTab';
 import { BehaviorTrackingTab } from '../components/admin/tabs/BehaviorTrackingTab';
 import { OrderManagementTab } from '../components/admin/tabs/OrderManagementTab';
+import { LoyaltySettingsPanel } from '../components/admin/LoyaltySettingsPanel';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings'>('inventory');
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
@@ -414,6 +415,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
               <button onClick={() => setActiveTab('journey')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'journey' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİ YOLCULUK TAKİBİ</button>
               <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
               <button onClick={() => setActiveTab('badges')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'badges' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ROZETLER</button>
+              <button onClick={() => setActiveTab('loyalty-settings')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'loyalty-settings' ? 'bg-brand-orange text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SADAKAT SİSTEMİ</button>
             </div>
           </div>
         </div>
@@ -1628,6 +1630,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <ConversationAnalyticsTab />
       ) : activeTab === 'journey' ? (
         <BehaviorTrackingTab />
+      ) : activeTab === 'loyalty-settings' ? (
+        <LoyaltySettingsPanel />
       ) : null}
 
       {/* Ürün Ekleme/Düzenleme Modalı */}

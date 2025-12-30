@@ -27,6 +27,7 @@ import { Register } from './pages/Register';
 import { SearchDrawer } from './components/SearchDrawer';
 import { NewsletterPopup } from './components/NewsletterPopup';
 import { AIAssistant } from './components/AIAssistant';
+import { useLoyaltyStore } from './stores/loyaltyStore';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -79,6 +80,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
+  const initializeLoyalty = useLoyaltyStore((state) => state.initialize);
+
   useEffect(() => {
     // Tema Başlatma
     const storedTheme = localStorage.getItem('theme');
@@ -87,7 +90,12 @@ const App: React.FC = () => {
     } else {
         document.documentElement.classList.remove('dark');
     }
-  }, []);
+
+    // Loyalty Sistemi Başlatma
+    initializeLoyalty().catch((err) => {
+      console.error('Loyalty system initialization failed:', err);
+    });
+  }, [initializeLoyalty]);
 
   return (
     <LanguageProvider>

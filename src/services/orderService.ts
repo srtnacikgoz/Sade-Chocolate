@@ -15,6 +15,13 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Order } from '../types/order';
+import {
+  getOrCreateCustomer,
+  addPointsForPurchase,
+  checkTierUpgrade,
+  applyReferralBonus,
+  getLoyaltyConfig
+} from './loyaltyService';
 
 // Firestore collection reference
 const ordersCollection = collection(db, 'orders');
@@ -106,24 +113,33 @@ export const subscribeToOrders = (
 export const createOrder = async (orderData: Omit<Order, 'id'>): Promise<string> => {
   try {
     // String tarihleri Timestamp'e çevir
-    const firestoreData = {
+    const firestoreData: any = {
       ...orderData,
       createdAt: serverTimestamp(),
-      tracking: orderData.tracking ? {
-        ...orderData.tracking,
-        addedAt: Timestamp.now()
-      } : undefined,
       tags: orderData.tags?.map(tag => ({
         ...tag,
         addedAt: Timestamp.now()
-      })),
+      })) || [],
       timeline: orderData.timeline?.map(entry => ({
         ...entry,
         time: Timestamp.now()
-      }))
+      })) || []
     };
 
-    const docRef = await addDoc(ordersCollection, firestoreData);
+    // Only add tracking if it exists
+    if (orderData.tracking) {
+      firestoreData.tracking = {
+        ...orderData.tracking,
+        addedAt: Timestamp.now()
+      };
+    }
+
+    // 🚫 Clean undefined values - Firestore doesn't accept undefined
+    const cleanedData = Object.fromEntries(
+      Object.entries(firestoreData).filter(([_, value]) => value !== undefined)
+    );
+
+    const docRef = await addDoc(ordersCollection, cleanedData);
     console.log('✅ Order created with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
@@ -154,7 +170,12 @@ export const updateOrder = async (orderId: string, updates: Partial<Order>): Pro
       }))
     };
 
-    await updateDoc(orderRef, firestoreUpdates);
+    // 🚫 Firestore undefined kabul etmiyor - undefined field'ları temizle
+    const cleanedUpdates = Object.fromEntries(
+      Object.entries(firestoreUpdates).filter(([_, value]) => value !== undefined)
+    );
+
+    await updateDoc(orderRef, cleanedUpdates);
     console.log('✅ Order updated:', orderId);
   } catch (error) {
     console.error('❌ Error updating order:', error);
@@ -241,5 +262,84 @@ export const batchImportOrders = async (orders: Omit<Order, 'id'>[]): Promise<vo
   } catch (error) {
     console.error('❌ Error batch importing orders:', error);
     throw error;
+  }
+};
+
+// 🎁 CREATE ORDER WITH LOYALTY INTEGRATION
+export const createOrderWithLoyalty = async (
+  orderData: Omit<Order, 'id'>,
+  customerEmail: string
+): Promise<string> => {
+  try {
+    // Check if loyalty system is active
+    const config = await getLoyaltyConfig();
+    if (!config || !config.isActive) {
+      console.log('⚠️ Loyalty system is not active, creating order without loyalty');
+      return await createOrder(orderData);
+    }
+
+    // 1. Get or create customer profile
+    const customer = await getOrCreateCustomer(
+      customerEmail,
+      orderData.customer.name,
+      undefined // uid - can be added if user is authenticated
+    );
+
+    console.log(`📊 Customer: ${customer.email} (${customer.tierLevel})`);
+
+    // 2. Create order with customer reference and tier info
+    const enrichedOrderData: Omit<Order, 'id'> = {
+      ...orderData,
+      customerId: customer.id,
+      customerTier: customer.tierLevel,
+      loyaltyPointsEarned: 0 // Will be updated below
+    };
+
+    const orderId = await createOrder(enrichedOrderData);
+    console.log(`✅ Order created: ${orderId}`);
+
+    // 3. Award loyalty points for purchase
+    const pointsEarned = await addPointsForPurchase(
+      customer.id,
+      orderId,
+      orderData.payment.total,
+      customer.tierLevel
+    );
+
+    console.log(`⭐ Awarded ${pointsEarned} points to ${customer.email}`);
+
+    // 4. Update order with points earned
+    await updateOrder(orderId, { loyaltyPointsEarned: pointsEarned });
+
+    // 5. Check for tier upgrade
+    const tierUpgrade = await checkTierUpgrade(customer.id);
+    if (tierUpgrade.upgraded) {
+      console.log(`🎉 Customer ${customerEmail} upgraded: ${tierUpgrade.oldTier} → ${tierUpgrade.newTier}!`);
+      // TODO: Send tier upgrade email notification
+    }
+
+    // 6. Apply referral bonus if this is first order
+    if (customer.totalOrders === 0 && customer.referredBy) {
+      console.log(`🎁 Applying referral bonus for ${customer.email}`);
+      try {
+        await applyReferralBonus(customer.referredBy, customer.id);
+      } catch (error) {
+        console.error('❌ Error applying referral bonus:', error);
+        // Don't fail the order if referral bonus fails
+      }
+    }
+
+    // 7. Update customer stats
+    await updateOrder(orderId, {
+      customerId: customer.id,
+      customerTier: tierUpgrade.upgraded ? tierUpgrade.newTier : customer.tierLevel
+    });
+
+    return orderId;
+  } catch (error) {
+    console.error('❌ Error creating order with loyalty:', error);
+    // Fallback to regular order creation
+    console.log('⚠️ Falling back to regular order creation');
+    return await createOrder(orderData);
   }
 };
