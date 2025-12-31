@@ -28,6 +28,10 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
 
           <nav className="flex flex-col space-y-5 relative z-10">
              <NavLink to="/catalog" onClick={onClose} className={({isActive}) => `font-display text-3xl transition-all ${isActive ? 'text-brown-900 dark:text-white translate-x-2' : 'text-gray-300 hover:text-brown-900'}`}>{t('menu_collections')}</NavLink>
+             <NavLink to="/tasting-quiz" onClick={onClose} className={({isActive}) => `font-display text-3xl transition-all flex items-center gap-2 ${isActive ? 'text-brown-900 dark:text-white translate-x-2' : 'text-gray-300 hover:text-brown-900'}`}>
+               <span>Damak Tadı</span>
+               <span className="text-xs bg-gold/20 text-gold px-2 py-0.5 rounded-full">Yeni</span>
+             </NavLink>
              <NavLink to="/favorites" onClick={onClose} className={({isActive}) => `font-display text-3xl transition-all ${isActive ? 'text-brown-900 dark:text-white translate-x-2' : 'text-gray-300 hover:text-brown-900'}`}>{t('menu_wishlist')}</NavLink>
              <NavLink to="/account" onClick={onClose} className={({isActive}) => `font-display text-3xl transition-all ${isActive ? 'text-brown-900 dark:text-white translate-x-2' : 'text-gray-300 hover:text-brown-900'}`}>{t('menu_account')}</NavLink>
           </nav>

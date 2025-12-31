@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { generateAIResponse } from '../utils/aiResponseGenerator';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useTasteProfileStore } from '../stores/tasteProfileStore';
+import { useUser } from '../context/UserContext';
 import { ConversationFlow, ConversationState } from '../types/conversationFlow';
 import { getOrCreateSessionId, startConversationLog, logMessage, completeConversationLog } from '../utils/conversationLogger';
 
@@ -40,7 +42,16 @@ export const AIAssistant: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { products } = useProducts();
   const { language } = useLanguage();
+  const { user } = useUser();
+  const { profile: tasteProfile, loadProfile } = useTasteProfileStore();
   const navigate = useNavigate();
+
+  // ✨ Tadım profili yükle (kullanıcı giriş yapmışsa)
+  useEffect(() => {
+    if (user?.uid && !tasteProfile) {
+      loadProfile(user.uid);
+    }
+  }, [user?.uid, tasteProfile, loadProfile]);
 
   // Fetch AI Config
   useEffect(() => {
@@ -130,11 +141,11 @@ export const AIAssistant: React.FC = () => {
       if (role === 'user' && !skipResponse) {
         setIsLoading(true);
 
-        // AI yanıtı üret
+        // AI yanıtı üret (tadım profili ile kişiselleştirilmiş)
         const response: any = await generateAIResponse(
           content.trim(),
           messages,
-          { aiConfig, knowledgeBase, products, conversationFlows, conversationState, currentLanguage: language }
+          { aiConfig, knowledgeBase, products, conversationFlows, conversationState, currentLanguage: language, tasteProfile }
         );
 
         // ✨ User mesajını logla

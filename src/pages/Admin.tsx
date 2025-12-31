@@ -18,6 +18,7 @@ import { ConversationAnalyticsTab } from '../components/admin/tabs/ConversationA
 import { BehaviorTrackingTab } from '../components/admin/tabs/BehaviorTrackingTab';
 import { OrderManagementTab } from '../components/admin/tabs/OrderManagementTab';
 import { LoyaltySettingsPanel } from '../components/admin/LoyaltySettingsPanel';
+import { TasteQuizTab } from '../components/admin/tabs/TasteQuizTab';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz'>('inventory');
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
@@ -401,7 +402,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-dark-800 p-6 rounded-[40px] border border-gray-200/60 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="p-3.5 bg-brown-900 text-white rounded-[20px]">
-            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'operations' ? <ShoppingCart size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : activeTab === 'journey' ? <TrendingUp size={26} /> : <Type size={26} />}
+            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'operations' ? <ShoppingCart size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : activeTab === 'journey' ? <TrendingUp size={26} /> : activeTab === 'taste-quiz' ? <Sparkles size={26} /> : <Type size={26} />}
           </div>
           <div>
             <h1 className="text-xl font-display font-bold italic">Komuta Merkezi</h1>
@@ -416,6 +417,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
               <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
               <button onClick={() => setActiveTab('badges')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'badges' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ROZETLER</button>
               <button onClick={() => setActiveTab('loyalty-settings')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'loyalty-settings' ? 'bg-brand-orange text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SADAKAT SİSTEMİ</button>
+              <button onClick={() => setActiveTab('taste-quiz')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'taste-quiz' ? 'bg-chocolate-700 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>DAMAK TADI</button>
             </div>
           </div>
         </div>
@@ -1632,6 +1634,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <BehaviorTrackingTab />
       ) : activeTab === 'loyalty-settings' ? (
         <LoyaltySettingsPanel />
+      ) : activeTab === 'taste-quiz' ? (
+        <TasteQuizTab />
       ) : null}
 
       {/* Ürün Ekleme/Düzenleme Modalı */}

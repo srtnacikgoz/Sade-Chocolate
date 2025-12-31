@@ -365,10 +365,25 @@ return (
               </button>
             ))}
             
-            {/* Dekoratif Boş Kart */}
-            <div className="hidden lg:flex border border-dashed border-gray-200 dark:border-gray-800 items-center justify-center p-12 rounded-none opacity-20">
-               <p className="text-[10px] font-black uppercase tracking-[1em] rotate-90">SADE ARTISAN</p>
-            </div>
+            {/* Damak Tadı Quiz Kartı */}
+            <Link
+              to="/tasting-quiz"
+              className="group relative bg-gradient-to-br from-gold/5 to-amber-50 dark:from-gold/10 dark:to-dark-800 border border-gold/20 p-8 text-left transition-all hover:border-gold/50 hover:shadow-[0_0_40px_rgba(212,175,55,0.1)] rounded-[32px] min-h-[220px] flex flex-col justify-between overflow-hidden"
+            >
+              <div className="w-12 h-12 bg-gold/10 border border-gold/20 flex items-center justify-center text-gold transition-all duration-500 group-hover:bg-gold group-hover:text-black rounded-2xl">
+                <Sparkles size={20} />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-xl font-bold dark:text-white italic tracking-tight uppercase group-hover:text-gold transition-colors">Damak Tadı</h3>
+                  <span className="bg-gold text-black text-[10px] px-3 py-1 font-black rounded-full animate-pulse">YENİ</span>
+                </div>
+                <p className="text-[10px] text-gray-400 font-medium italic leading-relaxed uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity duration-500">
+                  Çikolata tercihlerinizi keşfedin.
+                </p>
+              </div>
+              <div className="absolute bottom-0 left-0 h-[2px] bg-gold transition-all duration-700 w-0 group-hover:w-full"></div>
+            </Link>
           </div>
         </div>
       ) : (

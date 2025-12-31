@@ -1,5 +1,6 @@
 import { Product } from '../types';
 import { ConversationFlow, ConversationState, LocalizedString } from '../types/conversationFlow';
+import type { TasteProfile } from '../types/tasteProfile';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,6 +14,7 @@ interface AIContext {
   conversationFlows?: ConversationFlow[];
   conversationState?: ConversationState | null;
   currentLanguage?: 'tr' | 'en' | 'ru'; // ✨ Aktif dil bilgisi
+  tasteProfile?: TasteProfile | null; // ✨ Damak tadı profili
 }
 
 // ✨ YARDIMCI: Mevcut dile göre metni döndürür (Default: 'tr')
@@ -477,6 +479,82 @@ const findNextStep = (
   });
 
   return matchedOption?.nextStepId || null;
+};
+
+// ✨ DAMAK TADI PROFİLİ: Kişiselleştirilmiş öneri mesajı
+const getTasteProfileContext = (profile: TasteProfile | null | undefined, lang: string = 'tr'): string => {
+  if (!profile) return '';
+
+  const segments = profile.segments || [];
+  const preferences = profile.preferences;
+
+  // Segment bazlı öneriler
+  const segmentMessages: Record<string, Record<string, string>> = {
+    high_cacao_lover: {
+      tr: 'Yüksek kakaolu çikolataları sevdiğinizi biliyorum',
+      en: 'I know you love high-cocoa chocolates',
+      ru: 'Я знаю, что вы любите шоколад с высоким содержанием какао'
+    },
+    fruity_aroma_seeker: {
+      tr: 'Meyvemsi aromalara olan ilginizi biliyorum',
+      en: 'I know you enjoy fruity aromas',
+      ru: 'Я знаю, что вам нравятся фруктовые ароматы'
+    },
+    praline_enthusiast: {
+      tr: 'Pralin ve fındıklı çikolataları tercih ettiğinizi görüyorum',
+      en: 'I see you prefer praline and nutty chocolates',
+      ru: 'Я вижу, что вы предпочитаете пралине и ореховые шоколады'
+    },
+    classic_milk_fan: {
+      tr: 'Klasik sütlü çikolata tercih ettiğinizi biliyorum',
+      en: 'I know you prefer classic milk chocolate',
+      ru: 'Я знаю, что вы предпочитаете классический молочный шоколад'
+    },
+    adventurous_taster: {
+      tr: 'Yeni tatlar keşfetmeye açık olduğunuzu görüyorum',
+      en: 'I see you are open to discovering new flavors',
+      ru: 'Я вижу, что вы открыты для новых вкусов'
+    }
+  };
+
+  // İlk eşleşen segmenti kullan
+  for (const segment of segments) {
+    if (segmentMessages[segment]) {
+      return segmentMessages[segment][lang as keyof typeof segmentMessages[typeof segment]] || segmentMessages[segment]['tr'];
+    }
+  }
+
+  return '';
+};
+
+// ✨ DAMAK TADI: Profil bazlı ürün filtreleme
+const filterProductsByTasteProfile = (products: Product[], profile: TasteProfile | null | undefined): Product[] => {
+  if (!profile) return products;
+
+  const { preferences, segments, avoidIngredients } = profile;
+
+  return products.filter(product => {
+    // Kaçınılacak içerikleri filtrele
+    if (avoidIngredients.length > 0) {
+      const productText = `${product.title} ${product.description || ''}`.toLowerCase();
+      for (const ingredient of avoidIngredients) {
+        if (productText.includes(ingredient.toLowerCase())) {
+          return false;
+        }
+      }
+    }
+
+    // Kakao yoğunluğuna göre filtrele (basit mantık)
+    if (preferences.cacaoIntensity >= 4) {
+      // Yüksek kakao sevenler için sütlü çikolatayı düşür sıralamasını
+      const title = product.title.toLowerCase();
+      if (title.includes('sütlü') || title.includes('milk') || title.includes('beyaz') || title.includes('white')) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 };
 
 export const generateAIResponse = async (

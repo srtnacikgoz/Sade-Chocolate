@@ -24,6 +24,7 @@ import { TopBar } from './components/TopBar';
 import { Cart } from './pages/Cart'; // Birazdan oluşturacağız
 import { LoginGateway } from './pages/LoginGateway'; // Birazdan oluşturacağız
 import { Register } from './pages/Register';
+import { TastingQuiz } from './pages/TastingQuiz';
 import { SearchDrawer } from './components/SearchDrawer';
 import { NewsletterPopup } from './components/NewsletterPopup';
 import { AIAssistant } from './components/AIAssistant';
@@ -117,6 +118,7 @@ const App: React.FC = () => {
                   <Route path="/cart" element={<Cart />} />
 <Route path="/login-gateway" element={<LoginGateway />} />
 <Route path="/register" element={<Register />} />
+                  <Route path="/tasting-quiz" element={<TastingQuiz />} />
                   <Route path="/checkout" element={<Checkout />} />
                 </Routes>
               </Layout>
