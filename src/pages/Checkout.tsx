@@ -5,7 +5,9 @@ import { useUser } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductContext';
 import { Footer } from '../components/Footer';
-import { ChevronRight, ShieldCheck, CheckCircle2, MapPin, CreditCard, Plus, Edit2, X, FileText, Building2, User } from 'lucide-react';
+import { ChevronRight, ShieldCheck, CheckCircle2, MapPin, CreditCard, Plus, Edit2, X, FileText, Building2, User, AlertTriangle, Thermometer, Calendar } from 'lucide-react';
+import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shippingUtils';
+import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 
@@ -37,12 +39,68 @@ const grandTotal = cartTotal + shippingCost;
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Shipping alerts state
+  const [shippingAlerts, setShippingAlerts] = useState<{
+    isBlackoutDay: boolean;
+    nextShipDate: string;
+    isHeatHold: boolean;
+    temperature: number;
+    heatHoldMessage: string;
+  }>({
+    isBlackoutDay: false,
+    nextShipDate: '',
+    isHeatHold: false,
+    temperature: 0,
+    heatHoldMessage: ''
+  });
+
   useEffect(() => {
     if (isLoggedIn) {
       const defAddr = addresses.find(a => a.isDefault) || addresses[0];
       if (defAddr) setSelectedAddressId(defAddr.id);
     }
   }, [isLoggedIn, addresses]);
+
+  // Shipping alerts kontrolü
+  useEffect(() => {
+    const checkShippingAlerts = async () => {
+      // Blackout kontrolü
+      const today = new Date();
+      const isBlackout = isBlackoutDay(today);
+      const nextShipDate = isBlackout ? formatDateTR(getNextShippingDate(today)) : '';
+
+      // Heat Hold kontrolü - seçili adresin şehrine göre
+      const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+      let isHeatHold = false;
+      let temperature = 0;
+      let heatHoldMessage = '';
+
+      if (selectedAddress?.city) {
+        try {
+          const weatherCheck = await checkWeatherForShipping(selectedAddress.city);
+          isHeatHold = weatherCheck.requiresHeatHold;
+          temperature = weatherCheck.weather.temperature;
+          if (isHeatHold) {
+            heatHoldMessage = selectedAddress.city + ' için hava sıcaklığı ' + temperature + '°C';
+          }
+        } catch (error) {
+          console.log('Weather check failed, using defaults');
+        }
+      }
+
+      setShippingAlerts({
+        isBlackoutDay: isBlackout,
+        nextShipDate,
+        isHeatHold,
+        temperature,
+        heatHoldMessage
+      });
+    };
+
+    if (selectedAddressId) {
+      checkShippingAlerts();
+    }
+  }, [selectedAddressId, addresses]);
 
   const handleCardNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/\D/g, '');
@@ -350,6 +408,41 @@ const grandTotal = cartTotal + shippingCost;
         <div className="lg:col-span-1">
           <div className="sticky top-32 space-y-8 animate-slide-up" style={{animationDelay: '0.3s'}}>
             
+            {/* Shipping Alert Banners */}
+            {(shippingAlerts.isBlackoutDay || shippingAlerts.isHeatHold) && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                {/* Blackout Days Banner */}
+                {shippingAlerts.isBlackoutDay && (
+                  <div className="bg-brand-peach/30 border border-brand-peach rounded-2xl p-4 flex items-start gap-3">
+                    <Calendar className="text-brand-orange shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-brand-orange mb-1">
+                        Gönderim Bilgisi
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                        Hafta sonu kargolama yapılmamaktadır. Siparişiniz <strong className="text-brand-orange">{shippingAlerts.nextShipDate}</strong> tarihinde kargoya verilecektir.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Heat Hold Banner */}
+                {shippingAlerts.isHeatHold && (
+                  <div className="bg-brand-orange/10 border border-brand-orange/30 rounded-2xl p-4 flex items-start gap-3">
+                    <Thermometer className="text-brand-orange shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-brand-orange mb-1">
+                        Sıcaklık Uyarısı
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                        {shippingAlerts.heatHoldMessage}. Çikolatanızın kalitesi için uygun hava koşulları bekleniyor olabilir.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <section className="bg-white dark:bg-dark-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-luxurious">
               <h2 className="font-display text-2xl font-bold dark:text-white mb-8 italic">{t('order_summary')}</h2>
               

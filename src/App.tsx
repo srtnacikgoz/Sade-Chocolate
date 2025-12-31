@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { SplashScreen } from './pages/SplashScreen';
+// SplashScreen kaldirildi
 import { Home } from './pages/Home';
 import { Catalog } from './pages/Catalog';
 import { About } from './pages/About';
@@ -104,7 +104,7 @@ const App: React.FC = () => {
             <Router>
               <Layout>
                 <Routes>
-                  <Route path="/" element={<SplashScreen />} />
+                  <Route path="/" element={<Home />} />
                   <Route path="/home" element={<Home />} />
                   <Route path="/catalog" element={<Catalog />} />
                   <Route path="/product/:id" element={<ProductDetail />} />

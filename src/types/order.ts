@@ -1,5 +1,43 @@
 // --- ORDER TYPES ---
 
+// Order Status Type - Heat Hold dahil
+export type OrderStatus =
+  | 'Awaiting Prep'
+  | 'In Production'
+  | 'Ready for Packing'
+  | 'Heat Hold'
+  | 'Shipped'
+  | 'Cancelled'
+  | 'Refunded';
+
+// Heat Hold bilgileri
+export interface HeatHoldInfo {
+  isActive: boolean;
+  reason: string;
+  activatedAt: string;
+  targetTemp: number;
+  releaseTemp: number;
+  autoRelease: boolean;
+  releasedAt?: string;
+}
+
+// Blackout bilgileri
+export interface BlackoutDelayInfo {
+  isDelayed: boolean;
+  originalOrderDate: string;
+  scheduledShipDate: string;
+  delayDays: number;
+  reason: string;
+}
+
+// Soğutucu paketi bilgileri
+export interface ColdPackInfo {
+  required: boolean;
+  quantity: number;
+  reason: string;
+  isSummerProtocol: boolean;
+}
+
 export interface OrderItem {
   id: string;
   name: string;
@@ -57,7 +95,7 @@ export interface Order {
     phone: string;
   };
   items: OrderItem[];
-  status: 'Awaiting Prep' | 'In Production' | 'Ready for Packing' | 'Shipped' | 'Cancelled' | 'Refunded';
+  status: OrderStatus;
   priority: 'High' | 'Normal';
   tempAlert: boolean;
   gift: boolean;
@@ -91,6 +129,11 @@ export interface Order {
     coldPackage: boolean;
     shippingWindow: string;
     weatherAlert?: string;
+    scheduledShipDate?: string;
+    originalOrderDate?: string;
+    blackoutDelay?: BlackoutDelayInfo;
+    heatHold?: HeatHoldInfo;
+    coldPack?: ColdPackInfo;
   };
 
   // Extended Fields for State Management
@@ -102,8 +145,8 @@ export interface Order {
   specialNotes?: string;
 
   // Loyalty System Fields
-  customerId?: string;           // Reference to customers collection
-  loyaltyPointsEarned?: number;  // Points earned from this order
-  loyaltyPointsRedeemed?: number; // Points used in this order
-  customerTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum'; // Customer tier at order time
+  customerId?: string;
+  loyaltyPointsEarned?: number;
+  loyaltyPointsRedeemed?: number;
+  customerTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
 }

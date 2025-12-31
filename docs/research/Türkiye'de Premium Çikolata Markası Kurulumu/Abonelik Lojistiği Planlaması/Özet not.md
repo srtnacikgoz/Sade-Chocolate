@@ -1,0 +1,1 @@
+Abonelik lojistiği, **"çikolata satan bir lojistik şirketi"** gibi düşünülerek kurgulanmalıdır. **Back-End** tarafında hava durumu ve takvim kısıtlamaları yönetilirken, **Front-End** tarafında bu durum müşteriye bir "kalite taahhüdü" olarak sunulmalıdır.

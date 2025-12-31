@@ -41,6 +41,7 @@ const StatusBadge = ({ status }: { status: Order['status'] }) => {
     'Awaiting Prep': 'bg-brand-peach/30 text-brand-orange border-brand-peach',
     'In Production': 'bg-brand-yellow/30 text-brand-mustard border-brand-yellow',
     'Ready for Packing': 'bg-brand-blue/30 text-blue-700 border-brand-blue',
+    'Heat Hold': 'bg-orange-100 text-orange-700 border-orange-300',
     'Shipped': 'bg-brand-green/30 text-green-700 border-brand-green',
     'Cancelled': 'bg-red-50 text-red-600 border-red-200',
     'Refunded': 'bg-purple-50 text-purple-600 border-purple-200'
@@ -50,6 +51,7 @@ const StatusBadge = ({ status }: { status: Order['status'] }) => {
     'Awaiting Prep': 'Hazırlık Bekliyor',
     'In Production': 'Üretimde',
     'Ready for Packing': 'Paketlemeye Hazır',
+    'Heat Hold': 'Isı Beklemesi',
     'Shipped': 'Kargoya Verildi',
     'Cancelled': 'İptal Edildi',
     'Refunded': 'İade Edildi'

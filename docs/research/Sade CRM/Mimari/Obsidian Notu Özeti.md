@@ -1,0 +1,1 @@
+**Sade CRM**, karmaşık algoritmalar yerine **"Müşteri Ne Yaptı?"** ve **"Ben Ona Ne Anlatmalıyım?"** sorularına odaklanır. **Back-End** tarafında Firebase Cloud Functions ile tetikleyiciler yönetilirken, **Front-End** tarafında bu veriler butik ve sıcak bir iletişim diliyle müşteriye yansıtılır.

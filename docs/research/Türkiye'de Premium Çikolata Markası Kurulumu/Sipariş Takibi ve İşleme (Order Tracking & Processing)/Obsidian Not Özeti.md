@@ -1,0 +1,1 @@
+**Sipariş İşleme**, sadece bir paketleme süreci değil; **Back-End**'deki hava durumu analitiği ile **Front-End**'deki şeffaf iletişimin birleştiği bir "operasyonel mükemmellik" kalkanıdır. Amaç, çikolatayı 12°C–20°C aralığında tutarak müşteriye kusursuz bir "snaping" (kırılma) deneyimi ulaştırmaktır.

@@ -1,0 +1,1 @@
+**Kataloglama ve Sergileme**, artisan çikolatanın hikayesini bilimsel bir veriyle (radar grafikler, köken bilgisi) ve sanatsal bir görselleştirmeyle (makro videolar) harmanlama sanatıdır. **Front-End** kısmında görsel büyüleyicilik hedeflenirken, **Back-End** tarafında bu büyüleyiciliği destekleyen teknik şeffaflık ve tazelik verileri yönetilir.
