@@ -207,17 +207,32 @@ export const LoyaltySettingsPanel: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Puan Çarpanı (x)
+                    Sabit Bonus Puan / Sipariş
                   </label>
                   <input
                     type="number"
-                    value={config.tiers[tier].pointsMultiplier}
-                    onChange={(e) => updateTierConfig(tier, 'pointsMultiplier', Number(e.target.value))}
+                    value={config.tiers[tier].fixedBonusPoints || 0}
+                    onChange={(e) => updateTierConfig(tier, 'fixedBonusPoints', Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white"
-                    min="1"
-                    max="5"
-                    step="0.25"
+                    min="0"
+                    step="10"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Her siparişte ekstra kazanılacak puan</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Yıllık Koruma Harcaması (₺)
+                  </label>
+                  <input
+                    type="number"
+                    value={config.tiers[tier].annualSpentRequirement || 0}
+                    onChange={(e) => updateTierConfig(tier, 'annualSpentRequirement', Number(e.target.value))}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark-700 text-gray-900 dark:text-white"
+                    min="0"
+                    step="100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Bu seviyeyi korumak için yıllık min. harcama</p>
                 </div>
 
                 <div>

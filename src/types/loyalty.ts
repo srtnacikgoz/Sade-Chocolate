@@ -7,7 +7,14 @@ export interface TierConfig {
   tier: LoyaltyTier;
   minSpent: number;              // Minimum total spent to reach this tier
   maxSpent: number | null;       // Max spent (null for highest tier)
-  pointsMultiplier: number;      // 1.0, 1.25, 1.5, 2.0
+
+  // Hibrit Sistem: Sabit bonus yerine çarpan (opsiyonel - geriye uyumluluk)
+  pointsMultiplier?: number;     // Eski sistem: 1.0, 1.25, 1.5, 2.0
+  fixedBonusPoints: number;      // Yeni sistem: Her siparişte +50, +100, +200 puan
+
+  // Tier koruma mekanizması
+  annualSpentRequirement: number; // Yıllık minimum harcama (tier'ı korumak için)
+
   birthdayDiscount: number;      // Percentage (5, 10, 15, 20)
   freeShippingThreshold: number | null; // null = always free, number = minimum order
   exclusiveAccess: boolean;
@@ -52,6 +59,11 @@ export interface CustomerLoyaltyProfile {
   totalSpent: number;
   totalOrders: number;
   averageOrderValue: number;
+
+  // Hibrit Sistem: Yıllık harcama takibi
+  annualSpent: number;           // Bu yıl içindeki toplam harcama
+  annualPeriodStart: string;     // Yıllık dönem başlangıcı (ISO date)
+  tierExpiryWarning?: boolean;   // Tier düşme riski var mı?
 
   // Tier bilgileri
   tierLevel: LoyaltyTier;

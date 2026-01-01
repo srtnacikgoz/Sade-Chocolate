@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -7,12 +7,14 @@ import { ArrowLeft, CheckCircle2, Sparkles, Gift, ShieldCheck, Check, CreditCard
 import { auth, db } from '../lib/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { Link } from 'react-router-dom';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, addDoc, collection } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { validateReferralCode } from '../services/loyaltyService';
 
 export const Register: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -21,7 +23,8 @@ export const Register: React.FC = () => {
     phone: '',
     birthDate: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    referralCode: searchParams.get('ref') || '' // URL'den referans kodu al
   });
 const [agreedToTerms, setAgreedToTerms] = useState(false);
   const handleRegister = async (e: React.FormEvent) => {
@@ -46,10 +49,31 @@ const [agreedToTerms, setAgreedToTerms] = useState(false);
         phone: formData.phone,
         birthDate: formData.birthDate,
         createdAt: new Date().toISOString(),
-        role: 'user'
+        role: 'user',
+        referredBy: formData.referralCode || null // Referans kodu kaydet
       });
 
-      toast.success("Aramıza hoş geldiniz! Kayıt başarılı. ✨");
+      // 4. Referans Kodu Varsa - Bekleyen Bonus Oluştur
+      if (formData.referralCode) {
+        const referrer = await validateReferralCode(formData.referralCode);
+        if (referrer) {
+          // Bekleyen referans bonusu oluştur (ilk siparişte aktif olacak)
+          await addDoc(collection(db, 'referral_bonuses'), {
+            referrerId: referrer.id,
+            refereeId: user.uid,
+            refereeEmail: formData.email,
+            referralCode: formData.referralCode,
+            bonusPoints: 100, // Config'den alınacak
+            bonusAwarded: false, // Henüz ödül verilmedi
+            firstOrderCompleted: false, // İlk sipariş bekleniyor
+            createdAt: new Date().toISOString(),
+            status: 'pending'
+          });
+          toast.success(`${referrer.name || 'Arkadaşınız'} sizi davet etti! İlk siparişinizde ikiniz de puan kazanacaksınız.`);
+        }
+      }
+
+      toast.success("Aramıza hoş geldiniz! Kayıt başarılı.");
       navigate('/home');
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
@@ -209,24 +233,38 @@ const [agreedToTerms, setAgreedToTerms] = useState(false);
                 />
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input 
-                  label="ŞİFRE" 
-                  placeholder="••••••••" 
+                <Input
+                  label="ŞİFRE"
+                  placeholder="••••••••"
                   className="h-16 rounded-2xl"
-                  type="password" 
+                  type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                 />
-                <Input 
-                  label="ŞİFRE TEKRAR" 
-                  placeholder="••••••••" 
+                <Input
+                  label="ŞİFRE TEKRAR"
+                  placeholder="••••••••"
                   className="h-16 rounded-2xl"
-                  type="password" 
+                  type="password"
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                 />
+             </div>
+
+             {/* Referans Kodu (Opsiyonel) */}
+             <div className="relative">
+               <Input
+                 label="REFERANS KODU (OPSİYONEL)"
+                 placeholder="SADE-XXXX"
+                 value={formData.referralCode}
+                 onChange={e => setFormData({...formData, referralCode: e.target.value.toUpperCase()})}
+                 className="h-16 rounded-2xl font-mono tracking-widest"
+               />
+               <p className="text-[9px] text-gray-400 mt-1 ml-2">
+                 Arkadaşınızdan aldığınız kodu girin, ilk siparişinizde ikiniz de puan kazanın!
+               </p>
              </div>
 
              {/* ✅ KVKK / GDPR Checkbox Modülü */}

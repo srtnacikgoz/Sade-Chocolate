@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Footer } from '../components/Footer';
+import { CompanyInfo, Branch } from '../types';
 
 const StoreCard: React.FC<{ name: string, address: string, phone: string, mapLink: string }> = ({ name, address, phone, mapLink }) => (
   <div className="bg-gray-50 dark:bg-dark-800 p-10 rounded-[40px] border border-gray-100 dark:border-gray-800 shadow-soft group hover:shadow-luxurious transition-all duration-500 hover:-translate-y-2">
@@ -28,6 +29,7 @@ const StoreCard: React.FC<{ name: string, address: string, phone: string, mapLin
 export const About: React.FC = () => {
   const { t, language } = useLanguage();
   const [aboutData, setAboutData] = useState<any>(null);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   // Firebase'den About CMS verisini çek
@@ -40,6 +42,22 @@ export const About: React.FC = () => {
       }
     });
     return () => unsub();
+  }, []);
+
+  // Firebase'den Şirket Bilgilerini çek
+  useEffect(() => {
+    const loadCompanyInfo = async () => {
+      try {
+        const docRef = doc(db, 'site_settings', 'company_info');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setCompanyInfo(docSnap.data() as CompanyInfo);
+        }
+      } catch (error) {
+        console.error('Error loading company info:', error);
+      }
+    };
+    loadCompanyInfo();
   }, []);
 
   // Dinamik veriler - Firebase'den veya default değerler
@@ -73,15 +91,18 @@ export const About: React.FC = () => {
 
   const locationsTitle = aboutData?.[language]?.locations_title || 'Atölyelerimiz & Şubelerimiz';
 
-  const store1Name = aboutData?.store1_name || 'Yeşilbahçe Şubesi';
-  const store1Address = aboutData?.store1_address || 'Yeşilbahçe Mah. Çınarlı Cad. No:47/A';
-  const store1Phone = aboutData?.store1_phone || '0552 896 30 26';
-  const store1Map = aboutData?.store1_map || 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Yeşilbahçe';
+  // Şube bilgileri - Önce companyInfo, yoksa aboutData, yoksa default
+  const activeBranches = companyInfo?.branches?.filter(b => b.isActive) || [];
 
-  const store2Name = aboutData?.store2_name || 'Çağlayan Şubesi';
-  const store2Address = aboutData?.store2_address || 'Çağlayan Mah. 2050 Sokak No:19';
-  const store2Phone = aboutData?.store2_phone || '0552 896 30 26';
-  const store2Map = aboutData?.store2_map || 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Çağlayan';
+  const store1Name = activeBranches[0]?.name || aboutData?.store1_name || 'Yeşilbahçe Şubesi';
+  const store1Address = activeBranches[0]?.address || aboutData?.store1_address || 'Yeşilbahçe Mah. Çınarlı Cad. No:47/A';
+  const store1Phone = activeBranches[0]?.phone || aboutData?.store1_phone || '0552 896 30 26';
+  const store1Map = activeBranches[0]?.mapLink || aboutData?.store1_map || 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Yeşilbahçe';
+
+  const store2Name = activeBranches[1]?.name || aboutData?.store2_name || 'Çağlayan Şubesi';
+  const store2Address = activeBranches[1]?.address || aboutData?.store2_address || 'Çağlayan Mah. 2050 Sokak No:19';
+  const store2Phone = activeBranches[1]?.phone || aboutData?.store2_phone || '0552 896 30 26';
+  const store2Map = activeBranches[1]?.mapLink || aboutData?.store2_map || 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Çağlayan';
 
   return (
     <main className="w-full max-w-screen-xl mx-auto pt-32 pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen">

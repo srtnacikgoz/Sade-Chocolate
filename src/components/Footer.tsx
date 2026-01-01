@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { toast } from 'sonner';
 import { Mail, Send } from 'lucide-react';
+import { CompanyInfo } from '../types';
 
 interface FooterProps {
   onLogoClick?: () => void;
@@ -14,6 +15,26 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
   const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+
+  // Load company info from Firebase
+  useEffect(() => {
+    const loadCompanyInfo = async () => {
+      try {
+        const docRef = doc(db, 'site_settings', 'company_info');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setCompanyInfo(docSnap.data() as CompanyInfo);
+        }
+      } catch (error) {
+        console.error('Error loading company info:', error);
+      }
+    };
+    loadCompanyInfo();
+  }, []);
+
+  // Get primary branch for location link
+  const primaryBranch = companyInfo?.branches?.find(b => b.isPrimary) || companyInfo?.branches?.[0];
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +62,16 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-12">
         <div
           onClick={onLogoClick}
-          className={`font-display font-bold text-4xl tracking-tight text-brown-900 dark:text-white mb-10 italic ${onLogoClick ? 'cursor-pointer select-none' : ''}`}
+          className={`flex items-center justify-center gap-4 mb-10 ${onLogoClick ? 'cursor-pointer select-none' : ''}`}
         >
-          Sade <span className="text-gold">Chocolate</span>
+          <img
+            src="/kakaoLogo.svg"
+            alt="Sade Chocolate"
+            className="w-14 h-14 opacity-70 dark:invert"
+          />
+          <span className="font-display font-bold text-4xl tracking-tight text-brown-900 dark:text-white italic">
+            Sade <span className="text-gold">Chocolate</span>
+          </span>
         </div>
 
         {/* Newsletter Section */}
@@ -77,23 +105,35 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
 
         <div className="flex justify-center space-x-8 mb-12">
           <a
-            href="https://www.google.com/maps/search/?api=1&query=Antalya"
+            href={primaryBranch?.mapLink || "https://www.google.com/maps/search/?api=1&query=Antalya"}
             target="_blank"
             rel="noopener noreferrer"
             className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
           >
             <i className="material-icons-outlined">place</i>
           </a>
+          {companyInfo?.socialMedia?.instagram && (
+            <a
+              href={`https://instagram.com/${companyInfo.socialMedia.instagram}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
+            >
+              <i className="material-icons-outlined">camera_alt</i>
+            </a>
+          )}
+          {!companyInfo?.socialMedia?.instagram && (
+            <a
+              href="https://instagram.com/sadepatisserie"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
+            >
+              <i className="material-icons-outlined">camera_alt</i>
+            </a>
+          )}
           <a
-            href="https://instagram.com/sadepatisserie"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
-          >
-            <i className="material-icons-outlined">camera_alt</i>
-          </a>
-          <a
-            href="mailto:bilgi@sadepatisserie.com"
+            href={`mailto:${companyInfo?.generalEmail || 'bilgi@sadepatisserie.com'}`}
             className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
           >
             <i className="material-icons-outlined">alternate_email</i>

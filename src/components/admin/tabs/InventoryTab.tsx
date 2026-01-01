@@ -22,6 +22,16 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tümü');
+  const [criticalStockThreshold, setCriticalStockThreshold] = useState(() => {
+    const saved = localStorage.getItem('criticalStockThreshold');
+    return saved ? parseInt(saved, 10) : 5;
+  });
+
+  const handleCriticalThresholdChange = (value: number) => {
+    const newValue = Math.max(0, value);
+    setCriticalStockThreshold(newValue);
+    localStorage.setItem('criticalStockThreshold', String(newValue));
+  };
 
   const colorMap: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600',
@@ -40,10 +50,11 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 
   const stats = useMemo(() => ({
     total: products.length,
+    criticalStock: products.filter(p => (p.locationStock?.yesilbahce || 0) <= criticalStockThreshold).length,
     outOfStock: products.filter(p => (p.locationStock?.yesilbahce || 0) === 0).length,
     categories: [...new Set(products.map(p => p.category))].length,
     totalValue: products.reduce((acc, p) => acc + (p.price * (p.locationStock?.yesilbahce || 0)), 0)
-  }), [products]);
+  }), [products, criticalStockThreshold]);
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -53,51 +64,97 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* --- LOJİSTİK STRATEJİSİ KUTUSU --- */}
-      <div className="mb-8 p-8 bg-gold/5 rounded-[32px] border border-gold/15 flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
-        <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gold shadow-sm border border-gold/10">
-            <TrendingUp size={24} />
-          </div>
-          <div>
-            <h3 className="font-display text-xl font-bold italic text-brown-900">Lojistik Stratejisi</h3>
-            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Ücretsiz kargo için gereken minimum sepet tutarı</p>
-          </div>
+      {/* --- LOJİSTİK STRATEJİSİ KUTUSU (Kompakt) --- */}
+      <div className="mb-6 px-5 py-3 bg-gold/5 rounded-2xl border border-gold/15 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <TrendingUp size={18} className="text-gold" />
+          <span className="text-xs font-bold text-brown-900">Ücretsiz Kargo Limiti</span>
         </div>
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gold/10 shadow-sm">
-          <div className="flex items-center px-4 font-display font-bold text-brown-900">₺</div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-brown-900">₺</span>
           <input
             type="number"
             defaultValue={1500}
-            className="w-24 p-2 font-display font-bold text-lg outline-none bg-transparent"
+            className="w-20 px-3 py-1.5 font-bold text-sm outline-none bg-white border border-gold/20 rounded-lg"
           />
           <button
-            className="bg-brown-900 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gold transition-all shadow-md active:scale-95"
-            onClick={() => toast.success('Kargo limiti güncellendi! (Simülasyon)')}
+            className="bg-brown-900 text-white px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-gold transition-all"
+            onClick={() => toast.success('Kargo limiti güncellendi!')}
           >
-            GÜNCELLE
+            Kaydet
           </button>
         </div>
       </div>
-      {/* --- LOJİSTİK STRATEJİSİ KUTUSU BİTTİ --- */}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        {[
-          { label: 'Ürün Sayısı', val: stats.total, icon: Package, color: 'blue' },
-          { label: 'Stok Kritik', val: stats.outOfStock, icon: AlertTriangle, color: 'red', critical: stats.outOfStock > 0 },
-          { label: 'Koleksiyonlar', val: stats.categories, icon: LayoutGrid, color: 'purple' },
-          { label: 'Tahmini Değer', val: `₺${stats.totalValue.toLocaleString()}`, icon: TrendingUp, color: 'emerald' }
-        ].map((item, idx) => (
-          <div key={idx} className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm relative overflow-hidden group">
-            {item.critical && <div className="absolute top-3 right-3 bg-red-500 text-white text-[9px] font-black px-3 py-1 rounded-full animate-pulse z-10">ACİL</div>}
-            <div className={`w-12 h-12 ${colorMap[item.color]} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-              <item.icon size={24} />
-            </div>
-            <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">{item.val}</div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">{item.label}</div>
+      {/* Stats Bar (Kompakt inline) */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
+        {/* Ürün */}
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50">
+          <div className="w-8 h-8 text-blue-600 bg-blue-50 rounded-lg flex items-center justify-center">
+            <Package size={16} />
           </div>
-        ))}
+          <div>
+            <span className="text-lg font-bold text-gray-900">{stats.total}</span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase ml-1">Ürün</span>
+          </div>
+        </div>
+
+        {/* Kritik Stok - Düzenlenebilir */}
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${stats.criticalStock > 0 ? 'bg-red-50 ring-2 ring-red-200' : 'bg-slate-50'}`}>
+          <div className="w-8 h-8 text-red-600 bg-red-50 rounded-lg flex items-center justify-center">
+            <AlertTriangle size={16} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-gray-900">{stats.criticalStock}</span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase">Kritik</span>
+            <span className="text-[9px] text-gray-300">|</span>
+            <span className="text-[9px] text-gray-400">≤</span>
+            <input
+              type="number"
+              value={criticalStockThreshold}
+              onChange={(e) => handleCriticalThresholdChange(parseInt(e.target.value) || 0)}
+              className="w-10 px-1.5 py-0.5 text-xs font-bold text-center border border-red-200 rounded-lg focus:ring-2 focus:ring-red-300 outline-none bg-white"
+              min={0}
+            />
+            <span className="text-[9px] text-gray-400">adet</span>
+          </div>
+          {stats.criticalStock > 0 && <span className="text-[8px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">!</span>}
+        </div>
+
+        {/* Stok Yok */}
+        {stats.outOfStock > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-50 ring-2 ring-orange-200">
+            <div className="w-8 h-8 text-orange-600 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Package size={16} />
+            </div>
+            <div>
+              <span className="text-lg font-bold text-orange-600">{stats.outOfStock}</span>
+              <span className="text-[9px] text-orange-500 font-bold uppercase ml-1">Stok Yok</span>
+            </div>
+          </div>
+        )}
+
+        {/* Koleksiyon */}
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50">
+          <div className="w-8 h-8 text-purple-600 bg-purple-50 rounded-lg flex items-center justify-center">
+            <LayoutGrid size={16} />
+          </div>
+          <div>
+            <span className="text-lg font-bold text-gray-900">{stats.categories}</span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase ml-1">Koleksiyon</span>
+          </div>
+        </div>
+
+        {/* Toplam Değer */}
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50">
+          <div className="w-8 h-8 text-emerald-600 bg-emerald-50 rounded-lg flex items-center justify-center">
+            <TrendingUp size={16} />
+          </div>
+          <div>
+            <span className="text-lg font-bold text-gray-900">₺{stats.totalValue.toLocaleString()}</span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase ml-1">Toplam Değer</span>
+          </div>
+        </div>
       </div>
 
       {/* Ürün Listesi Tablosu */}
@@ -132,6 +189,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                     <span className="text-[10px] text-brown-900 dark:text-gold font-black bg-brown-50 dark:bg-brown-900/20 px-2.5 py-0.5 rounded uppercase tracking-wider">{PRODUCT_CATEGORIES.find(cat => cat.id === product.category)?.label}</span>
                     <span className="text-sm font-mono font-bold text-gray-400 italic">₺{product.price.toFixed(2)}</span>
                     {(product.locationStock?.yesilbahce || 0) === 0 && <span className="text-[8px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">STOK YOK</span>}
+                    {(product.locationStock?.yesilbahce || 0) > 0 && (product.locationStock?.yesilbahce || 0) <= criticalStockThreshold && <span className="text-[8px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black">KRİTİK</span>}
                   </div>
                 </div>
               </div>

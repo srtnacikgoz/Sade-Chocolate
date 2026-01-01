@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Sparkles } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Sparkles, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -19,6 +19,9 @@ import { BehaviorTrackingTab } from '../components/admin/tabs/BehaviorTrackingTa
 import { OrderManagementTab } from '../components/admin/tabs/OrderManagementTab';
 import { LoyaltySettingsPanel } from '../components/admin/LoyaltySettingsPanel';
 import { TasteQuizTab } from '../components/admin/tabs/TasteQuizTab';
+import { GiftNotesTab } from '../components/admin/tabs/GiftNotesTab';
+import { CompanyInfoTab } from '../components/admin/tabs/CompanyInfoTab';
+import { Building2 } from 'lucide-react';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -39,7 +42,8 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info'>('inventory');
+  const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
@@ -65,12 +69,14 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   const [customers, setCustomers] = useState<any[]>([]);
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<any[]>([]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
-  const [filterByNewsletter, setFilterByNewsletter] = useState<'all' | 'subscribed' | 'not-subscribed'>('all');
+  const [filterByNewsletter, setFilterByNewsletter] = useState<'all' | 'subscribed' | 'not-subscribed' | 'vip' | 'new'>('all');
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [badges, setBadges] = useState<any[]>([]);
   const [isAddingBadge, setIsAddingBadge] = useState(false);
   const [isBadgeInfoOpen, setIsBadgeInfoOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [newBadge, setNewBadge] = useState<any>({
     name: { tr: '', en: '', ru: '' },
     bgColor: '#1a1a1a',
@@ -85,6 +91,32 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     red: 'bg-red-50 text-red-600',
     purple: 'bg-purple-50 text-purple-600',
     emerald: 'bg-emerald-50 text-emerald-600'
+  };
+
+  // Sidebar Menü Yapılandırması
+  const menuItems = [
+    { id: 'inventory', label: 'Envanter', icon: Package, group: 'ana' },
+    { id: 'operations', label: 'Sipariş Yönetimi', icon: ShoppingCart, group: 'ana' },
+    { id: 'customers', label: 'Müşteriler', icon: Users, group: 'ana' },
+    { id: 'referrals', label: 'Referanslar', icon: Gift, group: 'ana' },
+    { id: 'cms', label: 'İçerik (CMS)', icon: Globe, group: 'icerik' },
+    { id: 'badges', label: 'Rozetler', icon: Tag, group: 'icerik' },
+    { id: 'gift-notes', label: 'Hediye Notları', icon: Gift, group: 'icerik' },
+    { id: 'ai', label: 'AI Sommelier', icon: Sparkles, group: 'ai' },
+    { id: 'scenarios', label: 'Senaryolar', icon: MessageSquare, group: 'ai' },
+    { id: 'analytics', label: 'Konuşma Logları', icon: BarChart3, group: 'ai' },
+    { id: 'journey', label: 'Yolculuk Takibi', icon: TrendingUp, group: 'analitik' },
+    { id: 'taste-quiz', label: 'Damak Tadı', icon: Heart, group: 'analitik' },
+    { id: 'loyalty-settings', label: 'Sadakat Sistemi', icon: Settings, group: 'ayarlar' },
+    { id: 'company-info', label: 'Şirket Künyesi', icon: Building2, group: 'ayarlar' },
+  ] as const;
+
+  const menuGroups = {
+    ana: 'Ana İşlemler',
+    icerik: 'İçerik Yönetimi',
+    ai: 'AI & Otomasyon',
+    analitik: 'Analitik',
+    ayarlar: 'Ayarlar',
   };
 
   // Site İçeriği (CMS) Snapshot - Home
@@ -155,6 +187,25 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     };
 
     fetchNewsletterSubscribers();
+  }, []);
+
+  // Referans Bonusları Snapshot
+  useEffect(() => {
+    const fetchReferrals = async () => {
+      try {
+        const q = query(collection(db, 'referral_bonuses'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const referralData = snapshot.docs.map((doc: any) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setReferrals(referralData);
+      } catch (error) {
+        console.error('Referans verileri yüklenemedi:', error);
+      }
+    };
+
+    fetchReferrals();
   }, []);
 
   // Birleştirilmiş Müşteri Listesi (users + newsletter_subscribers)
@@ -396,60 +447,182 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     </main>
   );
 
+  // Aktif menü öğesini bul
+  const activeMenuItem = menuItems.find(item => item.id === activeTab);
+  const ActiveIcon = activeMenuItem?.icon || Package;
+
   return (
-    <main className="w-full px-8 pt-32 pb-24 space-y-8 bg-slate-50/50 min-h-screen">
-      {/* --- ÜST BAR VE NAVİGASYON --- */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-dark-800 p-6 rounded-[40px] border border-gray-200/60 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-brown-900 text-white rounded-[20px]">
-            {activeTab === 'inventory' ? <Package size={26} /> : activeTab === 'operations' ? <ShoppingCart size={26} /> : activeTab === 'cms' ? <Globe size={26} /> : activeTab === 'customers' ? <Users size={26} /> : activeTab === 'badges' ? <Tag size={26} /> : activeTab === 'journey' ? <TrendingUp size={26} /> : activeTab === 'taste-quiz' ? <Sparkles size={26} /> : <Type size={26} />}
+    <div className="flex min-h-screen bg-slate-100">
+      {/* Mobile Overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* --- SIDEBAR --- */}
+      <aside className={`
+        fixed lg:sticky top-0 left-0 z-50 h-screen
+        ${sidebarOpen ? 'w-64' : 'w-20'}
+        ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        bg-gradient-to-b from-slate-900 to-slate-800
+        transition-all duration-300 ease-in-out
+        flex flex-col shadow-2xl
+      `}>
+        {/* Logo & Collapse */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            {sidebarOpen && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gold rounded-xl flex items-center justify-center">
+                  <span className="text-xl">🍫</span>
+                </div>
+                <div>
+                  <h1 className="font-display text-white font-bold text-lg italic">Sade</h1>
+                  <p className="text-[9px] text-slate-400 uppercase tracking-widest">Admin Panel</p>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="hidden lg:flex p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+            >
+              <ChevronLeft size={20} className={`transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {/* Mobile close */}
+            <button
+              onClick={() => setMobileSidebarOpen(false)}
+              className="lg:hidden p-2 text-slate-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <div>
-            <h1 className="text-xl font-display font-bold italic">Komuta Merkezi</h1>
-            <div className="flex gap-2 mt-2">
-              <button onClick={() => setActiveTab('inventory')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'inventory' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ENVANTER</button>
-              <button onClick={() => setActiveTab('operations')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'operations' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SİPARİŞ YÖNETİMİ</button>
-              <button onClick={() => setActiveTab('cms')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'cms' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>İÇERİK (CMS)</button>
-              <button onClick={() => setActiveTab('ai')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'ai' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI SOMMELIER</button>
-              <button onClick={() => setActiveTab('scenarios')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'scenarios' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SENARYOLAR</button>
-              <button onClick={() => setActiveTab('analytics')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'analytics' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>AI KONUŞMA LOGLARI</button>
-              <button onClick={() => setActiveTab('journey')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'journey' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİ YOLCULUK TAKİBİ</button>
-              <button onClick={() => setActiveTab('customers')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'customers' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>MÜŞTERİLER</button>
-              <button onClick={() => setActiveTab('badges')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'badges' ? 'bg-brown-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>ROZETLER</button>
-              <button onClick={() => setActiveTab('loyalty-settings')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'loyalty-settings' ? 'bg-brand-orange text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>SADAKAT SİSTEMİ</button>
-              <button onClick={() => setActiveTab('taste-quiz')} className={`text-[10px] font-black px-5 py-1.5 rounded-full transition-all ${activeTab === 'taste-quiz' ? 'bg-chocolate-700 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>DAMAK TADI</button>
+        </div>
+
+        {/* Menu Items */}
+        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
+          {Object.entries(menuGroups).map(([groupKey, groupLabel]) => {
+            const groupItems = menuItems.filter(item => item.group === groupKey);
+            if (groupItems.length === 0) return null;
+
+            return (
+              <div key={groupKey}>
+                {sidebarOpen && (
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2">
+                    {groupLabel}
+                  </p>
+                )}
+                <div className="space-y-1">
+                  {groupItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as any);
+                          setMobileSidebarOpen(false);
+                        }}
+                        className={`
+                          w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
+                          ${isActive
+                            ? 'bg-gold text-slate-900 shadow-lg shadow-gold/20'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          }
+                        `}
+                        title={!sidebarOpen ? item.label : undefined}
+                      >
+                        <Icon size={20} className={isActive ? 'text-slate-900' : ''} />
+                        {sidebarOpen && (
+                          <span className={`text-sm font-medium ${isActive ? 'font-bold' : ''}`}>
+                            {item.label}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Actions */}
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <button
+            onClick={() => navigate('/home')}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <Home size={20} />
+            {sidebarOpen && <span className="text-sm font-medium">Ana Sayfaya Dön</span>}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-white hover:bg-red-500/20 transition-all"
+          >
+            <LogOut size={20} />
+            {sidebarOpen && <span className="text-sm font-medium">Çıkış Yap</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* --- MAIN CONTENT --- */}
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'}`}>
+        {/* Mobile Header */}
+        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setMobileSidebarOpen(true)}
+            className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl"
+          >
+            <Menu size={24} />
+          </button>
+          <div className="flex items-center gap-2">
+            <ActiveIcon size={20} className="text-gold" />
+            <span className="font-bold text-slate-800">{activeMenuItem?.label}</span>
+          </div>
+          <div className="w-10" /> {/* Spacer for centering */}
+        </div>
+
+        {/* Page Header */}
+        <div className="bg-white border-b border-slate-200 px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gold/10 text-gold rounded-2xl">
+                <ActiveIcon size={28} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-display font-bold text-slate-800">{activeMenuItem?.label || 'Komuta Merkezi'}</h1>
+                <p className="text-sm text-slate-400">Sade Chocolate Yönetim Paneli</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              {activeTab === 'inventory' && (
+                <Button
+                  onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+                  className="bg-slate-900 text-white gap-2 text-sm font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-black transition-all"
+                >
+                  <Plus size={18} /> Yeni Ürün
+                </Button>
+              )}
+              {(activeTab === 'cms' || activeTab === 'ai' || activeTab === 'gift-notes' || activeTab === 'taste-quiz' || activeTab === 'loyalty-settings') && (
+                <button
+                  onClick={activeTab === 'ai' ? handleAiSave : handleCmsSave}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl shadow-lg transition-all"
+                >
+                  <Save size={18} />
+                  <span className="text-sm font-bold">Kaydet</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* İşlem Butonları */}
-        <div className="flex items-center gap-3">
-          {activeTab === 'inventory' ? (
-            <Button onClick={() => { setEditingProduct(null); setIsFormOpen(true); }} className="bg-brown-900 text-white gap-2 text-[11px] font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-black transition-all">
-              <Plus size={18} /> YENİ ÜRÜN EKLE
-            </Button>
-          ) : activeTab !== 'customers' && activeTab !== 'badges' && activeTab !== 'analytics' && activeTab !== 'scenarios' && activeTab !== 'journey' && activeTab !== 'operations' ? (
-            <button
-              onClick={activeTab === 'ai' ? handleAiSave : handleCmsSave}
-              className={`${activeTab === 'ai' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white p-3 rounded-xl shadow-lg hover:scale-110 transition-all`}
-              title={activeTab === 'ai' ? 'Stratejiyi Yayınla' : 'Değişiklikleri Yayınla'}
-            >
-              <Save size={20} />
-            </button>
-          ) : null}
 
-          {/* Çıkış Butonu - Sadece İkon */}
-          <button
-            onClick={handleLogout}
-            className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm hover:scale-110"
-            title="Çıkış Yap"
-          >
-            <LogOut size={20} />
-          </button>
-        </div>
-      </div>
-
-      {/* --- ANA İÇERİK ALANI (✅ FIXED TERNARY LOGIC) --- */}
+        {/* Content Area */}
+        <div className="p-8 space-y-8">
+          {/* --- ANA İÇERİK ALANI --- */}
       {activeTab === 'inventory' ? (
         <InventoryTab
           products={products}
@@ -944,158 +1117,177 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         ) : null}
       </div>
       ) : activeTab === 'customers' ? (
-        <div className="space-y-8 animate-in slide-in-from-bottom-3 duration-700">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div className="space-y-6 animate-in slide-in-from-bottom-3 duration-700">
+          {/* Stats Bar (Kompakt) */}
+          <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
             {[
-              {
-                label: 'Toplam Müşteri',
-                val: allCustomers.length,
-                icon: Users,
-                color: 'blue'
-              },
-              {
-                label: 'Bülten Abonesi',
-                val: newsletterSubscribers.length,
-                icon: Mail,
-                color: 'emerald'
-              },
-              {
-                label: 'Son 7 Gün',
-                val: allCustomers.filter((c: any) => {
-                  const createdAt = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
-                  const weekAgo = new Date();
-                  weekAgo.setDate(weekAgo.getDate() - 7);
-                  return createdAt >= weekAgo;
-                }).length,
-                icon: Calendar,
-                color: 'purple'
-              },
-              {
-                label: 'Kayıt Oranı',
-                val: allCustomers.length > 0 ? `%${Math.round((newsletterSubscribers.filter(sub => allCustomers.some(c => c.email === sub.email)).length / allCustomers.length) * 100)}` : '%0',
-                icon: TrendingUp,
-                color: 'red'
-              }
+              { label: 'Müşteri', val: allCustomers.length, icon: Users, color: 'text-blue-600 bg-blue-50' },
+              { label: 'Abone', val: newsletterSubscribers.length, icon: Mail, color: 'text-emerald-600 bg-emerald-50' },
+              { label: 'Yeni (7g)', val: allCustomers.filter((c: any) => {
+                const createdAt = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
+                const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+                return createdAt >= weekAgo;
+              }).length, icon: Calendar, color: 'text-purple-600 bg-purple-50' },
+              { label: 'Oran', val: allCustomers.length > 0 ? `%${Math.round((newsletterSubscribers.filter(sub => allCustomers.some(c => c.email === sub.email)).length / allCustomers.length) * 100)}` : '%0', icon: TrendingUp, color: 'text-amber-600 bg-amber-50' }
             ].map((item, idx) => (
-              <div key={idx} className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm relative overflow-hidden group">
-                <div className={`w-12 h-12 ${colorMap[item.color]} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                  <item.icon size={24} />
+              <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50">
+                <div className={`w-8 h-8 ${item.color} rounded-lg flex items-center justify-center`}>
+                  <item.icon size={16} />
                 </div>
-                <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">{item.val}</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">{item.label}</div>
+                <div>
+                  <span className="text-lg font-bold text-gray-900">{item.val}</span>
+                  <span className="text-[9px] text-gray-400 font-bold uppercase ml-1">{item.label}</span>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Search and Filter */}
-          <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="relative w-full md:max-w-md">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          {/* Search and Filters */}
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col lg:flex-row items-center gap-4">
+            {/* Search */}
+            <div className="relative w-full lg:max-w-xs">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Müşteri Ara (İsim, Email)..."
+                placeholder="Ara..."
                 value={customerSearchQuery}
                 onChange={(e) => setCustomerSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-dark-900 border-none rounded-2xl text-xs focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-dark-900 border-none rounded-xl text-sm focus:ring-2 focus:ring-brown-900/10 outline-none"
               />
             </div>
-            <div className="flex gap-2 bg-slate-100 dark:bg-dark-900 p-1.5 rounded-2xl">
-              <button
-                onClick={() => setFilterByNewsletter('all')}
-                className={`px-7 py-2.5 text-[10px] font-black rounded-xl transition-all ${filterByNewsletter === 'all' ? 'bg-white dark:bg-dark-800 shadow-md text-brown-900 dark:text-white' : 'text-gray-400 hover:text-slate-600'}`}
-              >
-                TÜMÜ
-              </button>
-              <button
-                onClick={() => setFilterByNewsletter('subscribed')}
-                className={`px-7 py-2.5 text-[10px] font-black rounded-xl transition-all ${filterByNewsletter === 'subscribed' ? 'bg-white dark:bg-dark-800 shadow-md text-brown-900 dark:text-white' : 'text-gray-400 hover:text-slate-600'}`}
-              >
-                ABONE
-              </button>
-              <button
-                onClick={() => setFilterByNewsletter('not-subscribed')}
-                className={`px-7 py-2.5 text-[10px] font-black rounded-xl transition-all ${filterByNewsletter === 'not-subscribed' ? 'bg-white dark:bg-dark-800 shadow-md text-brown-900 dark:text-white' : 'text-gray-400 hover:text-slate-600'}`}
-              >
-                ABONE DEĞİL
-              </button>
+
+            {/* Segment Filter */}
+            <div className="flex gap-1 bg-slate-100 dark:bg-dark-900 p-1 rounded-xl">
+              {[
+                { id: 'all', label: 'Tümü', icon: '👥' },
+                { id: 'vip', label: 'VIP', icon: '⭐' },
+                { id: 'new', label: 'Yeni', icon: '🆕' },
+                { id: 'subscribed', label: 'Abone', icon: '📧' },
+                { id: 'not-subscribed', label: 'Abone Değil', icon: '📭' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setFilterByNewsletter(f.id as any)}
+                  className={`px-4 py-2 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                    filterByNewsletter === f.id
+                      ? 'bg-white dark:bg-dark-800 shadow-md text-brown-900 dark:text-white'
+                      : 'text-gray-400 hover:text-slate-600'
+                  }`}
+                >
+                  <span>{f.icon}</span>
+                  <span className="hidden sm:inline">{f.label}</span>
+                </button>
+              ))}
             </div>
+
+            {/* Export Button */}
+            <button className="ml-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-bold transition-all flex items-center gap-2">
+              <span>📥</span> Dışa Aktar
+            </button>
           </div>
 
           {/* Customer List */}
-          <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            {/* Table Header */}
+            <div className="px-4 py-3 bg-slate-50 border-b border-gray-100 grid grid-cols-12 gap-4 text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="col-span-1">Tip</div>
+              <div className="col-span-4">Müşteri</div>
+              <div className="col-span-3">Durum</div>
+              <div className="col-span-2">Kayıt</div>
+              <div className="col-span-2 text-right">İşlemler</div>
+            </div>
+
             <div className="divide-y divide-gray-50 dark:divide-gray-800">
               {allCustomers
                 .filter((customer: any) => {
-                  // Search filter
                   const searchMatch = customerSearchQuery === '' ||
                     customer.displayName?.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
                     customer.email?.toLowerCase().includes(customerSearchQuery.toLowerCase());
 
-                  // Newsletter filter
                   const isSubscribed = newsletterSubscribers.some(sub => sub.email === customer.email);
-                  const newsletterMatch = filterByNewsletter === 'all' ||
-                    (filterByNewsletter === 'subscribed' && isSubscribed) ||
-                    (filterByNewsletter === 'not-subscribed' && !isSubscribed);
+                  const createdAt = customer.createdAt?.toDate ? customer.createdAt.toDate() : new Date(customer.createdAt);
+                  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+                  const isNew = createdAt >= weekAgo;
+                  const isVip = customer.loyaltyPoints >= 500 || customer.totalOrders >= 5;
 
-                  return searchMatch && newsletterMatch;
+                  const filterMatch =
+                    filterByNewsletter === 'all' ||
+                    (filterByNewsletter === 'subscribed' && isSubscribed) ||
+                    (filterByNewsletter === 'not-subscribed' && !isSubscribed) ||
+                    (filterByNewsletter === 'vip' && isVip) ||
+                    (filterByNewsletter === 'new' && isNew);
+
+                  return searchMatch && filterMatch;
                 })
                 .map((customer: any) => {
                   const isSubscribed = newsletterSubscribers.some(sub => sub.email === customer.email);
-                  const subscriberInfo = newsletterSubscribers.find(sub => sub.email === customer.email);
+                  const createdAt = customer.createdAt?.toDate ? customer.createdAt.toDate() : new Date(customer.createdAt);
+                  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+                  const isNew = createdAt >= weekAgo;
+                  const isVip = customer.loyaltyPoints >= 500 || customer.totalOrders >= 5;
+
+                  // Segment icon & color
+                  const getSegment = () => {
+                    if (isVip) return { icon: '⭐', label: 'VIP', color: 'bg-amber-100 text-amber-700' };
+                    if (isNew) return { icon: '🆕', label: 'Yeni', color: 'bg-blue-100 text-blue-700' };
+                    if (isSubscribed) return { icon: '📧', label: 'Abone', color: 'bg-emerald-100 text-emerald-700' };
+                    return { icon: '👤', label: 'Standart', color: 'bg-slate-100 text-slate-600' };
+                  };
+                  const segment = getSegment();
 
                   return (
-                    <div key={customer.id} className="p-6 hover:bg-slate-50/50 dark:hover:bg-dark-900/50 flex items-center justify-between group transition-all">
-                      <div className="flex items-center gap-6 flex-1">
-                        {/* Avatar */}
-                        <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-gray-100 dark:border-gray-700 shadow-sm shrink-0 bg-gradient-to-br from-brown-900 to-gold flex items-center justify-center">
-                          {customer.photoURL ? (
-                            <img src={customer.photoURL} className="w-full h-full object-cover" alt={customer.displayName} />
-                          ) : (
-                            <span className="text-white font-bold text-xl">
-                              {customer.displayName?.charAt(0)?.toUpperCase() || customer.email?.charAt(0)?.toUpperCase() || '?'}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h4 className="font-display font-bold text-base text-gray-900 dark:text-white">
-                              {customer.displayName || (customer.source === 'newsletter' ? 'Newsletter Abonesi' : 'İsimsiz Kullanıcı')}
-                            </h4>
-                            {isSubscribed && (
-                              <span className="flex items-center gap-1.5 text-[9px] bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full font-black uppercase tracking-wider">
-                                <Mail size={12} />
-                                Bülten
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{customer.email}</p>
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                              Kayıt: {customer.createdAt?.toDate ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(customer.createdAt.toDate()) : 'Bilinmiyor'}
-                            </span>
-                            {isSubscribed && subscriberInfo && (
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                                Bülten: {subscriberInfo.source === 'popup' ? 'Popup' : 'Footer'} • {subscriberInfo.subscribedAt?.toDate ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'short' }).format(subscriberInfo.subscribedAt.toDate()) : ''}
-                              </span>
-                            )}
-                          </div>
+                    <div key={customer.id} className="px-4 py-3 hover:bg-slate-50/50 grid grid-cols-12 gap-4 items-center group transition-all">
+                      {/* Segment Icon */}
+                      <div className="col-span-1">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${segment.color}`} title={segment.label}>
+                          {segment.icon}
                         </div>
                       </div>
 
+                      {/* Customer Info */}
+                      <div className="col-span-4">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                          {customer.displayName || 'İsimsiz'}
+                        </p>
+                        <p className="text-xs text-gray-400 font-mono truncate">{customer.email}</p>
+                      </div>
+
+                      {/* Status Badges */}
+                      <div className="col-span-3 flex flex-wrap gap-1">
+                        {isVip && <span className="text-[8px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">VIP</span>}
+                        {isSubscribed && <span className="text-[8px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">Abone</span>}
+                        {isNew && <span className="text-[8px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">Yeni</span>}
+                        {customer.loyaltyPoints > 0 && <span className="text-[8px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">{customer.loyaltyPoints} puan</span>}
+                      </div>
+
+                      {/* Date */}
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-gray-400">
+                          {customer.createdAt?.toDate ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'short' }).format(customer.createdAt.toDate()) : '-'}
+                        </span>
+                      </div>
+
                       {/* Actions */}
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => {
-                            setEditingCustomer(customer);
-                            setIsCustomerModalOpen(true);
-                          }}
-                          className="p-3 text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-all"
+                      <div className="col-span-2 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a
+                          href={`mailto:${customer.email}`}
+                          className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                          title="Mail Gönder"
                         >
-                          <Edit3 size={18} />
+                          <Mail size={14} />
+                        </a>
+                        <button
+                          onClick={() => { setEditingCustomer(customer); setIsCustomerModalOpen(true); }}
+                          className="p-2 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
+                          title="Düzenle"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          title="Sil"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -1632,11 +1824,80 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <ConversationAnalyticsTab />
       ) : activeTab === 'journey' ? (
         <BehaviorTrackingTab />
+      ) : activeTab === 'referrals' ? (
+        /* Referans Takibi */
+        <div className="space-y-6 animate-in fade-in duration-500">
+          {/* Stats */}
+          <div className="flex flex-wrap items-center gap-3 p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+              <span className="text-lg font-bold text-emerald-600">{referrals.filter(r => r.bonusAwarded).length}</span>
+              <span className="text-[9px] text-gray-400 font-bold uppercase">Tamamlanan</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20">
+              <span className="text-lg font-bold text-amber-600">{referrals.filter(r => !r.bonusAwarded).length}</span>
+              <span className="text-[9px] text-gray-400 font-bold uppercase">Bekleyen</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+              <span className="text-lg font-bold text-blue-600">{referrals.length}</span>
+              <span className="text-[9px] text-gray-400 font-bold uppercase">Toplam</span>
+            </div>
+          </div>
+
+          {/* Referral List */}
+          <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-slate-50/30 dark:bg-dark-900/30">
+              <h3 className="font-display text-xl font-bold italic text-gray-900 dark:text-white">Referans Kayıtları</h3>
+              <p className="text-xs text-gray-500 mt-1">Davet edilen kullanıcılar ve bonus durumları</p>
+            </div>
+            <div className="divide-y divide-gray-50 dark:divide-gray-800">
+              {referrals.length === 0 ? (
+                <div className="p-12 text-center text-gray-400">
+                  <Gift size={48} className="mx-auto mb-4 opacity-30" />
+                  <p className="text-sm font-medium">Henüz referans kaydı yok</p>
+                </div>
+              ) : (
+                referrals.map((ref: any) => (
+                  <div key={ref.id} className="p-5 hover:bg-slate-50/50 dark:hover:bg-dark-900/50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ref.bonusAwarded ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                        {ref.bonusAwarded ? '✓' : '⏳'}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-gray-900 dark:text-white">{ref.refereeEmail}</p>
+                        <p className="text-[10px] text-gray-400">
+                          Davet eden: {customers.find((c: any) => c.id === ref.referrerId)?.email || ref.referralCode}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                        ref.bonusAwarded
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      }`}>
+                        {ref.bonusAwarded ? 'Ödül Verildi' : 'İlk Sipariş Bekleniyor'}
+                      </span>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {new Date(ref.createdAt).toLocaleDateString('tr-TR')}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       ) : activeTab === 'loyalty-settings' ? (
         <LoyaltySettingsPanel />
       ) : activeTab === 'taste-quiz' ? (
         <TasteQuizTab />
+      ) : activeTab === 'gift-notes' ? (
+        <GiftNotesTab />
+      ) : activeTab === 'company-info' ? (
+        <CompanyInfoTab />
       ) : null}
+        </div>
+      </main>
 
       {/* Ürün Ekleme/Düzenleme Modalı */}
       {isFormOpen && (
@@ -1652,36 +1913,36 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Master Chef Editör Modu</p>
                 </div>
               </div>
-              <button 
-                onClick={() => { setIsFormOpen(false); setEditingProduct(null); }} 
+              <button
+                onClick={() => { setIsFormOpen(false); setEditingProduct(null); }}
                 className="w-16 h-16 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-dark-800 rounded-full text-gray-400 hover:text-red-500 transition-all duration-300"
               >
                 <X size={32} strokeWidth={1.5} />
               </button>
             </div>
             <div className="flex-1 overflow-hidden">
-              <ProductForm 
-                product={editingProduct} 
+              <ProductForm
+                product={editingProduct}
                 onSave={async (data) => {
-                  try { 
-                    if (editingProduct) await updateProduct(editingProduct.id, data); 
-                    else await addProduct(data); 
-                    setIsFormOpen(false); 
-                    setEditingProduct(null); 
-                    toast.success('Başarılı! ✨'); 
-                  } catch { 
-                    toast.error('Hata oluştu.'); 
+                  try {
+                    if (editingProduct) await updateProduct(editingProduct.id, data);
+                    else await addProduct(data);
+                    setIsFormOpen(false);
+                    setEditingProduct(null);
+                    toast.success('Başarılı! ✨');
+                  } catch {
+                    toast.error('Hata oluştu.');
                   }
-                }} 
-                onCancel={() => { 
-                  setIsFormOpen(false); 
-                  setEditingProduct(null); 
-                }} 
+                }}
+                onCancel={() => {
+                  setIsFormOpen(false);
+                  setEditingProduct(null);
+                }}
               />
             </div>
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 };

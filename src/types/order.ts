@@ -1,7 +1,8 @@
 // --- ORDER TYPES ---
 
-// Order Status Type - Heat Hold dahil
+// Order Status Type - Heat Hold ve Pending Payment dahil
 export type OrderStatus =
+  | 'Pending Payment'    // EFT/Havale ödemesi bekleniyor
   | 'Awaiting Prep'
   | 'In Production'
   | 'Ready for Packing'
@@ -9,6 +10,9 @@ export type OrderStatus =
   | 'Shipped'
   | 'Cancelled'
   | 'Refunded';
+
+// Payment Method Type
+export type PaymentMethod = 'card' | 'eft';
 
 // Heat Hold bilgileri
 export interface HeatHoldInfo {
@@ -149,4 +153,11 @@ export interface Order {
   loyaltyPointsEarned?: number;
   loyaltyPointsRedeemed?: number;
   customerTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+
+  // Payment Method Fields (EFT/Havale)
+  paymentMethod?: PaymentMethod;
+  paymentDeadline?: string;           // ISO date string - ödeme son tarihi
+  bankTransferDiscount?: number;      // Havale indirimi tutarı
+  paymentConfirmedAt?: string;        // Ödeme onay tarihi
+  paymentConfirmedBy?: string;        // Ödemeyi onaylayan admin
 }

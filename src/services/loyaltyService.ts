@@ -38,8 +38,10 @@ export function getDefaultLoyaltyConfig(): LoyaltyConfiguration {
       Bronze: {
         tier: 'Bronze',
         minSpent: 0,
-        maxSpent: 4999,
+        maxSpent: 999,
         pointsMultiplier: 1.0,
+        fixedBonusPoints: 0,           // Hibrit: Sabit bonus yok
+        annualSpentRequirement: 0,     // Bronze için koruma yok
         birthdayDiscount: 5,
         freeShippingThreshold: null,
         exclusiveAccess: false,
@@ -49,9 +51,11 @@ export function getDefaultLoyaltyConfig(): LoyaltyConfiguration {
       },
       Silver: {
         tier: 'Silver',
-        minSpent: 5000,
-        maxSpent: 14999,
-        pointsMultiplier: 1.25,
+        minSpent: 1000,
+        maxSpent: 2499,
+        pointsMultiplier: 1.0,         // Hibrit: Çarpan yok
+        fixedBonusPoints: 50,          // Her siparişte +50 puan
+        annualSpentRequirement: 1000,  // Yıllık 1000₺ gerekli
         birthdayDiscount: 10,
         freeShippingThreshold: 250,
         exclusiveAccess: true,
@@ -61,9 +65,11 @@ export function getDefaultLoyaltyConfig(): LoyaltyConfiguration {
       },
       Gold: {
         tier: 'Gold',
-        minSpent: 15000,
-        maxSpent: 34999,
-        pointsMultiplier: 1.5,
+        minSpent: 2500,
+        maxSpent: 4999,
+        pointsMultiplier: 1.0,
+        fixedBonusPoints: 100,         // Her siparişte +100 puan
+        annualSpentRequirement: 2500,  // Yıllık 2500₺ gerekli
         birthdayDiscount: 15,
         freeShippingThreshold: null,
         exclusiveAccess: true,
@@ -73,9 +79,11 @@ export function getDefaultLoyaltyConfig(): LoyaltyConfiguration {
       },
       Platinum: {
         tier: 'Platinum',
-        minSpent: 35000,
+        minSpent: 5000,
         maxSpent: null,
-        pointsMultiplier: 2.0,
+        pointsMultiplier: 1.0,
+        fixedBonusPoints: 200,         // Her siparişte +200 puan
+        annualSpentRequirement: 5000,  // Yıllık 5000₺ gerekli
         birthdayDiscount: 20,
         freeShippingThreshold: null,
         exclusiveAccess: true,
@@ -296,9 +304,13 @@ export async function getOrCreateCustomer(
       totalSpent: 0,
       totalOrders: 0,
       averageOrderValue: 0,
+      // Hibrit Sistem: Yıllık harcama takibi
+      annualSpent: 0,
+      annualPeriodStart: now,
+      tierExpiryWarning: false,
       tierLevel: 'Bronze',
       tierSince: now,
-      nextTierThreshold: 5000, // Silver threshold
+      nextTierThreshold: 1000, // Silver threshold (güncellendi)
       loyaltyPoints: 0,
       lifetimePoints: 0,
       pointsExpiringSoon: 0,
@@ -358,6 +370,7 @@ export async function updateCustomerProfile(
 
 /**
  * Add loyalty points for a purchase
+ * Hibrit Sistem: Base puan + Sabit tier bonusu (çarpan yerine)
  */
 export async function addPointsForPurchase(
   customerId: string,
@@ -369,9 +382,10 @@ export async function addPointsForPurchase(
     const config = await getLoyaltyConfig();
     const tierConfig = getTierConfig(tier, config);
 
-    // Calculate points: basePoints * tier multiplier
+    // Hibrit Sistem: Base puan + sabit tier bonusu
     const basePoints = Math.floor(orderAmount * config.pointsPerLira);
-    const points = Math.floor(basePoints * tierConfig.pointsMultiplier);
+    const tierBonus = tierConfig.fixedBonusPoints || 0;
+    const points = basePoints + tierBonus;
 
     // Create transaction record
     const transaction: Omit<LoyaltyTransaction, 'id'> = {

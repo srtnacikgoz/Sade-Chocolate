@@ -23,7 +23,12 @@
       "Bash(curl:*)",
       "Bash(npx playwright install:*)",
       "Bash(npx tsx:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(dig:*)",
+      "Bash(nslookup:*)",
+      "Bash(npx firebase hosting:channel:deploy:*)",
+      "WebFetch(domain:www.dandelionchocolate.com)",
+      "Bash(ls:*)"
     ]
   }
 }

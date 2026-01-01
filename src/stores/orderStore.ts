@@ -124,6 +124,9 @@ interface OrderStore {
     shipping?: { address: string; city: string };
     giftNote?: string;
     specialNotes?: string;
+    status?: Order['status'];
+    paymentConfirmedAt?: string;
+    paymentConfirmedBy?: string;
   }) => Promise<void>;
   startRefund: (orderId: string, refundData: {
     reason: string;
@@ -393,6 +396,29 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
           editedAt: new Date().toLocaleString('tr-TR')
         });
         updatedOrderData.specialNotes = updates.specialNotes || null;
+      }
+
+      // Track status changes (for payment confirmation)
+      if (updates.status !== undefined && updates.status !== order.status) {
+        newEdits.push({
+          field: 'status',
+          oldValue: order.status,
+          newValue: updates.status,
+          editedAt: new Date().toLocaleString('tr-TR')
+        });
+        updatedOrderData.status = updates.status;
+      }
+
+      // Track payment confirmation
+      if (updates.paymentConfirmedAt !== undefined) {
+        updatedOrderData.paymentConfirmedAt = updates.paymentConfirmedAt;
+        updatedOrderData.paymentConfirmedBy = updates.paymentConfirmedBy;
+        newEdits.push({
+          field: 'paymentConfirmed',
+          oldValue: null,
+          newValue: updates.paymentConfirmedAt,
+          editedAt: new Date().toLocaleString('tr-TR')
+        });
       }
 
       // Only update history and timeline if there are actual changes

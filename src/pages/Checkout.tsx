@@ -5,11 +5,14 @@ import { useUser } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductContext';
 import { Footer } from '../components/Footer';
-import { ChevronRight, ShieldCheck, CheckCircle2, MapPin, CreditCard, Plus, Edit2, X, FileText, Building2, User, AlertTriangle, Thermometer, Calendar } from 'lucide-react';
+import { ChevronRight, ShieldCheck, CheckCircle2, MapPin, CreditCard, Plus, Edit2, X, FileText, Building2, User, AlertTriangle, Thermometer, Calendar, Landmark, Copy, Check, Clock, Percent } from 'lucide-react';
 import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shippingUtils';
 import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { CompanyInfo } from '../types';
 
 export const Checkout: React.FC = () => {
   const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart } = useCart();
@@ -38,6 +41,15 @@ const grandTotal = cartTotal + shippingCost;
   const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [copiedIban, setCopiedIban] = useState<string | null>(null);
+
+  // Bank transfer hesaplama
+  const bankTransferSettings = companyInfo?.bankTransferSettings;
+  const bankTransferDiscount = bankTransferSettings?.isEnabled && paymentMethod === 'eft'
+    ? (cartTotal * (bankTransferSettings?.discountPercent || 2) / 100)
+    : 0;
+  const finalTotal = grandTotal - bankTransferDiscount;
 
   // Shipping alerts state
   const [shippingAlerts, setShippingAlerts] = useState<{
@@ -60,6 +72,22 @@ const grandTotal = cartTotal + shippingCost;
       if (defAddr) setSelectedAddressId(defAddr.id);
     }
   }, [isLoggedIn, addresses]);
+
+  // Load company info for bank accounts
+  useEffect(() => {
+    const loadCompanyInfo = async () => {
+      try {
+        const docRef = doc(db, 'site_settings', 'company_info');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setCompanyInfo(docSnap.data() as CompanyInfo);
+        }
+      } catch (error) {
+        console.error('Error loading company info:', error);
+      }
+    };
+    loadCompanyInfo();
+  }, []);
 
   // Shipping alerts kontrolü
   useEffect(() => {
@@ -153,7 +181,12 @@ const grandTotal = cartTotal + shippingCost;
           id: `SADE-${orderId}`,
           date: new Date().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US'),
           status: paymentMethod === 'eft' ? 'Ödeme Bekleniyor' : 'Hazırlanıyor',
-          total: cartTotal,
+          total: finalTotal,
+          subtotal: cartTotal,
+          shippingCost,
+          bankTransferDiscount: bankTransferDiscount > 0 ? bankTransferDiscount : undefined,
+          paymentMethod: paymentMethod,
+          paymentDeadline: paymentMethod === 'eft' ? new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() : undefined,
           items: [...items],
           // Add gift info if needed for backend
         });
@@ -376,9 +409,20 @@ const grandTotal = cartTotal + shippingCost;
     </div>
 <div className="space-y-8">
 
-<div className="bg-gray-50 dark:bg-dark-800 p-2 rounded-xl flex border border-gray-100 dark:border-gray-700 shadow-inner max-w-sm mb-10">
-    <button type="button" onClick={() => setPaymentMethod('card')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${paymentMethod === 'card' ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-lg' : 'text-gray-400'}`}>Kredi Kartı</button>
-    <button type="button" onClick={() => setPaymentMethod('eft')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${paymentMethod === 'eft' ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-lg' : 'text-gray-400'}`}>Havale / EFT</button>
+<div className="bg-gray-50 dark:bg-dark-800 p-2 rounded-xl flex border border-gray-100 dark:border-gray-700 shadow-inner max-w-md mb-10">
+    <button type="button" onClick={() => setPaymentMethod('card')} className={`flex-1 py-4 px-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex flex-col items-center gap-1 ${paymentMethod === 'card' ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-lg' : 'text-gray-400'}`}>
+      <CreditCard size={18} />
+      <span>Kredi Kartı</span>
+    </button>
+    <button type="button" onClick={() => setPaymentMethod('eft')} className={`flex-1 py-4 px-3 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex flex-col items-center gap-1 ${paymentMethod === 'eft' ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-lg' : 'text-gray-400'}`}>
+      <Landmark size={18} />
+      <span>Havale / EFT</span>
+      {bankTransferSettings?.isEnabled && bankTransferSettings.discountPercent > 0 && (
+        <span className={`text-[9px] px-2 py-0.5 rounded-full ${paymentMethod === 'eft' ? 'bg-emerald-100 text-emerald-600' : 'bg-emerald-50 text-emerald-500'}`}>
+          %{bankTransferSettings.discountPercent} İndirim
+        </span>
+      )}
+    </button>
       </div>
 
       {paymentMethod === 'card' ? (
@@ -391,8 +435,86 @@ const grandTotal = cartTotal + shippingCost;
           </div>
         </div>
       ) : (
-        <div className="p-8 bg-gray-50 dark:bg-dark-800 rounded-[30px] border-2 border-dashed border-gray-200 dark:border-gray-700 animate-fade-in">
-          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">Sipariş onayından sonra IBAN bilgileri e-posta adresinize iletilecektir. Ödemeniz onaylandığında artisan hazırlık sürecine başlanır.</p>
+        <div className="space-y-6 animate-fade-in">
+          {/* Discount Banner */}
+          {bankTransferSettings?.isEnabled && bankTransferDiscount > 0 && (
+            <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-emerald-500 text-white rounded-xl flex items-center justify-center">
+                  <Percent size={24} />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+                    %{bankTransferSettings.discountPercent} İndirim Uygulandı!
+                  </p>
+                  <p className="text-sm text-emerald-600 dark:text-emerald-500">
+                    ₺{bankTransferDiscount.toFixed(2)} tasarruf ediyorsunuz
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bank Accounts */}
+          <div className="space-y-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+              <Landmark size={14} /> Banka Hesap Bilgileri
+            </p>
+
+            {companyInfo?.bankAccounts?.filter(a => a.isActive).map((account) => (
+              <div key={account.id} className="p-5 bg-white dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-bold text-gray-900 dark:text-white">{account.bankName}</span>
+                  <span className="text-xs text-gray-400">{account.currency === 'TRY' ? '₺ TL' : account.currency === 'USD' ? '$ USD' : '€ EUR'}</span>
+                </div>
+                <p className="text-xs text-gray-500 mb-2">{account.accountHolder}</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 p-3 bg-gray-50 dark:bg-dark-800 rounded-lg text-sm font-mono tracking-wider text-gray-700 dark:text-gray-300">
+                    {account.iban}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(account.iban);
+                      setCopiedIban(account.id);
+                      setTimeout(() => setCopiedIban(null), 2000);
+                    }}
+                    className={`p-3 rounded-lg transition-all ${copiedIban === account.id ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 dark:bg-dark-800 text-gray-500 hover:bg-gray-200'}`}
+                  >
+                    {copiedIban === account.id ? <Check size={18} /> : <Copy size={18} />}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {(!companyInfo?.bankAccounts || companyInfo.bankAccounts.filter(a => a.isActive).length === 0) && (
+              <div className="p-6 bg-gray-50 dark:bg-dark-800 rounded-2xl text-center">
+                <p className="text-sm text-gray-400">Banka hesap bilgileri sipariş onayından sonra e-posta ile gönderilecektir.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Instructions */}
+          <div className="p-5 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400">Önemli Bilgiler:</p>
+                <ul className="text-xs text-amber-600 dark:text-amber-500 space-y-1 list-disc list-inside">
+                  <li>Açıklama kısmına <strong>sipariş numaranızı</strong> yazmayı unutmayın</li>
+                  <li>Ödemenizi <strong>{bankTransferSettings?.paymentDeadlineHours || 12} saat</strong> içinde tamamlayın</li>
+                  <li>Ödeme onaylandığında siparişiniz hazırlanmaya başlar</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Deadline Info */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-800 rounded-xl">
+            <Clock size={18} className="text-gray-400" />
+            <p className="text-xs text-gray-500">
+              Ödeme süresi: Sipariş tarihinden itibaren <strong className="text-gray-700 dark:text-gray-300">{bankTransferSettings?.paymentDeadlineHours || 12} saat</strong>
+            </p>
+          </div>
         </div>
       )}
     </div>    <div className="flex gap-4 mt-12 border-t pt-10">
@@ -490,14 +612,28 @@ const grandTotal = cartTotal + shippingCost;
                   <span className="font-bold">₺{cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-  <span className="uppercase tracking-widest text-gray-400 font-bold">Kargo</span>
-  <span className={`font-bold uppercase ${shippingCost === 0 ? 'text-green-500' : 'dark:text-white'}`}>
-    {shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost}`}
-  </span>
-</div>
+                  <span className="uppercase tracking-widest text-gray-400 font-bold">Kargo</span>
+                  <span className={`font-bold uppercase ${shippingCost === 0 ? 'text-green-500' : 'dark:text-white'}`}>
+                    {shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost}`}
+                  </span>
+                </div>
+                {/* Bank Transfer Discount */}
+                {bankTransferDiscount > 0 && (
+                  <div className="flex justify-between items-center text-xs animate-in fade-in">
+                    <span className="uppercase tracking-widest text-emerald-600 font-bold flex items-center gap-1">
+                      <Percent size={12} /> Havale İndirimi (%{bankTransferSettings?.discountPercent})
+                    </span>
+                    <span className="font-bold text-emerald-600">-₺{bankTransferDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-700">
                   <span className="font-display text-lg font-bold dark:text-white">Toplam</span>
-                  <span className="font-display text-3xl font-bold text-brown-900 dark:text-gold italic">₺{grandTotal.toFixed(2)}</span>
+                  <div className="text-right">
+                    {bankTransferDiscount > 0 && (
+                      <span className="text-sm text-gray-400 line-through mr-2">₺{grandTotal.toFixed(2)}</span>
+                    )}
+                    <span className="font-display text-3xl font-bold text-brown-900 dark:text-gold italic">₺{finalTotal.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
               

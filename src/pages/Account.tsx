@@ -7,14 +7,15 @@ import { Footer } from '../components/Footer';
 import { OrdersView } from '../components/account/OrdersView';
 import { AddressesView } from '../components/account/AddressesView';
 import { InvoiceInfoView } from '../components/account/InvoiceInfoView';
+import { LoyaltyPanel } from '../components/account/LoyaltyPanel';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { 
-  ShoppingBag, MapPin, Receipt, Settings, HelpCircle, 
-  LogOut, Moon, Sun, Sparkles, ArrowLeft, User as UserIcon, ShieldCheck, CreditCard, Check
+import {
+  ShoppingBag, MapPin, Receipt, Settings, HelpCircle,
+  LogOut, Moon, Sun, Sparkles, ArrowLeft, User as UserIcon, ShieldCheck, CreditCard, Check, Award
 } from 'lucide-react';
 
-type AccountView = 'main' | 'orders' | 'addresses' | 'invoice' | 'settings' | 'help';
+type AccountView = 'main' | 'orders' | 'addresses' | 'invoice' | 'settings' | 'help' | 'loyalty';
 
 
 
@@ -29,14 +30,15 @@ export const Account: React.FC = () => {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   
-  const [regData, setRegData] = useState<UserProfile & { pass: string, confirmPass: string }>({
+  const [regData, setRegData] = useState<UserProfile & { pass: string, confirmPass: string, referralCode: string }>({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     birthDate: '',
     pass: '',
-    confirmPass: ''
+    confirmPass: '',
+    referralCode: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -262,6 +264,17 @@ export const Account: React.FC = () => {
                   <Input label={t('password')} type="password" placeholder="••••" value={regData.pass} onChange={e => setRegData({...regData, pass: e.target.value})} required className="h-16 rounded-2xl" />
                   <Input label={t('confirm_password')} type="password" placeholder="••••" value={regData.confirmPass} onChange={e => setRegData({...regData, confirmPass: e.target.value})} required className="h-16 rounded-2xl" />
                 </div>
+                {/* Referans Kodu (Opsiyonel) */}
+                <div className="relative">
+                  <Input
+                    label="Referans Kodu (Opsiyonel)"
+                    placeholder="SADE-XXXX"
+                    value={regData.referralCode}
+                    onChange={e => setRegData({...regData, referralCode: e.target.value.toUpperCase()})}
+                    className="h-16 rounded-2xl font-mono tracking-widest"
+                  />
+                  <p className="text-[9px] text-gray-400 mt-1 ml-2">Arkadaşınızdan aldığınız kodu girin, ikiniz de puan kazanın!</p>
+                </div>
                 {/* ✅ KVKK Onay Modülü (Register.tsx ile Eşitlendi) */}
                 <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700 group cursor-pointer" onClick={() => setAgreedToTerms(!agreedToTerms)}>
                     <div className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${agreedToTerms ? 'bg-brown-900 border-brown-900 dark:bg-gold dark:border-gold' : 'border-gray-200 dark:border-gray-600'}`}>
@@ -336,6 +349,26 @@ return (
 
           {/* Menü Kartları - Katalog Ürün Kartı Düzeni */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Sadakat Kartı - Öne Çıkarılmış */}
+            <button
+              onClick={() => setCurrentView('loyalty')}
+              className="group relative bg-gradient-to-br from-gold/10 to-amber-50 dark:from-gold/20 dark:to-dark-800 border-2 border-gold/30 p-8 text-left transition-all hover:border-gold hover:shadow-[0_0_40px_rgba(212,175,55,0.15)] rounded-[32px] min-h-[220px] flex flex-col justify-between overflow-hidden md:col-span-2 lg:col-span-1"
+            >
+              <div className="w-12 h-12 bg-gold/20 border border-gold/30 flex items-center justify-center text-gold transition-all duration-500 group-hover:bg-gold group-hover:text-black rounded-2xl">
+                <Award size={20} />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-xl font-bold dark:text-white italic tracking-tight uppercase group-hover:text-gold transition-colors">Sadakat</h3>
+                  <span className="bg-gold text-black text-[10px] px-3 py-1 font-black rounded-full animate-pulse">PUAN</span>
+                </div>
+                <p className="text-[10px] text-gray-400 font-medium italic leading-relaxed uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity duration-500">
+                  Puanlarınız, seviyeniz ve avantajlar.
+                </p>
+              </div>
+              <div className="absolute bottom-0 left-0 h-[2px] bg-gold transition-all duration-700 w-0 group-hover:w-full"></div>
+            </button>
+
             {[
               { id: 'orders', icon: <ShoppingBag size={20} />, label: t('my_orders'), count: orders.length, desc: 'Sipariş geçmişi ve anlık takip.' },
               { id: 'addresses', icon: <MapPin size={20} />, label: t('my_addresses'), desc: 'Teslimat adreslerinizi yönetin.' },
@@ -390,12 +423,18 @@ return (
         /* ALT GÖRÜNÜMLER (Orders, Addresses vb.) - Katalog İçi Sayfa Yapısı */
         <div className="animate-fade-in-up">
           <div className="mb-12">
-             {renderHeader(currentView === 'orders' ? t('my_orders') : currentView === 'addresses' ? t('my_addresses') : t('invoice_info'))}
+             {renderHeader(
+               currentView === 'orders' ? t('my_orders') :
+               currentView === 'addresses' ? t('my_addresses') :
+               currentView === 'loyalty' ? 'Sadakat Programı' :
+               t('invoice_info')
+             )}
           </div>
           <div className="bg-white dark:bg-dark-900 rounded-none">
             {currentView === 'orders' && <OrdersView orders={orders} />}
             {currentView === 'addresses' && <AddressesView />}
             {currentView === 'invoice' && <InvoiceInfoView />}
+            {currentView === 'loyalty' && <LoyaltyPanel />}
           </div>
         </div>
       )}

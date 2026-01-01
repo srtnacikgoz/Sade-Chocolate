@@ -1,74 +1,83 @@
-Sade Chocolate Operasyonel ve Dijital Mükemmellik
-# 🍫 Stratejik Vizyon: Sade Chocolate Operasyonel ve Dijital Mükemmellik
+# Sade Chocolate - Proje Durumu ve Hedefler
 
-## 1. Misyon Tanımı
+> **Son Güncelleme:** 31 Aralık 2024
 
-Sade Chocolate'ın hedefi; operasyonel süreçlerdeki kusursuzluğu, **"Kasti Minimalizm"** (Intentional Minimalism) tasarım felsefesiyle birleştirerek Türkiye'nin en rafine ve güvenilir dijital çikolata deneyimini sunmaktır. Odak noktamız, üretimden teslimata kadar her adımın şeffaf ve kullanıcı dostu bir teknolojiyle yönetilmesidir.
+---
 
-## 2. Operasyonel Standartlar ve Verimlilik
+## TAMAMLANAN ÖZELLİKLER
 
-Sisteme entegre edilecek 4 temel operasyonel güç:
+### Sipariş & Ödeme Sistemi
+- [x] Havale/EFT ödeme seçeneği (%2 indirim ile)
+- [x] Ödeme süresi ayarlanabilir (varsayılan 12 saat)
+- [x] Admin panelde "Ödeme Bekleniyor" filtresi
+- [x] Ödeme onaylama aksiyonu (sipariş detayında)
 
-### A. Tazelik ve Paketleme Şeffaflığı
+### Admin Panel - Şirket Künyesi
+- [x] Şube yönetimi (2 şube için)
+- [x] Banka hesapları yönetimi (TRY/USD/EUR)
+- [x] Sosyal medya ve iletişim bilgileri
+- [x] Havale/EFT ayarları (indirim oranı, ödeme süresi)
 
-- **Sade Uygulaması:** Müşteri, sipariş takip ekranında ürünün ne zaman hazırlandığını, paketlendiğini ve hangi kalite kontrol aşamalarından geçtiğini görebilmelidir. "Bean-to-bar" yerine "Tazelik ve El İşçiliği" vurgusu ön plandadır.
-    
+### Envanter
+- [x] Kritik stok eşiği ayarlanabilir
 
-### B. Hava Durumu Duyarlı Lojistik (Weather-Aware OMS)
+### Sadakat Sistemi
+- [x] Müşteri sadakat puanları
+- [x] Tier sistemi (Bronze/Silver/Gold/Platinum)
 
-- **Sade Uygulaması:** OMS (Sipariş Yönetim Sistemi), teslimat bölgesindeki hava durumunu anlık takip eder. Sıcaklık eşikleri aşıldığında sistem, personele otomatik olarak "Isı Korumalı Özel Paketleme" iş emri atar ve müşteriye "Ürününüzün formunu korumak için termal koruma eklenmiştir" bilgisi verilir.
-    
+---
 
-### C. Üretim-Satış Senkronizasyonu (ATP Motoru)
+## BEKLEYEN HEDEFLER
 
-- **Sade Uygulaması:** Stok yönetimi dinamiktir. Mevcut ürünler ile o gün mutfakta hazırlanan ürünler eş zamanlı eşleşir. Stokta olmayan ürünler için sistem, bir sonraki üretim döngüsünü baz alarak otomatik "Tahmini Teslimat Tarihi" sunar.
-    
+### 1. Logo ve Font Entegrasyonu
+- [ ] Profesyonel logo tasarımı
+- [ ] Santana fontu entegrasyonu (`public/fonts/santana/`)
+  - TTF dosyalarını klasöre kopyala
+  - CSS'de @font-face tanımla
 
-### D. Hediye Deneyiminde Operasyonel Hassasiyet
+### 2. Kullanıcı Giriş/Kayıt Sayfaları
+- [ ] Giriş sayfası UI düzenlemesi
+- [ ] Kayıt sayfası UI düzenlemesi
+- [ ] Form validasyonları
 
-- **Sade Uygulaması:** Personel dashboard'unda hediye notları görsel birer kartvizit formatında sunulur. Sistem, paketleme aşamasında notun eklenip eklenmediğini ve kurdele/paket kalitesini onaylatmadan "Kargoya Verildi" statüsüne geçilmesine izin vermez.
-    
+### 3. Ödeme Sayfası
+- [ ] Checkout UI iyileştirmesi
+- [ ] "Misafir olarak devam et" özelliği
+- [ ] Adres yönetimi
 
-## 3. UI/UX Tasarım Rehberi (Kurumsal Kimlik Odaklı)
+### 4. Genel UI Gözden Geçirme
+- [ ] Dandelion Chocolate tarzı ürün detay sayfası
+- [ ] Çoklu görsel galerisi
+- [ ] Zengin box içeriği (kakao yüzdesi, menşei, tasting notes)
 
-Mevcut kurumsal renk paletiniz ve tasarım diliniz çerçevesinde sisteme eklenen dijital dokunuşlar:
+---
 
-### I. Görsel Hiyerarşi ve Tipografi
+## STRATEJİK VİZYON
 
-- **Font Seçimi:** Başlıklarda zanaatkar ve premium hissi veren yüksek kaliteli bir **Serif** font, gövde metinlerinde ise modern ve net bir **Sans-Serif** font kullanımı. Bu ikili yapı, markanın hem geleneksel ustalığını hem de modern teknolojisini simgeler.
-    
-- **Renk Uygulaması:** Tasarımda tamamen Sade Chocolate kurumsal renk paleti kullanılır. Arayüz elemanları (butonlar, ikonlar, bildirimler) bu renklerin kontrast değerlerine göre optimize edilir.
-    
+**Misyon:** Sade Chocolate'ın hedefi; operasyonel süreçlerdeki kusursuzluğu, "Kasti Minimalizm" tasarım felsefesiyle birleştirerek Türkiye'nin en rafine ve güvenilir dijital çikolata deneyimini sunmaktır.
 
-### II. Üretim Yolculuğu Arayüzü (The Storytelling UX)
+### Operasyonel Standartlar
+1. **Tazelik Şeffaflığı** - Müşteri sipariş takibinde tüm aşamaları görür
+2. **Hava Durumu Duyarlı Lojistik** - Sıcaklık eşiklerinde termal koruma
+3. **Üretim-Satış Senkronizasyonu** - Dinamik stok ve teslimat tahmini
+4. **Hediye Deneyimi** - Paketleme onayı zorunlu
 
-- Müşteri takip ekranında statik bir liste yerine, ürünün hazırlık aşamalarını (Onaylandı -> Hazırlanıyor -> Paketlendi -> Yola Çıktı) gösteren sade ve zarif mikro-animasyonlar yer alır.
-    
+### Gelecek Vizyonu
+- Omnichannel sadakat (online + mağaza)
+- Akıllı talep tahminleme
+- Dijital tadım rehberi (QR kod)
 
-### III. Personel Deneyimi (Invisible UX)
+---
 
-- Personel paneli, yüksek tempolu mutfak/depo ortamında hata payını azaltmak için "Sıfır Karmaşa" ilkesiyle çalışır. Kritik veriler (Alerjen uyarıları, VIP notlar) kurumsal vurgu renkleriyle öne çıkarılır.
-    
+## TEKNİK NOTLAR
 
-## 4. Teknik Mimari Özellikleri (OMS & FSM)
+- **Firebase:** Firestore veritabanı
+- **Hosting:** Firebase + Cloudflare
+- **Email:** Henüz karar verilmedi (Google Workspace / Cloudflare / Zoho önerildi)
 
-|   |   |   |
-|---|---|---|
-|**Özellik**|**Teknik Karşılığı**|**İş Değeri**|
-|**Sipariş Orkestrasyonu**|Event-Driven Architecture|Tüm birimlerin (mutfak, kurye, müşteri) eş zamanlı veri alması.|
-|**Durum Makinesi**|Finite State Machine (FSM)|Personelin her adımı onaylamasını sağlayan hatasız iş akışı.|
-|**Dinamik Sourcing**|Hevristik Rota Algoritması|Siparişin en taze ürüne sahip olan noktadan çıkışının sağlanması.|
-|**Thermal Guard**|Weather API Entegrasyonu|Hava sıcaklığına göre paketleme tipinin otomatik belirlenmesi.|
-
-## 5. Gelecek Vizyonu: Yeni Nesil Özellikler
-
-Sistemin ölçeklenebilirliğini artıracak yeni nesil eklentiler:
-
-- **Omnichannel (Çok Kanallı) Sadakat:** Online sipariş veren müşterinin, fiziksel mağaza ziyaretlerinde de aynı profil ve avantajlarla karşılanması.
-    
-- **Akıllı Talep Tahminleme:** Özel günlerde (Yılbaşı, Sevgililer Günü vb.) sistemin geçmiş verilere bakarak personel için "Hazırlık Önerisi" sunması.
-    
-- **Dijital Tadım Rehberi:** Paket üzerindeki QR kod okutulduğunda, o kutudaki ürünlerle uyumlu kahve veya eşlikçi önerilerinin sunulduğu interaktif bir deneyim.
-    
-
-**Sade Chocolate** dijital altyapısı, zanaatın değerini teknolojiyle koruyan ve markanın kurumsal duruşunu her etkileşimde hissettiren bir yapıya kavuşacaktır.
+logo düzenlenecek ve santana fontu kullanılacak
+giriş yap ve kayıt ol sayafası düzenlecek
+ödeme yap sayfası düzenlenecek ve misafir olarak devam et etkinleştirilecek
+genel olarak ui gözden geçirilecek
+acaba 300 satır limit kuralı konulsa mı? yoksa belli bir aralık mı belirlenmeli. 300-450 arası satır sayısı geçilmeyecek gibi.
+refactoring yapılacak dosyalar üzerine durulmalı.

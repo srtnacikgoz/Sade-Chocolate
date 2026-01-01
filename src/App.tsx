@@ -32,10 +32,10 @@ import { useLoyaltyStore } from './stores/loyaltyStore';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const isSplash = location.pathname === '/';
+  // Splash sayfası kaldırıldı - isSplash artık kullanılmıyor
   const isAdmin = location.pathname === '/admin' || location.pathname === '/seed-data';
   const isCheckout = location.pathname === '/checkout';
-  
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { t } = useLanguage();
@@ -43,10 +43,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-dark-900 transition-colors duration-300">
       <Toaster position="top-right" richColors closeButton expand={false} />
-      
+
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      
-      {!isSplash && (
+
+      {!isAdmin && (
         <div className="relative">
           <TopBar />
           <div
@@ -60,21 +60,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </div>
       )}
-      
+
       <div className="flex flex-col">
         {children}
       </div>
 
-      {!isSplash && !isAdmin && !isCheckout && <BottomNav />}
+      {!isAdmin && !isCheckout && <BottomNav />}
 
       {/* AI Asistan - Tüm sitede erişilebilir */}
-      {!isSplash && !isAdmin && !isCheckout && <AIAssistant />}
+      {!isAdmin && !isCheckout && <AIAssistant />}
 
       <CartDrawer />
       <SearchDrawer isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      {/* Newsletter Popup - Don't show on splash, admin, or checkout */}
-      {!isSplash && !isAdmin && !isCheckout && <NewsletterPopup />}
+      {/* Newsletter Popup - Don't show on admin or checkout */}
+      {!isAdmin && !isCheckout && <NewsletterPopup />}
     </div>
   );
 };

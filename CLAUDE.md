@@ -1,5 +1,16 @@
 # Sade Chocolate - Claude Code Kılavuzu
 
+## Oturum Başlangıcı
+
+**Her oturum başında `.claude/hedefler.md` dosyasını oku ve kullanıcıya:**
+1. Tamamlanan son özellikler
+2. Bekleyen hedefler
+3. Öncelikli görevler
+
+hakkında kısa bir özet sun.
+
+---
+
 ## Proje Hakkında
 Sade Chocolate e-ticaret platformu. React + TypeScript + Firebase + Tailwind CSS.
 

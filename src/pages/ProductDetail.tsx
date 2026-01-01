@@ -8,14 +8,16 @@ import { ShippingInfo } from '../components/ShippingInfo';
 import { NutritionalInfo } from '../components/NutritionalInfo';
 import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
-import { ViewMode } from '../types';
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, 
-  ResponsiveContainer 
+import { ViewMode, GiftNoteTemplate } from '../types';
+import {
+  Radar, RadarChart, PolarGrid, PolarAngleAxis,
+  ResponsiveContainer
 } from 'recharts';
 import { ChevronLeft, ChevronRight, Milk, Bean, Square, Nut, Cherry, Coffee, Sparkles, Cookie, Flame, IceCream, Wand2, Heart, Gift as GiftIcon, Star } from 'lucide-react';
-import { giftNoteTemplates, Emotion } from '../constants/giftNoteTemplates';
-import { generateGiftNotes } from '../utils/giftNoteGenerator';
+import { Emotion } from '../constants/giftNoteTemplates';
+import { generateGiftNotes, generateGiftNotesFromFirebase } from '../utils/giftNoteGenerator';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 // İkon Eşleştirme Yardımcısı
 const AttributeIcon = ({ iconId }: { iconId: string }) => {
@@ -70,12 +72,43 @@ export const ProductDetail: React.FC = () => {
   const { t } = useLanguage();
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(null);
   const [generatedNotes, setGeneratedNotes] = useState<Record<string, string> | null>(null);
+  const [giftTemplates, setGiftTemplates] = useState<GiftNoteTemplate[]>([]);
+
+  // Firebase'den hediye notu şablonlarını çek
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const q = query(collection(db, 'gift_note_templates'), where('active', '==', true));
+        const snapshot = await getDocs(q);
+        const templates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GiftNoteTemplate[];
+        setGiftTemplates(templates);
+      } catch (error) {
+        console.error('Hediye şablonları yüklenemedi:', error);
+      }
+    };
+    fetchTemplates();
+  }, []);
   
   
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'ingredients' | 'shipping'>('desc');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
+
+  // Ana görsel + galeri görselleri birleştirilmiş liste
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    const images: string[] = [];
+    if (product.image) images.push(product.image); // Ana görsel ilk sırada
+    if (product.images && product.images.length > 0) {
+      // Galeri görsellerini ekle (ana görselle aynı değilse)
+      product.images.forEach(img => {
+        if (img !== product.image) images.push(img);
+      });
+    }
+    return images;
+  }, [product]);
   
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -95,6 +128,7 @@ export const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setSelectedImageIndex(0); // Ürün değiştiğinde ilk görsele dön
   }, [id]);
 
   if (!product) {
@@ -124,8 +158,9 @@ export const ProductDetail: React.FC = () => {
 
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
           
-          {/* Left Side: Visuals */}
-          <div className="space-y-8">
+          {/* Left Side: Visuals - Dandelion Tarzı Galeri */}
+          <div className="space-y-6">
+            {/* Ana Görsel */}
             <div className="relative aspect-square lg:aspect-[4/5] bg-gray-50 dark:bg-dark-800 rounded-[50px] overflow-hidden shadow-luxurious border border-gray-100 dark:border-gray-800 group">
               {isOut && (
                 <div className="absolute inset-0 z-20 bg-white/80 dark:bg-black/80 flex flex-col items-center justify-center">
@@ -137,15 +172,38 @@ export const ProductDetail: React.FC = () => {
               {product.video ? (
                 <video src={product.video} autoPlay loop muted playsInline className="w-full h-full object-cover" />
               ) : (
-                <img src={product.image} alt={product.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-[2s]" />
+                <img
+                  src={allImages[selectedImageIndex] || product.image}
+                  alt={product.title}
+                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                />
               )}
-              <button 
+              <button
                 onClick={() => toggleFavorite(product.id)}
                 className={`absolute top-8 right-8 z-30 w-14 h-14 rounded-full flex items-center justify-center shadow-xl backdrop-blur-md transition-all ${isFav ? 'bg-red-500 text-white scale-110' : 'bg-white/90 dark:bg-dark-900/90 text-gray-400 hover:text-red-500'}`}
               >
                 <span className="material-icons-outlined text-2xl">{isFav ? 'favorite' : 'favorite_border'}</span>
               </button>
             </div>
+
+            {/* Thumbnail Galeri (Dandelion Tarzı) */}
+            {allImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+                {allImages.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden border-2 transition-all duration-300 ${
+                      selectedImageIndex === index
+                        ? 'border-gold shadow-lg scale-105'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`${product.title} - ${index + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
             
             {/* Value Badges: Dinamik Admin Seçimi */}
             <div className="grid grid-cols-3 gap-6">
@@ -183,8 +241,18 @@ export const ProductDetail: React.FC = () => {
     </span>
   ))}
 </h1>
-              {/* Läderach Stil İkonlu İçerik Etiketleri */}
-{product.attributes && product.attributes.length > 0 && (
+              {/* Tablet Ürünler: Dandelion Tarzı Minimal Tasting Notes */}
+{product.productType === 'tablet' && product.tastingNotes && (
+  <div className="mt-6 mb-10">
+    <p className="text-[10px] font-bold text-gold uppercase tracking-[0.3em] mb-3">Tadım Notları</p>
+    <p className="font-display text-xl lg:text-2xl italic text-gray-600 dark:text-gray-300 leading-relaxed">
+      "{product.tastingNotes}"
+    </p>
+  </div>
+)}
+
+{/* Diğer Ürünler: Läderach Stil İkonlu İçerik Etiketleri */}
+{product.productType !== 'tablet' && product.attributes && product.attributes.length > 0 && (
   <div className="flex flex-wrap gap-5 mt-4 mb-10">
     {product.attributes.map(attr => {
       const [name, iconId] = attr.includes('|') ? attr.split('|') : [attr, 'special'];
@@ -282,24 +350,34 @@ export const ProductDetail: React.FC = () => {
         <h5 className="flex items-center justify-center gap-3 text-sm font-bold text-gray-500 mb-6 tracking-widest uppercase"><Wand2 size={16} className="text-gold" /> AI Sommelier Soruyor</h5>
         <p className="font-display text-2xl italic mb-8">Kime ve hangi duyguyla gönderiyorsunuz?</p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          {(Object.keys(giftNoteTemplates) as Emotion[]).map((emotion) => {
-            const emotionData = {
-              love: { label: 'Aşk & Tutku', icon: <Heart size={18}/> },
-              gratitude: { label: 'Teşekkür & Minnet', icon: <GiftIcon size={18}/> },
-              celebration: { label: 'Kutlama & Başarı', icon: <Star size={18}/> },
-            }[emotion];
-            
+          {(giftTemplates.length > 0 ? giftTemplates : [
+            { emotion: 'love' as Emotion, emotionLabel: { tr: 'Aşk & Tutku', en: 'Love' } },
+            { emotion: 'gratitude' as Emotion, emotionLabel: { tr: 'Teşekkür & Minnet', en: 'Gratitude' } },
+            { emotion: 'celebration' as Emotion, emotionLabel: { tr: 'Kutlama & Başarı', en: 'Celebration' } },
+          ]).map((template) => {
+            const emotionIcons = {
+              love: <Heart size={18}/>,
+              gratitude: <GiftIcon size={18}/>,
+              celebration: <Star size={18}/>,
+            };
+
             return (
-              <button 
-                key={emotion}
+              <button
+                key={template.emotion}
                 onClick={() => {
-                  setSelectedEmotion(emotion);
-                  setGeneratedNotes(generateGiftNotes(product, emotion));
+                  setSelectedEmotion(template.emotion);
+                  // Firebase şablonu varsa onu kullan, yoksa fallback
+                  const firebaseTemplate = giftTemplates.find(t => t.emotion === template.emotion);
+                  if (firebaseTemplate) {
+                    setGeneratedNotes(generateGiftNotesFromFirebase(product, firebaseTemplate));
+                  } else {
+                    setGeneratedNotes(generateGiftNotes(product, template.emotion));
+                  }
                 }}
                 className="flex-1 p-6 bg-white dark:bg-dark-800 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:border-gold/30 dark:hover:border-gold/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-4"
               >
-                <span className="text-gold">{emotionData.icon}</span>
-                <span className="font-bold text-sm text-mocha-900 dark:text-gray-200">{emotionData.label}</span>
+                <span className="text-gold">{emotionIcons[template.emotion]}</span>
+                <span className="font-bold text-sm text-mocha-900 dark:text-gray-200">{template.emotionLabel.tr}</span>
               </button>
             );
           })}
@@ -428,26 +506,57 @@ export const ProductDetail: React.FC = () => {
         className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory gap-6 pb-8 touch-pan-x scroll-smooth"
       >
         {product.boxItems.map((item) => (
-          <div 
-  key={item.id} 
-  className="flex-shrink-0 w-[150px] lg:w-[180px] snap-start flex flex-col items-center text-center group"
->
-  {/* Görsel: Marcolini & Sade Stil - Tam Yuvarlak (rounded-full) */}
-  <div className="w-24 h-24 sm:w-32 sm:h-32 mb-6 rounded-full shadow-luxurious border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-dark-800 transition-transform duration-700 group-hover:scale-110">
-          <img 
-                src={item.image} 
-                alt={item.name} 
-                className="w-full h-full object-contain p-2" 
+          <div
+            key={item.id}
+            className="flex-shrink-0 w-[180px] lg:w-[220px] snap-start flex flex-col items-center text-center group"
+          >
+            {/* Görsel: Dandelion & Sade Stil */}
+            <div className="w-28 h-28 sm:w-36 sm:h-36 mb-6 rounded-full shadow-luxurious border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-dark-800 transition-transform duration-700 group-hover:scale-110">
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-full h-full object-contain p-2"
               />
             </div>
-            
-            {/* Metinler: Daha sıkı ve zarif dizilim */}
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-brown-900 dark:text-gold mb-2 h-8 flex items-center justify-center">
+
+            {/* Yüzde ve Menşei (Dandelion Tarzı) */}
+            {(item.percentage || item.origin) && (
+              <div className="flex items-center justify-center gap-2 mb-3">
+                {item.percentage && (
+                  <span className="text-gold font-bold text-sm">{item.percentage}%</span>
+                )}
+                {item.percentage && item.origin && (
+                  <span className="text-gray-300">•</span>
+                )}
+                {item.origin && (
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{item.origin}</span>
+                )}
+              </div>
+            )}
+
+            {/* İsim */}
+            <h4 className="text-[11px] font-black uppercase tracking-widest text-brown-900 dark:text-gold mb-2">
               {item.name}
             </h4>
-            <p className="text-[10px] leading-relaxed text-gray-500 dark:text-gray-400 italic line-clamp-3 px-2">
+
+            {/* Açıklama */}
+            <p className="text-[10px] leading-relaxed text-gray-500 dark:text-gray-400 italic line-clamp-2 px-2 mb-3">
               {item.description}
             </p>
+
+            {/* Tasting Notes (Dandelion Tarzı) */}
+            {item.tastingNotes && item.tastingNotes.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-1.5 px-2">
+                {item.tastingNotes.map((note, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[8px] font-bold uppercase tracking-wider text-gold/80 bg-gold/10 px-2 py-1 rounded-full"
+                  >
+                    {note}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

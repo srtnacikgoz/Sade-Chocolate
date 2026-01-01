@@ -32,7 +32,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
 
         {/* Desktop Navigation (Center) - Logo as First Item */}
         <nav className="hidden lg:flex items-center space-x-10 absolute left-1/2 transform -translate-x-1/2">
-          <Link to="/home" className="flex items-center gap-2 group">
+          <Link to="/home" className="flex items-center gap-3 group">
+            <img
+              src="/kakaoLogo.svg"
+              alt="Sade Chocolate"
+              className="w-9 h-9 opacity-80 group-hover:opacity-100 transition-opacity dark:invert"
+            />
             <div className="font-display font-bold text-xl lg:text-2xl tracking-tight">
               <span className="text-brown-900 dark:text-white group-hover:text-gold transition-colors">Sade</span> <span className="font-medium italic text-gold group-hover:text-brown-900 dark:group-hover:text-white transition-colors">Chocolate</span>
             </div>
@@ -50,7 +55,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
 
         {/* Mobile Logo (Center) */}
         <Link to="/home" className="lg:hidden flex items-center gap-2 group absolute left-1/2 transform -translate-x-1/2">
-          <div className="font-display font-bold text-xl tracking-tight">
+          <img
+            src="/kakaoLogo.svg"
+            alt="Sade Chocolate"
+            className="w-7 h-7 opacity-80 group-hover:opacity-100 transition-opacity dark:invert"
+          />
+          <div className="font-display font-bold text-lg tracking-tight">
             <span className="text-brown-900 dark:text-white group-hover:text-gold transition-colors">Sade</span> <span className="font-medium italic text-gold group-hover:text-brown-900 dark:group-hover:text-white transition-colors">Chocolate</span>
           </div>
         </Link>

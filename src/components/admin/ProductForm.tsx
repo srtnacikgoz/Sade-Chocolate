@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Product, BoxItem, ProductBadge } from '../../types';
+import { Product, BoxItem, ProductBadge, ProductType } from '../../types';
 import { PRODUCT_CATEGORIES } from '../../constants';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -66,6 +66,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     description: '', detailedDescription: '', tastingNotes: '', ingredients: '', allergens: '',
     isOutOfStock: false, locationStock: { yesilbahce: 0 },
     boxItems: [],
+    images: [], // ✅ Dandelion tarzı çoklu görsel galerisi
+    productType: 'other' as ProductType, // ✅ Ürün tipi: tablet, filled, other
     showSensory: true, // ✅ Varsayılan açık
     attributes: [], // ✅ Boş özellik dizisi
     nutritionalValues: '', // ✅ Besin değerleri
@@ -75,9 +77,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
 
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingAlternate, setIsUploadingAlternate] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [uploadingBoxIndex, setUploadingBoxIndex] = useState<number | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [dragActiveAlternate, setDragActiveAlternate] = useState(false);
+  const [dragActiveGallery, setDragActiveGallery] = useState(false);
   const [newAttr, setNewAttr] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('special'); // Varsayılan ikon
   // ✅ Dinamik Lezzet Havuzu (Başlangıçta boş veya temel öğelerle başlayabilir)
@@ -202,6 +206,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const alternateFileInputRef = useRef<HTMLInputElement>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ GERÇEK YÜKLEME FONKSİYONU
   const uploadImage = async (file: File) => {
@@ -282,6 +287,60 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     if (e.target.files && e.target.files[0]) {
       uploadAlternateImage(e.target.files[0]);
     }
+  };
+
+  // ✅ GALERİ GÖRSEL YÜKLEME FONKSİYONLARI (Dandelion Tarzı)
+  const uploadGalleryImage = async (file: File) => {
+    try {
+      setIsUploadingGallery(true);
+      const storageRef = ref(storage, `products/gallery/${Date.now()}-${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      setFormData((prev: any) => ({
+        ...prev,
+        images: [...(prev.images || []), downloadURL]
+      }));
+      toast.success("Galeri görseli eklendi! 🖼️");
+    } catch (error) {
+      toast.error("Galeri görseli yüklenemedi.");
+      console.error(error);
+    } finally {
+      setIsUploadingGallery(false);
+    }
+  };
+
+  const handleDragGallery = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActiveGallery(true);
+    else if (e.type === "dragleave") setDragActiveGallery(false);
+  };
+
+  const handleDropGallery = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActiveGallery(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      // Birden fazla dosya yüklenebilir
+      Array.from(files).forEach(file => uploadGalleryImage(file));
+    }
+  };
+
+  const onGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(file => uploadGalleryImage(file));
+    }
+  };
+
+  const removeGalleryImage = (indexToRemove: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      images: prev.images.filter((_: string, i: number) => i !== indexToRemove)
+    }));
+    toast.info("Görsel galeriden kaldırıldı");
   };
 
   const uploadBoxItemImage = async (file: File, index: number) => {
@@ -371,6 +430,57 @@ const addAttribute = () => {
               <p className="text-[7px] text-slate-300 mt-1">İsteğe bağlı</p>
             </div>
           </div>
+
+          {/* ✅ Galeri Görselleri (Dandelion Tarzı) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Galeri Görselleri</label>
+              <span className="text-[9px] text-slate-300">{formData.images?.length || 0} görsel</span>
+            </div>
+
+            {/* Mevcut Galeriler */}
+            {formData.images && formData.images.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.images.map((img: string, index: number) => (
+                  <div key={index} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+                    <img src={img} alt={`Galeri ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(index)}
+                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <CloseIcon size={16} className="text-white" />
+                    </button>
+                    {index === 0 && (
+                      <span className="absolute bottom-0 left-0 right-0 bg-gold text-white text-[6px] text-center py-0.5 font-black">ANA</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Galeri Yükleme Alanı */}
+            <div
+              onDragEnter={handleDragGallery} onDragLeave={handleDragGallery} onDragOver={handleDragGallery} onDrop={handleDropGallery}
+              onClick={() => !isUploadingGallery && galleryFileInputRef.current?.click()}
+              className={`relative group h-24 rounded-[24px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer
+                ${dragActiveGallery ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50/50 hover:border-emerald-500/50'}
+                ${isUploadingGallery ? 'cursor-wait opacity-70' : ''}`}
+            >
+              <input ref={galleryFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={onGalleryFileChange} />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                  {isUploadingGallery ? <Loader2 className="animate-spin text-emerald-500" size={18} /> : <Plus className="text-slate-400" size={18} />}
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                    {isUploadingGallery ? 'YÜKLENİYOR...' : 'GÖRSEL EKLE'}
+                  </p>
+                  <p className="text-[7px] text-slate-300">Birden fazla seçebilirsiniz</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sağ: Temel Bilgiler */}
@@ -416,6 +526,37 @@ const addAttribute = () => {
                   {badges.find(b => b.id === formData.badge)!.name.tr}
                 </div>
               )}
+            </div>
+          </div>
+
+         {/* --- ÜRÜN TİPİ SEÇİMİ (Tablet vs Diğer) --- */}
+          <div className="bg-gradient-to-r from-gold/5 to-amber-50 p-8 rounded-[40px] border border-gold/20 space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-gold uppercase tracking-widest">Ürün Tipi</label>
+              <span className="text-[9px] text-slate-400 italic">Tablet ürünler Dandelion tarzı minimal görünüm kullanır</span>
+            </div>
+            <div className="flex gap-3">
+              {[
+                { id: 'tablet', label: 'Tablet', desc: 'Dandelion tarzı minimal layout' },
+                { id: 'filled', label: 'Dolgulu', desc: 'Pralin, truffle vb.' },
+                { id: 'other', label: 'Diğer', desc: 'Standart görünüm' }
+              ].map(type => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, productType: type.id })}
+                  className={`flex-1 p-4 rounded-2xl border-2 transition-all text-left ${
+                    formData.productType === type.id
+                      ? 'border-gold bg-white shadow-lg'
+                      : 'border-slate-200 bg-white/50 hover:border-gold/50'
+                  }`}
+                >
+                  <p className={`text-sm font-bold ${formData.productType === type.id ? 'text-gold' : 'text-slate-600'}`}>
+                    {type.label}
+                  </p>
+                  <p className="text-[9px] text-slate-400 mt-1">{type.desc}</p>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -664,10 +805,18 @@ const addAttribute = () => {
       </div>
       <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Kutu İçeriği (Marcolini Stil)</span>
     </div>
-    <button 
+    <button
       type="button"
       onClick={() => {
-        const newItem: BoxItem = { id: `bi-${Date.now()}`, name: '', description: '', image: 'https://placehold.co/400x400/png?text=Sade' };
+        const newItem: BoxItem = {
+          id: `bi-${Date.now()}`,
+          name: '',
+          description: '',
+          image: 'https://placehold.co/400x400/png?text=Sade',
+          percentage: undefined,
+          origin: '',
+          tastingNotes: []
+        };
         setFormData({ ...formData, boxItems: [...(formData.boxItems || []), newItem] });
       }}
       className="flex items-center gap-2 px-4 py-2 bg-white text-gold border border-gold/20 rounded-full text-[10px] font-black uppercase hover:bg-gold hover:text-white transition-all shadow-sm"
@@ -676,52 +825,94 @@ const addAttribute = () => {
     </button>
   </div>
 
-  <div className="grid gap-3">
+  <div className="grid gap-4">
     {formData.boxItems?.map((item: BoxItem, index: number) => (
-      <div key={item.id} className="flex items-center gap-4 p-3 bg-white rounded-2xl border border-slate-100 group hover:shadow-md transition-all">
-        {/* Görsel Yükleme Alanı */}
-        <div 
-          onClick={() => document.getElementById(`box-file-${index}`)?.click()}
-          className="relative w-14 h-14 rounded-full bg-slate-100 flex-shrink-0 cursor-pointer overflow-hidden border-2 border-white shadow-inner"
-        >
-          {uploadingBoxIndex === index ? (
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center"><Loader2 className="animate-spin text-white" size={16} /></div>
-          ) : (
-            <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
-          )}
-          <input id={`box-file-${index}`} type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadBoxItemImage(e.target.files[0], index)} />
-        </div>
+      <div key={item.id} className="p-4 bg-white rounded-2xl border border-slate-100 group hover:shadow-md transition-all">
+        <div className="flex items-start gap-4">
+          {/* Görsel Yükleme Alanı */}
+          <div
+            onClick={() => document.getElementById(`box-file-${index}`)?.click()}
+            className="relative w-16 h-16 rounded-xl bg-slate-100 flex-shrink-0 cursor-pointer overflow-hidden border-2 border-white shadow-inner"
+          >
+            {uploadingBoxIndex === index ? (
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center"><Loader2 className="animate-spin text-white" size={16} /></div>
+            ) : (
+              <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
+            )}
+            <input id={`box-file-${index}`} type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadBoxItemImage(e.target.files[0], index)} />
+          </div>
 
-        <div className="flex-1 space-y-1">
-          <input 
-            value={item.name}
-            onChange={(e) => {
-              const newItems = [...formData.boxItems];
-              newItems[index].name = e.target.value;
-              setFormData({ ...formData, boxItems: newItems });
-            }}
-            placeholder="Lezzet Adı (Örn: Tuzlu Karamel)"
-            className="w-full bg-transparent text-[12px] font-bold text-slate-700 outline-none placeholder:text-slate-300"
-          />
-          <input 
-            value={item.description}
-            onChange={(e) => {
-              const newItems = [...formData.boxItems];
-              newItems[index].description = e.target.value;
-              setFormData({ ...formData, boxItems: newItems });
-            }}
-            placeholder="Kısa açıklama..."
-            className="w-full bg-transparent text-[10px] text-slate-400 outline-none italic"
-          />
-        </div>
+          {/* Ana Bilgiler */}
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                value={item.name}
+                onChange={(e) => {
+                  const newItems = [...formData.boxItems];
+                  newItems[index].name = e.target.value;
+                  setFormData({ ...formData, boxItems: newItems });
+                }}
+                placeholder="Lezzet Adı (Örn: Anamalai)"
+                className="flex-1 bg-slate-50 rounded-lg px-3 py-2 text-[11px] font-bold text-slate-700 outline-none placeholder:text-slate-300"
+              />
+              <input
+                type="number"
+                value={item.percentage || ''}
+                onChange={(e) => {
+                  const newItems = [...formData.boxItems];
+                  newItems[index].percentage = e.target.value ? parseInt(e.target.value) : undefined;
+                  setFormData({ ...formData, boxItems: newItems });
+                }}
+                placeholder="%"
+                className="w-16 bg-slate-50 rounded-lg px-2 py-2 text-[11px] font-bold text-gold text-center outline-none placeholder:text-slate-300"
+              />
+            </div>
 
-        <button 
-          type="button"
-          onClick={() => setFormData({ ...formData, boxItems: formData.boxItems.filter((_: any, i: number) => i !== index) })}
-          className="p-2 text-slate-200 hover:text-red-500 hover:bg-red-50/50 rounded-full transition-all"
-        >
-          <Trash2 size={16} />
-        </button>
+            <div className="flex items-center gap-2">
+              <input
+                value={item.origin || ''}
+                onChange={(e) => {
+                  const newItems = [...formData.boxItems];
+                  newItems[index].origin = e.target.value;
+                  setFormData({ ...formData, boxItems: newItems });
+                }}
+                placeholder="Menşei (Örn: India, Tanzania)"
+                className="flex-1 bg-slate-50 rounded-lg px-3 py-1.5 text-[10px] text-slate-500 outline-none placeholder:text-slate-300"
+              />
+            </div>
+
+            <input
+              value={item.description}
+              onChange={(e) => {
+                const newItems = [...formData.boxItems];
+                newItems[index].description = e.target.value;
+                setFormData({ ...formData, boxItems: newItems });
+              }}
+              placeholder="Kısa açıklama..."
+              className="w-full bg-slate-50 rounded-lg px-3 py-1.5 text-[10px] text-slate-400 outline-none italic placeholder:text-slate-300"
+            />
+
+            {/* Tasting Notes */}
+            <input
+              value={item.tastingNotes?.join(', ') || ''}
+              onChange={(e) => {
+                const newItems = [...formData.boxItems];
+                newItems[index].tastingNotes = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+                setFormData({ ...formData, boxItems: newItems });
+              }}
+              placeholder="Tadım notları (virgülle ayırın: kumquat, hojicha, vanilya)"
+              className="w-full bg-gold/5 border border-gold/10 rounded-lg px-3 py-1.5 text-[10px] text-gold outline-none placeholder:text-gold/40"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, boxItems: formData.boxItems.filter((_: any, i: number) => i !== index) })}
+            className="p-2 text-slate-200 hover:text-red-500 hover:bg-red-50/50 rounded-full transition-all"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
     ))}
   </div>
