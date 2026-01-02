@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
@@ -22,6 +22,19 @@ const addresses = user?.addresses || []; // Veriyi doğrudan kullanıcı profili
   const { t, language } = useLanguage();
   const navigate = useNavigate();
 
+  // Guest mode state
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [guestData, setGuestData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    phoneCountry: '+90', // Varsayılan Türkiye
+    city: '',
+    district: '',
+    address: ''
+  });
+
   const [currentStep, setCurrentStep] = useState<1 | 2>(1); // 1: Teslimat, 2: Ödeme
 const [paymentMethod, setPaymentMethod] = useState<'card' | 'eft'>('card');
 const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -29,6 +42,21 @@ const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
 const [editingAddress, setEditingAddress] = useState<any>(null);
 const [invoiceType, setInvoiceType] = useState<'individual' | 'corporate'>('individual');
 const [isSameAsDelivery, setIsSameAsDelivery] = useState(true);
+const [vergiNo, setVergiNo] = useState(''); // Vergi no state (max 10 hane)
+
+  // Guest form validation
+  const isGuestFormValid = useMemo(() => {
+    if (!isGuestMode) return true;
+    return !!(
+      guestData.firstName?.trim() &&
+      guestData.lastName?.trim() &&
+      guestData.email?.trim() &&
+      guestData.phone?.trim() &&
+      guestData.city?.trim() &&
+      guestData.district?.trim() &&
+      guestData.address?.trim()
+    );
+  }, [isGuestMode, guestData]);
 
 // Kargo Hesaplama Mantığı
 const freeShippingLimit = settings?.freeShippingLimit || 1500;
@@ -154,14 +182,49 @@ const grandTotal = cartTotal + shippingCost;
     if (errors.cardCvv) setErrors(prev => ({ ...prev, cardCvv: '' }));
   };
 
-  const handleCompleteOrder = () => {
-    const newErrors: Record<string, string> = {};
-    if (!selectedAddressId) {
-      newErrors.address = t('fill_delivery_info');
-      setCurrentStep(1);
+  // Telefon numarası formatla
+  const formatPhoneNumber = (value: string, countryCode: string) => {
+    const digits = value.replace(/\D/g, '');
+
+    if (countryCode === '+90') {
+      // TR format: 533 342 04 93 (10 digit)
+      const limited = digits.substring(0, 10);
+      if (limited.length <= 3) return limited;
+      if (limited.length <= 6) return `${limited.slice(0, 3)} ${limited.slice(3)}`;
+      if (limited.length <= 8) return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+      return `${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6, 8)} ${limited.slice(8)}`;
     }
+
+    // Diğer ülkeler için basit format (max 15 digit)
+    return digits.substring(0, 15);
+  };
+
+  const handleCompleteOrder = async () => {
+    const newErrors: Record<string, string> = {};
+
+    // Guest mode validations
+    if (isGuestMode) {
+      if (!guestData.firstName || !guestData.lastName) {
+        newErrors.address = "Lütfen ad ve soyadınızı girin.";
+      }
+      if (!guestData.email) {
+        newErrors.email = "Lütfen e-posta adresinizi girin.";
+      }
+      if (!guestData.phone) {
+        newErrors.phone = "Lütfen telefon numaranızı girin.";
+      }
+      if (!guestData.city || !guestData.district || !guestData.address) {
+        newErrors.address = "Lütfen teslimat adresinizi eksiksiz girin.";
+      }
+    } else {
+      if (!selectedAddressId) {
+        newErrors.address = t('fill_delivery_info');
+        setCurrentStep(1);
+      }
+    }
+
     if (!agreedToTerms) newErrors.terms = language === 'tr' ? "Lütfen satış sözleşmesini onaylayın." : "Please agree to the terms.";
-    
+
     if (currentStep === 2 && paymentMethod === 'card') {
       const cleanNum = cardData.number.replace(/\s/g, '');
       if (cleanNum.length < 16) newErrors.cardNum = language === 'tr' ? "Geçersiz kart numarası." : "Invalid card number.";
@@ -176,7 +239,41 @@ const grandTotal = cartTotal + shippingCost;
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
+
+    try {
+      if (isGuestMode) {
+        // Guest sipariş oluştur
+        const { addDoc, collection } = await import('firebase/firestore');
+        await addDoc(collection(db, 'orders'), {
+          orderId: `SADE-${orderId}`,
+          customerEmail: guestData.email,
+          customerName: `${guestData.firstName} ${guestData.lastName}`,
+          customerPhone: guestData.phone,
+          shippingAddress: {
+            city: guestData.city,
+            district: guestData.district,
+            address: guestData.address
+          },
+          items: items.map(item => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image
+          })),
+          subtotal: cartTotal,
+          shippingCost,
+          bankTransferDiscount: bankTransferDiscount > 0 ? bankTransferDiscount : undefined,
+          total: finalTotal,
+          paymentMethod,
+          paymentDeadline: paymentMethod === 'eft' ? new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() : undefined,
+          status: paymentMethod === 'eft' ? 'Ödeme Bekleniyor' : 'Hazırlanıyor',
+          isGuest: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      } else {
+        // Kayıtlı kullanıcı siparişi
         addOrder({
           id: `SADE-${orderId}`,
           date: new Date().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US'),
@@ -188,13 +285,18 @@ const grandTotal = cartTotal + shippingCost;
           paymentMethod: paymentMethod,
           paymentDeadline: paymentMethod === 'eft' ? new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() : undefined,
           items: [...items],
-          // Add gift info if needed for backend
         });
-        setIsSuccess(true);
-        setIsSubmitting(false);
-        clearCart();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+      }
+
+      setIsSuccess(true);
+      clearCart();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error('Order creation error:', error);
+      setErrors({ general: 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
 // ✅ TEK VE STABİL MUHAFIZ: Oturum doğrulanırken sabırla bekle
@@ -209,10 +311,44 @@ const grandTotal = cartTotal + shippingCost;
     );
   }
 
-  // Oturum kontrolü bitti (loading=false) ve hala giriş yoksa kapıya yönlendir
-  if (!isLoggedIn) {
-    navigate('/login-gateway');
-    return null;
+  // Kullanıcı giriş yapmamışsa ve guest mode seçmemişse, seçim ekranı göster
+  if (!isLoggedIn && !isGuestMode) {
+    return (
+      <main className="min-h-screen w-full flex items-center justify-center bg-cream-100 dark:bg-dark-900 px-4 animate-fade-in">
+        <div className="max-w-2xl w-full space-y-8">
+          <div className="text-center space-y-4">
+            <h2 className="font-display text-5xl font-bold italic dark:text-white">Nasıl Devam Etmek İstersiniz?</h2>
+            <p className="text-sm text-gray-400 uppercase tracking-widest">Siparişinizi tamamlamak için bir seçenek belirleyin</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Giriş Yap */}
+            <button
+              onClick={() => navigate('/login-gateway')}
+              className="p-10 bg-white dark:bg-dark-800 rounded-3xl border-2 border-gray-100 dark:border-gray-700 hover:border-brown-900 dark:hover:border-gold transition-all group"
+            >
+              <div className="w-16 h-16 mx-auto mb-6 bg-brown-900 dark:bg-gold rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <User className="text-white dark:text-black" size={32} />
+              </div>
+              <h3 className="font-display text-2xl font-bold italic mb-3 dark:text-white">Giriş Yap</h3>
+              <p className="text-xs text-gray-400 leading-relaxed">Hesabınızla giriş yapın ve kayıtlı adreslerinizi kullanın</p>
+            </button>
+
+            {/* Misafir Olarak Devam Et */}
+            <button
+              onClick={() => setIsGuestMode(true)}
+              className="p-10 bg-gradient-to-br from-gold/5 to-brown-900/5 dark:from-gold/10 dark:to-gold/5 rounded-3xl border-2 border-gold/20 hover:border-gold transition-all group"
+            >
+              <div className="w-16 h-16 mx-auto mb-6 bg-gold rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ShieldCheck className="text-white" size={32} />
+              </div>
+              <h3 className="font-display text-2xl font-bold italic mb-3 dark:text-white">Misafir Olarak Devam Et</h3>
+              <p className="text-xs text-gray-400 leading-relaxed">Hızlıca sipariş verin, hesap oluşturmaya gerek yok</p>
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
 
@@ -231,9 +367,25 @@ const grandTotal = cartTotal + shippingCost;
         <p className="text-base text-gray-500 dark:text-gray-400 mb-10 max-w-sm mx-auto leading-relaxed">
             {t('order_success_msg')} <strong className="text-brown-900 dark:text-gold block mt-2 text-3xl font-display tracking-tight">#SADE-{orderId}</strong>
         </p>
-        <Button onClick={() => navigate('/account')} size="lg" className="px-16 h-16 rounded-xl shadow-2xl">
-            {language === 'tr' ? 'SİPARİŞLERİME GİT' : 'MY ORDERS'}
-        </Button>
+        {isGuestMode ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
+              Sipariş detaylarınız <strong className="text-brown-900 dark:text-gold">{guestData.email}</strong> adresine gönderildi.
+            </p>
+            <div className="flex gap-4">
+              <Button onClick={() => navigate('/catalog')} size="lg" className="px-12 h-16 rounded-xl shadow-2xl">
+                ALIŞVERİŞE DEVAM ET
+              </Button>
+              <Button onClick={() => navigate('/register')} variant="outline" size="lg" className="px-12 h-16 rounded-xl">
+                HESAP OLUŞTUR
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button onClick={() => navigate('/account')} size="lg" className="px-16 h-16 rounded-xl shadow-2xl">
+              {language === 'tr' ? 'SİPARİŞLERİME GİT' : 'MY ORDERS'}
+          </Button>
+        )}
       </main>
     );
   }
@@ -256,16 +408,130 @@ const grandTotal = cartTotal + shippingCost;
 </div>
 
       <div className="grid lg:grid-cols-3 gap-12 lg:gap-20">
-        
+
         {/* Forms Side */}
         {currentStep === 1 ? (
   /* ADIM 1: TESLİMAT ADRESİ */
-  <section className="animate-in slide-in-from-left-4 duration-500">
-    <div className="flex items-center gap-4 mb-10">
+  <section className="animate-in slide-in-from-left-4 duration-500 lg:col-span-2">
+    {/* Başlık modal dışında */}
+    <div className="flex items-center gap-4 mb-8">
       <MapPin className="text-gold" size={28} />
-      <h2 className="font-display text-4xl font-bold italic dark:text-white">Teslimat Adresi</h2>
+      <h2 className="font-display text-4xl font-bold italic dark:text-white">Teslimat Bilgileri</h2>
     </div>
-{!isAddressFormOpen ? (
+
+{/* Guest Mode Form */}
+{isGuestMode ? (
+  <div className="bg-white dark:bg-dark-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 space-y-6 animate-in fade-in">
+    <div className="flex items-center gap-3 p-4 bg-gold/5 rounded-2xl border border-gold/20">
+      <ShieldCheck className="text-gold" size={20} />
+      <p className="text-xs text-gray-600 dark:text-gray-300">Misafir olarak devam ediyorsunuz. Sipariş bilgileriniz e-posta adresinize gönderilecektir.</p>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-4">
+      <Input
+        label="ADINIZ"
+        placeholder="Can"
+        className="h-16 rounded-2xl"
+        required
+        value={guestData.firstName}
+        onChange={(e) => setGuestData({...guestData, firstName: e.target.value})}
+      />
+      <Input
+        label="SOYADINIZ"
+        placeholder="Yılmaz"
+        className="h-16 rounded-2xl"
+        required
+        value={guestData.lastName}
+        onChange={(e) => setGuestData({...guestData, lastName: e.target.value})}
+      />
+    </div>
+
+    <Input
+      label="E-POSTA ADRESİ"
+      type="email"
+      placeholder="isim@ornek.com"
+      className="h-16 rounded-2xl"
+      required
+      value={guestData.email}
+      onChange={(e) => setGuestData({...guestData, email: e.target.value})}
+    />
+
+    {/* Telefon input - ülke kodu dropdown + formatlanmış input */}
+    <div className="space-y-2">
+      <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
+        TELEFON
+      </label>
+      <div className="flex gap-2">
+        {/* Ülke kodu dropdown */}
+        <select
+          value={guestData.phoneCountry}
+          onChange={(e) => setGuestData({...guestData, phoneCountry: e.target.value, phone: ''})}
+          className="h-16 px-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 font-medium focus:outline-none focus:ring-2 focus:ring-brown-500 dark:focus:ring-gold transition-all"
+          style={{ width: '110px' }}
+        >
+          <option value="+90">🇹🇷 +90</option>
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+44">🇬🇧 +44</option>
+          <option value="+49">🇩🇪 +49</option>
+          <option value="+33">🇫🇷 +33</option>
+          <option value="+39">🇮🇹 +39</option>
+          <option value="+34">🇪🇸 +34</option>
+          <option value="+31">🇳🇱 +31</option>
+          <option value="+32">🇧🇪 +32</option>
+          <option value="+41">🇨🇭 +41</option>
+          <option value="+43">🇦🇹 +43</option>
+          <option value="+61">🇦🇺 +61</option>
+          <option value="+81">🇯🇵 +81</option>
+          <option value="+86">🇨🇳 +86</option>
+          <option value="+971">🇦🇪 +971</option>
+        </select>
+
+        {/* Formatlanmış telefon input */}
+        <input
+          type="tel"
+          placeholder={guestData.phoneCountry === '+90' ? '533 342 04 93' : 'Phone number'}
+          className="flex-1 h-16 px-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 font-medium focus:outline-none focus:ring-2 focus:ring-brown-500 dark:focus:ring-gold transition-all"
+          required
+          value={guestData.phone}
+          onChange={(e) => {
+            const formatted = formatPhoneNumber(e.target.value, guestData.phoneCountry);
+            setGuestData({...guestData, phone: formatted});
+          }}
+        />
+      </div>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-4">
+      <Input
+        label="ŞEHİR"
+        placeholder="Antalya"
+        className="h-16 rounded-2xl"
+        required
+        value={guestData.city}
+        onChange={(e) => setGuestData({...guestData, city: e.target.value})}
+      />
+      <Input
+        label="İLÇE"
+        placeholder="Muratpaşa"
+        className="h-16 rounded-2xl"
+        required
+        value={guestData.district}
+        onChange={(e) => setGuestData({...guestData, district: e.target.value})}
+      />
+    </div>
+
+    <div className="space-y-2">
+      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">AÇIK ADRES</label>
+      <textarea
+        className="w-full p-5 bg-gray-50 dark:bg-dark-900 border-2 border-gray-100 dark:border-gray-800 rounded-2xl text-sm focus:ring-2 focus:ring-brown-900/10 outline-none transition-all min-h-[120px]"
+        placeholder="Mahalle, sokak, bina no, daire no..."
+        required
+        value={guestData.address}
+        onChange={(e) => setGuestData({...guestData, address: e.target.value})}
+      />
+    </div>
+  </div>
+) : !isAddressFormOpen ? (
   <div className="grid md:grid-cols-2 gap-4">
     {/* Mevcut Adresler */}
     {addresses.map(addr => (
@@ -332,14 +598,15 @@ const grandTotal = cartTotal + shippingCost;
     </div>
   </div>
 )}
-{/* FATURA TERCİHİ BÖLÜMÜ */}
-    <div className="mt-16 pt-12 border-t border-gray-50 dark:border-gray-800 animate-in fade-in duration-700">
-      <div className="flex items-center gap-4 mb-8">
-        <FileText className="text-gold" size={28} />
-        <h2 className="font-display text-4xl font-bold italic dark:text-white">Fatura Bilgileri</h2>
-      </div>
 
-      <div className="space-y-8">
+{/* FATURA TERCİHİ BÖLÜMÜ - Teslimat formunun devamı */}
+<div className="mt-12 bg-white dark:bg-dark-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 space-y-6">
+  <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-gray-800">
+    <FileText className="text-gold" size={20} />
+    <h3 className="text-lg font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Fatura Bilgileri</h3>
+  </div>
+
+      <div className="space-y-6">
         {/* Fatura Tipi Seçici */}
         <div className="bg-gray-50 dark:bg-dark-800 p-2 rounded-xl flex border border-gray-100 dark:border-gray-700 shadow-inner max-w-sm">
           <button 
@@ -374,7 +641,20 @@ const grandTotal = cartTotal + shippingCost;
                 <Input label="FİRMA UNVANI" placeholder="LTD. ŞTİ." className="h-16 rounded-2xl" />
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="VERGİ DAİRESİ" className="h-16 rounded-2xl" />
-                  <Input label="VERGİ NO" className="h-16 rounded-2xl" />
+                  <Input
+                    label="VERGİ NO"
+                    placeholder="0000000000"
+                    className="h-16 rounded-2xl"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={vergiNo}
+                    onChange={(e) => {
+                      // Sadece rakam girişine izin ver, max 10 hane
+                      const onlyNumbers = e.target.value.replace(/\D/g, '');
+                      setVergiNo(onlyNumbers.substring(0, 10));
+                    }}
+                  />
                 </div>
               </>
             ) : (
@@ -391,9 +671,17 @@ const grandTotal = cartTotal + shippingCost;
       </div>
     </div>
     <div className="mt-12">
-      <Button 
-        onClick={() => setCurrentStep(2)} 
-        disabled={!selectedAddressId}
+      <Button
+        onClick={() => {
+          // Guest mode için basit validasyon
+          if (isGuestMode && !isGuestFormValid) {
+            setErrors({ address: 'Lütfen tüm bilgileri eksiksiz doldurun.' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+          setCurrentStep(2);
+        }}
+        disabled={isGuestMode ? !isGuestFormValid : !selectedAddressId}
         className="w-full md:w-auto px-16 h-18 rounded-full shadow-xl"
       >
         ÖDEMEYE DEVAM ET <ChevronRight className="ml-2" size={16} />
@@ -528,8 +816,14 @@ const grandTotal = cartTotal + shippingCost;
 
         {/* Summary Side - Sticky */}
         <div className="lg:col-span-1">
+          {/* Başlık modal dışında - Sticky */}
+          <div className="sticky top-24 z-40 flex items-center gap-4 mb-8 pb-4 bg-cream-100 dark:bg-dark-900 -mx-2 px-2">
+            <ShieldCheck className="text-gold" size={28} />
+            <h2 className="font-display text-4xl font-bold italic dark:text-white">Sipariş Özeti</h2>
+          </div>
+
           <div className="sticky top-32 space-y-8 animate-slide-up" style={{animationDelay: '0.3s'}}>
-            
+
             {/* Shipping Alert Banners */}
             {(shippingAlerts.isBlackoutDay || shippingAlerts.isHeatHold) && (
               <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -542,7 +836,7 @@ const grandTotal = cartTotal + shippingCost;
                         Gönderim Bilgisi
                       </p>
                       <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                        Hafta sonu kargolama yapılmamaktadır. Siparişiniz <strong className="text-brand-orange">{shippingAlerts.nextShipDate}</strong> tarihinde kargoya verilecektir.
+                        Hafta sonu kargolama yapılmamaktadır (ürün tazeliği ve kalite kontrolü için). Siparişiniz <strong className="text-brand-orange">{shippingAlerts.nextShipDate}</strong> tarihinde kargoya verilecektir.
                       </p>
                     </div>
                   </div>
@@ -566,7 +860,6 @@ const grandTotal = cartTotal + shippingCost;
             )}
 
             <section className="bg-white dark:bg-dark-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-luxurious">
-              <h2 className="font-display text-2xl font-bold dark:text-white mb-8 italic">{t('order_summary')}</h2>
               
               <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                 {items.map(item => (
@@ -666,6 +959,29 @@ const grandTotal = cartTotal + shippingCost;
           </div>
         </div>
 
+      </div>
+
+      {/* Mobile Sticky Bottom Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-dark-900 border-t-2 border-gray-200 dark:border-gray-800 shadow-2xl animate-slide-up">
+        <div className="px-4 py-4 flex items-center justify-between gap-4">
+          {/* Total */}
+          <div className="flex-1">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Toplam Tutar</p>
+            <p className="font-display text-2xl font-bold text-brown-900 dark:text-gold italic">
+              ₺{finalTotal.toFixed(2)}
+            </p>
+          </div>
+
+          {/* CTA Button */}
+          <Button
+            onClick={() => currentStep === 1 ? setCurrentStep(2) : handleCompleteOrder()}
+            loading={isSubmitting}
+            disabled={currentStep === 1 && (isGuestMode ? !isGuestFormValid : !selectedAddressId)}
+            className="px-8 h-14 rounded-full shadow-xl text-xs whitespace-nowrap"
+          >
+            {currentStep === 1 ? 'DEVAM ET' : 'SİPARİŞİ TAMAMLA'}
+          </Button>
+        </div>
       </div>
 
       <Footer />

@@ -22,8 +22,10 @@ export const Input: React.FC<InputProps> = ({ label, icon, error, className = ''
         )}
         <input
           className={`
-            w-full py-3 px-4 bg-gray-50 dark:bg-dark-800 border border-transparent 
-            rounded-xl text-sm dark:text-white outline-none transition-all
+            w-full py-3 px-4 bg-gray-50 dark:bg-dark-800 border border-transparent
+            rounded-xl text-sm text-gray-900 dark:text-white
+            placeholder-gray-400 dark:placeholder-gray-500
+            outline-none transition-all
             focus:bg-white dark:focus:bg-dark-700 focus:border-brown-900 dark:focus:border-gold
             ${icon ? 'pl-10' : ''}
             ${error ? 'border-red-500' : ''}

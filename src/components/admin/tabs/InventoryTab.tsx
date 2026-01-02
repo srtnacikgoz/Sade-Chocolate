@@ -22,6 +22,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tümü');
+  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'bonbons' | 'boxes' | 'tablets'>('all');
   const [criticalStockThreshold, setCriticalStockThreshold] = useState(() => {
     const saved = localStorage.getItem('criticalStockThreshold');
     return saved ? parseInt(saved, 10) : 5;
@@ -59,7 +60,14 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === 'Tümü' || p.category?.toLowerCase() === activeCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
+
+    // Ürün tipi filtresi
+    let matchesType = true;
+    if (productTypeFilter === 'bonbons') matchesType = p.isBoxContent === true;
+    if (productTypeFilter === 'boxes') matchesType = p.productType === 'box';
+    if (productTypeFilter === 'tablets') matchesType = p.productType === 'tablet';
+
+    return matchesSearch && matchesCategory && matchesType;
   });
 
   return (
@@ -159,7 +167,30 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 
       {/* Ürün Listesi Tablosu */}
       <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-50/30">
+        <div className="p-6 border-b flex flex-col gap-4 bg-slate-50/30">
+          {/* Ürün Tipi Filtreleri */}
+          <div className="flex gap-2 bg-gradient-to-r from-rose-50 to-orange-50 p-1.5 rounded-2xl border border-rose-200/50">
+            {[
+              { id: 'all', label: 'TÜM ÜRÜNLER', icon: '📦' },
+              { id: 'bonbons', label: 'BONBONLAR', icon: '🍫' },
+              { id: 'boxes', label: 'KUTULAR', icon: '🎁' },
+              { id: 'tablets', label: 'TABLETLER', icon: '▬' }
+            ].map(type => (
+              <button
+                key={type.id}
+                onClick={() => setProductTypeFilter(type.id as any)}
+                className={`flex-1 px-5 py-2.5 text-[10px] font-black rounded-xl transition-all ${
+                  productTypeFilter === type.id
+                    ? 'bg-white shadow-md text-rose-600'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {type.icon} {type.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Kategori Filtreleri */}
           <div className="flex gap-1 bg-slate-100 p-1.5 rounded-2xl">
             {['Tümü', ...PRODUCT_CATEGORIES.map(cat => cat.id)].map(c => (
               <button key={c} onClick={() => setActiveCategory(c)} className={`px-7 py-2.5 text-[10px] font-black rounded-xl transition-all ${activeCategory === c ? 'bg-white shadow-md text-brown-900' : 'text-gray-400 hover:text-slate-600'}`}>

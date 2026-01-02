@@ -72,7 +72,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     attributes: [], // ✅ Boş özellik dizisi
     nutritionalValues: '', // ✅ Besin değerleri
     valueBadges: [], // ✅ Dinamik değer simgeleri
-    sensory: { intensity: 50, sweetness: 50, creaminess: 50, fruitiness: 0, acidity: 0, crunch: 0 }
+    sensory: { intensity: 50, sweetness: 50, creaminess: 50, fruitiness: 0, acidity: 0, crunch: 0 },
+    // 🎁 Kutu içeriği sistemi
+    isBoxContent: false,
+    boxContentIds: [],
+    boxSize: 9
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -98,6 +102,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
   });
   const [newCollection, setNewCollection] = useState('');
   const [badges, setBadges] = useState<ProductBadge[]>([]);
+  const [bonbonProducts, setBonbonProducts] = useState<Product[]>([]); // Kutu içeriği olarak seçilebilir ürünler
 
   React.useEffect(() => {
     localStorage.setItem('sade_collection_pool', JSON.stringify(collectionPool));
@@ -117,6 +122,50 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     };
     fetchBadges();
   }, []);
+
+  // Fetch bonbon products (isBoxContent = true)
+  useEffect(() => {
+    const fetchBonbons = async () => {
+      try {
+        const q = query(collection(db, 'products'));
+        const snapshot = await getDocs(q);
+        const allProducts = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as Product[];
+        // Sadece isBoxContent === true olanları filtrele, kendi ID'mizi çıkar
+        setBonbonProducts(allProducts.filter(p => p.isBoxContent && p.id !== product?.id));
+      } catch (error) {
+        console.error('Bonbon ürünleri yüklenemedi:', error);
+      }
+    };
+    fetchBonbons();
+  }, [product?.id]);
+
+  // Bonbon seçme/çıkarma (aynı bonbon birden fazla eklenebilir)
+  const toggleBonbon = (bonbonId: string) => {
+    const currentContents = formData.boxContentIds || [];
+    const boxCapacity = formData.boxSize || 9;
+
+    // Çıkartma: bonbon zaten seçiliyse bir tanesini çıkar
+    if (currentContents.includes(bonbonId)) {
+      const index = currentContents.indexOf(bonbonId);
+      setFormData({
+        ...formData,
+        boxContentIds: [...currentContents.slice(0, index), ...currentContents.slice(index + 1)]
+      });
+      return;
+    }
+
+    // Ekleme: Kapasite doluysa uyar
+    if (currentContents.length >= boxCapacity) {
+      toast.error(`En fazla ${boxCapacity} bonbon seçebilirsiniz!`);
+      return;
+    }
+
+    // Ekle
+    setFormData({
+      ...formData,
+      boxContentIds: [...currentContents, bonbonId]
+    });
+  };
 
   // Kategori seçim/kaldırma (Checkbox mantığı)
   const toggleCategory = (cat: string) => {
@@ -535,10 +584,11 @@ const addAttribute = () => {
               <label className="text-[10px] font-black text-gold uppercase tracking-widest">Ürün Tipi</label>
               <span className="text-[9px] text-slate-400 italic">Tablet ürünler Dandelion tarzı minimal görünüm kullanır</span>
             </div>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { id: 'tablet', label: 'Tablet', desc: 'Dandelion tarzı minimal layout' },
                 { id: 'filled', label: 'Dolgulu', desc: 'Pralin, truffle vb.' },
+                { id: 'box', label: '🎁 Kutu', desc: 'Bonbon kutusu (6lı, 9lu, vb.)' },
                 { id: 'other', label: 'Diğer', desc: 'Standart görünüm' }
               ].map(type => (
                 <button
@@ -559,6 +609,113 @@ const addAttribute = () => {
               ))}
             </div>
           </div>
+
+         {/* --- 🎁 KUTU İÇERİĞİ TOGGLE --- */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-8 rounded-[40px] border border-orange-200/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isBoxContent"
+                  checked={formData.isBoxContent || false}
+                  onChange={(e) => setFormData({ ...formData, isBoxContent: e.target.checked })}
+                  className="w-5 h-5 rounded border-orange-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                />
+                <label htmlFor="isBoxContent" className="text-[10px] font-black text-orange-600 uppercase tracking-widest cursor-pointer">
+                  Kutu İçeriği Olarak Seçilebilsin Mi?
+                </label>
+              </div>
+              <span className="text-[9px] text-slate-400 italic">Bonbonlar kutularda kullanılabilir</span>
+            </div>
+            {formData.isBoxContent && (
+              <p className="text-xs text-orange-600 bg-white/70 p-3 rounded-xl border border-orange-200">
+                ✓ Bu ürün, kutu oluştururken içerik olarak seçilebilecek.
+              </p>
+            )}
+          </div>
+
+         {/* --- 🎁 KUTU İÇERİĞİ SEÇİCİ (Sadece productType === 'box' ise) --- */}
+         {formData.productType === 'box' && (
+          <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-8 rounded-[40px] border border-rose-200/50 space-y-6">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Kutu İçeriği Seç</label>
+              <div className="flex items-center gap-4">
+                <span className="text-[9px] text-slate-400 italic">
+                  {(formData.boxContentIds || []).length} / {formData.boxSize || 9} bonbon seçildi
+                </span>
+                <select
+                  value={formData.boxSize || 9}
+                  onChange={(e) => setFormData({ ...formData, boxSize: +e.target.value, boxContentIds: [] })}
+                  className="px-3 py-2 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 bg-white"
+                >
+                  <option value={6}>6'lı Kutu</option>
+                  <option value={9}>9'lu Kutu</option>
+                  <option value={12}>12'li Kutu</option>
+                  <option value={16}>16'lı Kutu</option>
+                  <option value={24}>24'lü Kutu</option>
+                </select>
+              </div>
+            </div>
+
+            {bonbonProducts.length === 0 ? (
+              <p className="text-xs text-slate-400 bg-white/70 p-4 rounded-xl text-center">
+                Henüz kutu içeriği olarak işaretlenmiş bonbon yok. Önce bonbon ürünleri oluşturup "Kutu İçeriği Olarak Seçilebilsin Mi?" seçeneğini aktifleştirin.
+              </p>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {bonbonProducts.map((bonbon) => {
+                  const selectedCount = (formData.boxContentIds || []).filter((id: string) => id === bonbon.id).length;
+                  const isSelected = selectedCount > 0;
+
+                  return (
+                    <button
+                      key={bonbon.id}
+                      type="button"
+                      onClick={() => toggleBonbon(bonbon.id)}
+                      className={`relative border-2 rounded-2xl p-3 transition-all group ${
+                        isSelected
+                          ? 'border-rose-400 bg-rose-50 shadow-lg ring-2 ring-rose-200'
+                          : 'border-slate-200 bg-white hover:border-rose-300 hover:shadow'
+                      }`}
+                    >
+                      <div className="aspect-square rounded-xl overflow-hidden mb-2">
+                        <img
+                          src={bonbon.image}
+                          alt={bonbon.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                        />
+                      </div>
+                      <p className={`text-xs font-bold line-clamp-2 ${isSelected ? 'text-rose-600' : 'text-slate-600'}`}>
+                        {bonbon.title}
+                      </p>
+                      {isSelected && (
+                        <div className="absolute -top-2 -right-2 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-lg">
+                          {selectedCount}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {(formData.boxContentIds || []).length > 0 && (
+              <div className="bg-white/70 p-4 rounded-xl border border-rose-200">
+                <p className="text-[9px] font-black text-rose-600 uppercase tracking-widest mb-2">Seçilen Bonbonlar:</p>
+                <div className="flex flex-wrap gap-2">
+                  {(formData.boxContentIds || []).map((id: string, idx: number) => {
+                    const bonbon = bonbonProducts.find(b => b.id === id);
+                    return bonbon ? (
+                      <span key={idx} className="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-full">
+                        {bonbon.title}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+         )}
 
          {/* --- KOLEKSİYON YÖNETİMİ (DYNAMIC POOL) --- */}
           <div className="bg-slate-50/50 p-8 rounded-[40px] border border-slate-100 space-y-6">

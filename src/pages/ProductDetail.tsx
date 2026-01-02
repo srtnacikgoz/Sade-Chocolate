@@ -109,6 +109,15 @@ export const ProductDetail: React.FC = () => {
     }
     return images;
   }, [product]);
+
+  // 🎁 YENİ SİSTEM: Kutu içeriği bonbonları (boxContentIds'den)
+  const boxContentProducts = useMemo(() => {
+    if (!product || !product.boxContentIds || product.boxContentIds.length === 0) return [];
+    // boxContentIds'deki her ID için ürünü bul (aynı ID birden fazla olabilir)
+    return product.boxContentIds
+      .map(id => products.find(p => p.id === id))
+      .filter(Boolean); // undefined olanları çıkar
+  }, [product, products]);
   
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -571,6 +580,48 @@ export const ProductDetail: React.FC = () => {
       >
         <ChevronRight size={48} strokeWidth={1} />
       </button>
+    </div>
+  </section>
+)}
+
+{/* --- 🎁 YENİ SİSTEM: KUTU İÇERİĞİ (boxContentIds) --- */}
+{product.productType === 'box' && boxContentProducts.length > 0 && (
+  <section className="mt-32 pt-24 border-t border-gray-50 dark:border-gray-800">
+    <div className="text-center mb-16">
+      <span className="text-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">Kutu İçeriği</span>
+      <h2 className="font-display text-4xl italic dark:text-white">Seçilen Bonbonlar</h2>
+      <p className="text-xs text-gray-400 mt-2">{product.boxSize || boxContentProducts.length} Adet Bonbon</p>
+    </div>
+
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {boxContentProducts.map((bonbon: any, idx) => (
+        <Link
+          key={idx}
+          to={`/urun/${bonbon.id}`}
+          className="group border-2 border-gray-100 dark:border-gray-800 rounded-3xl p-4 hover:border-gold dark:hover:border-gold transition-all hover:shadow-lg"
+        >
+          <div className="aspect-square rounded-2xl overflow-hidden mb-4">
+            <img
+              src={bonbon.image}
+              alt={bonbon.title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            />
+          </div>
+          <h4 className="text-xs font-black uppercase tracking-widest text-brown-900 dark:text-gold text-center mb-2">
+            {bonbon.title}
+          </h4>
+          {bonbon.description && (
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 italic text-center line-clamp-2">
+              {bonbon.description}
+            </p>
+          )}
+          {bonbon.price && (
+            <p className="text-xs font-bold text-center mt-3 text-gray-900 dark:text-white">
+              ₺{bonbon.price}
+            </p>
+          )}
+        </Link>
+      ))}
     </div>
   </section>
 )}

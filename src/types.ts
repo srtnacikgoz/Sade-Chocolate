@@ -12,6 +12,8 @@ export interface ProductVariant {
   sku: string;
 }
 
+// @deprecated - YENİ SİSTEM: Bonbonlar artık Product olarak yönetiliyor
+// Migration sonrası silinecek
 export interface BoxItem {
   id: string;
   name: string;
@@ -39,7 +41,7 @@ export interface ProductBadge {
 }
 
 // Ürün Tipi: Tablet vs Diğer (Dandelion tarzı ayrım)
-export type ProductType = 'tablet' | 'filled' | 'other';
+export type ProductType = 'tablet' | 'filled' | 'box' | 'other';
 
 export interface Product {
   id: string;
@@ -75,13 +77,18 @@ export interface Product {
     crunch: number;
   };
   variants?: ProductVariant[];
-  boxItems?: BoxItem[];
+  boxItems?: BoxItem[];  // @deprecated - Yeni sistemde boxContentIds kullan
   locationStock?: {
     yesilbahce: number;
   };
   tastingNotes?: string;
   ingredients?: string;
   allergens?: string;
+
+  // 🎁 YENİ KUTU İÇERİĞİ SİSTEMİ (Marcolini Stil)
+  isBoxContent?: boolean;     // Bu ürün kutu içeriği olarak seçilebilir mi?
+  boxContentIds?: string[];   // Kutunun içindeki bonbon Product ID'leri (aynı ID tekrar edebilir)
+  boxSize?: number;           // Kutu kapasitesi (6, 9, 12, 16, vb.)
 }
 export interface GiftOptions {
   isGift: boolean;
