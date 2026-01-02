@@ -76,7 +76,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     // 🎁 Kutu içeriği sistemi
     isBoxContent: false,
     boxContentIds: [],
-    boxSize: 9
+    boxSize: 4
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -142,7 +142,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
   // Bonbon seçme/çıkarma (aynı bonbon birden fazla eklenebilir)
   const toggleBonbon = (bonbonId: string) => {
     const currentContents = formData.boxContentIds || [];
-    const boxCapacity = formData.boxSize || 9;
+    const boxCapacity = formData.boxSize || 4;
 
     // Çıkartma: bonbon zaten seçiliyse bir tanesini çıkar
     if (currentContents.includes(bonbonId)) {
@@ -641,18 +641,17 @@ const addAttribute = () => {
               <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Kutu İçeriği Seç</label>
               <div className="flex items-center gap-4">
                 <span className="text-[9px] text-slate-400 italic">
-                  {(formData.boxContentIds || []).length} / {formData.boxSize || 9} bonbon seçildi
+                  {(formData.boxContentIds || []).length} / {formData.boxSize || 4} bonbon seçildi
                 </span>
                 <select
-                  value={formData.boxSize || 9}
+                  value={formData.boxSize || 4}
                   onChange={(e) => setFormData({ ...formData, boxSize: +e.target.value, boxContentIds: [] })}
                   className="px-3 py-2 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 bg-white"
                 >
-                  <option value={6}>6'lı Kutu</option>
-                  <option value={9}>9'lu Kutu</option>
-                  <option value={12}>12'li Kutu</option>
+                  <option value={4}>4'lü Kutu</option>
+                  <option value={8}>8'li Kutu</option>
                   <option value={16}>16'lı Kutu</option>
-                  <option value={24}>24'lü Kutu</option>
+                  <option value={25}>25'li Kutu</option>
                 </select>
               </div>
             </div>

@@ -1,22 +1,43 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useProducts } from '../context/ProductContext';
 import { ProductCard } from '../components/ProductCard';
-import { ViewMode, Product } from '../types';
+import { ViewMode, Product, BoxConfig } from '../types';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { CuratedBoxModal } from '../components/CuratedBoxModal';
 import { Footer } from '../components/Footer';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown } from 'lucide-react';
+import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown, Package, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export const Catalog: React.FC = () => {
   const { products, isLoading } = useProducts();
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.GRID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isBoxModalOpen, setIsBoxModalOpen] = useState(false);
+  const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
   const { t } = useLanguage();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Firestore'dan box_config yapılandırmasını çek
+  useEffect(() => {
+    const fetchBoxConfig = async () => {
+      try {
+        const docRef = doc(db, 'box_config', 'default');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setBoxConfig(docSnap.data() as BoxConfig);
+        }
+      } catch (error) {
+        console.error('Box config yüklenemedi:', error);
+      }
+    };
+    fetchBoxConfig();
+  }, []);
 
   // URL parametrelerinden state'leri başlat
   const initialCategory = searchParams.get('category') || 'all';
@@ -239,6 +260,86 @@ export const Catalog: React.FC = () => {
           </div>
         ) : (
           <div className={`grid gap-x-6 gap-y-10 transition-all duration-500 ${viewMode === ViewMode.GRID ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
+            {/* Kendi Kutunu Oluştur - ProductCard Stili */}
+            {(boxConfig?.enabled !== false) && (
+              <motion.button
+                onClick={() => setIsBoxModalOpen(true)}
+                className={`group bg-cream-50 dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-500 overflow-hidden flex flex-col h-full border border-gold/15 relative cursor-pointer text-left ${
+                  viewMode === ViewMode.LIST ? 'flex-row' : ''
+                }`}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                {/* Görsel Alanı - ProductCard ile aynı */}
+                <div className={`relative ${viewMode === ViewMode.LIST ? 'w-48 aspect-square' : 'aspect-[4/5]'} bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden`}>
+                  {/* Rozet */}
+                  <span className="absolute top-0 left-0 text-[10px] font-bold px-3 py-1 uppercase tracking-widest z-20 bg-gold text-white">
+                    Özel
+                  </span>
+
+                  {/* Görsel veya Varsayılan İkon */}
+                  {boxConfig?.cardImage ? (
+                    <img
+                      src={boxConfig.cardImage}
+                      alt={boxConfig?.cardTitle || 'Kendi Kutunu Oluştur'}
+                      className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-300 ease-out"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gold/10 to-brand-mustard/20">
+                      <div className="relative">
+                        <div className="w-24 h-24 bg-gradient-to-br from-gold to-brand-mustard rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                          <Package className="text-white" size={48} />
+                        </div>
+                        <Sparkles className="absolute -top-2 -right-2 text-gold drop-shadow-md" size={20} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-mocha-900/0 group-hover:bg-mocha-900/5 transition-colors duration-700" />
+                </div>
+
+                {/* Alt Bilgiler - ProductCard ile aynı */}
+                <div className={`p-4 flex flex-col flex-grow relative z-20 bg-cream-50 dark:bg-dark-800 ${viewMode === ViewMode.LIST ? 'justify-center' : ''}`}>
+                  <h3 className="font-display text-lg font-semibold leading-tight mb-1 text-gray-900 dark:text-gray-100 line-clamp-2 min-h-[3rem]">
+                    {boxConfig?.cardTitle || 'Kendi Kutunu Oluştur'}
+                  </h3>
+                  <p className="font-sans text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-1">
+                    {boxConfig?.cardSubtitle || 'Favori bonbonlarını seç'}
+                  </p>
+
+                  <div className="mt-auto flex items-center justify-between">
+                    {/* Kutu boyutları */}
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-gold uppercase tracking-wider">
+                      {boxConfig?.boxSizes?.filter(s => s.enabled).slice(0, 3).map((size, idx, arr) => (
+                        <React.Fragment key={size.id}>
+                          <span>{size.size}'li</span>
+                          {idx < arr.length - 1 && <span className="text-gold/40">•</span>}
+                        </React.Fragment>
+                      )) || (
+                        <>
+                          <span>4'lü</span>
+                          <span className="text-gold/40">•</span>
+                          <span>8'li</span>
+                          <span className="text-gold/40">•</span>
+                          <span>16'lı</span>
+                        </>
+                      )}
+                    </div>
+                    {/* Sepete ekle yerine + butonu */}
+                    <div className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full group-hover:bg-brown-900 transition-colors duration-300 shadow-sm">
+                      <span className="material-icons-outlined text-lg">add</span>
+                    </div>
+                  </div>
+
+                  {/* Geniş buton - ProductCard ile aynı */}
+                  <button className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-mocha-900 dark:text-gray-100 border border-gold/20 bg-cream-50 dark:bg-transparent rounded-lg hover:bg-gold hover:text-white dark:hover:bg-gold transition-all duration-300 shadow-sm">
+                    {boxConfig?.ctaText || 'Kutuya Git'}
+                  </button>
+                </div>
+              </motion.button>
+            )}
+
             {sortedAndFilteredProducts.map(product => (
               <ProductCard
                 key={product.id}
@@ -258,6 +359,12 @@ export const Catalog: React.FC = () => {
           onClose={closeQuickView}
         />
       )}
+
+      {/* Kendi Kutunu Oluştur Modal */}
+      <CuratedBoxModal
+        isOpen={isBoxModalOpen}
+        onClose={() => setIsBoxModalOpen(false)}
+      />
 
       <Footer />
     </div>

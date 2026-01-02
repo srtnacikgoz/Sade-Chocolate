@@ -18,6 +18,8 @@ interface CartContextType {
   favorites: string[];
   toggleFavorite: (productId: string) => void;
   isFavorite: (productId: string) => boolean;
+  clearAllFavorites: () => void;
+  removeFavorites: (productIds: string[]) => void;
   // Gift State
   isGift: boolean;
   setIsGift: (isGift: boolean) => void;
@@ -98,6 +100,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const isFavorite = (productId: string) => favorites.includes(productId);
 
+  const clearAllFavorites = () => {
+    setFavorites([]);
+  };
+
+  const removeFavorites = (productIds: string[]) => {
+    setFavorites(prev => prev.filter(id => !productIds.includes(id)));
+  };
+
   // Calculate total count of items
   const cartCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
   
@@ -118,6 +128,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       favorites,
       toggleFavorite,
       isFavorite,
+      clearAllFavorites,
+      removeFavorites,
       isGift,
       setIsGift,
       giftMessage,

@@ -8,13 +8,15 @@ import { Footer } from '../components/Footer';
 import { ViewMode, Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
-import { Sparkles, Package } from 'lucide-react'; // Package eklendi
+import { Sparkles, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const Favorites: React.FC = () => {
-  const { favorites, addToCart, setIsCartOpen } = useCart();
+  const { favorites, addToCart, setIsCartOpen, clearAllFavorites } = useCart();
   const { products } = useProducts();
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isCuratedBoxModalOpen, setIsCuratedBoxModalOpen] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { t } = useLanguage();
 
   const favoriteProducts = useMemo(() => {
@@ -27,6 +29,13 @@ export const Favorites: React.FC = () => {
         return null;
     }).filter(Boolean) as Product[]; 
   }, [favorites, products]);
+
+  // Favorileri temizle
+  const handleClearAll = () => {
+    clearAllFavorites();
+    toast.success('Favoriler sıfırlandı');
+    setShowClearConfirm(false);
+  };
 
   const handleSmartAction = (action: 'cheapest' | 'expensive' | 'aesthetic' | 'all' | 'curated') => {
     if (favoriteProducts.length === 0) return;
@@ -83,8 +92,18 @@ export const Favorites: React.FC = () => {
               <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Sizin Seçimleriniz</span>
               <h2 className="font-display text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white italic tracking-tighter">{t('my_favorites')}</h2>
             </div>
-            <div className="bg-gray-50 dark:bg-dark-800 px-6 py-3 rounded-full border border-gray-100 dark:border-gray-700 shadow-sm">
-               <span className="text-xs font-bold uppercase tracking-widest text-brown-900 dark:text-gold">{t('products_count').replace('{count}', favorites.length.toString())}</span>
+            <div className="flex items-center gap-4">
+              {/* Sıfırla Butonu */}
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="flex items-center gap-2 px-5 py-3 bg-gray-50 dark:bg-dark-800 rounded-full text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 transition-all border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800"
+              >
+                <RotateCcw size={16} />
+                Sıfırla
+              </button>
+              <div className="bg-gray-50 dark:bg-dark-800 px-6 py-3 rounded-full border border-gray-100 dark:border-gray-700 shadow-sm">
+                <span className="text-xs font-bold uppercase tracking-widest text-brown-900 dark:text-gold">{t('products_count').replace('{count}', favorites.length.toString())}</span>
+              </div>
             </div>
         </div>
 
@@ -120,14 +139,45 @@ export const Favorites: React.FC = () => {
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {favoriteProducts.map(product => (
-                <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    viewMode={ViewMode.GRID} 
+                <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode={ViewMode.GRID}
                     onQuickView={setQuickViewProduct}
                 />
             ))}
         </div>
+
+        {/* Sıfırlama Onay Dialog */}
+        {showClearConfirm && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-dark-800 rounded-[32px] shadow-2xl p-8 max-w-md w-full text-center animate-scale-in">
+              <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <RotateCcw size={32} className="text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                Favorileri Sıfırla
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-8">
+                {favorites.length} ürün favorilerden kaldırılacak. Bu işlem geri alınamaz.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="flex-1 px-6 py-4 bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-dark-600 transition-all"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  onClick={handleClearAll}
+                  className="flex-1 px-6 py-4 bg-red-500 text-white rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg"
+                >
+                  Sıfırla
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <QuickViewModal 
             product={quickViewProduct} 
@@ -138,7 +188,7 @@ export const Favorites: React.FC = () => {
         <CuratedBoxModal
             isOpen={isCuratedBoxModalOpen}
             onClose={() => setIsCuratedBoxModalOpen(false)}
-            favoriteProducts={favoriteProducts}
+            availableProducts={favoriteProducts}
         />
 
         <Footer />

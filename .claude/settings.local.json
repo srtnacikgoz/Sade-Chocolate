@@ -28,7 +28,8 @@
       "Bash(nslookup:*)",
       "Bash(npx firebase hosting:channel:deploy:*)",
       "WebFetch(domain:www.dandelionchocolate.com)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(claude mcp list:*)"
     ]
   }
 }

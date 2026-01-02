@@ -21,6 +21,12 @@
 - [x] Şirket Künyesi tab'ı (CompanyInfoTab)
 - [x] Hediye Notları tab'ı (GiftNotesTab)
 - [x] Envanter yönetimi (kritik stok eşiği)
+- [x] **Kutu Oluşturucu tab'ı (BoxConfigTab)** - 02 Ocak 2026
+  - Kutu boyutları dinamik yönetimi (4'lü, 8'li, 16'lı, 25'li)
+  - Her boyut için: label, açıklama, basePrice, grid düzeni
+  - Kart görseli yükleme (Firebase Storage)
+  - Başlık/alt başlık/CTA metni düzenleme
+  - Katalog ve ana sayfa kartları config'den okuyor
 
 ### Sadakat Sistemi
 - [x] Müşteri sadakat puanları
@@ -62,13 +68,19 @@
   - Header'da logo yerleştirme
   - Favicon güncelleme
 
-### 📦 Öncelik 2.5: Ürün & Envanter Yönetimi
-- [ ] **Kutu İçeriği Yönetim Sistemi (Marcolini Stil)**
-  - Problem: Şu anda her ürünün içinde ayrı kutu içeriği var
-  - Çözüm 1: Envanter sayfasında "Kutu İçeriği" tab'ı
-  - Çözüm 2: Ürünler "isBoxContent: true" flag'i ile işaretlenebilir
-  - Çözüm 3: Ürün detay/edit formunda "Kutu İçeriği Seç" multi-select dropdown
-  - Firestore schema tasarımı gerekli
+### 📦 Öncelik 2.5: Envanter UX İyileştirmeleri
+- [ ] **Yeni Ürün Butonu Dropdown**
+  - "Yeni Ürün Ekle" butonuna tıklandığında kategori dropdown'ı açılsın
+  - Kullanıcı önce kategori seçsin (Tablet / Truffle / Kutu / Diğer)
+  - Seçime göre ilgili form açılsın
+- [ ] **Envanter Tab Filtreleme Mantığı**
+  - Problem: "Tabletler" butonuna basınca altında tekrar "Tablet/Truffle/Gift Box" seçenekleri çıkıyor
+  - Çözüm: Her tab kendi kategorisini otomatik filtrelesin, alt seçenekler kaldırılsın
+  - "Tüm Ürünler" tab'ında tüm kategoriler gösterilsin
+- [ ] **Bonbon Görünürlük Yönetimi**
+  - Bonbonlar varsayılan olarak sadece kutu içeriği için kullanılıyor
+  - Katalog sayfasında gösterilmemeli
+  - Admin'de "Katalogda Göster" checkbox'ı eklensin (opsiyonel)
 
 ### 📧 Öncelik 3: Bildirim Servisleri
 - [ ] **Email bildirim servisi**
@@ -142,3 +154,36 @@
 - Türkçe kod yorumları
 - Tailwind renk paleti kullanımı (cream-*, mocha-*, gold-*, brown-*, dark-*)
 - `chocolate-*` renkleri tanımlı DEĞİL, kullanılmamalı!
+
+---
+
+## SON OTURUM ÖZETİ
+
+**Tarih:** 02 Ocak 2026
+
+### Tamamlanan İşler
+1. ✅ **Admin Panel - Kutu Oluşturucu Sekmesi**
+   - `BoxConfigTab.tsx` bileşeni oluşturuldu
+   - Firebase Storage ile görsel yükleme
+   - Dinamik kutu boyutu yönetimi (ekle/sil/düzenle)
+   - Firestore: `box_config/default` yapılandırması
+
+2. ✅ **CuratedBoxModal Config Entegrasyonu**
+   - Firestore'dan box_config okuma
+   - Dinamik kutu boyutları
+   - Her kutu boyutu için basePrice desteği
+   - Modal başlık/alt başlık özelleştirme
+
+3. ✅ **Katalog & Ana Sayfa Kart Güncellemeleri**
+   - ProductCard stiliyle uyumlu tasarım
+   - Config'den başlık/görsel/CTA okuma
+   - Görsel yoksa varsayılan ikon gösterimi
+   - Liste/grid view desteği
+
+### Dosya Değişiklikleri
+- `src/types.ts` - BoxConfig ve BoxSizeOption tipleri eklendi
+- `src/components/admin/tabs/BoxConfigTab.tsx` - YENİ
+- `src/pages/Admin.tsx` - BoxConfigTab entegrasyonu
+- `src/components/CuratedBoxModal.tsx` - Config entegrasyonu
+- `src/pages/Catalog.tsx` - ProductCard stili kart
+- `src/pages/Home.tsx` - ProductCard stili kart

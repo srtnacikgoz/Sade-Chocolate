@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Sparkles, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Sparkles, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -21,6 +21,7 @@ import { LoyaltySettingsPanel } from '../components/admin/LoyaltySettingsPanel';
 import { TasteQuizTab } from '../components/admin/tabs/TasteQuizTab';
 import { GiftNotesTab } from '../components/admin/tabs/GiftNotesTab';
 import { CompanyInfoTab } from '../components/admin/tabs/CompanyInfoTab';
+import { BoxConfigTab } from '../components/admin/tabs/BoxConfigTab';
 import { Building2 } from 'lucide-react';
 
 export const Admin = () => {
@@ -42,14 +43,15 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config'>('inventory');
   const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
-    persona: { 
-      tone: 'friendly', 
-      greeting: '', 
+    enabled: true, // AI Sommelier aktif/deaktif durumu
+    persona: {
+      tone: 'friendly',
+      greeting: '',
       expertise: `Sen Sade Chocolate'ın kurumsal hafızası ve sommelier'isin. Ses tonun, Playfair Display fontunun zarafetini ve krem tonlarının sıcaklığını taşımalı. Müşteriye bir 'tüketici' gibi değil, bir 'koleksiyoner' gibi davran. Veritabanındaki sensory verilerini kullanarak bilimsel ama şiirsel eşleşmeler yap.
 
 EĞER KULLANICI HEDİYE GÖNDERİYORSA, ana rolün lojistik zekasına sahip bir 'Hediye Asistanı'na ve editoryal yeteneği olan bir 'Duygu Küratörü'ne dönüşür. Bu modda önceliklerin şunlardır:
@@ -109,6 +111,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     { id: 'taste-quiz', label: 'Damak Tadı', icon: Heart, group: 'analitik' },
     { id: 'loyalty-settings', label: 'Sadakat Sistemi', icon: Settings, group: 'ayarlar' },
     { id: 'company-info', label: 'Şirket Künyesi', icon: Building2, group: 'ayarlar' },
+    { id: 'box-config', label: 'Kutu Oluşturucu', icon: Boxes, group: 'ayarlar' },
   ] as const;
 
   const menuGroups = {
@@ -145,8 +148,10 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
 
   // AI Konfigürasyon Snapshot
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'ai_config', 'default'), (doc) => {
-      if (doc.exists()) setAiConfig(doc.data());
+    const unsub = onSnapshot(doc(db, 'settings', 'ai'), (doc) => {
+      if (doc.exists()) {
+        setAiConfig(doc.data());
+      }
     });
     return () => unsub();
   }, []);
@@ -1895,6 +1900,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <GiftNotesTab />
       ) : activeTab === 'company-info' ? (
         <CompanyInfoTab />
+      ) : activeTab === 'box-config' ? (
+        <BoxConfigTab />
       ) : null}
         </div>
       </main>

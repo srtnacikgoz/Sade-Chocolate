@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import { Type, Package, BrainCircuit, MessageSquare, BookOpen, Trash2 } from 'lucide-react';
+import { Type, Package, BrainCircuit, MessageSquare, BookOpen, Trash2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SommelierTabProps {
@@ -271,6 +271,35 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
 
   return (
     <div className="space-y-8">
+      {/* AI Sommelier Aktif/Deaktif Toggle */}
+      <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl border-2 border-purple-200 dark:border-purple-700/50">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl ${aiConfig.enabled ? 'bg-purple-600' : 'bg-gray-400'} transition-colors`}>
+            <Sparkles className="text-white" size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white">AI Sommelier Durumu</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {aiConfig.enabled
+                ? '✅ Aktif - Müşteriler AI asistanı görebilir'
+                : '⛔ Deaktif - AI asistan gizli (geliştirme modu)'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setAiConfig({...aiConfig, enabled: !aiConfig.enabled})}
+          className={`relative inline-flex h-10 w-20 items-center rounded-full transition-colors ${
+            aiConfig.enabled ? 'bg-purple-600' : 'bg-gray-400'
+          }`}
+        >
+          <span
+            className={`inline-block h-8 w-8 transform rounded-full bg-white shadow-lg transition-transform ${
+              aiConfig.enabled ? 'translate-x-11' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
+
       {/* Sub-tab Navigation */}
       <div className="flex justify-center gap-2 bg-slate-100 dark:bg-dark-900/50 p-2 rounded-2xl">
         <button

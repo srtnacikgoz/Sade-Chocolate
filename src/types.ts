@@ -209,3 +209,38 @@ export interface CompanyInfo {
   updatedAt?: string;
   updatedBy?: string;
 }
+
+// Kutu Boyutu Yapılandırması
+export interface BoxSizeOption {
+  id: string;
+  size: number;           // 4, 8, 16, 25 vb.
+  label: string;          // "4'lü Kutu"
+  description: string;    // "Deneme paketi"
+  basePrice: number;      // Kutu maliyeti (bonbon fiyatlarına eklenir)
+  enabled: boolean;       // Aktif/Pasif
+  gridCols: number;       // Grid sütun sayısı (görsel için)
+  gridRows: number;       // Grid satır sayısı
+}
+
+// Kendi Kutunu Oluştur Yapılandırması
+export interface BoxConfig {
+  id: string;
+  enabled: boolean;               // Özellik aktif mi?
+
+  // Kart Görünümü
+  cardTitle: string;              // "Kendi Kutunu Oluştur"
+  cardSubtitle: string;           // "Favori bonbonlarını seç"
+  cardDescription: string;        // Uzun açıklama
+  cardImage?: string;             // Özel görsel (yoksa ikon gösterilir)
+  ctaText: string;                // "Kutuya Git" / "Başla"
+
+  // Modal Görünümü
+  modalTitle: string;             // Modal başlığı
+  modalSubtitle: string;          // Modal alt başlığı
+
+  // Kutu Boyutları
+  boxSizes: BoxSizeOption[];
+
+  updatedAt?: string;
+  updatedBy?: string;
+}

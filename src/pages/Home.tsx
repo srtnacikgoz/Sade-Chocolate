@@ -4,20 +4,24 @@ import { COLLECTIONS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { QuickViewModal } from '../components/QuickViewModal';
+import { CuratedBoxModal } from '../components/CuratedBoxModal';
 import { AdminLoginModal } from '../components/AdminLoginModal';
 import { Footer } from '../components/Footer';
-import { Product } from '../types';
+import { Product, BoxConfig } from '../types';
 import { useLanguage } from '../context/LanguageContext';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { Package, Sparkles } from 'lucide-react';
 
 export const Home: React.FC = () => {
   const { addToCart } = useCart();
   const { products } = useProducts();
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [isBoxModalOpen, setIsBoxModalOpen] = useState(false);
   const { t, language } = useLanguage();
 
   const [liveContent, setLiveContent] = useState<any>(null);
+  const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const clickCount = useRef(0);
   const clickTimer = useRef<NodeJS.Timeout | null>(null);
@@ -27,6 +31,22 @@ export const Home: React.FC = () => {
       if (doc.exists()) setLiveContent(doc.data());
     });
     return () => unsub();
+  }, []);
+
+  // Firestore'dan box_config yapılandırmasını çek
+  useEffect(() => {
+    const fetchBoxConfig = async () => {
+      try {
+        const docRef = doc(db, 'box_config', 'default');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setBoxConfig(docSnap.data() as BoxConfig);
+        }
+      } catch (error) {
+        console.error('Box config yüklenemedi:', error);
+      }
+    };
+    fetchBoxConfig();
   }, []);
 
   const heroTitle = liveContent?.[language]?.hero_title || t('hero_title');
@@ -208,7 +228,88 @@ export const Home: React.FC = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {premiumCollections.map((collection) => (
+            {/* Kendi Kutunu Oluştur - Özel Kart */}
+            {(boxConfig?.enabled !== false) && (
+              <button
+                onClick={() => setIsBoxModalOpen(true)}
+                className="group cursor-pointer bg-white dark:bg-dark-800 rounded-[40px] overflow-hidden transition-all duration-700 hover:shadow-luxurious border-2 border-gold text-left"
+              >
+                <div className="relative aspect-square overflow-hidden flex items-center justify-center">
+                  {/* Arka plan görseli veya gradient */}
+                  {boxConfig?.cardImage ? (
+                    <>
+                      <img
+                        src={boxConfig.cardImage}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                      {/* Kutu boyutları görselin altında */}
+                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-[10px] font-bold text-gold uppercase tracking-widest bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full">
+                        {boxConfig?.boxSizes?.filter(s => s.enabled).map((size, idx, arr) => (
+                          <React.Fragment key={size.id}>
+                            <span>{size.size}'li</span>
+                            {idx < arr.length - 1 && <span className="w-1 h-1 rounded-full bg-gold/50" />}
+                          </React.Fragment>
+                        )) || (
+                          <>
+                            <span>4'lü</span>
+                            <span className="w-1 h-1 rounded-full bg-gold/50" />
+                            <span>8'li</span>
+                            <span className="w-1 h-1 rounded-full bg-gold/50" />
+                            <span>16'lı</span>
+                            <span className="w-1 h-1 rounded-full bg-gold/50" />
+                            <span>25'li</span>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-brand-mustard/10 dark:from-gold/10 dark:to-brand-mustard/5 flex items-center justify-center">
+                      {/* Ana ikon */}
+                      <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-28 h-28 bg-gradient-to-br from-gold to-brand-mustard rounded-3xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500 mb-6">
+                          <Package className="text-white" size={56} />
+                          <Sparkles className="absolute -top-2 -right-2 text-white drop-shadow-lg" size={24} />
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gold uppercase tracking-widest">
+                          {boxConfig?.boxSizes?.filter(s => s.enabled).map((size, idx, arr) => (
+                            <React.Fragment key={size.id}>
+                              <span>{size.size}'li</span>
+                              {idx < arr.length - 1 && <span className="w-1 h-1 rounded-full bg-gold/50" />}
+                            </React.Fragment>
+                          )) || (
+                            <>
+                              <span>4'lü</span>
+                              <span className="w-1 h-1 rounded-full bg-gold/50" />
+                              <span>8'li</span>
+                              <span className="w-1 h-1 rounded-full bg-gold/50" />
+                              <span>16'lı</span>
+                              <span className="w-1 h-1 rounded-full bg-gold/50" />
+                              <span>25'li</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="p-10 text-center">
+                  <h3 className="font-display text-2xl mb-2 text-mocha-900 dark:text-white italic">
+                    {boxConfig?.cardTitle || 'Kendi Kutunu Oluştur'}
+                  </h3>
+                  <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">
+                    {boxConfig?.cardSubtitle || 'Favori bonbonlarını seç'}
+                  </p>
+                  <span className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-white rounded-xl text-[10px] font-bold uppercase tracking-widest group-hover:bg-brown-900 transition-all">
+                    {boxConfig?.ctaText || 'Başla'}
+                    <span className="material-icons-outlined text-sm">east</span>
+                  </span>
+                </div>
+              </button>
+            )}
+
+            {premiumCollections.slice(0, 2).map((collection) => (
               <div
                 key={collection.id}
                 className="group cursor-pointer bg-white dark:bg-dark-800 rounded-[40px] overflow-hidden transition-all duration-700 hover:shadow-luxurious border border-gray-100 dark:border-gray-800"
@@ -275,6 +376,12 @@ export const Home: React.FC = () => {
         product={quickViewProduct}
         isOpen={!!quickViewProduct}
         onClose={() => setQuickViewProduct(null)}
+      />
+
+      {/* Kendi Kutunu Oluştur Modal */}
+      <CuratedBoxModal
+        isOpen={isBoxModalOpen}
+        onClose={() => setIsBoxModalOpen(false)}
       />
 
       <AdminLoginModal

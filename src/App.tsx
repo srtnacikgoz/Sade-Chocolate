@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from './lib/firebase';
 // SplashScreen kaldirildi
 import { Home } from './pages/Home';
 import { Catalog } from './pages/Catalog';
@@ -38,7 +40,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAiEnabled, setIsAiEnabled] = useState(true); // Varsayılan aktif
   const { t } = useLanguage();
+
+  // Firestore'dan AI Sommelier enabled durumunu dinle (canlı)
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'settings', 'ai'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const config = docSnap.data();
+          setIsAiEnabled(config.enabled !== false); // Varsayılan true
+        }
+      },
+      (error) => {
+        console.error('AI config dinlenemedi:', error);
+        // Hata durumunda varsayılan true bırak
+      }
+    );
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-dark-900 transition-colors duration-300">
@@ -67,8 +88,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {!isAdmin && !isCheckout && <BottomNav />}
 
-      {/* AI Asistan - Tüm sitede erişilebilir */}
-      {!isAdmin && !isCheckout && <AIAssistant />}
+      {/* AI Asistan - Tüm sitede erişilebilir (enabled ise) */}
+      {!isAdmin && !isCheckout && isAiEnabled && <AIAssistant />}
 
       <CartDrawer />
       <SearchDrawer isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
