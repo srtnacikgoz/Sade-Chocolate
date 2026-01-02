@@ -2,6 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🎨 Santana Font Family */
+@font-face {
+  font-family: 'Santana';
+  src: url('/fonts/santana/Santana.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana';
+  src: url('/fonts/santana/Santana-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana';
+  src: url('/fonts/santana/Santana-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana Condensed';
+  src: url('/fonts/santana/Santana-RegularCondensed.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana Condensed';
+  src: url('/fonts/santana/Santana-BlackCondensed.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana XtraCondensed';
+  src: url('/fonts/santana/SantanaXtraCondensed.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Safari z-index fix - modal açıkken header'ı düzelt */
 body:has([class*="z-[9999]"]) header {
   z-index: 40 !important;

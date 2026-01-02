@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Chrome, Apple, ArrowRight } from 'lucide-react';
 import { auth } from '../lib/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { useUser } from '../context/UserContext'; // ✅ Yeni eklendi
 import { toast } from 'sonner';
 
@@ -43,6 +43,18 @@ export const LoginGateway: React.FC = () => {
     } catch (error: any) {
       console.error(error);
       toast.error("Google girişi sırasında bir hata oluştu.");
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      return toast.error("Lütfen önce e-posta adresinizi girin.");
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Şifre sıfırlama linki e-posta adresinize gönderildi.");
+    } catch (error: any) {
+      toast.error("Şifre sıfırlama hatası. E-posta adresinizi kontrol edin.");
     }
   };
 
@@ -98,13 +110,21 @@ export const LoginGateway: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
              />
-             <Button 
-                type="submit" 
+             <Button
+                type="submit"
                 loading={loading}
                 className="w-full h-18 rounded-[25px] text-[11px] tracking-[0.3em] shadow-xl bg-brown-900 text-white dark:bg-gold dark:text-black"
              >
                 OTURUM AÇ
              </Button>
+
+             <button
+               type="button"
+               onClick={handleForgotPassword}
+               className="text-[10px] text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors font-bold uppercase tracking-widest text-center w-full"
+             >
+               Şifremi Unuttum
+             </button>
           </form>
 
           <div className="flex items-center gap-4 text-gray-300">

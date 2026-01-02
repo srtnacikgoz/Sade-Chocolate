@@ -11,6 +11,25 @@ import { doc, setDoc, addDoc, collection } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { validateReferralCode } from '../services/loyaltyService';
 
+// Şifre gücü hesaplama yardımcı fonksiyonu
+const calculatePasswordStrength = (password: string): { strength: number; label: string; color: string } => {
+  let strength = 0;
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+  const labels = ['Çok Zayıf', 'Zayıf', 'Orta', 'Güçlü', 'Çok Güçlü'];
+  const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500'];
+
+  return {
+    strength: Math.min(strength, 5),
+    label: labels[Math.min(strength, 4)] || 'Çok Zayıf',
+    color: colors[Math.min(strength, 4)] || 'bg-red-500'
+  };
+};
+
 export const Register: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -27,6 +46,7 @@ export const Register: React.FC = () => {
     referralCode: searchParams.get('ref') || '' // URL'den referans kodu al
   });
 const [agreedToTerms, setAgreedToTerms] = useState(false);
+const passwordStrength = calculatePasswordStrength(formData.password);
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
@@ -232,25 +252,46 @@ const [agreedToTerms, setAgreedToTerms] = useState(false);
                   onChange={e => setFormData({...formData, phone: e.target.value})} 
                 />
              </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="ŞİFRE"
-                  placeholder="••••••••"
-                  className="h-16 rounded-2xl"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                />
-                <Input
-                  label="ŞİFRE TEKRAR"
-                  placeholder="••••••••"
-                  className="h-16 rounded-2xl"
-                  type="password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                />
+             <div className="space-y-4">
+               <div className="space-y-2">
+                 <Input
+                   label="ŞİFRE"
+                   placeholder="••••••••"
+                   className="h-16 rounded-2xl"
+                   type="password"
+                   required
+                   value={formData.password}
+                   onChange={(e) => setFormData({...formData, password: e.target.value})}
+                 />
+                 {formData.password && (
+                   <div className="px-2 space-y-2">
+                     <div className="flex items-center gap-3">
+                       <div className="flex-1 h-2 bg-gray-100 dark:bg-dark-800 rounded-full overflow-hidden">
+                         <div
+                           className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                           style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                         />
+                       </div>
+                       <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                         {passwordStrength.label}
+                       </span>
+                     </div>
+                     <p className="text-[9px] text-gray-400 leading-relaxed">
+                       En az 8 karakter, büyük-küçük harf, rakam ve özel karakter kullanın.
+                     </p>
+                   </div>
+                 )}
+               </div>
+
+               <Input
+                 label="ŞİFRE TEKRAR"
+                 placeholder="••••••••"
+                 className="h-16 rounded-2xl"
+                 type="password"
+                 required
+                 value={formData.confirmPassword}
+                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+               />
              </div>
 
              {/* Referans Kodu (Opsiyonel) */}
