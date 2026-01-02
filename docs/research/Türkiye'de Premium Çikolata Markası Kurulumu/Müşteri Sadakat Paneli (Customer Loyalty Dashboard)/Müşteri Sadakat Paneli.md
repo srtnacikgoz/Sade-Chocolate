@@ -1,0 +1,1 @@
+**Müşteri Sadakat Paneli (Customer Loyalty Dashboard)**, abonenin sadece bir alıcı değil, markanızın bir parçası ve bir "çikolata otoritesi" (connoisseur) hissetmesini sağlayan dijital arayüzdür. Bu panel, müşteri yaşam boyu değerini (LTV) artırmak ve referans döngüsünü (referral loop) tetiklemek için tasarlanmıştır.

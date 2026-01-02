@@ -1,0 +1,1 @@
+**Entegrasyon ve Veri Modeli**, OMS'in ekosistemin merkezi "beyni" olarak diğer sistemlerle pürüzsüz konuşmasını sağlayan teknik altyapıdır. **Back-End** tarafında API entegrasyonları yönetilirken, **End-To-End** seviyesinde veri tutarlılığı ve sistem performansı garanti altına alınır.

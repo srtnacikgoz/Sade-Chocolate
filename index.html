@@ -14,41 +14,8 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
       rel="stylesheet"
     />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              brown: {
-                900: "#3E2723",
-                800: "#4E342E",
-                400: "#8D6E63",
-              },
-              gold: {
-                DEFAULT: "#D4AF37",
-                light: "#E5C558",
-              },
-              dark: {
-                900: "#121212",
-                800: "#1E1E1E",
-              },
-            },
-            fontFamily: {
-              display: ["'Playfair Display'", "serif"],
-              sans: ["'Inter'", "sans-serif"],
-              montserrat: ["'Montserrat'", "sans-serif"],
-              handwriting: ["'Caveat'", "cursive"],
-            },
-            boxShadow: {
-                'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                'luxurious': '0 10px 30px -5px rgba(0, 0, 0, 0.08)',
-            }
-          },
-        },
-      };
-    </script>
+    
+   
     <style>
       body {
         /* Prevent bounce on iOS */
@@ -95,8 +62,10 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
-  </body>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
 </html>

@@ -1,0 +1,1 @@
+**Sade Analitik Panel**, zanaatkar çikolatacı ile veri bilimciyi birleştirir. **Back-End** tarafında hava durumu ve lojistik riskleri hesaplarken, **Front-End** tarafında bu verileri anlaşılır karar destek tablolarına dönüştürür. **End-to-End** seviyesinde ise bu raporlar doğrudan üretim kalitesini ve müşteri memnuniyetini artırmak için kullanılır.

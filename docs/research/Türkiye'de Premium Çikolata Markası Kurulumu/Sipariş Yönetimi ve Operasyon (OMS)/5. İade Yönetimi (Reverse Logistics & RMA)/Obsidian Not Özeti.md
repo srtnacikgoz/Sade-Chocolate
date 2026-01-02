@@ -1,0 +1,1 @@
+**İade Yönetimi**, fiziksel geri dönüşü müşteri sadakatine ve yeniden kazanılan stoğa dönüştürme sürecidir. **Front-End** kısmında sürtünmesiz bir iade talebi hedeflenirken, **Back-End** tarafında muayene ve otomatik finansal sonuçlandırma yönetilir.

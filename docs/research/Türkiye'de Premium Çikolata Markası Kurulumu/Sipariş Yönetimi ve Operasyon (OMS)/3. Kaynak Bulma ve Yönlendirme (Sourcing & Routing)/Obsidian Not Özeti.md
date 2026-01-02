@@ -1,0 +1,1 @@
+**Kaynak Bulma ve Yönlendirme**, envanterin dağıtık yapısını müşteri için pürüzsüz bir teslimat planına dönüştürme sanatıdır. **Back-End** tarafında karmaşık optimizasyon algoritmaları çalışırken, **End-To-End** seviyesinde toplam lojistik maliyeti ve hızı optimize edilir.

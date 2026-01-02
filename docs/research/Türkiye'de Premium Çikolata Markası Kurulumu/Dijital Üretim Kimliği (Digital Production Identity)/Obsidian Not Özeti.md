@@ -1,0 +1,1 @@
+**Dijital Üretim Kimliği**, artisan çikolatayı sıradan bir şekerlemeden ayıran "bilgi katmanıdır". **Back-End** tarafında 12 aşamalı teknik veriler toplanırken, **Front-End** tarafında bu veriler müşteriye bir "güven ve kalite pasaportu" olarak sunulur. **End-to-End** seviyesinde ise yasal uyumluluk ve kalite iyileştirme döngüsü sağlanır.

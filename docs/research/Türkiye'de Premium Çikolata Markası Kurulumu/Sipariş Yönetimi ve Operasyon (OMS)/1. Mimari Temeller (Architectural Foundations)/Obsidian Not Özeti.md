@@ -1,0 +1,1 @@
+**Mimari Temeller**, modern ticaretin karmaşıklığını ölçeklenebilir ve hataya dayanıklı bir teknolojik zemine oturtma felsefesidir. **Front-End** kısmında Headless yapı ile her kanalda tutarlı deneyim hedeflenirken, **Back-End** tarafında mikroservisler ve olay güdümlü mimari ile sistemin esnekliği yönetilir.

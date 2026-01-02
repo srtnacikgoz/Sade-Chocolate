@@ -1,0 +1,1 @@
+**Sadakat Paneli**, markanın "Dijital Yakınlık" (Digital Intimacy) kurma aracıdır. **Front-End** kısmında görsel tadım deneyimi sunulurken, **Back-End** tarafında karmaşık puan ve referans algoritmaları çalışır. Bu sistem, **End-to-End** seviyesinde müşteriyi bir tüketiciden marka elçisine dönüştürmeyi hedefler.

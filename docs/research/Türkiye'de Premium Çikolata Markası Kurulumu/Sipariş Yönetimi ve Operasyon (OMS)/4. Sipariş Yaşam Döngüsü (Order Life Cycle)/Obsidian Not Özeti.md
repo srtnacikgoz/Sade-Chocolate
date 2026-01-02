@@ -1,0 +1,1 @@
+**Sipariş Yaşam Döngüsü**, her siparişin "mutlu yol" veya "istisna" fark etmeksizin katı iş kurallarıyla yönetilmesidir. **Back-End** kısmında FSM ve koruma koşulları ile hatasız akış sağlanırken, **End-To-End** seviyesinde operasyonel mükemmellik korunur.

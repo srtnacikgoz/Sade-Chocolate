@@ -1,0 +1,1 @@
+**Envanter ve Satış Vaadi**, "ne satabilirim?" sorusuna gerçek zamanlı ve hatasız yanıt verme disiplinidir. **Front-End** kısmında müşteri güvenini sağlayan doğru stok bilgisi sunulurken, **Back-End** tarafında ATP matematiği ve kademeli rezervasyon algoritmaları yönetilir.

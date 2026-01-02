@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(git pull:*)",
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)",
+      "WebSearch",
+      "Bash(grep:*)",
+      "Bash(git stash:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(tree:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npx tsx:*)",
+      "Bash(git rebase:*)",
+      "Bash(dig:*)",
+      "Bash(nslookup:*)",
+      "Bash(npx firebase hosting:channel:deploy:*)",
+      "WebFetch(domain:www.dandelionchocolate.com)",
+      "Bash(ls:*)"
+    ]
+  }
+}

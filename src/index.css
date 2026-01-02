@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🎨 Santana Font Family */
+@font-face {
+  font-family: 'Santana';
+  src: url('/fonts/santana/Santana.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana';
+  src: url('/fonts/santana/Santana-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana';
+  src: url('/fonts/santana/Santana-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana Condensed';
+  src: url('/fonts/santana/Santana-RegularCondensed.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana Condensed';
+  src: url('/fonts/santana/Santana-BlackCondensed.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Santana XtraCondensed';
+  src: url('/fonts/santana/SantanaXtraCondensed.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Safari z-index fix - modal açıkken header'ı düzelt */
+body:has([class*="z-[9999]"]) header {
+  z-index: 40 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: white !important;
+}
+
+.dark body:has([class*="z-[9999]"]) header {
+  background: #0a0a0a !important;
+}
+
+:root {
+  font-family: 'Inter', sans-serif;
+  --header-height: 80px; /* Masaüstü standart yüksekliğimiz */
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --header-height: 64px; /* Mobil standart yüksekliğimiz */
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  /* Mocha Mousse: Sıcak Krem Zemin */
+  @apply bg-cream-100 text-mocha-900 antialiased;
+  transition: background-color 0.5s ease;
+}
+
+/* Lüks Scrollbar: İnce ve Kahve Tonlu */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-cream-200;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-mocha-200/50 rounded-full hover:bg-gold;
+}
+
+.dark body {
+  background-color: #0a0a0a;
+}
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0; /* Slate-200 */
+    border-radius: 20px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Slate-400 */
+  }
+}
+@layer utilities {
+  /* Scrollbar gizleme motoru */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none; /* IE ve Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+@layer components {
+  /* 🍫 Sade Standart Konteyner: Ürünler ve metinler burada toplanır */
+  .sade-container {
+    @apply w-full max-w-screen-xl mx-auto px-6 lg:px-12;
+  }
+}
+
+/* 🎚️ Custom Range Slider Styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #8B4513;
+  border: 4px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  margin-top: -8px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #8B4513;
+  border: 4px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 12px;
+  border-radius: 9999px;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 12s linear infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

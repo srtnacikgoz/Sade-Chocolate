@@ -1,0 +1,1 @@
+**Dijital Tadım Anketi**, online çikolata ticaretindeki "lezzet belirsizliğini" veriye dönüştürür. **Front-End** kısmında görsel tadım rehberleri kullanılırken, **Back-End** bu verileri müşteri tercihlerine göre segmente eder. **End-to-End** seviyesinde ise bu geri bildirimler doğrudan üretim reçetelerini (kavurma, konçlama) iyileştirmek için kullanılır

@@ -1,0 +1,1 @@
+Mağduriyetsiz bir ödeme sistemi; **Front-End** tarafında hız ve şeffaflık, **Back-End** tarafında Iyzico gibi güçlü altyapılar ve **End-to-End** tarafında ise kesintisiz müşteri bilgilendirmesi ile kurulur. Bu yapı, markanın güvenilirliğini ve premium konumunu korumasını sağlar
