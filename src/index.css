@@ -27,6 +27,15 @@
   font-display: swap;
 }
 
+/* Windows Font Rendering İyileştirmesi - Santana için özel optimizasyon */
+.font-santana {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+}
+
 @font-face {
   font-family: 'Santana Condensed';
   src: url('/fonts/santana/Santana-RegularCondensed.ttf') format('truetype');

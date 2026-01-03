@@ -38,8 +38,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
               alt="Sade Chocolate"
               className="w-9 h-9 opacity-80 group-hover:opacity-100 transition-opacity dark:invert"
             />
-            <div className="font-display font-bold text-xl lg:text-2xl tracking-tight">
-              <span className="text-brown-900 dark:text-white group-hover:text-gold transition-colors">Sade</span> <span className="font-medium italic text-gold group-hover:text-brown-900 dark:group-hover:text-white transition-colors">Chocolate</span>
+            <div className="text-xl lg:text-2xl tracking-tight">
+              <span className="font-santana font-bold text-brown-900 dark:text-white group-hover:text-gold transition-colors">Sade</span>{' '}
+              <span className="font-santana font-normal text-gold group-hover:text-brown-900 dark:group-hover:text-white transition-colors">Chocolate</span>
             </div>
           </Link>
           {navLinks.map((link) => (
@@ -60,8 +61,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
             alt="Sade Chocolate"
             className="w-7 h-7 opacity-80 group-hover:opacity-100 transition-opacity dark:invert"
           />
-          <div className="font-display font-bold text-lg tracking-tight">
-            <span className="text-brown-900 dark:text-white group-hover:text-gold transition-colors">Sade</span> <span className="font-medium italic text-gold group-hover:text-brown-900 dark:group-hover:text-white transition-colors">Chocolate</span>
+          <div className="text-lg tracking-tight">
+            <span className="font-santana font-bold text-brown-900 dark:text-white group-hover:text-gold transition-colors">Sade</span>{' '}
+            <span className="font-santana font-normal text-gold group-hover:text-brown-900 dark:group-hover:text-white transition-colors">Chocolate</span>
           </div>
         </Link>
 
