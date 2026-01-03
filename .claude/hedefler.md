@@ -116,13 +116,80 @@
   - Katalog sayfasında gösterilmemeli
   - Admin'de "Katalogda Göster" checkbox'ı eklensin (opsiyonel)
 
-### 📧 Öncelik 3: Bildirim Servisleri
-- [ ] **Email bildirim servisi**
-  - Sipariş onay emaili
-  - Kargo takip emaili
-- [ ] **WhatsApp bildirim**
-  - Sipariş bildirimleri
-  - Kargo takip
+### 🚚 Öncelik 3: Kargo Takip Sistemi
+- [x] **Backend hazır** - 03 Ocak 2026
+  - Firebase Cloud Functions deploy edildi
+  - MNG Kargo API entegrasyonu (trackShipment, getShipmentStatus, calculateShipping)
+  - API credentials .env ile yapılandırıldı
+- [x] **Frontend komponenti hazır**
+  - ShipmentTracker.tsx komponenti
+  - OrdersView entegrasyonu (tab ile kargo takip)
+- [x] **Admin panel kargo yönetimi** - 03 Ocak 2026
+  - StatusChangeModal ile sipariş durumu değiştirme
+  - TrackingNumberModal ile kargo takip numarası ekleme (zaten vardı)
+  - Tracking eklendiğinde otomatik "Shipped" durumu
+  - OrdersView'da "Kargoda" veya "Teslim Edildi" siparişlerde kargo takip sekmesi
+- [ ] **MNG Kargo otomatik gönderi oluşturma** (Opsiyonel)
+
+### 📧 Öncelik 4: Email Bildirim Sistemi
+- [ ] **Email servis seçimi ve yapılandırma**
+  - Servis araştırması (SendGrid, Resend, Amazon SES, Mailgun)
+  - API key yapılandırması
+  - Firebase Functions entegrasyonu
+  - Email template motoru (React Email veya MJML)
+
+- [ ] **Sipariş onay emaili**
+  - Trigger: Sipariş oluşturulduğunda (`orders` collection onCreate)
+  - İçerik:
+    - Sipariş özeti (ürünler, toplam tutar)
+    - Sipariş numarası ve tarih
+    - Teslimat adresi
+    - Tahmini teslimat tarihi
+    - Havale/EFT için banka bilgileri (eğer ödeme yöntemi EFT)
+    - "Siparişinizi Takip Edin" linki
+  - Template: HTML + plain text fallback
+
+- [ ] **Ödeme onay emaili**
+  - Trigger: Admin ödemeyi onayladığında
+  - İçerik:
+    - Ödeme onaylandı bildirimi
+    - Sipariş hazırlık sürecine alındı
+    - Tahmini hazırlık süresi
+
+- [ ] **Kargo bilgilendirme emaili**
+  - Trigger: Sipariş durumu "Shipped" olduğunda
+  - İçerik:
+    - Kargo takip numarası
+    - Kargo firması (MNG Kargo)
+    - Tahmini teslimat tarihi
+    - MNG Kargo takip linki
+    - Sade Chocolate kargo takip sayfası linki
+
+- [ ] **Teslimat onay emaili**
+  - Trigger: Sipariş durumu "Delivered" olduğunda
+  - İçerik:
+    - Teslim edildi bildirimi
+    - Geri bildirim formu linki
+    - Yeni siparişler için indirim kodu (sadakat sistemi)
+
+- [ ] **Heat Hold bilgilendirme emaili**
+  - Trigger: Sipariş "Heat Hold" durumuna geçtiğinde
+  - İçerik:
+    - Hava sıcaklığı nedeniyle bekleme açıklaması
+    - Tahmini gönderim tarihi
+    - Dandelion Chocolate modelinden ilham alınan kalite garantisi
+
+- [ ] **İptal/İade emaili**
+  - Trigger: Sipariş iptal edildiğinde veya iade başlatıldığında
+  - İçerik:
+    - İptal/iade nedeni
+    - İade tutarı ve süresi
+    - Müşteri desteği iletişim bilgileri
+
+- [ ] **WhatsApp bildirim** (Gelecek)
+  - SMS/WhatsApp Business API entegrasyonu
+  - Sipariş özet bildirimleri
+  - Kargo takip linkleri
 
 ### 💡 Öncelik 4: Checkout UX İyileştirmeleri (Gelecek)
 - [ ] **Checkout sayfa düzeni yeniden tasarımı** ⚠️ KRITIK
@@ -193,31 +260,34 @@
 
 ## SON OTURUM ÖZETİ
 
-**Tarih:** 02 Ocak 2026
+**Tarih:** 03 Ocak 2026
 
 ### Tamamlanan İşler
-1. ✅ **Admin Panel - Kutu Oluşturucu Sekmesi**
-   - `BoxConfigTab.tsx` bileşeni oluşturuldu
-   - Firebase Storage ile görsel yükleme
-   - Dinamik kutu boyutu yönetimi (ekle/sil/düzenle)
-   - Firestore: `box_config/default` yapılandırması
+1. ✅ **Admin Panel - Sipariş Durumu Yönetimi**
+   - `StatusChangeModal` komponenti oluşturuldu
+   - Tüm sipariş durumları arasında geçiş (8 durum)
+   - Her durum için özel ikon ve renk
+   - Mevcut durum disabled, seçilen durum highlighted
+   - Real-time timeline güncellemesi
 
-2. ✅ **CuratedBoxModal Config Entegrasyonu**
-   - Firestore'dan box_config okuma
-   - Dinamik kutu boyutları
-   - Her kutu boyutu için basePrice desteği
-   - Modal başlık/alt başlık özelleştirme
+2. ✅ **Kargo Takip Sistemi Entegrasyonu**
+   - Admin panel dropdown menüsüne "Durumu Değiştir" aksiyonu eklendi
+   - Tracking ekleme ile otomatik "Shipped" durumu (orderStore)
+   - OrdersView'da "Kargoda/Teslim Edildi" siparişlerde kargo takip tab'ı
+   - ShipmentTracker komponenti (Firebase Functions → MNG Kargo API)
 
-3. ✅ **Katalog & Ana Sayfa Kart Güncellemeleri**
-   - ProductCard stiliyle uyumlu tasarım
-   - Config'den başlık/görsel/CTA okuma
-   - Görsel yoksa varsayılan ikon gösterimi
-   - Liste/grid view desteği
+3. ✅ **Bug Fixes**
+   - Invalid Date formatı düzeltildi (ISO format + fallback)
+   - Weather API error console spam azaltıldı (sadece DEV mode)
+   - Firestore undefined value hatası giderildi (bankTransferDiscount)
+   - Login error mesajları eklendi (Türkçe)
 
 ### Dosya Değişiklikleri
-- `src/types.ts` - BoxConfig ve BoxSizeOption tipleri eklendi
-- `src/components/admin/tabs/BoxConfigTab.tsx` - YENİ
-- `src/pages/Admin.tsx` - BoxConfigTab entegrasyonu
-- `src/components/CuratedBoxModal.tsx` - Config entegrasyonu
-- `src/pages/Catalog.tsx` - ProductCard stili kart
-- `src/pages/Home.tsx` - ProductCard stili kart
+- `src/components/admin/tabs/OrderManagementTab.tsx` - StatusChangeModal + durum değiştirme aksiyonu
+- `src/stores/orderStore.ts` - addTracking'de otomatik "Shipped" durumu (zaten vardı)
+- `src/components/account/ShipmentTracker.tsx` - YENİ (önceki oturumda)
+- `src/services/shippingService.ts` - YENİ (önceki oturumda)
+- `src/components/account/OrdersView.tsx` - Kargo takip tab entegrasyonu
+- `src/pages/Checkout.tsx` - Date format + bankTransferDiscount fix
+- `src/pages/Account.tsx` - Login error handling
+- `src/services/weatherService.ts` - Console spam azaltıldı

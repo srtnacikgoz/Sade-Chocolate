@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Product } from '../../../types';
 import { PRODUCT_CATEGORIES } from '../../../constants';
-import { Package, AlertTriangle, LayoutGrid, TrendingUp, Search, Plus, Minus, Edit3, Trash2 } from 'lucide-react';
+import { Package, AlertTriangle, LayoutGrid, TrendingUp, Search, Plus, Minus, Edit3, Trash2, Eye, EyeOff } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { toast } from 'sonner';
 
@@ -46,6 +46,17 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
       await updateProduct(id, { locationStock: { yesilbahce: Math.max(0, currentStock + delta) } });
     } catch (err) {
       toast.error("Stok güncellenemedi.");
+    }
+  };
+
+  const handleVisibilityToggle = async (productId: string, currentVisibility: boolean | undefined) => {
+    try {
+      // Varsayılan değer true (görünür), toggle edince tersine çevir
+      const newVisibility = currentVisibility === false ? true : false;
+      await updateProduct(productId, { isVisibleInCatalog: newVisibility });
+      toast.success(newVisibility ? 'Ürün katalogda gösterilecek' : 'Ürün katalogdan gizlendi');
+    } catch (err) {
+      toast.error('Görünürlük güncellenemedi.');
     }
   };
 
@@ -225,6 +236,32 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-14">
+                {/* Katalog Görünürlüğü Toggle */}
+                <div className="hidden md:flex flex-col items-center gap-2">
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Katalog</span>
+                  <button
+                    onClick={() => handleVisibilityToggle(product.id, product.isVisibleInCatalog)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                      product.isVisibleInCatalog !== false
+                        ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    }`}
+                    title={product.isVisibleInCatalog !== false ? 'Katalogda görünür' : 'Katalogdan gizli'}
+                  >
+                    {product.isVisibleInCatalog !== false ? (
+                      <>
+                        <Eye size={16} />
+                        <span className="text-[10px] font-bold">Göster</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff size={16} />
+                        <span className="text-[10px] font-bold">Gizli</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 <div className="hidden md:flex flex-col items-center gap-2">
                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Envanter</span>
                   <div className="flex items-center gap-5 bg-slate-50 dark:bg-dark-900 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-inner">

@@ -149,7 +149,10 @@ export async function getWeatherByCity(city: string): Promise<WeatherData> {
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Weather API error:', error);
+    // API hatası - sessizce mock data kullan
+    if (import.meta.env.DEV) {
+      console.warn('Weather API unavailable, using mock data');
+    }
     return getMockWeatherData(city);
   }
 }

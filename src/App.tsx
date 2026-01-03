@@ -15,6 +15,7 @@ import { TopBar } from './components/TopBar';
 import { SearchDrawer } from './components/SearchDrawer';
 import { NewsletterPopup } from './components/NewsletterPopup';
 import { AIAssistant } from './components/AIAssistant';
+import { CookieConsent } from './components/CookieConsent';
 import { useLoyaltyStore } from './stores/loyaltyStore';
 
 // Lazy load pages - Route bazlı code splitting
@@ -107,6 +108,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Newsletter Popup - Don't show on admin or checkout */}
       {!isAdmin && !isCheckout && <NewsletterPopup />}
+
+      {/* Cookie Consent - Don't show on admin or checkout */}
+      {!isAdmin && !isCheckout && <CookieConsent />}
     </div>
   );
 };

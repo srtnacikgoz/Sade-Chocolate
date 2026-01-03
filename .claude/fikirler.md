@@ -228,3 +228,6 @@ Hava durumu uyarıları için termometre bileşeni.
 - Accessibility (a11y) ihmal edilmemeli
 - Performance optimize edilmeli (CSS > JS animasyonlar)
 - Dark mode desteği şart
+
+
+kutu oluşturucu geliştirilmeli: kutu çeşitleri, canta, not gibi ücret karşılığ herşeyi özelleştirebilir yapılabilir.

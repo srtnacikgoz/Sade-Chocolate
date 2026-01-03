@@ -70,11 +70,31 @@ export const Account: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-    setTimeout(() => {
-      login(email, pass, rememberMe);
+
+    try {
+      await login(email, pass, rememberMe);
+    } catch (err: any) {
+      // Firebase auth hata kodlarını Türkçe mesajlara çevir
+      const errorCode = err?.code || '';
+      let errorMessage = language === 'tr' ? 'Giriş yapılırken bir hata oluştu.' : 'An error occurred during login.';
+
+      if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found') {
+        errorMessage = language === 'tr' ? 'E-posta veya şifre hatalı.' : 'Invalid email or password.';
+      } else if (errorCode === 'auth/invalid-email') {
+        errorMessage = language === 'tr' ? 'Geçersiz e-posta adresi.' : 'Invalid email address.';
+      } else if (errorCode === 'auth/too-many-requests') {
+        errorMessage = language === 'tr' ? 'Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.' : 'Too many failed attempts. Please try again later.';
+      } else if (errorCode === 'auth/user-disabled') {
+        errorMessage = language === 'tr' ? 'Bu hesap devre dışı bırakılmış.' : 'This account has been disabled.';
+      }
+
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   const handleRegister = (e: React.FormEvent) => {
@@ -208,6 +228,7 @@ export const Account: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                {error && <p className="text-[10px] text-red-500 font-bold text-center uppercase tracking-widest animate-shake">{error}</p>}
                 <Button type="submit" className="w-full h-20 rounded-[30px] shadow-2xl tracking-[0.4em] text-[11px] bg-brown-900 text-white dark:bg-gold dark:text-black" loading={isLoading}>{t('login_button')}</Button>
               </form>
             ) : (

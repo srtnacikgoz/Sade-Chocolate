@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShoppingBag, Package, Truck, CheckCircle2, 
-  ChevronRight, ArrowRight, X, Clock, MapPin, Receipt 
+import {
+  ShoppingBag, Package, Truck, CheckCircle2,
+  ChevronRight, ArrowRight, X, Clock, MapPin, Receipt, Navigation
 } from 'lucide-react';
+import { ShipmentTracker } from './ShipmentTracker';
 
 // --- TİP TANIMLAMALARI ---
 export interface OrderItem {
@@ -29,6 +30,7 @@ interface OrdersViewProps {
 export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showTracking, setShowTracking] = useState(false);
 
   // Sipariş Durum Renkleri ve İkonları
   const getStatusDetails = (status: string) => {
@@ -87,7 +89,10 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
                     </div>
                   </div>
                   <h4 className="font-display text-xl font-bold dark:text-white italic">
-                    {new Date(order.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {(() => {
+                      const d = new Date(order.date);
+                      return isNaN(d.getTime()) ? order.date : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                    })()}
                   </h4>
                 </div>
               </div>
@@ -111,7 +116,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
       {/* 🛡️ SADE ARTISAN SİPARİŞ DETAY MODALI */}
       {selectedOrder && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10 animate-fade-in">
-          <div className="absolute inset-0 bg-brown-900/60 backdrop-blur-md" onClick={() => setSelectedOrder(null)}></div>
+          <div className="absolute inset-0 bg-brown-900/60 backdrop-blur-md" onClick={() => { setSelectedOrder(null); setShowTracking(false); }}></div>
           <div className="relative bg-white dark:bg-dark-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[40px] shadow-2xl animate-scale-in">
             
             {/* Modal Header */}
@@ -120,11 +125,43 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
                 <span className="text-[10px] font-black text-gold uppercase tracking-[0.3em]">Sipariş Detayı</span>
                 <h3 className="font-display text-2xl font-bold dark:text-white italic tracking-tight uppercase">#{selectedOrder.id}</h3>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="w-12 h-12 bg-gray-50 dark:bg-dark-800 flex items-center justify-center rounded-2xl text-gray-400 hover:text-red-500 transition-all">
+              <button onClick={() => { setSelectedOrder(null); setShowTracking(false); }} className="w-12 h-12 bg-gray-50 dark:bg-dark-800 flex items-center justify-center rounded-2xl text-gray-400 hover:text-red-500 transition-all">
                 <X size={24} />
               </button>
             </div>
 
+            {/* Tab Navigasyonu - Kargoda veya Teslim Edildi ise göster */}
+            {(selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered') && (
+              <div className="px-8 py-4 border-b border-gray-100 dark:border-gray-800 flex gap-2">
+                <button
+                  onClick={() => setShowTracking(false)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    !showTracking
+                      ? 'bg-brown-900 dark:bg-gold text-white dark:text-black'
+                      : 'bg-gray-50 dark:bg-dark-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-700'
+                  }`}
+                >
+                  <Receipt size={14} />
+                  Sipariş Detayı
+                </button>
+                <button
+                  onClick={() => setShowTracking(true)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    showTracking
+                      ? 'bg-brown-900 dark:bg-gold text-white dark:text-black'
+                      : 'bg-gray-50 dark:bg-dark-800 text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-700'
+                  }`}
+                >
+                  <Navigation size={14} />
+                  Kargo Takip
+                </button>
+              </div>
+            )}
+
+            {/* İçerik Alanı */}
+            {showTracking ? (
+              <ShipmentTracker orderId={selectedOrder.id} />
+            ) : (
             <div className="p-8 space-y-10">
               {/* Zaman Çizelgesi Özeti */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -132,7 +169,10 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
                   <div className="flex items-center gap-2 text-gray-400">
                     <Clock size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">SİPARİŞ TARİHİ</span>
                   </div>
-                  <p className="text-xs font-bold dark:text-white">{new Date(selectedOrder.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs font-bold dark:text-white">{(() => {
+                    const d = new Date(selectedOrder.date);
+                    return isNaN(d.getTime()) ? selectedOrder.date : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  })()}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-400">
@@ -177,6 +217,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       )}

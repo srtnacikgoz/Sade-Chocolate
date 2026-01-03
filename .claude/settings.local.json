@@ -31,7 +31,12 @@
       "Bash(ls:*)",
       "Bash(claude mcp list:*)",
       "Bash(firebase deploy:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(firebase init:*)",
+      "Bash(firebase functions:config:get:*)",
+      "Bash(firebase functions:log:*)",
+      "Bash(Select-String -Pattern \"error|Error|failed\" -Context 2,2)",
+      "Bash(firebase functions:list:*)"
     ]
   },
   "hooks": {
@@ -63,8 +68,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -Command \"[console]::beep(1000,200); Start-Sleep -Milliseconds 100; [console]::beep(1200,200)\"",
-            "timeout": 2
+            "command": "powershell -NoProfile -Command \"'Hook triggered at ' + (Get-Date) | Out-File -Append -FilePath '.claude/hook-log.txt'; [console]::beep(1000,500)\"",
+            "timeout": 3
           }
         ]
       }

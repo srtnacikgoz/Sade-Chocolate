@@ -44,6 +44,23 @@ const [invoiceType, setInvoiceType] = useState<'individual' | 'corporate'>('indi
 const [isSameAsDelivery, setIsSameAsDelivery] = useState(true);
 const [vergiNo, setVergiNo] = useState(''); // Vergi no state (max 10 hane)
 
+  // Email validation helper
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Phone validation helper
+  const isValidPhone = (phone: string, countryCode: string): boolean => {
+    const digits = phone.replace(/\D/g, '');
+    if (countryCode === '+90') {
+      // Türkiye: 10 hane gerekli
+      return digits.length === 10;
+    }
+    // Diğer ülkeler için minimum 7 hane
+    return digits.length >= 7;
+  };
+
   // Guest form validation
   const isGuestFormValid = useMemo(() => {
     if (!isGuestMode) return true;
@@ -51,7 +68,9 @@ const [vergiNo, setVergiNo] = useState(''); // Vergi no state (max 10 hane)
       guestData.firstName?.trim() &&
       guestData.lastName?.trim() &&
       guestData.email?.trim() &&
+      isValidEmail(guestData.email) &&
       guestData.phone?.trim() &&
+      isValidPhone(guestData.phone, guestData.phoneCountry) &&
       guestData.city?.trim() &&
       guestData.district?.trim() &&
       guestData.address?.trim()
@@ -209,9 +228,14 @@ const grandTotal = cartTotal + shippingCost;
       }
       if (!guestData.email) {
         newErrors.email = "Lütfen e-posta adresinizi girin.";
+      } else if (!isValidEmail(guestData.email)) {
+        newErrors.email = "Geçerli bir e-posta adresi girin.";
       }
       if (!guestData.phone) {
         newErrors.phone = "Lütfen telefon numaranızı girin.";
+      } else if (!isValidPhone(guestData.phone, guestData.phoneCountry)) {
+        const requiredDigits = guestData.phoneCountry === '+90' ? '10' : '7';
+        newErrors.phone = `Geçerli bir telefon numarası girin (${requiredDigits} hane gerekli).`;
       }
       if (!guestData.city || !guestData.district || !guestData.address) {
         newErrors.address = "Lütfen teslimat adresinizi eksiksiz girin.";
@@ -263,10 +287,10 @@ const grandTotal = cartTotal + shippingCost;
           })),
           subtotal: cartTotal,
           shippingCost,
-          bankTransferDiscount: bankTransferDiscount > 0 ? bankTransferDiscount : undefined,
+          ...(bankTransferDiscount > 0 && { bankTransferDiscount }),
           total: finalTotal,
           paymentMethod,
-          paymentDeadline: paymentMethod === 'eft' ? new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() : undefined,
+          ...(paymentMethod === 'eft' && { paymentDeadline: new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() }),
           status: paymentMethod === 'eft' ? 'Ödeme Bekleniyor' : 'Hazırlanıyor',
           isGuest: true,
           createdAt: new Date().toISOString(),
@@ -276,14 +300,14 @@ const grandTotal = cartTotal + shippingCost;
         // Kayıtlı kullanıcı siparişi
         addOrder({
           id: `SADE-${orderId}`,
-          date: new Date().toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US'),
+          date: new Date().toISOString(),
           status: paymentMethod === 'eft' ? 'Ödeme Bekleniyor' : 'Hazırlanıyor',
           total: finalTotal,
           subtotal: cartTotal,
           shippingCost,
-          bankTransferDiscount: bankTransferDiscount > 0 ? bankTransferDiscount : undefined,
+          ...(bankTransferDiscount > 0 && { bankTransferDiscount }),
           paymentMethod: paymentMethod,
-          paymentDeadline: paymentMethod === 'eft' ? new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() : undefined,
+          ...(paymentMethod === 'eft' && { paymentDeadline: new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() }),
           items: [...items],
         });
       }
@@ -446,15 +470,23 @@ const grandTotal = cartTotal + shippingCost;
       />
     </div>
 
-    <Input
-      label="E-POSTA ADRESİ"
-      type="email"
-      placeholder="isim@ornek.com"
-      className="h-16 rounded-2xl"
-      required
-      value={guestData.email}
-      onChange={(e) => setGuestData({...guestData, email: e.target.value})}
-    />
+    <div>
+      <Input
+        label="E-POSTA ADRESİ"
+        type="email"
+        placeholder="isim@ornek.com"
+        className="h-16 rounded-2xl"
+        required
+        value={guestData.email}
+        onChange={(e) => setGuestData({...guestData, email: e.target.value})}
+      />
+      {guestData.email && !isValidEmail(guestData.email) && (
+        <p className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+          <span className="material-icons-outlined text-sm">error</span>
+          Geçerli bir e-posta adresi girin (örn: isim@ornek.com)
+        </p>
+      )}
+    </div>
 
     {/* Telefon input - ülke kodu dropdown + formatlanmış input */}
     <div className="space-y-2">
@@ -499,6 +531,14 @@ const grandTotal = cartTotal + shippingCost;
           }}
         />
       </div>
+      {guestData.phone && !isValidPhone(guestData.phone, guestData.phoneCountry) && (
+        <p className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+          <span className="material-icons-outlined text-sm">error</span>
+          {guestData.phoneCountry === '+90'
+            ? 'Türkiye için 10 haneli telefon numarası girin (örn: 533 342 04 93)'
+            : 'En az 7 haneli telefon numarası girin'}
+        </p>
+      )}
     </div>
 
     <div className="grid md:grid-cols-2 gap-4">
@@ -529,6 +569,12 @@ const grandTotal = cartTotal + shippingCost;
         value={guestData.address}
         onChange={(e) => setGuestData({...guestData, address: e.target.value})}
       />
+      {errors.address && (
+        <p className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
+          <span className="material-icons-outlined text-sm">error</span>
+          {errors.address}
+        </p>
+      )}
     </div>
   </div>
 ) : !isAddressFormOpen ? (
@@ -679,10 +725,14 @@ const grandTotal = cartTotal + shippingCost;
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
           }
+          if (!agreedToTerms) {
+            setErrors({ terms: 'Lütfen satış sözleşmesini onaylayın.' });
+            return;
+          }
           setCurrentStep(2);
         }}
-        disabled={isGuestMode ? !isGuestFormValid : !selectedAddressId}
-        className="w-full md:w-auto px-16 h-18 rounded-full shadow-xl"
+        disabled={(isGuestMode ? !isGuestFormValid : !selectedAddressId) || !agreedToTerms}
+        className={`w-full md:w-auto px-16 h-18 rounded-full shadow-xl ${!agreedToTerms ? 'opacity-50' : ''}`}
       >
         ÖDEMEYE DEVAM ET <ChevronRight className="ml-2" size={16} />
       </Button>
@@ -720,6 +770,17 @@ const grandTotal = cartTotal + shippingCost;
           <div className="grid grid-cols-2 gap-4">
             <Input label="S.K. TARİHİ" placeholder="AA/YY" value={cardData.expiry} onChange={handleExpiry} className={`h-16 rounded-2xl border-2 ${errors.cardExp ? 'border-red-600' : 'border-gray-100 dark:border-gray-800'}`} />
             <Input label="CVV" placeholder="***" type="password" value={cardData.cvv} onChange={handleCVV} className={`h-16 rounded-2xl border-2 ${errors.cardCvv ? 'border-red-600' : 'border-gray-100 dark:border-gray-800'}`} />
+          </div>
+
+          {/* Güvenli Ödeme - Iyzico */}
+          <div className="flex items-center justify-center gap-3 py-4 px-6 bg-gray-50 dark:bg-dark-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+            <ShieldCheck className="text-emerald-600 dark:text-emerald-400" size={20} />
+            <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">256-bit SSL ile güvenli ödeme</span>
+            <img
+              src="/payment/iyzico/iyzico-logo-pack/checkout_iyzico_ile_ode/TR/Tr_Colored/iyzico_ile_ode_colored.svg"
+              alt="iyzico ile öde"
+              className="h-6 opacity-80"
+            />
           </div>
         </div>
       ) : (
@@ -807,7 +868,7 @@ const grandTotal = cartTotal + shippingCost;
       )}
     </div>    <div className="flex gap-4 mt-12 border-t pt-10">
       <button onClick={() => setCurrentStep(1)} className="px-8 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-brown-900 transition-colors">GERİ DÖN</button>
-      <Button onClick={handleCompleteOrder} loading={isSubmitting} className="flex-1 h-18 rounded-full shadow-2xl">
+      <Button onClick={handleCompleteOrder} loading={isSubmitting} disabled={!agreedToTerms} className={`flex-1 h-18 rounded-full shadow-2xl ${!agreedToTerms ? 'opacity-50 cursor-not-allowed' : ''}`}>
         SİPARİŞİ TAMAMLA
       </Button>
     </div>
@@ -948,15 +1009,19 @@ const grandTotal = cartTotal + shippingCost;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
+      if (!agreedToTerms) {
+        setErrors({ terms: 'Lütfen satış sözleşmesini onaylayın.' });
+        return;
+      }
       setCurrentStep(2);
     } else {
       handleCompleteOrder();
     }
   }}
   loading={isSubmitting}
-  disabled={currentStep === 1 && (isGuestMode ? !isGuestFormValid : !selectedAddressId)}
+  disabled={(currentStep === 1 && (isGuestMode ? !isGuestFormValid : !selectedAddressId)) || !agreedToTerms}
   size="lg"
-  className="w-full h-16 shadow-2xl rounded-xl text-[11px] font-bold uppercase tracking-[0.3em]"
+  className={`w-full h-16 shadow-2xl rounded-xl text-[11px] font-bold uppercase tracking-[0.3em] ${!agreedToTerms ? 'opacity-50' : ''}`}
 >
   {currentStep === 1 ? (language === 'tr' ? 'ÖDEME ADIMINA GEÇ' : 'PROCEED TO PAYMENT') : t('complete_order')}
 </Button>
@@ -988,8 +1053,8 @@ const grandTotal = cartTotal + shippingCost;
           <Button
             onClick={() => currentStep === 1 ? setCurrentStep(2) : handleCompleteOrder()}
             loading={isSubmitting}
-            disabled={currentStep === 1 && (isGuestMode ? !isGuestFormValid : !selectedAddressId)}
-            className="px-8 h-14 rounded-full shadow-xl text-xs whitespace-nowrap"
+            disabled={currentStep === 1 ? (isGuestMode ? !isGuestFormValid : !selectedAddressId) : !agreedToTerms}
+            className={`px-8 h-14 rounded-full shadow-xl text-xs whitespace-nowrap ${currentStep === 2 && !agreedToTerms ? 'opacity-50' : ''}`}
           >
             {currentStep === 1 ? 'DEVAM ET' : 'SİPARİŞİ TAMAMLA'}
           </Button>

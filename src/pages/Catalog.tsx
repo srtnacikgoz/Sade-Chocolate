@@ -91,6 +91,9 @@ export const Catalog: React.FC = () => {
   const sortedAndFilteredProducts = useMemo(() => {
     let currentProducts = products;
 
+    // 👁️ Katalogda gizli ürünleri filtrele
+    currentProducts = currentProducts.filter(p => p.isVisibleInCatalog !== false);
+
     if (searchTerm) {
       currentProducts = currentProducts.filter(p =>
         p.title.toLowerCase().includes(searchTerm) ||
@@ -262,7 +265,7 @@ export const Catalog: React.FC = () => {
           <div className={`grid gap-x-6 gap-y-10 transition-all duration-500 ${viewMode === ViewMode.GRID ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
             {/* Kendi Kutunu Oluştur - ProductCard Stili */}
             {(boxConfig?.enabled !== false) && (
-              <motion.button
+              <motion.div
                 onClick={() => setIsBoxModalOpen(true)}
                 className={`group bg-cream-50 dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-500 overflow-hidden flex flex-col h-full border border-gold/15 relative cursor-pointer text-left ${
                   viewMode === ViewMode.LIST ? 'flex-row' : ''
@@ -337,7 +340,7 @@ export const Catalog: React.FC = () => {
                     {boxConfig?.ctaText || 'Kutuya Git'}
                   </button>
                 </div>
-              </motion.button>
+              </motion.div>
             )}
 
             {sortedAndFilteredProducts.map(product => (

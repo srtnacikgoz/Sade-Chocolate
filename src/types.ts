@@ -89,6 +89,9 @@ export interface Product {
   isBoxContent?: boolean;     // Bu ürün kutu içeriği olarak seçilebilir mi?
   boxContentIds?: string[];   // Kutunun içindeki bonbon Product ID'leri (aynı ID tekrar edebilir)
   boxSize?: number;           // Kutu kapasitesi (6, 9, 12, 16, vb.)
+
+  // 👁️ KATALOG GÖRÜNÜRLÜĞÜ
+  isVisibleInCatalog?: boolean; // false ise katalogda gösterilmez (varsayılan: true)
 }
 export interface GiftOptions {
   isGift: boolean;

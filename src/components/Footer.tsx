@@ -163,6 +163,25 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           </Link>
         </div>
 
+        {/* Güvenli Ödeme Rozeti */}
+        <div className="flex items-center justify-center gap-4 mb-8 py-4">
+          <img
+            src="/payment/iyzico/iyzico-logo-pack/footer_iyzico_ile_ode/Colored/logo_band_colored.svg"
+            alt="iyzico ile güvenli ödeme"
+            className="h-8 opacity-60 hover:opacity-80 transition-opacity dark:hidden"
+          />
+          <img
+            src="/payment/iyzico/iyzico-logo-pack/footer_iyzico_ile_ode/White/logo_band_white.svg"
+            alt="iyzico ile güvenli ödeme"
+            className="h-8 opacity-60 hover:opacity-80 transition-opacity hidden dark:block"
+          />
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <i className="material-icons-outlined text-sm">lock</i>
+            <span>256-bit SSL</span>
+          </div>
+        </div>
+
         <p className="font-sans text-[10px] text-gray-300 dark:text-gray-600 uppercase tracking-[0.4em] mb-4">
           Powered by Sade Patisserie • Antalya
         </p>

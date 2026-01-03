@@ -522,6 +522,136 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
   );
 };
 
+// --- STATUS CHANGE MODAL ---
+const StatusChangeModal = ({ order, onClose, onSave }: { order: Order; onClose: () => void; onSave: (newStatus: Order['status']) => void }) => {
+  const [selectedStatus, setSelectedStatus] = useState<Order['status']>(order.status);
+
+  const statuses: Array<{ value: Order['status']; label: string; color: string; icon: any }> = [
+    { value: 'Pending Payment', label: 'Ödeme Bekleniyor', color: 'bg-amber-100 text-amber-700 border-amber-300', icon: Clock },
+    { value: 'Awaiting Prep', label: 'Hazırlık Bekliyor', color: 'bg-brand-peach/30 text-brand-orange border-brand-peach', icon: Clock },
+    { value: 'In Production', label: 'Üretimde', color: 'bg-brand-yellow/30 text-brand-mustard border-brand-yellow', icon: Package },
+    { value: 'Ready for Packing', label: 'Paketlemeye Hazır', color: 'bg-brand-blue/30 text-blue-700 border-brand-blue', icon: Package },
+    { value: 'Heat Hold', label: 'Isı Beklemesi', color: 'bg-orange-100 text-orange-700 border-orange-300', icon: Thermometer },
+    { value: 'Shipped', label: 'Kargoya Verildi', color: 'bg-brand-green/30 text-green-700 border-brand-green', icon: Truck },
+    { value: 'Cancelled', label: 'İptal Edildi', color: 'bg-red-50 text-red-600 border-red-200', icon: XCircle },
+    { value: 'Refunded', label: 'İade Edildi', color: 'bg-purple-50 text-purple-600 border-purple-200', icon: RefreshCw }
+  ];
+
+  const handleSave = () => {
+    if (selectedStatus !== order.status) {
+      onSave(selectedStatus);
+    }
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
+
+      {/* Modal */}
+      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-[32px] shadow-2xl">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Sipariş Durumunu Değiştir</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
+              <X size={20} className="text-gray-400" />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id}</p>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)] space-y-4">
+          <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Mevcut Durum</p>
+            <div className="flex items-center gap-3">
+              {React.createElement(statuses.find(s => s.value === order.status)?.icon || Clock, { size: 20, className: 'text-gray-500' })}
+              <span className="font-medium text-brown-900 dark:text-white">
+                {statuses.find(s => s.value === order.status)?.label || order.status}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+              Yeni Durum Seçin
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {statuses.map((status) => {
+                const Icon = status.icon;
+                const isSelected = selectedStatus === status.value;
+                const isCurrent = order.status === status.value;
+
+                return (
+                  <button
+                    key={status.value}
+                    onClick={() => setSelectedStatus(status.value)}
+                    disabled={isCurrent}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                      isCurrent
+                        ? 'bg-gray-100 dark:bg-dark-700 border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed'
+                        : isSelected
+                        ? 'bg-brand-mustard/10 border-brand-mustard dark:border-brand-mustard shadow-lg'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-brand-mustard dark:hover:border-brand-mustard hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        isSelected ? 'bg-brand-mustard text-white' : 'bg-gray-100 dark:bg-dark-900 text-gray-500'
+                      }`}>
+                        <Icon size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-brown-900 dark:text-white">{status.label}</p>
+                        {isCurrent && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Mevcut Durum</p>}
+                      </div>
+                      {isSelected && !isCurrent && (
+                        <CheckCircle2 size={20} className="text-brand-mustard shrink-0" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {selectedStatus !== order.status && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-900 dark:text-blue-300">
+                <strong>Not:</strong> Sipariş durumu "{statuses.find(s => s.value === order.status)?.label}" → "{statuses.find(s => s.value === selectedStatus)?.label}" olarak değiştirilecektir.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+          >
+            İptal
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={selectedStatus === order.status}
+            className={`px-6 py-3 rounded-2xl text-white text-sm font-medium transition-colors flex items-center gap-2 ${
+              selectedStatus === order.status
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-brand-mustard hover:bg-brand-orange'
+            }`}
+          >
+            <CheckCircle2 size={16} />
+            Durumu Güncelle
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- REFUND MODAL ---
 const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => void; onSave: (refundData: any) => void }) => {
   const [refundReason, setRefundReason] = useState('');
@@ -1906,6 +2036,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isStatusChangeModalOpen, setIsStatusChangeModalOpen] = useState(false);
 
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -1927,6 +2058,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const editOrder = useOrderStore((state) => state.editOrder);
   const startRefund = useOrderStore((state) => state.startRefund);
   const cancelOrder = useOrderStore((state) => state.cancelOrder);
+  const updateOrderStatus = useOrderStore((state) => state.updateOrderStatus);
 
   const handleAction = (action: string) => {
     if (action === 'E-posta Gönder') {
@@ -1966,6 +2098,11 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
     }
     if (action === 'Siparişi İptal Et') {
       setIsCancelModalOpen(true);
+      setIsDropdownOpen(false);
+      return;
+    }
+    if (action === 'Durumu Değiştir') {
+      setIsStatusChangeModalOpen(true);
       setIsDropdownOpen(false);
       return;
     }
@@ -2046,6 +2183,15 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
       success('Sipariş başarıyla iptal edildi');
     } catch (err: any) {
       error(`Sipariş iptal edilemedi: ${err.message}`);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: Order['status']) => {
+    try {
+      await updateOrderStatus(order.id, newStatus);
+      success(`Sipariş durumu güncellendi: ${newStatus}`);
+    } catch (err: any) {
+      error(`Durum güncellenemedi: ${err.message}`);
     }
   };
 
@@ -2244,6 +2390,13 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                   >
                     <Tag size={16} className="text-brand-peach" />
                     <span className="text-sm text-brown-900 dark:text-white">Etiket Ekle</span>
+                  </button>
+                  <button
+                    onClick={() => handleAction('Durumu Değiştir')}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                  >
+                    <RefreshCw size={16} className="text-purple-600" />
+                    <span className="text-sm text-brown-900 dark:text-white">Durumu Değiştir</span>
                   </button>
                 </div>
 
@@ -2545,6 +2698,15 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
           order={order}
           onClose={() => setIsRefundModalOpen(false)}
           onSave={handleRefund}
+        />
+      )}
+
+      {/* Status Change Modal */}
+      {isStatusChangeModalOpen && (
+        <StatusChangeModal
+          order={order}
+          onClose={() => setIsStatusChangeModalOpen(false)}
+          onSave={handleStatusChange}
         />
       )}
 
