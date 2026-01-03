@@ -57,6 +57,16 @@
             "timeout": 2
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"[console]::beep(1000,200); Start-Sleep -Milliseconds 100; [console]::beep(1200,200)\"",
+            "timeout": 2
+          }
+        ]
       }
     ]
   }
