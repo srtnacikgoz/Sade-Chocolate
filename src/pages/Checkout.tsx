@@ -939,11 +939,23 @@ const grandTotal = cartTotal + shippingCost;
                 </p>
               </div>
 
-              <Button 
-  onClick={() => currentStep === 1 ? setCurrentStep(2) : handleCompleteOrder()} 
-  loading={isSubmitting} 
-  disabled={currentStep === 1 && !selectedAddressId}
-  size="lg" 
+              <Button
+  onClick={() => {
+    if (currentStep === 1) {
+      // Guest mode için validasyon
+      if (isGuestMode && !isGuestFormValid) {
+        setErrors({ address: 'Lütfen tüm bilgileri eksiksiz doldurun.' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      setCurrentStep(2);
+    } else {
+      handleCompleteOrder();
+    }
+  }}
+  loading={isSubmitting}
+  disabled={currentStep === 1 && (isGuestMode ? !isGuestFormValid : !selectedAddressId)}
+  size="lg"
   className="w-full h-16 shadow-2xl rounded-xl text-[11px] font-bold uppercase tracking-[0.3em]"
 >
   {currentStep === 1 ? (language === 'tr' ? 'ÖDEME ADIMINA GEÇ' : 'PROCEED TO PAYMENT') : t('complete_order')}
