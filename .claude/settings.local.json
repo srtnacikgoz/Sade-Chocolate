@@ -29,7 +29,23 @@
       "Bash(npx firebase hosting:channel:deploy:*)",
       "WebFetch(domain:www.dandelionchocolate.com)",
       "Bash(ls:*)",
-      "Bash(claude mcp list:*)"
+      "Bash(claude mcp list:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(chmod:*)"
+    ]
+  },
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/approval-notification.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

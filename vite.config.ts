@@ -18,6 +18,29 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // React ve react-router ayrı chunk
+              'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+              // Firebase ayrı chunk (en büyük kütüphane)
+              'firebase': [
+                'firebase/app',
+                'firebase/auth',
+                'firebase/firestore',
+                'firebase/storage'
+              ],
+              // UI kütüphaneleri
+              'ui-vendor': ['sonner', 'lucide-react'],
+              // Zustand ve diğer state management
+              'state-vendor': ['zustand']
+            }
+          }
+        },
+        chunkSizeWarningLimit: 600,
+        sourcemap: false
       }
     };
 });
