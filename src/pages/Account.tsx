@@ -110,7 +110,9 @@ export const Account: React.FC = () => {
       <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-dark-900">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-none animate-spin"></div>
-          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gold">Sade Chocolate</p>
+          <p className="text-[10px] uppercase tracking-[0.5em] text-gold">
+            <span className="font-santana font-bold">Sade</span> <span className="font-santana font-normal">Chocolate</span>
+          </p>
         </div>
       </div>
     );
@@ -135,7 +137,10 @@ export const Account: React.FC = () => {
 
           <div className="relative z-10 space-y-8 lg:space-y-12">
             <div className="space-y-4">
-              <h2 className="font-display text-4xl lg:text-7xl text-brown-900 italic leading-tight">Sade <br /> <span className="text-gold">Artisan</span> Kulübü</h2>
+              <h2 className="text-4xl lg:text-7xl text-brown-900 leading-tight">
+                <span className="font-santana font-bold">Sade</span> <br />
+                <span className="font-santana font-normal text-gold">Artisan</span> <span className="font-santana font-normal">Kulübü</span>
+              </h2>
             </div>
 
             <div className="grid gap-6 lg:gap-8">

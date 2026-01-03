@@ -16,8 +16,9 @@ export const BottomNav: React.FC = () => {
         <NavLink to="/home" className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
           isActive ? 'text-brown-900 dark:text-white' : 'text-gray-400 hover:text-brown-900 dark:hover:text-white'
         }`}>
-          <div className="font-display font-bold text-sm tracking-tight">
-            Sade <span className="font-medium italic text-gold">Chocolate</span>
+          <div className="text-sm tracking-tight">
+            <span className="font-santana font-bold">Sade</span>{' '}
+            <span className="font-santana font-normal text-gold">Chocolate</span>
           </div>
         </NavLink>
         <NavLink to="/catalog" className={getLinkClass}>

@@ -69,9 +69,10 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
             alt="Sade Chocolate"
             className="w-14 h-14 opacity-70 dark:invert"
           />
-          <span className="font-display font-bold text-4xl tracking-tight text-brown-900 dark:text-white italic">
-            Sade <span className="text-gold">Chocolate</span>
-          </span>
+          <div className="text-4xl tracking-tight">
+            <span className="font-santana font-bold text-brown-900 dark:text-white">Sade</span>{' '}
+            <span className="font-santana font-normal text-gold">Chocolate</span>
+          </div>
         </div>
 
         {/* Newsletter Section */}

@@ -131,7 +131,10 @@ const passwordStrength = calculatePasswordStrength(formData.password);
 
         <div className="relative z-10 mt-12 lg:mt-0 space-y-8 lg:space-y-12">
           <div className="space-y-4">
-            <h2 className="font-display text-4xl lg:text-7xl text-brown-900 italic leading-tight">Sade <br /> <span className="text-gold">Artisan</span> Kulübü</h2>
+            <h2 className="text-4xl lg:text-7xl text-brown-900 leading-tight">
+              <span className="font-santana font-bold">Sade</span> <br />
+              <span className="font-santana font-normal text-gold">Artisan</span> <span className="font-santana font-normal">Kulübü</span>
+            </h2>
           </div>
 
           <div className="grid gap-6 lg:gap-8">

@@ -442,7 +442,9 @@ export const ProductDetail: React.FC = () => {
         </div>
 
         <div className="mt-auto pt-4 w-full flex flex-col items-center opacity-60">
-          <p className="text-[8px] font-black uppercase tracking-[0.4em] text-gold">Sade Chocolate</p>
+          <p className="text-[8px] uppercase tracking-[0.4em] text-gold">
+            <span className="font-santana font-bold">Sade</span> <span className="font-santana font-normal">Chocolate</span>
+          </p>
         </div>
       </div>
       
