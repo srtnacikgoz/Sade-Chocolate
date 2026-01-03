@@ -153,8 +153,26 @@ export const Home: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
             <div className="max-w-3xl animate-fade-in">
-              <h1 className="font-serif text-5xl lg:text-8xl text-white font-extralight mb-6 leading-none tracking-tighter drop-shadow-xl">
-                {heroTitle}
+              <h1 className="text-5xl lg:text-8xl text-white mb-6 leading-none tracking-tighter drop-shadow-xl whitespace-pre-line">
+                {heroTitle.includes('Sade') && heroTitle.includes('Chocolate') ? (
+                  // "Sade Chocolate" içeriyorsa Santana font kullan
+                  heroTitle.split('\n').map((line, idx) => (
+                    <React.Fragment key={idx}>
+                      {line.includes('Sade') && line.includes('Chocolate') ? (
+                        <>
+                          <span className="font-santana font-bold">Sade</span>{' '}
+                          <span className="font-santana font-normal">Chocolate</span>
+                        </>
+                      ) : (
+                        <span className="font-serif font-extralight">{line}</span>
+                      )}
+                      {idx < heroTitle.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  // Diğer durumlarda normal serif font
+                  <span className="font-serif font-extralight">{heroTitle}</span>
+                )}
               </h1>
               <p className="font-sans text-white/90 text-sm lg:text-base font-light mb-10 tracking-[0.3em] uppercase">
                 {heroSubtitle}
