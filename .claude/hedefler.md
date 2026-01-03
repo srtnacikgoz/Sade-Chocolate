@@ -1,6 +1,6 @@
 # Sade Chocolate - Proje Durumu ve Hedefler
 
-> **Son Güncelleme:** 02 Ocak 2026
+> **Son Güncelleme:** 03 Ocak 2026
 
 ---
 
@@ -36,6 +36,11 @@
 ### Tasarım & Fontlar
 - [x] Santana font dosyaları yüklendi (6 varyant: Regular, Bold, Black, Condensed)
 - [x] Santana fontu CSS entegrasyonu (@font-face + Tailwind config)
+- [x] **Logo ve branding finalize** - 03 Ocak 2026
+  - Header logo Santana fontu ile güncellendi (Sade Bold + Chocolate Regular)
+  - Windows font rendering optimizasyonu (antialiased, kerning, optimizeLegibility)
+  - Favicon olarak kakaoLogo.svg ayarlandı
+  - Mac/Windows tutarlılığı sağlandı
 
 ### Kullanıcı Deneyimi
 - [x] Giriş sayfası iyileştirmeleri (Şifremi unuttum akışı)
@@ -51,22 +56,41 @@
   - Hafta sonu gönderim açıklaması güncellendi
   - Sipariş özeti başlık sticky
   - Form validation bug fix (whitespace trim)
+  - Guest mode buton validasyonu düzeltildi (03 Ocak 2026)
+
+### Performans & Optimizasyon
+- [x] **Bundle size optimizasyonu** - 03 Ocak 2026
+  - Route-based code splitting (React.lazy + Suspense)
+  - Manual chunks (Firebase, React, UI vendor ayrı chunk'lar)
+  - Ana bundle: 2155KB → 330KB (%85 küçültme)
+  - İlk sayfa yükleme: 562KB → 102KB (gzip)
+  - Lazy loading ile sayfa bazlı yükleme
+
+### Developer Tools
+- [x] **Claude Code hooks sistemi** - 03 Ocak 2026
+  - PermissionRequest hook ile onay bildirim sistemi
+  - Sesli + görsel bildirim (Windows PowerShell beep)
+  - `.claude/settings.local.json` hook yapılandırması
 
 ---
 
 ## BEKLEYEN HEDEFLER
 
 ### 🎯 Öncelik 1: Ödeme Entegrasyonu (P0 - Kritik)
-- [ ] **Iyzico ödeme gateway**
+- [ ] **Iyzico ödeme gateway** (Başvuru yapıldı, onay bekleniyor)
   - Kart ödeme entegrasyonu
   - 3D Secure desteği
   - Test/prod environment ayrımı
 
 ### 🏷️ Öncelik 2: Tasarım & Branding
-- [ ] **Logo tasarımı ve entegrasyonu**
-  - Profesyonel logo dosyası (SVG/PNG)
-  - Header'da logo yerleştirme
-  - Favicon güncelleme
+- [x] ~~**Logo tasarımı ve entegrasyonu**~~ ✅ Tamamlandı (03 Ocak 2026)
+  - ~~Profesyonel logo dosyası (SVG/PNG)~~
+  - ~~Header'da logo yerleştirme~~
+  - ~~Favicon güncelleme~~
+- [ ] **kakaoLogo.svg optimizasyonu** (Opsiyonel)
+  - Mevcut dosya 1.4MB (çok büyük!)
+  - SVG optimize edilmeli (~10-50KB hedef)
+  - Gereksiz metadata temizlenmeli
 
 ### 📦 Öncelik 2.5: Envanter UX İyileştirmeleri
 - [ ] **Yeni Ürün Butonu Dropdown**
