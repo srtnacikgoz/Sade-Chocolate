@@ -46,6 +46,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash(firebase deploy.*)|Bash(git push.*)|Bash(npm run build.*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"[console]::beep(800,150)\"",
+            "timeout": 2
+          }
+        ]
+      }
     ]
   }
 }
