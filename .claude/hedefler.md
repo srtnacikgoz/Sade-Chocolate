@@ -41,6 +41,8 @@
   - Windows font rendering optimizasyonu (antialiased, kerning, optimizeLegibility)
   - Favicon olarak kakaoLogo.svg ayarlandı
   - Mac/Windows tutarlılığı sağlandı
+  - **Tüm sitede Santana branding** (Footer, BottomNav, Account, Register, ProductDetail)
+  - Tutarlı marka kimliği: Sade Bold + Chocolate Regular formatı her yerde
 
 ### Kullanıcı Deneyimi
 - [x] Giriş sayfası iyileştirmeleri (Şifremi unuttum akışı)
