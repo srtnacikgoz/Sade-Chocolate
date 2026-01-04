@@ -22,6 +22,8 @@ import { TasteQuizTab } from '../components/admin/tabs/TasteQuizTab';
 import { GiftNotesTab } from '../components/admin/tabs/GiftNotesTab';
 import { CompanyInfoTab } from '../components/admin/tabs/CompanyInfoTab';
 import { BoxConfigTab } from '../components/admin/tabs/BoxConfigTab';
+import { TypographyTab } from '../components/admin/tabs/TypographyTab';
+import { EmailTemplatesTab } from '../components/admin/tabs/EmailTemplatesTab';
 import { Building2 } from 'lucide-react';
 
 export const Admin = () => {
@@ -43,7 +45,7 @@ export const Admin = () => {
   };
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography'>('inventory');
   const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
@@ -104,6 +106,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     { id: 'cms', label: 'İçerik (CMS)', icon: Globe, group: 'icerik' },
     { id: 'badges', label: 'Rozetler', icon: Tag, group: 'icerik' },
     { id: 'gift-notes', label: 'Hediye Notları', icon: Gift, group: 'icerik' },
+    { id: 'email-templates', label: 'Email Şablonları', icon: Mail, group: 'icerik' },
     { id: 'ai', label: 'AI Sommelier', icon: Sparkles, group: 'ai' },
     { id: 'scenarios', label: 'Senaryolar', icon: MessageSquare, group: 'ai' },
     { id: 'analytics', label: 'Konuşma Logları', icon: BarChart3, group: 'ai' },
@@ -112,6 +115,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     { id: 'loyalty-settings', label: 'Sadakat Sistemi', icon: Settings, group: 'ayarlar' },
     { id: 'company-info', label: 'Şirket Künyesi', icon: Building2, group: 'ayarlar' },
     { id: 'box-config', label: 'Kutu Oluşturucu', icon: Boxes, group: 'ayarlar' },
+    { id: 'typography', label: 'Typography', icon: Type, group: 'ayarlar' },
   ] as const;
 
   const menuGroups = {
@@ -296,6 +300,32 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     } catch (error) {
       console.error('Müşteri güncellenemedi:', error);
       toast.error('Müşteri güncellenemedi');
+    }
+  };
+
+  const handleDeleteCustomer = async (customer: any) => {
+    try {
+      // Eğer users koleksiyonundan gelen bir müşteri ise
+      if (customer.id && !customer.isNewsletterOnly) {
+        await deleteDoc(doc(db, 'users', customer.id));
+        setCustomers(prev => prev.filter((c: any) => c.id !== customer.id));
+      }
+      // Eğer sadece newsletter abonesiyse
+      if (customer.isNewsletterOnly && customer.newsletterId) {
+        await deleteDoc(doc(db, 'newsletter_subscribers', customer.newsletterId));
+        setNewsletterSubscribers(prev => prev.filter((ns: any) => ns.id !== customer.newsletterId));
+      }
+      // Eğer users'ta olan biri ama newsletter'da da varsa, newsletter kaydını da sil
+      const newsletterSub = newsletterSubscribers.find((ns: any) => ns.email === customer.email);
+      if (newsletterSub && !customer.isNewsletterOnly) {
+        await deleteDoc(doc(db, 'newsletter_subscribers', newsletterSub.id));
+        setNewsletterSubscribers(prev => prev.filter((ns: any) => ns.id !== newsletterSub.id));
+      }
+
+      toast.success('Müşteri silindi');
+    } catch (error) {
+      console.error('Müşteri silinemedi:', error);
+      toast.error('Müşteri silinemedi');
     }
   };
 
@@ -1288,12 +1318,42 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                         >
                           <Edit3 size={14} />
                         </button>
-                        <button
-                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                          title="Sil"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <AlertDialog.Root>
+                          <AlertDialog.Trigger asChild>
+                            <button
+                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                              title="Sil"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </AlertDialog.Trigger>
+                          <AlertDialog.Portal>
+                            <AlertDialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] animate-in fade-in" />
+                            <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-800 p-8 rounded-3xl shadow-2xl z-[151] w-full max-w-sm animate-in zoom-in-95">
+                              <AlertDialog.Title className="text-xl font-display font-bold mb-2 italic text-gray-900 dark:text-white">
+                                Müşteriyi Sil
+                              </AlertDialog.Title>
+                              <AlertDialog.Description className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+                                <strong>{customer.email}</strong> adresli müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                              </AlertDialog.Description>
+                              <div className="flex justify-end gap-3">
+                                <AlertDialog.Cancel asChild>
+                                  <button className="px-6 py-3 text-xs font-bold text-gray-500 bg-gray-100 dark:bg-dark-900 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors">
+                                    Vazgeç
+                                  </button>
+                                </AlertDialog.Cancel>
+                                <AlertDialog.Action asChild>
+                                  <button
+                                    onClick={() => handleDeleteCustomer(customer)}
+                                    className="px-6 py-3 text-xs font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
+                                  >
+                                    Evet, Sil
+                                  </button>
+                                </AlertDialog.Action>
+                              </div>
+                            </AlertDialog.Content>
+                          </AlertDialog.Portal>
+                        </AlertDialog.Root>
                       </div>
                     </div>
                   );
@@ -1902,6 +1962,10 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <CompanyInfoTab />
       ) : activeTab === 'box-config' ? (
         <BoxConfigTab />
+      ) : activeTab === 'typography' ? (
+        <TypographyTab />
+      ) : activeTab === 'email-templates' ? (
+        <EmailTemplatesTab />
       ) : null}
         </div>
       </main>

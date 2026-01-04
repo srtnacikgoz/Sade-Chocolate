@@ -247,3 +247,182 @@ export interface BoxConfig {
   updatedAt?: string;
   updatedBy?: string;
 }
+
+// Typography (Font) Ayarları
+export type FontSource = 'google' | 'custom' | 'system';
+
+export interface FontConfig {
+  family: string;          // "Inter", "Santana", vb.
+  source: FontSource;      // Google Fonts, Custom Upload, veya System
+  weights: number[];       // [300, 400, 600, 700]
+  url?: string;           // Custom font URL (Firebase Storage)
+  fallback?: string;      // Yedek font
+}
+
+// Responsive font size değeri
+export interface ResponsiveFontSize {
+  desktop: string;             // Desktop (lg+) - "72px", "4.5rem"
+  tablet: string;              // Tablet (md) - "56px", "3.5rem"
+  mobile: string;              // Mobile (sm) - "40px", "2.5rem"
+}
+
+// Font Preset (Hazır kombinasyon)
+export interface FontPreset {
+  id: string;
+  name: string;
+  description: string;
+  headingFont: string;         // Font family adı
+  bodyFont: string;
+  displayFont: string;
+  buttonFont: string;
+  navFont: string;
+}
+
+export interface TypographySettings {
+  id: string;
+
+  // Başlık Fontları (Her seviye için ayrı)
+  h1Font: FontConfig;          // H1 başlıklar
+  h2Font: FontConfig;          // H2 başlıklar
+  h3Font: FontConfig;          // H3 başlıklar
+  h4Font: FontConfig;          // H4 başlıklar
+
+  // Diğer Fontlar
+  bodyFont: FontConfig;        // Normal metinler
+  displayFont: FontConfig;     // Özel başlıklar (italic vb.)
+  logoFont: FontConfig;        // Header logo
+  buttonFont: FontConfig;      // Butonlar
+  navFont: FontConfig;         // Navigation/Menu
+  labelFont: FontConfig;       // Form labels
+  captionFont: FontConfig;     // Küçük metinler
+
+  // Font Ölçekleri (Responsive)
+  fontSize: {
+    h1: ResponsiveFontSize;
+    h2: ResponsiveFontSize;
+    h3: ResponsiveFontSize;
+    h4: ResponsiveFontSize;
+    h5: ResponsiveFontSize;
+    h6: ResponsiveFontSize;
+    body: ResponsiveFontSize;
+    small: ResponsiveFontSize;
+    tiny: ResponsiveFontSize;
+    button: ResponsiveFontSize;
+  };
+
+  // Font Weights (Global presets)
+  fontWeight: {
+    thin: number;              // 100
+    light: number;             // 300
+    normal: number;            // 400
+    medium: number;            // 500
+    semibold: number;          // 600
+    bold: number;              // 700
+    black: number;             // 900
+  };
+
+  // Element-specific weights
+  elementWeights: {
+    h1: number;
+    h2: number;
+    h3: number;
+    h4: number;
+    h5: number;
+    h6: number;
+    body: number;
+    button: number;
+    nav: number;
+    label: number;
+  };
+
+  // Tipografi Ayarları (Global presets)
+  letterSpacing: {
+    tight: string;             // -0.05em
+    normal: string;            // 0
+    wide: string;              // 0.05em
+    wider: string;             // 0.1em
+    widest: string;            // 0.2em
+  };
+
+  // Element-specific letter spacing
+  elementLetterSpacing: {
+    h1: string;
+    h2: string;
+    h3: string;
+    h4: string;
+    body: string;
+    button: string;
+    nav: string;
+  };
+
+  lineHeight: {
+    tight: number;             // 1.25
+    normal: number;            // 1.5
+    relaxed: number;           // 1.75
+    loose: number;             // 2
+  };
+
+  // Element-specific line height
+  elementLineHeight: {
+    h1: number;
+    h2: number;
+    h3: number;
+    h4: number;
+    body: number;
+    button: number;
+  };
+
+  // Hover Renkleri
+  hoverColors: {
+    primary: string;           // Ana hover rengi (varsayılan: gold)
+    secondary: string;         // İkincil hover rengi (varsayılan: gray-900)
+    accent: string;            // Vurgu rengi
+  };
+
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+// Newsletter Email Template Yapılandırması
+export interface NewsletterTemplate {
+  id: string;
+
+  // Header
+  headerBadge: string;           // "✦ Hoş Geldin ✦"
+
+  // Main Content
+  mainTitle: string;             // "Artisan Çikolata\nDünyasına Adım Attın"
+  welcomeText: string;           // Alt açıklama metni
+
+  // Discount Section
+  discountEnabled: boolean;      // İndirim gösterilsin mi?
+  discountLabel: string;         // "İlk Siparişine Özel"
+  discountPercent: number;       // 10
+  discountCode: string;          // "HOSGELDIN10"
+
+  // Benefits (2 sütun)
+  benefit1Title: string;         // "Koleksiyonlar"
+  benefit1Text: string;          // Açıklama
+  benefit2Title: string;         // "Ayrıcalıklar"
+  benefit2Text: string;          // Açıklama
+
+  // CTA Button
+  ctaText: string;               // "Koleksiyonu Keşfet"
+  ctaUrl: string;                // "https://sadechocolate.com/#/catalog"
+
+  // Email Subject
+  emailSubject: string;          // "Hoş Geldin — İlk Siparişine %10 İndirim"
+
+  // Styling (opsiyonel - varsayılanlar kullanılabilir)
+  colors?: {
+    headerBg: string;            // "#4B3832"
+    bodyBg: string;              // "#FDFCF8"
+    outerBg: string;             // "#E8E4DC"
+    accent: string;              // "#C5A059" (gold)
+    textPrimary: string;         // "#4B3832"
+    textSecondary: string;       // "#666666"
+  };
+
+  updatedAt?: any;
+  updatedBy?: string;
+}

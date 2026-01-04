@@ -36,7 +36,13 @@
       "Bash(firebase functions:config:get:*)",
       "Bash(firebase functions:log:*)",
       "Bash(Select-String -Pattern \"error|Error|failed\" -Context 2,2)",
-      "Bash(firebase functions:list:*)"
+      "Bash(firebase functions:list:*)",
+      "Bash(firebase functions:config:export:*)",
+      "Bash(git fetch:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(firebase functions:delete:*)",
+      "Bash(npx svgo:*)",
+      "Bash(npm run build:vite:*)"
     ]
   },
   "hooks": {

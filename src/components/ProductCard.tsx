@@ -141,16 +141,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
             <button
               aria-label="Sepete Ekle"
               onClick={(e) => handleAddToCart(e)}
-              className="bg-gray-900 dark:bg-white text-white dark:text-black w-9 h-9 flex items-center justify-center rounded-full hover:bg-gold dark:hover:bg-gold hover:text-white dark:hover:text-white transition-colors duration-300 shadow-sm"
+              className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 shadow-sm"
             >
               <span className="material-icons-outlined text-lg">add</span>
             </button>
           </div>
           
           {/* Mobil İçin Geniş Buton */}
-          <button 
+          <button
   onClick={(e) => handleAddToCart(e)}
-  className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-mocha-900 dark:text-gray-100 border border-gold/20 bg-cream-50 dark:bg-transparent rounded-lg hover:bg-mocha-900 hover:text-white dark:hover:bg-gold transition-all duration-300 shadow-sm"
+  className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-mocha-900 dark:text-gray-100 border border-gold/20 bg-cream-50 dark:bg-transparent rounded-lg hover:bg-gold hover:text-white dark:hover:bg-gold transition-all duration-300 shadow-sm"
 >
             {t('add_to_cart')}
           </button>
@@ -218,9 +218,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
               </span>
             </div>
           </div>
-          <button 
+          <button
             onClick={(e) => handleAddToCart(e)}
-            className="w-full py-3 bg-gold text-white font-semibold uppercase tracking-wider rounded-lg hover:opacity-90 transition-colors duration-300 shadow-lg text-sm"
+            className="w-full py-3 bg-gold text-white font-semibold uppercase tracking-wider rounded-lg hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 shadow-lg text-sm"
           >
             {t('add_to_cart')}
           </button>
@@ -305,9 +305,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
               >
                 <span className="material-icons-outlined text-base">add</span>
               </button>
-              <button 
+              <button
                 onClick={(e) => handleAddToCart(e, quantity)}
-                className="ml-2 px-3 py-1.5 bg-gold text-white text-xs font-semibold rounded-full hover:opacity-90 transition-opacity whitespace-nowrap"
+                className="ml-2 px-3 py-1.5 bg-gold text-white text-xs font-semibold rounded-full hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 whitespace-nowrap"
               >
                 {t('add_to_cart')}
               </button>

@@ -190,16 +190,16 @@ export const Home: React.FC = () => {
 
      {/* 🏷️ Bilgi Kuşağı - Infinite Scroll Versiyonu */}
 <div className="w-full bg-white dark:bg-dark-900 border-b border-gray-100 dark:border-gray-800 py-5 relative z-10 overflow-hidden">
-  <div className="animate-marquee flex gap-10 lg:gap-10">
-    {/* İçeriği iki kez render ediyoruz ki sonsuz döngü oluşsun */}
-    {[1, 2].map((iteration) => (
-      <div key={iteration} className="flex gap-10 lg:gap-10 ">
-        {(liveContent?.[language]?.featured_tags 
-  ? liveContent[language].featured_tags.split(',').filter((t: string) => t.trim() !== '') 
+  <div className="animate-marquee flex gap-10">
+    {/* İçeriği 4 kez render ediyoruz ki sonsuz döngü kusursuz olsun */}
+    {[1, 2, 3, 4].map((iteration) => (
+      <div key={iteration} className="flex gap-10 shrink-0">
+        {(liveContent?.[language]?.featured_tags
+  ? liveContent[language].featured_tags.split(',').filter((t: string) => t.trim() !== '')
   : ['SINGLE-ORIGIN', 'BEAN-TO-BAR', 'ETHICALLY SOURCED', 'ARTISAN', 'SMALL BATCH']
 ).map((text: string, idx: number) => (
-          <span 
-  key={`${iteration}-${idx}`} 
+          <span
+  key={`${iteration}-${idx}`}
   className="shrink-0 text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 dark:text-gray-500 whitespace-nowrap"
 >
             {text.trim()}

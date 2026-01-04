@@ -6,9 +6,12 @@ import {
   signOut,
   setPersistence,
   browserLocalPersistence,
-  browserSessionPersistence
+  browserSessionPersistence,
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction, setDoc } from 'firebase/firestore';
 import { createOrderWithLoyalty } from '../services/orderService';
 import type { Order as LoyaltyOrder } from '../types/order';
 
@@ -76,6 +79,8 @@ interface UserContextType {
   loading: boolean;
   orders: Order[];
   login: (email: string, pass: string, rememberMe?: boolean) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   register: (profile: Omit<UserProfile, 'uid'>, pass: string) => void;
   logout: () => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -124,6 +129,38 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
     await setPersistence(auth, persistence);
     await signInWithEmailAndPassword(auth, email, pass);
+  };
+
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+
+    await setPersistence(auth, browserLocalPersistence);
+    const result = await signInWithPopup(auth, provider);
+
+    // Google'dan gelen kullanıcı bilgilerini Firestore'a kaydet
+    const firebaseUser = result.user;
+    const userRef = doc(db, 'users', firebaseUser.uid);
+
+    // Kullanıcı ilk kez giriş yapıyorsa profil oluştur
+    await setDoc(userRef, {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName,
+      firstName: firebaseUser.displayName?.split(' ')[0] || '',
+      lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+      phone: firebaseUser.phoneNumber || '',
+      birthDate: '',
+      createdAt: serverTimestamp(),
+      addresses: [],
+      invoiceProfiles: []
+    }, { merge: true }); // merge: true ile mevcut veriyi korur
+  };
+
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
   };
 
   const register = (profile: Omit<UserProfile, 'uid'>, pass: string) => {
@@ -217,7 +254,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <UserContext.Provider value={{
       user, isLoggedIn: !!user, loading, orders,
-      login, register, logout, updateProfile, addOrder
+      login, loginWithGoogle, resetPassword, register, logout, updateProfile, addOrder
     }}>
       {children}
     </UserContext.Provider>

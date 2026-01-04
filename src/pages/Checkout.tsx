@@ -13,6 +13,7 @@ import { Button } from '../components/ui/Button';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CompanyInfo } from '../types';
+import { sendOrderConfirmationEmail } from '../services/emailService';
 
 export const Checkout: React.FC = () => {
   const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart } = useCart();
@@ -309,6 +310,32 @@ const grandTotal = cartTotal + shippingCost;
           paymentMethod: paymentMethod,
           ...(paymentMethod === 'eft' && { paymentDeadline: new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() }),
           items: [...items],
+        });
+      }
+
+      // Sipariş Onay Emaili Gönder
+      const customerEmail = isGuestMode ? guestData.email : user?.email;
+      const customerName = isGuestMode ? `${guestData.firstName} ${guestData.lastName}` : `${user?.firstName} ${user?.lastName}`;
+      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+      const customerAddress = isGuestMode
+        ? `${guestData.address}, ${guestData.district}, ${guestData.city}`
+        : selectedAddr?.address || '';
+
+      if (customerEmail) {
+        sendOrderConfirmationEmail(customerEmail, {
+          orderId: `SADE-${orderId}`,
+          customerName: customerName || 'Değerli Müşterimiz',
+          items: items.map(item => ({
+            name: item.title,
+            quantity: item.quantity,
+            price: item.price * item.quantity
+          })),
+          subtotal: cartTotal,
+          shipping: shippingCost,
+          total: finalTotal,
+          address: customerAddress
+        }).catch(err => {
+          console.log('Sipariş onay emaili gönderilemedi:', err);
         });
       }
 

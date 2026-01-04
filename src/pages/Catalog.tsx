@@ -164,25 +164,39 @@ export const Catalog: React.FC = () => {
               )}
       
               <div className="mb-6">          <div className="flex justify-between items-center">
-            <button 
+            <button
               onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-mocha-900 dark:hover:text-gold transition-colors"
+              className="group flex items-center gap-3 px-5 py-3 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold transition-all duration-300 hover:scale-105 hover:shadow-lg"
             >
-              <SlidersHorizontal size={18} />
-              <span>{t('filters')}</span>
+              <SlidersHorizontal size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300" />
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-gold transition-colors duration-300">{t('filters')}</span>
               <motion.div
                 animate={{ rotate: isFiltersOpen ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <ChevronDown size={18} />
+                <ChevronDown size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300" />
               </motion.div>
             </button>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setViewMode(ViewMode.GRID)} className={`p-2 rounded-md ${viewMode === ViewMode.GRID ? 'bg-gray-200 dark:bg-dark-700 text-mocha-900 dark:text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-800'}`}>
-                <LayoutGrid size={20} />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setViewMode(ViewMode.GRID)}
+                className={`group p-3.5 rounded-2xl transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                  viewMode === ViewMode.GRID
+                    ? 'bg-gradient-to-br from-gold to-brand-mustard border-2 border-gold shadow-md'
+                    : 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold'
+                }`}
+              >
+                <LayoutGrid size={20} className={viewMode === ViewMode.GRID ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300'} />
               </button>
-              <button onClick={() => setViewMode(ViewMode.LIST)} className={`p-2 rounded-md ${viewMode === ViewMode.LIST ? 'bg-gray-200 dark:bg-dark-700 text-mocha-900 dark:text-white' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-800'}`}>
-                <Rows3 size={20} />
+              <button
+                onClick={() => setViewMode(ViewMode.LIST)}
+                className={`group p-3.5 rounded-2xl transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                  viewMode === ViewMode.LIST
+                    ? 'bg-gradient-to-br from-gold to-brand-mustard border-2 border-gold shadow-md'
+                    : 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold'
+                }`}
+              >
+                <Rows3 size={20} className={viewMode === ViewMode.LIST ? 'text-white' : 'text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300'} />
               </button>
             </div>
           </div>
@@ -195,12 +209,12 @@ export const Catalog: React.FC = () => {
                 transition={{ duration: 0.4, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="flex items-center gap-4 flex-wrap pt-4">
+                <div className="flex items-center gap-4 flex-wrap pt-6">
                   {/* Kategori Filtresi */}
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200"
+                    className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 hover:border-gold dark:hover:border-gold focus:border-gold dark:focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all cursor-pointer"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -219,20 +233,20 @@ export const Catalog: React.FC = () => {
                     placeholder={t('min_price') || "Min Fiyat"}
                     value={minPrice}
                     onChange={(e) => setMinPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 w-28"
+                    className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 hover:border-gold dark:hover:border-gold focus:border-gold dark:focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all w-32"
                   />
                   <input
                     type="number"
                     placeholder={t('max_price') || "Max Fiyat"}
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 w-28"
+                    className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 hover:border-gold dark:hover:border-gold focus:border-gold dark:focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all w-32"
                   />
                   {/* Sıralama Seçenekleri */}
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="p-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200"
+                    className="px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium bg-white dark:bg-dark-800 text-gray-700 dark:text-gray-200 hover:border-gold dark:hover:border-gold focus:border-gold dark:focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none transition-all cursor-pointer"
                   >
                     <option value="default">{t('sort_default') || "Varsayılan"}</option>
                     <option value="price_asc">{t('sort_price_asc') || "Fiyat: Artan"}</option>
@@ -244,9 +258,9 @@ export const Catalog: React.FC = () => {
                   {hasActiveFilters && (
                     <button
                       onClick={handleClearFilters}
-                      className="flex items-center gap-1 px-3 py-2 rounded-md bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-200 text-sm hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+                      className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-700 hover:border-red-400 dark:hover:border-red-500 text-sm font-bold text-red-700 dark:text-red-400 hover:scale-105 transition-all duration-300 hover:shadow-lg"
                     >
-                      <XCircle size={16} />
+                      <XCircle size={16} className="group-hover:rotate-90 transition-transform duration-300" />
                       <span>{t('clear_filters') || "Temizle"}</span>
                     </button>
                   )}
@@ -330,7 +344,7 @@ export const Catalog: React.FC = () => {
                       )}
                     </div>
                     {/* Sepete ekle yerine + butonu */}
-                    <div className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full group-hover:bg-brown-900 transition-colors duration-300 shadow-sm">
+                    <div className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full group-hover:bg-gray-900 dark:group-hover:bg-gray-900 transition-colors duration-300 shadow-sm">
                       <span className="material-icons-outlined text-lg">add</span>
                     </div>
                   </div>

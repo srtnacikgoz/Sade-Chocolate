@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { toast } from 'sonner';
 import { Mail, Send, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { sendNewsletterWelcomeEmail } from '../services/emailService';
 
 export const NewsletterPopup: React.FC = () => {
   const { t } = useLanguage();
@@ -42,6 +43,12 @@ export const NewsletterPopup: React.FC = () => {
         subscribedAt: serverTimestamp(),
         source: 'popup'
       });
+
+      // Hoş geldin emaili gönder (arka planda, hata olsa bile kullanıcıya gösterme)
+      sendNewsletterWelcomeEmail(email).catch(err => {
+        console.error('Newsletter welcome email error:', err);
+      });
+
       toast.success('Bültenimize abone oldunuz! 🎉');
       localStorage.setItem('newsletter_subscribed', 'true');
       setEmail('');

@@ -1,6 +1,6 @@
 # Sade Chocolate - Proje Durumu ve Hedefler
 
-> **Son Güncelleme:** 03 Ocak 2026
+> **Son Güncelleme:** 04 Ocak 2026
 
 ---
 
@@ -82,6 +82,39 @@
   - Focus indicators ve semantic HTML
   - ✅ YASAK API'ler kullanılmıyor (alert/confirm/prompt)
 
+### Tipografi Sistemi
+- [x] **Admin Panel Typography Tab iyileştirmeleri** - 04 Ocak 2026
+  - Her başlık seviyesi için ayrı font seçimi (H1, H2, H3, H4)
+  - Migration: Eski `headingFont` → yeni `h1Font/h2Font/h3Font/h4Font` yapısı
+  - Mini sayfa önizlemesi (e-ticaret mockup)
+  - Logo fontu koruması (Santana değiştirilemez)
+  - Türkçe karakter fallback (Cormorant Garamond)
+
+### Hesap & Kimlik Doğrulama
+- [x] **Account sayfası yeniden tasarımı** - 04 Ocak 2026
+  - Minimal tek kart tasarımı (max 420px, centered)
+  - Sol sidebar kaldırıldı
+  - Sade Chocolate logo ve branding
+  - Login/Register tab switch
+  - **Google ile giriş** (Firebase Google Auth entegrasyonu)
+  - Şifremi unuttum sistemi (email link ile şifre sıfırlama)
+  - Kayıt formu validasyonları:
+    - Telefon: 10-11 hane, 5 ile başlamalı
+    - Email: Regex format kontrolü
+    - Şifre: Min. 6 karakter, eşleşme kontrolü
+    - Doğum tarihi: Tam seçim zorunlu
+    - Hatalı alanlar kırmızı border ile gösteriliyor
+
+### Email Bildirim Sistemi
+- [x] **Email servisi kurulumu** - 04 Ocak 2026
+  - `src/services/emailService.ts` oluşturuldu
+  - Firebase Extensions "Trigger Email from Firestore" entegrasyonu
+  - SendGrid SMTP yapılandırması
+  - **Hoş geldin emaili** - Kayıt sonrası otomatik
+  - **Sipariş onay emaili** - Sipariş sonrası otomatik
+  - **Kargo bildirimi emaili** - Admin panel'den tetiklenir
+  - Şık HTML template'ler (marka renkleri, responsive)
+
 ---
 
 ## BEKLEYEN HEDEFLER
@@ -132,64 +165,27 @@
 - [ ] **MNG Kargo otomatik gönderi oluşturma** (Opsiyonel)
 
 ### 📧 Öncelik 4: Email Bildirim Sistemi
-- [ ] **Email servis seçimi ve yapılandırma**
-  - Servis araştırması (SendGrid, Resend, Amazon SES, Mailgun)
-  - API key yapılandırması
-  - Firebase Functions entegrasyonu
-  - Email template motoru (React Email veya MJML)
+- [x] ~~**Email servis seçimi ve yapılandırma**~~ ✅ Tamamlandı (04 Ocak 2026)
+  - ~~Servis araştırması~~ → SendGrid seçildi
+  - ~~API key yapılandırması~~ → Firebase Extensions ile entegre
+  - ~~Firebase Functions entegrasyonu~~ → Trigger Email Extension
+  - ~~Email template motoru~~ → Custom HTML templates
 
-- [ ] **Sipariş onay emaili**
-  - Trigger: Sipariş oluşturulduğunda (`orders` collection onCreate)
-  - İçerik:
-    - Sipariş özeti (ürünler, toplam tutar)
-    - Sipariş numarası ve tarih
-    - Teslimat adresi
-    - Tahmini teslimat tarihi
-    - Havale/EFT için banka bilgileri (eğer ödeme yöntemi EFT)
-    - "Siparişinizi Takip Edin" linki
-  - Template: HTML + plain text fallback
+- [x] ~~**Sipariş onay emaili**~~ ✅ Tamamlandı
+- [x] ~~**Kargo bilgilendirme emaili**~~ ✅ Tamamlandı
+- [x] ~~**Hoş geldin emaili**~~ ✅ Tamamlandı
 
-- [ ] **Ödeme onay emaili**
+- [ ] **Ödeme onay emaili** (Gelecek)
   - Trigger: Admin ödemeyi onayladığında
-  - İçerik:
-    - Ödeme onaylandı bildirimi
-    - Sipariş hazırlık sürecine alındı
-    - Tahmini hazırlık süresi
 
-- [ ] **Kargo bilgilendirme emaili**
-  - Trigger: Sipariş durumu "Shipped" olduğunda
-  - İçerik:
-    - Kargo takip numarası
-    - Kargo firması (MNG Kargo)
-    - Tahmini teslimat tarihi
-    - MNG Kargo takip linki
-    - Sade Chocolate kargo takip sayfası linki
-
-- [ ] **Teslimat onay emaili**
+- [ ] **Teslimat onay emaili** (Gelecek)
   - Trigger: Sipariş durumu "Delivered" olduğunda
-  - İçerik:
-    - Teslim edildi bildirimi
-    - Geri bildirim formu linki
-    - Yeni siparişler için indirim kodu (sadakat sistemi)
 
-- [ ] **Heat Hold bilgilendirme emaili**
+- [ ] **Heat Hold bilgilendirme emaili** (Gelecek)
   - Trigger: Sipariş "Heat Hold" durumuna geçtiğinde
-  - İçerik:
-    - Hava sıcaklığı nedeniyle bekleme açıklaması
-    - Tahmini gönderim tarihi
-    - Dandelion Chocolate modelinden ilham alınan kalite garantisi
-
-- [ ] **İptal/İade emaili**
-  - Trigger: Sipariş iptal edildiğinde veya iade başlatıldığında
-  - İçerik:
-    - İptal/iade nedeni
-    - İade tutarı ve süresi
-    - Müşteri desteği iletişim bilgileri
 
 - [ ] **WhatsApp bildirim** (Gelecek)
   - SMS/WhatsApp Business API entegrasyonu
-  - Sipariş özet bildirimleri
-  - Kargo takip linkleri
 
 ### 💡 Öncelik 4: Checkout UX İyileştirmeleri (Gelecek)
 - [ ] **Checkout sayfa düzeni yeniden tasarımı** ⚠️ KRITIK
@@ -260,34 +256,56 @@
 
 ## SON OTURUM ÖZETİ
 
-**Tarih:** 03 Ocak 2026
+**Tarih:** 04 Ocak 2026
 
 ### Tamamlanan İşler
-1. ✅ **Admin Panel - Sipariş Durumu Yönetimi**
-   - `StatusChangeModal` komponenti oluşturuldu
-   - Tüm sipariş durumları arasında geçiş (8 durum)
-   - Her durum için özel ikon ve renk
-   - Mevcut durum disabled, seçilen durum highlighted
-   - Real-time timeline güncellemesi
+1. ✅ **Tipografi Sistemi İyileştirmeleri**
+   - H1/H2/H3/H4 için ayrı font seçimi
+   - Firestore migration (eski headingFont → yeni h1-h4Font)
+   - Mini sayfa önizlemesi (e-ticaret mockup)
+   - Türkçe karakter fallback düzeltmesi
 
-2. ✅ **Kargo Takip Sistemi Entegrasyonu**
-   - Admin panel dropdown menüsüne "Durumu Değiştir" aksiyonu eklendi
-   - Tracking ekleme ile otomatik "Shipped" durumu (orderStore)
-   - OrdersView'da "Kargoda/Teslim Edildi" siparişlerde kargo takip tab'ı
-   - ShipmentTracker komponenti (Firebase Functions → MNG Kargo API)
+2. ✅ **Account Sayfası Yeniden Tasarımı**
+   - Minimal tek kart login ekranı (centered, max 420px)
+   - Sol sidebar tamamen kaldırıldı
+   - Google ile giriş butonu (Firebase Google Auth)
+   - Şifremi unuttum sistemi (email link)
+   - Kayıt formu validasyonları (telefon, email, şifre, doğum tarihi)
+   - Hatalı alanlar kırmızı border ile gösteriliyor
 
-3. ✅ **Bug Fixes**
-   - Invalid Date formatı düzeltildi (ISO format + fallback)
-   - Weather API error console spam azaltıldı (sadece DEV mode)
-   - Firestore undefined value hatası giderildi (bankTransferDiscount)
-   - Login error mesajları eklendi (Türkçe)
+3. ✅ **Email Bildirim Sistemi**
+   - `src/services/emailService.ts` oluşturuldu
+   - Firebase Extensions "Trigger Email" kurulumu
+   - SendGrid SMTP entegrasyonu
+   - Hoş geldin emaili (kayıt sonrası)
+   - Sipariş onay emaili (checkout sonrası)
+   - Kargo bildirimi emaili (admin panel)
+   - Şık HTML template'ler
 
 ### Dosya Değişiklikleri
-- `src/components/admin/tabs/OrderManagementTab.tsx` - StatusChangeModal + durum değiştirme aksiyonu
-- `src/stores/orderStore.ts` - addTracking'de otomatik "Shipped" durumu (zaten vardı)
-- `src/components/account/ShipmentTracker.tsx` - YENİ (önceki oturumda)
-- `src/services/shippingService.ts` - YENİ (önceki oturumda)
-- `src/components/account/OrdersView.tsx` - Kargo takip tab entegrasyonu
-- `src/pages/Checkout.tsx` - Date format + bankTransferDiscount fix
-- `src/pages/Account.tsx` - Login error handling
-- `src/services/weatherService.ts` - Console spam azaltıldı
+- `src/pages/Account.tsx` - Komple yeniden tasarım, Google login, şifremi unuttum
+- `src/context/UserContext.tsx` - loginWithGoogle, resetPassword fonksiyonları
+- `src/services/emailService.ts` - YENİ (email template'leri)
+- `src/pages/Register.tsx` - Hoş geldin emaili entegrasyonu
+- `src/pages/Checkout.tsx` - Sipariş onay emaili entegrasyonu
+- `src/components/admin/tabs/TypographyTab.tsx` - H1-H4 ayrı font seçimi, mini önizleme
+- `src/types.ts` - TypographySettings interface güncellendi
+- `src/App.tsx` - Typography migration ve null safety
+
+### Firebase Extensions
+- ✅ Trigger Email from Firestore kuruldu (SendGrid SMTP)
+- 📋 Bekleyen: Resize Images, Delete User Data
+
+### Gelecek Öneriler
+- Resize Images extension (ürün görselleri optimizasyonu)
+- Delete User Data extension (KVKK uyumluluğu)
+- TopBar dinamik mesaj sistemi (admin panelden yönetilen)
+
+
+account sayfasındaki tüm kart içindeki başlıklar menu bar altında kalıyor. siparişlerim, fatura bilgileri gibi başlıkların hepsi. düzeltilmeli.
+account sayfasında fatura bilgileri girerken vergi no rakam adeti ile sınırlı olmalı. fazlası yazılalamallı. hatta tc kimlik veya vergi no checkbox veya başka bir seçenek ile hangisi olduğu bilgisi alınmalı ve tc kimlik ise 11 hane, vergi no ise 10 hane olacak.
+acaba fatura bilgileri adres alanında mı olsa daha iyi olur. orada bir checkbox seçeneği ile fatura bilgileri alanı açlıp orada girilebilir herşey. ve tabi fatufa bilgilerim adresim ile aynı seçeneği tıklandığında da müşterinin bu durumu önemsemediği anlaşılır.
+
+kayıtlı kullanıcı olarak alışveriş yapıyorum ve güvenli ödeme sayfasında tüm fatura bilgilerim kayıtlı olmasına rağmen burada yine fatura bilgilerimi girmemi istiyor. buna kesin bir kontrol, bir çözüm bulmamız lazım.
+
+admin panelinde email şablonlarına typografi özellikleri ekle

@@ -6,6 +6,7 @@ import { db } from '../lib/firebase';
 import { toast } from 'sonner';
 import { Mail, Send } from 'lucide-react';
 import { CompanyInfo } from '../types';
+import { sendNewsletterWelcomeEmail } from '../services/emailService';
 
 interface FooterProps {
   onLogoClick?: () => void;
@@ -47,6 +48,13 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
         subscribedAt: serverTimestamp(),
         source: 'footer'
       });
+
+      // Hoş geldin emaili gönder (arka planda)
+      console.log('🔔 Newsletter email gönderiliyor:', email);
+      sendNewsletterWelcomeEmail(email)
+        .then(() => console.log('✅ Newsletter email kuyruğa eklendi'))
+        .catch(err => console.error('❌ Newsletter welcome email error:', err));
+
       toast.success('Bültenimize abone oldunuz! 🎉');
       setEmail('');
     } catch (error) {
@@ -104,23 +112,23 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           </form>
         </div>
 
-        <div className="flex justify-center space-x-8 mb-12">
+        <div className="flex justify-center gap-6 mb-12">
           <a
             href={primaryBranch?.mapLink || "https://www.google.com/maps/search/?api=1&query=Antalya"}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
+            className="group relative w-14 h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold transition-all duration-300 hover:scale-110 hover:shadow-lg"
           >
-            <i className="material-icons-outlined">place</i>
+            <i className="material-icons-outlined text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300">place</i>
           </a>
           {companyInfo?.socialMedia?.instagram && (
             <a
               href={`https://instagram.com/${companyInfo.socialMedia.instagram}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
+              className="group relative w-14 h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold transition-all duration-300 hover:scale-110 hover:shadow-lg"
             >
-              <i className="material-icons-outlined">camera_alt</i>
+              <i className="material-icons-outlined text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300">camera_alt</i>
             </a>
           )}
           {!companyInfo?.socialMedia?.instagram && (
@@ -128,16 +136,16 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
               href="https://instagram.com/sadepatisserie"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
+              className="group relative w-14 h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold transition-all duration-300 hover:scale-110 hover:shadow-lg"
             >
-              <i className="material-icons-outlined">camera_alt</i>
+              <i className="material-icons-outlined text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300">camera_alt</i>
             </a>
           )}
           <a
             href={`mailto:${companyInfo?.generalEmail || 'bilgi@sadepatisserie.com'}`}
-            className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-dark-800 text-gray-400 hover:text-gold transition-all shadow-sm"
+            className="group relative w-14 h-14 flex items-center justify-center rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold transition-all duration-300 hover:scale-110 hover:shadow-lg"
           >
-            <i className="material-icons-outlined">alternate_email</i>
+            <i className="material-icons-outlined text-gray-500 dark:text-gray-400 group-hover:text-gold transition-colors duration-300">alternate_email</i>
           </a>
         </div>
 
@@ -182,11 +190,8 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           </div>
         </div>
 
-        <p className="font-sans text-[10px] text-gray-300 dark:text-gray-600 uppercase tracking-[0.4em] mb-4">
-          Powered by Sade Patisserie • Antalya
-        </p>
-        <p className="font-sans text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
-          {t('footer_rights')}
+        <p className="font-sans text-[8px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+          Powered by Sade Patisserie • Antalya <span className="mx-2">•</span> {t('footer_rights')}
         </p>
       </div>
     </footer>

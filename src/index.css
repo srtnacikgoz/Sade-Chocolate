@@ -2,13 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 🎨 Santana Font Family */
+/* 🎨 Santana Font Family - Türkçe Karakter Desteği ile */
 @font-face {
   font-family: 'Santana';
   src: url('/fonts/santana/Santana.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+  /* Sadece Latin karakterler için kullan */
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0100-017F;
 }
 
 @font-face {
@@ -17,6 +19,7 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0100-017F;
 }
 
 @font-face {
@@ -25,6 +28,17 @@
   font-weight: 900;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0100-017F;
+}
+
+/* 🇹🇷 Türkçe karakterler için fallback - Serif Uyumu */
+@font-face {
+  font-family: 'Santana-Turkish';
+  src: local('Cormorant Garamond'), local('Georgia'), local('Times New Roman');
+  font-weight: 400;
+  font-style: normal;
+  /* Türkçe karakterler: ç, ğ, ı, ö, ş, ü, İ, Ğ, Ü, Ş, Ö, Ç */
+  unicode-range: U+011E, U+011F, U+0130, U+0131, U+015E, U+015F;
 }
 
 /* Windows Font Rendering İyileştirmesi - Santana için özel optimizasyon */
@@ -186,7 +200,8 @@ input[type="range"]::-moz-range-track {
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 12s linear infinite;
+  animation: marquee 25s linear infinite;
+  will-change: transform;
 }
 
 @keyframes fadeIn {

@@ -43,10 +43,10 @@ export default {
         // Zanaatkar Serif ve Modern Sans-Serif birlikteliği
         display: ["Playfair Display", "serif"],
         sans: ["Inter", "sans-serif"],
-        // Santana - Premium branding fontu (henüz kullanılmıyor)
-        santana: ["Santana", "sans-serif"],
-        "santana-condensed": ["Santana Condensed", "sans-serif"],
-        "santana-xtra": ["Santana XtraCondensed", "sans-serif"],
+        // Santana - Premium branding fontu (Türkçe desteği için serif fallback)
+        santana: ["Santana", "Cormorant Garamond", "Georgia", "serif"],
+        "santana-condensed": ["Santana Condensed", "Georgia", "serif"],
+        "santana-xtra": ["Santana XtraCondensed", "Georgia", "serif"],
       },
       boxShadow: {
         luxurious: "0 20px 40px -15px rgba(75, 56, 50, 0.15)", // Kahve tonlu yumuşak gölge

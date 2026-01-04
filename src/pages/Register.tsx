@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { doc, setDoc, addDoc, collection } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { validateReferralCode } from '../services/loyaltyService';
+import { sendWelcomeEmail } from '../services/emailService';
 
 // Şifre gücü hesaplama yardımcı fonksiyonu
 const calculatePasswordStrength = (password: string): { strength: number; label: string; color: string } => {
@@ -92,6 +93,11 @@ const passwordStrength = calculatePasswordStrength(formData.password);
           toast.success(`${referrer.name || 'Arkadaşınız'} sizi davet etti! İlk siparişinizde ikiniz de puan kazanacaksınız.`);
         }
       }
+
+      // 5. Hoş Geldin Emaili Gönder
+      sendWelcomeEmail(formData.email, formData.firstName).catch(err => {
+        console.log('Hoş geldin emaili gönderilemedi:', err);
+      });
 
       toast.success("Aramıza hoş geldiniz! Kayıt başarılı.");
       navigate('/home');

@@ -17,6 +17,7 @@ import { NewsletterPopup } from './components/NewsletterPopup';
 import { AIAssistant } from './components/AIAssistant';
 import { CookieConsent } from './components/CookieConsent';
 import { useLoyaltyStore } from './stores/loyaltyStore';
+import { TypographySettings } from './types';
 
 // Lazy load pages - Route bazlı code splitting
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
@@ -115,6 +116,100 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+// Typography uygulama fonksiyonu
+const applyTypography = (settings: TypographySettings) => {
+  const root = document.documentElement;
+
+  // Font families - Başlıklar (Her seviye için ayrı)
+  if (settings.h1Font) {
+    root.style.setProperty('--font-h1', `${settings.h1Font.family}, ${settings.h1Font.fallback}`);
+  }
+  if (settings.h2Font) {
+    root.style.setProperty('--font-h2', `${settings.h2Font.family}, ${settings.h2Font.fallback}`);
+  }
+  if (settings.h3Font) {
+    root.style.setProperty('--font-h3', `${settings.h3Font.family}, ${settings.h3Font.fallback}`);
+  }
+  if (settings.h4Font) {
+    root.style.setProperty('--font-h4', `${settings.h4Font.family}, ${settings.h4Font.fallback}`);
+  }
+  if (settings.bodyFont) {
+    root.style.setProperty('--font-body', `${settings.bodyFont.family}, ${settings.bodyFont.fallback}`);
+  }
+  if (settings.displayFont) {
+    root.style.setProperty('--font-display', `${settings.displayFont.family}, ${settings.displayFont.fallback}`);
+  }
+  if (settings.logoFont) {
+    root.style.setProperty('--font-logo', `${settings.logoFont.family}, ${settings.logoFont.fallback}`);
+  }
+  if (settings.buttonFont) {
+    root.style.setProperty('--font-button', `${settings.buttonFont.family}, ${settings.buttonFont.fallback}`);
+  }
+  if (settings.navFont) {
+    root.style.setProperty('--font-nav', `${settings.navFont.family}, ${settings.navFont.fallback}`);
+  }
+  if (settings.labelFont) {
+    root.style.setProperty('--font-label', `${settings.labelFont.family}, ${settings.labelFont.fallback}`);
+  }
+  if (settings.captionFont) {
+    root.style.setProperty('--font-caption', `${settings.captionFont.family}, ${settings.captionFont.fallback}`);
+  }
+
+  // Font sizes (responsive)
+  Object.entries(settings.fontSize).forEach(([key, value]) => {
+    root.style.setProperty(`--text-${key}-desktop`, value.desktop);
+    root.style.setProperty(`--text-${key}-tablet`, value.tablet);
+    root.style.setProperty(`--text-${key}-mobile`, value.mobile);
+  });
+
+  // Hover colors
+  root.style.setProperty('--hover-primary', settings.hoverColors.primary);
+  root.style.setProperty('--hover-secondary', settings.hoverColors.secondary);
+  root.style.setProperty('--hover-accent', settings.hoverColors.accent);
+
+  // Google Fonts yükle
+  loadGoogleFonts(settings);
+};
+
+// Google Fonts yükleyici
+const loadGoogleFonts = (settings: TypographySettings) => {
+  const fonts: Array<{ family: string; weights: number[] }> = [];
+
+  [
+    settings.h1Font,
+    settings.h2Font,
+    settings.h3Font,
+    settings.h4Font,
+    settings.bodyFont,
+    settings.displayFont,
+    settings.logoFont,
+    settings.buttonFont,
+    settings.navFont,
+    settings.labelFont,
+    settings.captionFont
+  ].forEach(font => {
+    if (font && font.source === 'google' && !fonts.find(f => f.family === font.family)) {
+      fonts.push({ family: font.family, weights: font.weights });
+    }
+  });
+
+  if (fonts.length > 0) {
+    const existingLink = document.querySelector('link[data-typography]');
+    if (existingLink) existingLink.remove();
+
+    const link = document.createElement('link');
+    link.setAttribute('data-typography', 'true');
+    link.rel = 'stylesheet';
+
+    const families = fonts.map(f =>
+      `family=${f.family.replace(/ /g, '+')}:wght@${f.weights.join(';')}`
+    ).join('&');
+
+    link.href = `https://fonts.googleapis.com/css2?${families}&display=swap`;
+    document.head.appendChild(link);
+  }
+};
+
 const App: React.FC = () => {
   const initializeLoyalty = useLoyaltyStore((state) => state.initialize);
 
@@ -126,6 +221,38 @@ const App: React.FC = () => {
     } else {
         document.documentElement.classList.remove('dark');
     }
+
+    // Typography Başlatma
+    const loadTypography = async () => {
+      try {
+        const docRef = doc(db, 'site_settings', 'typography');
+        onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data() as any;
+
+            // Migration: Eski yapıdan yeni yapıya geçiş
+            let settings: TypographySettings;
+            if (data.headingFont && !data.h1Font) {
+              settings = {
+                ...data,
+                h1Font: data.headingFont,
+                h2Font: data.headingFont,
+                h3Font: data.headingFont,
+                h4Font: data.headingFont
+              };
+            } else {
+              settings = data as TypographySettings;
+            }
+
+            applyTypography(settings);
+          }
+        });
+      } catch (error) {
+        console.error('Typography loading failed:', error);
+      }
+    };
+
+    loadTypography();
 
     // Loyalty Sistemi Başlatma
     initializeLoyalty().catch((err) => {

@@ -231,3 +231,5 @@ Hava durumu uyarıları için termometre bileşeni.
 
 
 kutu oluşturucu geliştirilmeli: kutu çeşitleri, canta, not gibi ücret karşılığ herşeyi özelleştirebilir yapılabilir.
+
+CLAUDE.MD geliştir. istediğin formata sok ve genel proje kullanımına uygun hale getir. mesela soru sorup cümle soru işareti ile bittiğinde sadece o sorunun cevabını bekliyorum. detaylı cevap kelimeleri ilave edilirse kapsamlı bir cevap beklendiği anlaşılmalı.
