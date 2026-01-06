@@ -21,8 +21,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   setIsFormOpen,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Tümü');
-  const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'bonbons' | 'boxes' | 'tablets'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'tablets' | 'truffles' | 'boxes' | 'bonbons' | 'other'>('all');
   const [criticalStockThreshold, setCriticalStockThreshold] = useState(() => {
     const saved = localStorage.getItem('criticalStockThreshold');
     return saved ? parseInt(saved, 10) : 5;
@@ -70,15 +69,28 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'Tümü' || p.category?.toLowerCase() === activeCategory.toLowerCase();
 
-    // Ürün tipi filtresi
-    let matchesType = true;
-    if (productTypeFilter === 'bonbons') matchesType = p.isBoxContent === true;
-    if (productTypeFilter === 'boxes') matchesType = p.productType === 'box';
-    if (productTypeFilter === 'tablets') matchesType = p.productType === 'tablet';
+    // Tek katman filtre mantığı
+    let matchesFilter = true;
+    if (filterType === 'tablets') {
+      // Tablet kategorisi VE kutu değil
+      matchesFilter = p.category === 'tablet' && p.productType !== 'box';
+    } else if (filterType === 'truffles') {
+      // Truffle kategorisi
+      matchesFilter = p.category === 'truffle';
+    } else if (filterType === 'boxes') {
+      // Kutu tipi ürünler
+      matchesFilter = p.productType === 'box';
+    } else if (filterType === 'bonbons') {
+      // Kutu içeriği için kullanılan ürünler
+      matchesFilter = p.isBoxContent === true;
+    } else if (filterType === 'other') {
+      // Yukarıdakilerin hiçbiri değil
+      matchesFilter = p.category !== 'tablet' && p.category !== 'truffle' && p.productType !== 'box' && !p.isBoxContent;
+    }
+    // filterType === 'all' ise hepsini göster
 
-    return matchesSearch && matchesCategory && matchesType;
+    return matchesSearch && matchesFilter;
   });
 
   return (
@@ -179,21 +191,23 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
       {/* Ürün Listesi Tablosu */}
       <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b flex flex-col gap-4 bg-slate-50/30">
-          {/* Ürün Tipi Filtreleri */}
-          <div className="flex gap-2 bg-gradient-to-r from-rose-50 to-orange-50 p-1.5 rounded-2xl border border-rose-200/50">
+          {/* Tek Katman Filtre Sistemi */}
+          <div className="flex flex-wrap gap-2 bg-gradient-to-r from-slate-50 to-slate-100 p-2 rounded-2xl border border-slate-200">
             {[
-              { id: 'all', label: 'TÜM ÜRÜNLER', icon: '📦' },
-              { id: 'bonbons', label: 'BONBONLAR', icon: '🍫' },
+              { id: 'all', label: 'TÜMÜ', icon: '📦' },
+              { id: 'tablets', label: 'TABLETLER', icon: '▬' },
+              { id: 'truffles', label: 'TRUFFLES', icon: '🍫' },
               { id: 'boxes', label: 'KUTULAR', icon: '🎁' },
-              { id: 'tablets', label: 'TABLETLER', icon: '▬' }
+              { id: 'bonbons', label: 'BONBONLAR', icon: '🍬' },
+              { id: 'other', label: 'DİĞER', icon: '📋' }
             ].map(type => (
               <button
                 key={type.id}
-                onClick={() => setProductTypeFilter(type.id as any)}
-                className={`flex-1 px-5 py-2.5 text-[10px] font-black rounded-xl transition-all ${
-                  productTypeFilter === type.id
-                    ? 'bg-white shadow-md text-rose-600'
-                    : 'text-gray-400 hover:text-gray-600'
+                onClick={() => setFilterType(type.id as any)}
+                className={`flex-1 min-w-[120px] px-5 py-3 text-[10px] font-black rounded-xl transition-all ${
+                  filterType === type.id
+                    ? 'bg-white shadow-md text-brown-900 ring-2 ring-brown-100'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
                 }`}
               >
                 {type.icon} {type.label}
@@ -201,14 +215,6 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
             ))}
           </div>
 
-          {/* Kategori Filtreleri */}
-          <div className="flex gap-1 bg-slate-100 p-1.5 rounded-2xl">
-            {['Tümü', ...PRODUCT_CATEGORIES.map(cat => cat.id)].map(c => (
-              <button key={c} onClick={() => setActiveCategory(c)} className={`px-7 py-2.5 text-[10px] font-black rounded-xl transition-all ${activeCategory === c ? 'bg-white shadow-md text-brown-900' : 'text-gray-400 hover:text-slate-600'}`}>
-                {c === 'Tümü' ? 'TÜMÜ' : PRODUCT_CATEGORIES.find(cat => cat.id === c)?.label.toUpperCase()}
-              </button>
-            ))}
-          </div>
           <div className="relative w-full md:max-w-sm">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input type="text" placeholder="Ürün Ara..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl text-xs focus:ring-2 focus:ring-brown-900/10 outline-none" />

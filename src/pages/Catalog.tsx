@@ -7,7 +7,8 @@ import { CuratedBoxModal } from '../components/CuratedBoxModal';
 import { Footer } from '../components/Footer';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown, Package, Sparkles } from 'lucide-react';
+import { SlidersHorizontal, LayoutGrid, Rows3, XCircle, ChevronDown, Package } from 'lucide-react';
+import { BrandIcon } from '../components/ui/BrandIcon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -307,7 +308,7 @@ export const Catalog: React.FC = () => {
                         <div className="w-24 h-24 bg-gradient-to-br from-gold to-brand-mustard rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
                           <Package className="text-white" size={48} />
                         </div>
-                        <Sparkles className="absolute -top-2 -right-2 text-gold drop-shadow-md" size={20} />
+                        <BrandIcon className="absolute -top-2 -right-2 text-gold drop-shadow-md" size={20} />
                       </div>
                     </div>
                   )}

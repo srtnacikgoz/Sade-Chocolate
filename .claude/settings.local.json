@@ -42,7 +42,19 @@
       "Bash(npm run deploy:*)",
       "Bash(firebase functions:delete:*)",
       "Bash(npx svgo:*)",
-      "Bash(npm run build:vite:*)"
+      "Bash(npm run build:vite:*)",
+      "Bash(powershell -Command \"\\(Get-Item ''C:\\\\dev\\\\sade-chocolate\\\\public\\\\kakaologo.png''\\).Length / 1KB\")",
+      "Bash(magick identify:*)",
+      "Bash(python3:*)",
+      "Bash(pkill:*)",
+      "Bash(Get-Process)",
+      "Bash(Where-Object {$_ProcessName -like \"*node*\"})",
+      "Bash(Stop-Process -Force)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:gist.githubusercontent.com)",
+      "Bash(npm run build:dev:*)",
+      "Bash(npm run:*)"
     ]
   },
   "hooks": {

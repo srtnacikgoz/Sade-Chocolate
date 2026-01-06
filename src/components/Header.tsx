@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
         <nav className="hidden lg:flex items-center space-x-10 absolute left-1/2 transform -translate-x-1/2">
           <Link to="/home" className="flex items-center gap-3 group">
             <img
-              src="/kakaoLogo.svg"
+              src="/kakaologo.png"
               alt="Sade Chocolate"
               className="w-9 h-9 opacity-80 group-hover:opacity-100 transition-opacity dark:invert"
             />
@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
         {/* Mobile Logo (Center) */}
         <Link to="/home" className="lg:hidden flex items-center gap-2 group absolute left-1/2 transform -translate-x-1/2">
           <img
-            src="/kakaoLogo.svg"
+            src="/kakaologo.png"
             alt="Sade Chocolate"
             className="w-7 h-7 opacity-80 group-hover:opacity-100 transition-opacity dark:invert"
           />

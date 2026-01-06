@@ -33,6 +33,35 @@ export const enableOfflinePersistence = async () => {
   console.log('✅ Firestore offline persistence is configured at initialization');
 };
 
+// SLA hesaplama yardımcı fonksiyonu
+const calculateSLA = (createdAt: any): number => {
+  try {
+    let createdDate: Date;
+
+    if (createdAt?.toDate) {
+      // Firestore Timestamp
+      createdDate = createdAt.toDate();
+    } else if (createdAt instanceof Date) {
+      createdDate = createdAt;
+    } else if (typeof createdAt === 'string') {
+      // String format: "2025-01-15 09:30" veya ISO string
+      createdDate = new Date(createdAt);
+    } else {
+      return 0;
+    }
+
+    if (isNaN(createdDate.getTime())) return 0;
+
+    const now = new Date();
+    const diffMs = now.getTime() - createdDate.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    return Math.max(0, diffMinutes);
+  } catch {
+    return 0;
+  }
+};
+
 // 📥 FETCH ALL ORDERS
 export const fetchOrders = async (): Promise<Order[]> => {
   try {
@@ -44,6 +73,8 @@ export const fetchOrders = async (): Promise<Order[]> => {
       return {
         ...data,
         id: doc.id,
+        // SLA hesapla (siparişten bu yana geçen dakika)
+        sla: calculateSLA(data.createdAt),
         // Timestamp'leri string'e çevir
         createdAt: data.createdAt?.toDate?.()?.toLocaleString('tr-TR') || data.createdAt,
         tracking: data.tracking ? {
@@ -82,6 +113,8 @@ export const subscribeToOrders = (
         return {
           ...data,
           id: doc.id,
+          // SLA hesapla (siparişten bu yana geçen dakika)
+          sla: calculateSLA(data.createdAt),
           createdAt: data.createdAt?.toDate?.()?.toLocaleString('tr-TR') || data.createdAt,
           tracking: data.tracking ? {
             ...data.tracking,

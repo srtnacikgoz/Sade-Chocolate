@@ -8,8 +8,9 @@ import { Footer } from '../components/Footer';
 import { ViewMode, Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
-import { Sparkles, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { BrandIcon } from '../components/ui/BrandIcon';
 
 export const Favorites: React.FC = () => {
   const { favorites, addToCart, setIsCartOpen, clearAllFavorites } = useCart();
@@ -110,7 +111,7 @@ export const Favorites: React.FC = () => {
         {/* Smart Actions */}
         <div className="mb-20">
             <div className="flex items-center gap-3 mb-8 ml-1">
-                <Sparkles size={20} className="text-gold" />
+                <BrandIcon size={20} className="text-gold" />
                 <p className="text-[11px] font-bold font-sans text-gray-400 uppercase tracking-[0.4em]">{t('quick_pick')}</p>
             </div>
             

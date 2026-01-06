@@ -4,7 +4,7 @@ import { Product } from './types';
 export const PRODUCT_CATEGORIES = [
   { id: 'tablet', label: 'Tablet' },
   { id: 'truffle', label: 'Truffle' },
-  { id: 'gift-box', label: 'Gift Box' }
+  { id: 'gift-box', label: 'Kutu' }
 ];
 
 export const COLLECTIONS = [

@@ -387,6 +387,18 @@ export interface TypographySettings {
 export interface NewsletterTemplate {
   id: string;
 
+  // Logo Customization
+  logoImageUrl?: string;          // Logo görseli URL (varsayılan: "/kakaologo.png")
+  logoShowImage?: boolean;        // Logo görselini göster (varsayılan: true)
+  logoImageSize?: number;         // Logo görsel boyutu px (varsayılan: 60)
+  logoColor?: string;             // Logo rengi (hex) (varsayılan: "#C5A059" - gold)
+  logoSadeText?: string;          // "SADE" metni (varsayılan: "SADE")
+  logoChocolateText?: string;     // "Chocolate" metni (varsayılan: "Chocolate")
+  logoSadeFont?: string;          // SADE font (varsayılan: "Santana")
+  logoChocolateFont?: string;     // Chocolate font (varsayılan: "Santana")
+  logoSadeSize?: number;          // SADE boyutu (varsayılan: 28)
+  logoChocolateSize?: number;     // Chocolate boyutu (varsayılan: 11)
+
   // Header
   headerBadge: string;           // "✦ Hoş Geldin ✦"
 
@@ -423,6 +435,50 @@ export interface NewsletterTemplate {
     textSecondary: string;       // "#666666"
   };
 
+  // Tipografi (opsiyonel - varsayılanlar kullanılabilir)
+  typography?: {
+    headingFont: string;         // "Georgia, serif"
+    bodyFont: string;            // "Arial, sans-serif"
+    headingSize: number;         // 32
+    bodySize: number;            // 15
+    lineHeight: number;          // 1.8
+  };
+
+  updatedAt?: any;
+  updatedBy?: string;
+}
+
+// Font Yönetimi
+export interface EmailFont {
+  id: string;
+  value: string;              // "Georgia, serif"
+  label: string;              // "Georgia (Serif - Klasik)"
+  category: 'serif' | 'sans-serif' | 'cursive' | 'monospace';
+  isActive?: boolean;         // Aktif/Pasif
+  order?: number;             // Sıralama
+}
+
+export interface FontSettings {
+  fonts: EmailFont[];
+  updatedAt?: any;
+  updatedBy?: string;
+}
+
+// Web Font Yönetimi (Tipografi için)
+export interface WebFont {
+  id: string;
+  family: string;              // "Inter", "Santana", "Georgia"
+  source: 'google' | 'custom' | 'system';
+  category: 'serif' | 'sans-serif' | 'display' | 'monospace';
+  weights?: number[];          // [300, 400, 600, 700]
+  fallback?: string;           // "sans-serif", "serif"
+  url?: string;                // Custom font URL (Firebase Storage)
+  isActive?: boolean;
+  order?: number;
+}
+
+export interface WebFontSettings {
+  fonts: WebFont[];
   updatedAt?: any;
   updatedBy?: string;
 }

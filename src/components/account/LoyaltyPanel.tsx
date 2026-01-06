@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useLoyaltyStore } from '../../stores/loyaltyStore';
 import { useUser } from '../../context/UserContext';
 import type { LoyaltyTier } from '../../types/loyalty';
-import { Gift, Star, Truck, Clock, Sparkles, AlertTriangle, Copy, Check, Share2, MessageCircle, Info } from 'lucide-react';
+import { Gift, Star, Truck, Clock, AlertTriangle, Copy, Check, Share2, MessageCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { BrandIcon } from '../ui/BrandIcon';
 
 const TIER_COLORS: Record<LoyaltyTier, { bg: string; text: string; border: string; gradient: string }> = {
   Bronze: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', gradient: 'from-amber-100 to-amber-50' },
@@ -40,15 +41,55 @@ export const LoyaltyPanel: React.FC = () => {
   }, [initialize]);
 
   useEffect(() => {
-    if (user?.email && !currentCustomer) {
+    if (user?.email && !currentCustomer && !isLoading) {
       loadCustomer(user.email, user.displayName || user.firstName);
     }
-  }, [user, currentCustomer, loadCustomer]);
+  }, [user?.email, currentCustomer, isLoading, loadCustomer]);
 
-  if (isLoading || !currentCustomer || !config) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-gold border-t-transparent rounded-full animate-spin" />
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center">
+          <Gift size={32} className="text-gold animate-pulse" />
+        </div>
+        <p className="text-sm text-gray-400 uppercase tracking-widest font-bold">Sadakat programı yükleniyor...</p>
+      </div>
+    );
+  }
+
+  // Config missing
+  if (!config) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-6 max-w-md mx-auto text-center">
+        <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+          <AlertTriangle size={32} className="text-red-500" />
+        </div>
+        <div>
+          <h3 className="font-display text-2xl font-bold text-gray-900 dark:text-white mb-2 italic">Sistem Hatası</h3>
+          <p className="text-sm text-gray-500">Sadakat programı yapılandırması yüklenemedi. Lütfen daha sonra tekrar deneyin.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Customer missing
+  if (!currentCustomer) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-6 max-w-md mx-auto text-center">
+        <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center">
+          <Info size={32} className="text-amber-500" />
+        </div>
+        <div>
+          <h3 className="font-display text-2xl font-bold text-gray-900 dark:text-white mb-2 italic">Profil Bulunamadı</h3>
+          <p className="text-sm text-gray-500 mb-4">Sadakat profiliniz oluşturulamadı. İlk siparişinizi verdikten sonra otomatik olarak oluşturulacak.</p>
+          <button
+            onClick={() => user?.email && loadCustomer(user.email, user.displayName || user.firstName)}
+            className="px-6 py-3 bg-brown-900 dark:bg-gold text-white dark:text-black rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all"
+          >
+            Tekrar Dene
+          </button>
+        </div>
       </div>
     );
   }
@@ -117,7 +158,7 @@ export const LoyaltyPanel: React.FC = () => {
 
         {/* Decorative element */}
         <div className="absolute -right-10 -bottom-10 w-40 h-40 opacity-10">
-          <Sparkles size={160} className={colors.text} />
+          <BrandIcon size={160} className={colors.text} />
         </div>
       </div>
 
@@ -240,7 +281,7 @@ export const LoyaltyPanel: React.FC = () => {
               active: tierConfig.freeShippingThreshold === null || tierConfig.freeShippingThreshold < 500
             },
             {
-              icon: <Sparkles size={20} />,
+              icon: <BrandIcon size={20} />,
               label: 'Özel Erişim',
               value: tierConfig.exclusiveAccess ? 'Aktif' : 'Pasif',
               active: tierConfig.exclusiveAccess

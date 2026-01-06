@@ -73,7 +73,7 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           className={`flex items-center justify-center gap-4 mb-10 ${onLogoClick ? 'cursor-pointer select-none' : ''}`}
         >
           <img
-            src="/kakaoLogo.svg"
+            src="/kakaologo.png"
             alt="Sade Chocolate"
             className="w-14 h-14 opacity-70 dark:invert"
           />

@@ -3,11 +3,51 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { toast } from 'sonner';
 import { Mail, Save, Eye, RefreshCw } from 'lucide-react';
-import type { NewsletterTemplate } from '../../../types';
+import type { NewsletterTemplate, EmailFont } from '../../../types';
+import { DEFAULT_EMAIL_FONTS } from '../../../utils/seedEmailFonts';
+
+// Hex renk -> SVG color overlay filter (daha iyi sonuç verir)
+function getLogoColorStyle(hex: string): string {
+  // Basit filter: sadece rengi değiştir, şekli koruyun
+  // opacity ile renk yoğunluğunu ayarla
+  return `
+    filter:
+      drop-shadow(0 0 0 ${hex})
+      brightness(0)
+      invert(1)
+      sepia(1)
+      saturate(10000%)
+      hue-rotate(0deg);
+    -webkit-filter:
+      drop-shadow(0 0 0 ${hex})
+      brightness(0)
+      invert(1)
+      sepia(1)
+      saturate(10000%)
+      hue-rotate(0deg);
+  `.trim();
+}
+
+// Alternatif: SVG mask kullanarak renklendirme
+function getLogoWithColor(hex: string): string {
+  return `background-color: ${hex}; -webkit-mask: url(https://sadechocolate.com/kakaologo.png) center/contain no-repeat; mask: url(https://sadechocolate.com/kakaologo.png) center/contain no-repeat;`;
+}
 
 // Varsayılan template değerleri
 const DEFAULT_TEMPLATE: NewsletterTemplate = {
   id: 'newsletter_welcome',
+  // Logo
+  logoImageUrl: 'https://sadechocolate.com/kakaologo.png',
+  logoShowImage: true,
+  logoImageSize: 60,
+  logoColor: '#C5A059',
+  logoSadeText: 'SADE',
+  logoChocolateText: 'Chocolate',
+  logoSadeFont: "'Santana', Georgia, serif",
+  logoChocolateFont: "'Santana', Georgia, serif",
+  logoSadeSize: 28,
+  logoChocolateSize: 11,
+  // Content
   headerBadge: '✦ Hoş Geldin ✦',
   mainTitle: 'Artisan Çikolata\nDünyasına Adım Attın',
   welcomeText: 'Bundan sonra yeni koleksiyonlar, özel teklifler ve bean-to-bar dünyasından hikayeler seninle.',
@@ -29,35 +69,53 @@ const DEFAULT_TEMPLATE: NewsletterTemplate = {
     accent: '#C5A059',
     textPrimary: '#4B3832',
     textSecondary: '#666666'
+  },
+  typography: {
+    headingFont: 'Georgia, serif',
+    bodyFont: 'Arial, sans-serif',
+    headingSize: 32,
+    bodySize: 15,
+    lineHeight: 1.8
   }
 };
 
 export const EmailTemplatesTab: React.FC = () => {
   const [template, setTemplate] = useState<NewsletterTemplate>(DEFAULT_TEMPLATE);
+  const [availableFonts, setAvailableFonts] = useState<EmailFont[]>(DEFAULT_EMAIL_FONTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Firestore'dan template'i yükle
+  // Firestore'dan template ve fontları yükle
   useEffect(() => {
-    const loadTemplate = async () => {
+    const loadData = async () => {
       try {
-        const docRef = doc(db, 'email_templates', 'newsletter_welcome');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setTemplate({ ...DEFAULT_TEMPLATE, ...docSnap.data() } as NewsletterTemplate);
+        // Template'i yükle
+        const templateRef = doc(db, 'email_templates', 'newsletter_welcome');
+        const templateSnap = await getDoc(templateRef);
+        if (templateSnap.exists()) {
+          setTemplate({ ...DEFAULT_TEMPLATE, ...templateSnap.data() } as NewsletterTemplate);
         } else {
           // İlk kez - varsayılan değerleri kaydet
-          await setDoc(docRef, { ...DEFAULT_TEMPLATE, updatedAt: serverTimestamp() });
+          await setDoc(templateRef, { ...DEFAULT_TEMPLATE, updatedAt: serverTimestamp() });
+        }
+
+        // Fontları yükle
+        const fontsRef = doc(db, 'email_settings', 'fonts');
+        const fontsSnap = await getDoc(fontsRef);
+        if (fontsSnap.exists()) {
+          const fonts = fontsSnap.data().fonts || DEFAULT_EMAIL_FONTS;
+          // Sadece aktif fontları göster, sırala
+          setAvailableFonts(fonts.filter((f: EmailFont) => f.isActive !== false).sort((a: EmailFont, b: EmailFont) => (a.order || 0) - (b.order || 0)));
         }
       } catch (error) {
-        console.error('Template yüklenemedi:', error);
-        toast.error('Template yüklenemedi');
+        console.error('Yükleme hatası:', error);
+        toast.error('Yükleme başarısız');
       } finally {
         setLoading(false);
       }
     };
-    loadTemplate();
+    loadData();
   }, []);
 
   // Template'i kaydet
@@ -157,6 +215,205 @@ export const EmailTemplatesTab: React.FC = () => {
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold/20"
                 placeholder="Email konusu..."
               />
+            </div>
+
+            {/* Logo Customization */}
+            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">🏷️ Logo Özelleştirme</h3>
+              <div className="space-y-4">
+                {/* Logo Görsel Toggle */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-900 rounded-xl">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kakao Logo Görseli</label>
+                    <p className="text-xs text-gray-500">Email başlığında logo görseli göster</p>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={template.logoShowImage !== false}
+                      onChange={(e) => setTemplate({ ...template, logoShowImage: e.target.checked })}
+                      className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-gold"
+                    />
+                    <span className="text-xs text-gray-500">{template.logoShowImage !== false ? 'Göster' : 'Gizle'}</span>
+                  </label>
+                </div>
+
+                {/* Logo Görsel Ayarları */}
+                {template.logoShowImage !== false && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Logo Görsel URL</label>
+                        <input
+                          type="text"
+                          value={template.logoImageUrl || 'https://sadechocolate.com/kakaologo.png'}
+                          onChange={(e) => setTemplate({ ...template, logoImageUrl: e.target.value })}
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                          placeholder="https://sadechocolate.com/kakaologo.png"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Logo Boyutu (px)</label>
+                        <input
+                          type="number"
+                          value={template.logoImageSize || 60}
+                          onChange={(e) => setTemplate({ ...template, logoImageSize: parseInt(e.target.value) || 60 })}
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                          min={30}
+                          max={120}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Logo Rengi</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={template.logoColor || '#C5A059'}
+                          onChange={(e) => setTemplate({ ...template, logoColor: e.target.value })}
+                          className="w-16 h-10 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={template.logoColor || '#C5A059'}
+                          onChange={(e) => setTemplate({ ...template, logoColor: e.target.value })}
+                          className="flex-1 px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none font-mono"
+                          placeholder="#C5A059"
+                        />
+                        <button
+                          onClick={() => setTemplate({ ...template, logoColor: '#C5A059' })}
+                          className="px-4 py-2 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 rounded-xl text-xs transition-colors"
+                          title="Varsayılan (Gold)"
+                        >
+                          Sıfırla
+                        </button>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => setTemplate({ ...template, logoColor: '#C5A059' })} className="px-3 py-1 rounded-lg text-xs" style={{ backgroundColor: '#C5A059', color: 'white' }}>Gold</button>
+                        <button onClick={() => setTemplate({ ...template, logoColor: '#FFFFFF' })} className="px-3 py-1 rounded-lg text-xs border" style={{ backgroundColor: '#FFFFFF', color: '#333' }}>Beyaz</button>
+                        <button onClick={() => setTemplate({ ...template, logoColor: '#8B4513' })} className="px-3 py-1 rounded-lg text-xs" style={{ backgroundColor: '#8B4513', color: 'white' }}>Kahve</button>
+                        <button onClick={() => setTemplate({ ...template, logoColor: '#4B3832' })} className="px-3 py-1 rounded-lg text-xs" style={{ backgroundColor: '#4B3832', color: 'white' }}>Koyu</button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">SADE Metni</label>
+                    <input
+                      type="text"
+                      value={template.logoSadeText || 'SADE'}
+                      onChange={(e) => setTemplate({ ...template, logoSadeText: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      placeholder="SADE"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Chocolate Metni</label>
+                    <input
+                      type="text"
+                      value={template.logoChocolateText || 'Chocolate'}
+                      onChange={(e) => setTemplate({ ...template, logoChocolateText: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      placeholder="Chocolate"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">SADE Fontu</label>
+                    <select
+                      value={template.logoSadeFont || "'Santana', Georgia, serif"}
+                      onChange={(e) => setTemplate({ ...template, logoSadeFont: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    >
+                      <optgroup label="⭐ Önerilen">
+                        <option value="'Santana', Georgia, serif">Santana (Özel Font)</option>
+                      </optgroup>
+                      {availableFonts.length > 0 && (
+                        <optgroup label="Diğer Email-Safe Fonts">
+                          {availableFonts.map(font => (
+                            <option key={font.id} value={font.value}>
+                              {font.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Chocolate Fontu</label>
+                    <select
+                      value={template.logoChocolateFont || "'Santana', Georgia, serif"}
+                      onChange={(e) => setTemplate({ ...template, logoChocolateFont: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    >
+                      <optgroup label="⭐ Önerilen">
+                        <option value="'Santana', Georgia, serif">Santana (Özel Font)</option>
+                      </optgroup>
+                      {availableFonts.length > 0 && (
+                        <optgroup label="Diğer Email-Safe Fonts">
+                          {availableFonts.map(font => (
+                            <option key={font.id} value={font.value}>
+                              {font.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">SADE Boyutu (px)</label>
+                    <input
+                      type="number"
+                      value={template.logoSadeSize || 28}
+                      onChange={(e) => setTemplate({ ...template, logoSadeSize: parseInt(e.target.value) || 28 })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      min={16}
+                      max={64}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Chocolate Boyutu (px)</label>
+                    <input
+                      type="number"
+                      value={template.logoChocolateSize || 11}
+                      onChange={(e) => setTemplate({ ...template, logoChocolateSize: parseInt(e.target.value) || 11 })}
+                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      min={8}
+                      max={32}
+                    />
+                  </div>
+                </div>
+                {/* Logo Preview */}
+                <div className="p-6 bg-brown-900 dark:bg-dark-900 rounded-xl text-center">
+                  {template.logoShowImage !== false && (
+                    <div className="mb-4">
+                      <img
+                        src="/kakaologo.png"
+                        alt="Logo"
+                        style={{
+                          width: `${template.logoImageSize || 60}px`,
+                          height: `${template.logoImageSize || 60}px`,
+                          margin: '0 auto',
+                          display: 'block',
+                          filter: `brightness(0) saturate(100%) invert(${template.logoColor === '#FFFFFF' ? '100' : '0'}%)`,
+                          opacity: 0.9
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ fontFamily: template.logoSadeFont || "'Santana', Georgia, serif", fontSize: `${template.logoSadeSize || 28}px`, fontWeight: 'bold', color: 'white' }}>
+                    {template.logoSadeText || 'SADE'}
+                  </div>
+                  <div style={{ fontFamily: template.logoChocolateFont || "'Santana', Georgia, serif", fontSize: `${template.logoChocolateSize || 11}px`, color: '#C5A059', marginTop: '4px' }}>
+                    {template.logoChocolateText || 'Chocolate'}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Header Section */}
@@ -315,6 +572,103 @@ export const EmailTemplatesTab: React.FC = () => {
               </div>
             </div>
 
+            {/* Typography Settings */}
+            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                <span className="text-gold">Aa</span>
+                Tipografi Ayarları
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Başlık Fontu</label>
+                    <select
+                      value={template.typography?.headingFont || DEFAULT_TEMPLATE.typography?.headingFont}
+                      onChange={(e) => setTemplate({
+                        ...template,
+                        typography: { ...template.typography!, headingFont: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    >
+                      {availableFonts.map(font => (
+                        <option key={font.id} value={font.value}>{font.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Gövde Fontu</label>
+                    <select
+                      value={template.typography?.bodyFont || DEFAULT_TEMPLATE.typography?.bodyFont}
+                      onChange={(e) => setTemplate({
+                        ...template,
+                        typography: { ...template.typography!, bodyFont: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    >
+                      {availableFonts.map(font => (
+                        <option key={font.id} value={font.value}>{font.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Başlık Boyutu (px)</label>
+                    <input
+                      type="number"
+                      value={template.typography?.headingSize || 32}
+                      onChange={(e) => setTemplate({
+                        ...template,
+                        typography: { ...template.typography!, headingSize: parseInt(e.target.value) || 32 }
+                      })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      min={16}
+                      max={64}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Gövde Boyutu (px)</label>
+                    <input
+                      type="number"
+                      value={template.typography?.bodySize || 15}
+                      onChange={(e) => setTemplate({
+                        ...template,
+                        typography: { ...template.typography!, bodySize: parseInt(e.target.value) || 15 }
+                      })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      min={10}
+                      max={24}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Satır Yüksekliği</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={template.typography?.lineHeight || 1.8}
+                      onChange={(e) => setTemplate({
+                        ...template,
+                        typography: { ...template.typography!, lineHeight: parseFloat(e.target.value) || 1.8 }
+                      })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      min={1}
+                      max={3}
+                    />
+                  </div>
+                </div>
+                {/* Preview */}
+                <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-xl border border-gray-100 dark:border-gray-700">
+                  <p className="text-xs text-gray-400 mb-2">Önizleme:</p>
+                  <p style={{ fontFamily: template.typography?.headingFont, fontSize: `${template.typography?.headingSize || 32}px`, fontStyle: 'italic' }} className="text-gray-900 dark:text-white mb-2">
+                    Başlık Örneği
+                  </p>
+                  <p style={{ fontFamily: template.typography?.bodyFont, fontSize: `${template.typography?.bodySize || 15}px`, lineHeight: template.typography?.lineHeight || 1.8 }} className="text-gray-600 dark:text-gray-400">
+                    Bu bir gövde metni örneğidir. Tipografi ayarlarınızın nasıl görüneceğini buradan kontrol edebilirsiniz.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Color Settings (Collapsible) */}
             <details className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
               <summary className="p-6 cursor-pointer text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -358,25 +712,39 @@ export const EmailTemplatesTab: React.FC = () => {
 // Preview HTML generator
 function generatePreviewHTML(t: NewsletterTemplate): string {
   const c = t.colors || DEFAULT_TEMPLATE.colors!;
+  const ty = t.typography || DEFAULT_TEMPLATE.typography!;
   const mainTitleHTML = t.mainTitle.replace(/\n/g, '<br>');
 
+  // Logo customization
+  const logoShowImage = t.logoShowImage !== false;
+  const logoImageUrl = t.logoImageUrl || `${window.location.origin}/kakaologo.png`;
+  const logoImageSize = t.logoImageSize || 60;
+  const logoColor = t.logoColor || '#C5A059';
+  const logoSadeText = t.logoSadeText || 'SADE';
+  const logoChocolateText = t.logoChocolateText || 'Chocolate';
+  const logoSadeFont = t.logoSadeFont || "'Santana', Georgia, serif";
+  const logoChocolateFont = t.logoChocolateFont || "'Santana', Georgia, serif";
+  const logoSadeSize = t.logoSadeSize || 28;
+  const logoChocolateSize = t.logoChocolateSize || 11;
+
   return `
-    <div style="background-color: ${c.outerBg}; padding: 40px 20px; font-family: Georgia, serif;">
+    <div style="background-color: ${c.outerBg}; padding: 40px 20px; font-family: ${ty.headingFont};">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: ${c.bodyBg}; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
         <!-- Header -->
         <tr>
           <td style="background-color: ${c.headerBg}; padding: 40px 48px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px; font-weight: normal; letter-spacing: 6px; color: ${c.bodyBg};">SADE</h1>
-            <p style="margin: 8px 0 0; font-size: 11px; letter-spacing: 4px; color: ${c.accent}; text-transform: uppercase;">Chocolate</p>
+            ${logoShowImage ? `<div style="width: ${logoImageSize}px; height: ${logoImageSize}px; margin: 0 auto 16px; background-color: ${logoColor}; -webkit-mask: url(${logoImageUrl}) center/contain no-repeat; mask: url(${logoImageUrl}) center/contain no-repeat;"></div>` : ''}
+            <h1 style="margin: 0; font-family: ${logoSadeFont}; font-size: ${logoSadeSize}px; font-weight: bold; letter-spacing: 6px; color: ${c.bodyBg};">${logoSadeText}</h1>
+            <p style="margin: 8px 0 0; font-family: ${logoChocolateFont}; font-size: ${logoChocolateSize}px; letter-spacing: 4px; color: ${c.accent}; font-weight: normal;">${logoChocolateText}</p>
           </td>
         </tr>
         <!-- Content -->
         <tr>
           <td style="padding: 60px 48px;">
-            <p style="text-align: center; margin: 0 0 16px; font-size: 10px; letter-spacing: 3px; color: ${c.accent}; text-transform: uppercase;">${t.headerBadge}</p>
-            <h2 style="text-align: center; margin: 0 0 32px; font-size: 32px; font-weight: normal; font-style: italic; color: ${c.textPrimary}; line-height: 1.3;">${mainTitleHTML}</h2>
+            <p style="text-align: center; margin: 0 0 16px; font-family: ${ty.bodyFont}; font-size: 10px; letter-spacing: 3px; color: ${c.accent}; text-transform: uppercase;">${t.headerBadge}</p>
+            <h2 style="text-align: center; margin: 0 0 32px; font-family: ${ty.headingFont}; font-size: ${ty.headingSize}px; font-weight: normal; font-style: italic; color: ${c.textPrimary}; line-height: 1.3;">${mainTitleHTML}</h2>
             <div style="width: 60px; height: 1px; background-color: ${c.accent}; margin: 0 auto 32px;"></div>
-            <p style="text-align: center; margin: 0 0 48px; font-size: 15px; line-height: 1.8; color: ${c.textSecondary};">${t.welcomeText}</p>
+            <p style="text-align: center; margin: 0 0 48px; font-family: ${ty.bodyFont}; font-size: ${ty.bodySize}px; line-height: ${ty.lineHeight}; color: ${c.textSecondary};">${t.welcomeText}</p>
             ${t.discountEnabled ? `
             <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${c.headerBg}; margin-bottom: 48px;">
               <tr>

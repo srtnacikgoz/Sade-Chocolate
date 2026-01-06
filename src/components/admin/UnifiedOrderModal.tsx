@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Order } from '../../types/order';
 import {
-  X, MapPin, Package, Droplets, Gift, Sparkles, Box,
+  X, MapPin, Package, Droplets, Gift, Box,
   User, Calendar, ShoppingBag, TrendingUp, Award, Heart,
   CheckCircle, AlertTriangle, Phone, Mail, Clock, Truck
 } from 'lucide-react';
+import { BrandIcon } from '../ui/BrandIcon';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { calculateEstimatedDeliveryDate, getDeliveryStatus } from '../../utils/estimatedDelivery';
@@ -291,7 +292,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
               {/* Duyusal Profil (Placeholder) */}
               <div>
                 <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
-                  <Sparkles size={20} /> Duyusal Profil
+                  <BrandIcon size={20} /> Duyusal Profil
                 </h3>
                 <div className="space-y-3 p-6 bg-slate-50 rounded-3xl border border-gray-200">
                   <p className="text-sm text-gray-500 italic">Ürün taste profili bilgisi eklendiğinde burada gösterilecek</p>
@@ -368,7 +369,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
 
                 <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200">
                   <h3 className="font-display font-bold text-sm mb-4 flex items-center gap-2 text-gray-700">
-                    <Sparkles size={18} /> Özel Bilgiler
+                    <BrandIcon size={18} /> Özel Bilgiler
                   </h3>
                   <div className="space-y-3">
                     {analytics.referralCount > 0 && (

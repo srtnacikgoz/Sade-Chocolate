@@ -16,6 +16,7 @@ import { SearchDrawer } from './components/SearchDrawer';
 import { NewsletterPopup } from './components/NewsletterPopup';
 import { AIAssistant } from './components/AIAssistant';
 import { CookieConsent } from './components/CookieConsent';
+import { FloatingFeedback } from './components/FloatingFeedback';
 import { useLoyaltyStore } from './stores/loyaltyStore';
 import { TypographySettings } from './types';
 
@@ -34,15 +35,11 @@ const Cart = lazy(() => import('./pages/Cart').then(m => ({ default: m.Cart })))
 const LoginGateway = lazy(() => import('./pages/LoginGateway').then(m => ({ default: m.LoginGateway })));
 const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.Register })));
 const TastingQuiz = lazy(() => import('./pages/TastingQuiz').then(m => ({ default: m.TastingQuiz })));
+const Campaigns = lazy(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
 
-// Loading component
+// Minimal loading component - no spinner
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen bg-cream-100 dark:bg-dark-900">
-    <div className="text-center">
-      <div className="w-12 h-12 border-4 border-mocha-200 border-t-mocha-600 rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-mocha-600 dark:text-cream-200">Yükleniyor...</p>
-    </div>
-  </div>
+  <div className="flex items-center justify-center min-h-screen bg-white dark:bg-dark-900"></div>
 );
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -103,6 +100,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* AI Asistan - Tüm sitede erişilebilir (enabled ise) */}
       {!isAdmin && !isCheckout && isAiEnabled && <AIAssistant />}
+
+      {/* Floating Feedback - Don't show on admin or checkout */}
+      {!isAdmin && !isCheckout && <FloatingFeedback />}
 
       <CartDrawer />
       <SearchDrawer isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
@@ -283,6 +283,7 @@ const App: React.FC = () => {
                     <Route path="/login-gateway" element={<LoginGateway />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/tasting-quiz" element={<TastingQuiz />} />
+                    <Route path="/campaigns" element={<Campaigns />} />
                     <Route path="/checkout" element={<Checkout />} />
                   </Routes>
                 </Suspense>

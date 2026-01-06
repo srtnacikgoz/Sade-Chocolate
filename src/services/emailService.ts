@@ -65,8 +65,10 @@ const getEmailFooter = (email: string) => `
 const getEmailHeader = (badge?: string) => `
   <div style="background: ${COLORS.primary}; padding: 48px 20px; text-align: center;">
     <!-- Logo -->
-    <h1 style="font-family: Georgia, serif; font-size: 42px; color: white; margin: 0; font-weight: normal; letter-spacing: 3px;">Sade</h1>
-    <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 8px 0 0; letter-spacing: 2px;">Chocolate</p>
+    <div style="margin: 0;">
+      <span style="font-family: 'Santana', Georgia, serif; font-size: 42px; color: white; font-weight: bold; letter-spacing: 3px;">SADE</span>
+    </div>
+    <p style="font-family: 'Santana', Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 8px 0 0; letter-spacing: 2px; font-weight: normal;">Chocolate</p>
     ${badge ? `
     <div style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 10px 24px; border-radius: 30px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; text-transform: uppercase;">
       ${badge}
@@ -385,6 +387,19 @@ export const sendShippingNotificationEmail = async (
 export const sendNewsletterWelcomeEmail = async (email: string) => {
   // Firestore'dan template ayarlarını çek
   let t = {
+    // Logo Customization
+    logoImageUrl: 'https://sadechocolate.com/kakaologo.png',
+    logoShowImage: true,
+    logoImageSize: 60,
+    logoColor: '#C5A059',
+    logoSadeText: 'SADE',
+    logoChocolateText: 'Chocolate',
+    logoSadeFont: "'Santana', Georgia, serif",
+    logoChocolateFont: "'Santana', Georgia, serif",
+    logoSadeSize: 28,
+    logoChocolateSize: 11,
+
+    // Content
     headerBadge: '✦ Hoş Geldin ✦',
     mainTitle: 'Artisan Çikolata\nDünyasına Adım Attın',
     welcomeText: 'Bundan sonra yeni koleksiyonlar, özel teklifler ve bean-to-bar dünyasından hikayeler seninle.',
@@ -406,6 +421,13 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
       accent: '#C5A059',
       textPrimary: '#4B3832',
       textSecondary: '#666666'
+    },
+    typography: {
+      headingFont: 'Georgia, serif',
+      bodyFont: 'Arial, sans-serif',
+      headingSize: 32,
+      bodySize: 15,
+      lineHeight: 1.8
     }
   };
 
@@ -420,7 +442,26 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
   }
 
   const c = t.colors;
+  const ty = t.typography || {
+    headingFont: 'Georgia, serif',
+    bodyFont: 'Arial, sans-serif',
+    headingSize: 32,
+    bodySize: 15,
+    lineHeight: 1.8
+  };
   const mainTitleHTML = t.mainTitle.replace(/\n/g, '<br>');
+
+  // Logo değerleri
+  const logoShowImage = t.logoShowImage !== false;
+  const logoImageUrl = t.logoImageUrl || 'https://sadechocolate.com/kakaologo.png';
+  const logoImageSize = t.logoImageSize || 60;
+  const logoColor = t.logoColor || '#C5A059';
+  const logoSadeText = t.logoSadeText || 'SADE';
+  const logoChocolateText = t.logoChocolateText || 'Chocolate';
+  const logoSadeFont = t.logoSadeFont || "'Santana', Georgia, serif";
+  const logoChocolateFont = t.logoChocolateFont || "'Santana', Georgia, serif";
+  const logoSadeSize = t.logoSadeSize || 28;
+  const logoChocolateSize = t.logoChocolateSize || 11;
 
   // İndirim bölümü HTML'i
   const discountSectionHTML = t.discountEnabled ? `
@@ -430,10 +471,10 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
                         <p style="margin: 0 0 8px; font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 3px; color: ${c.accent}; text-transform: uppercase;">
                           ${t.discountLabel}
                         </p>
-                        <p style="margin: 0 0 4px; font-family: Georgia, serif; font-size: 64px; font-weight: normal; color: ${c.bodyBg}; line-height: 1;">
+                        <p style="margin: 0 0 4px; font-family: ${ty.headingFont}; font-size: 64px; font-weight: normal; color: ${c.bodyBg}; line-height: 1;">
                           %${t.discountPercent}
                         </p>
-                        <p style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 16px; font-style: italic; color: ${c.accent};">
+                        <p style="margin: 0 0 24px; font-family: ${ty.headingFont}; font-size: 16px; font-style: italic; color: ${c.accent};">
                           indirim
                         </p>
                         <div style="display: inline-block; border: 1px solid rgba(255,255,255,0.2); padding: 12px 24px;">
@@ -457,7 +498,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Sade Chocolate - Bültene Hoş Geldin</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: ${c.outerBg}; font-family: Georgia, 'Times New Roman', serif;">
+    <body style="margin: 0; padding: 0; background-color: ${c.outerBg}; font-family: ${ty.bodyFont};">
 
       <!-- Outer Container -->
       <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${c.outerBg}; padding: 40px 20px;">
@@ -470,8 +511,11 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
               <!-- Header Band -->
               <tr>
                 <td style="background-color: ${c.headerBg}; padding: 40px 48px; text-align: center;">
-                  <h1 style="margin: 0; font-family: Georgia, serif; font-size: 28px; font-weight: normal; letter-spacing: 6px; color: ${c.bodyBg};">SADE</h1>
-                  <p style="margin: 8px 0 0; font-family: Georgia, serif; font-size: 11px; letter-spacing: 4px; color: ${c.accent}; text-transform: uppercase;">Chocolate</p>
+                  ${logoShowImage ? `
+                  <img src="${logoImageUrl}" alt="Logo" width="${logoImageSize}" height="${logoImageSize}" style="display: block; margin: 0 auto 16px; max-width: 100%; height: auto;" />
+                  ` : ''}
+                  <h1 style="margin: 0; font-family: ${logoSadeFont}; font-size: ${logoSadeSize}px; font-weight: bold; letter-spacing: 6px; color: ${c.bodyBg};">${logoSadeText}</h1>
+                  <p style="margin: 8px 0 0; font-family: ${logoChocolateFont}; font-size: ${logoChocolateSize}px; letter-spacing: 4px; color: ${c.accent}; font-weight: normal;">${logoChocolateText}</p>
                 </td>
               </tr>
 
@@ -485,7 +529,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
                   </p>
 
                   <!-- Main Title -->
-                  <h2 style="text-align: center; margin: 0 0 32px; font-family: Georgia, serif; font-size: 32px; font-weight: normal; font-style: italic; color: ${c.textPrimary}; line-height: 1.3;">
+                  <h2 style="text-align: center; margin: 0 0 32px; font-family: ${ty.headingFont}; font-size: ${ty.headingSize}px; font-weight: normal; font-style: italic; color: ${c.textPrimary}; line-height: 1.3;">
                     ${mainTitleHTML}
                   </h2>
 
@@ -493,7 +537,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
                   <div style="width: 60px; height: 1px; background-color: ${c.accent}; margin: 0 auto 32px;"></div>
 
                   <!-- Welcome Text -->
-                  <p style="text-align: center; margin: 0 0 48px; font-family: Georgia, serif; font-size: 15px; line-height: 1.8; color: ${c.textSecondary};">
+                  <p style="text-align: center; margin: 0 0 48px; font-family: ${ty.bodyFont}; font-size: ${ty.bodySize}px; line-height: ${ty.lineHeight}; color: ${c.textSecondary};">
                     ${t.welcomeText}
                   </p>
 
@@ -507,7 +551,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
                         <p style="margin: 0 0 8px; font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 2px; color: ${c.accent}; text-transform: uppercase;">
                           ${t.benefit1Title}
                         </p>
-                        <p style="margin: 0; font-family: Georgia, serif; font-size: 13px; line-height: 1.6; color: ${c.textSecondary};">
+                        <p style="margin: 0; font-family: ${ty.bodyFont}; font-size: 13px; line-height: 1.6; color: ${c.textSecondary};">
                           ${t.benefit1Text}
                         </p>
                       </td>
@@ -516,7 +560,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
                         <p style="margin: 0 0 8px; font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 2px; color: ${c.accent}; text-transform: uppercase;">
                           ${t.benefit2Title}
                         </p>
-                        <p style="margin: 0; font-family: Georgia, serif; font-size: 13px; line-height: 1.6; color: ${c.textSecondary};">
+                        <p style="margin: 0; font-family: ${ty.bodyFont}; font-size: 13px; line-height: 1.6; color: ${c.textSecondary};">
                           ${t.benefit2Text}
                         </p>
                       </td>
@@ -540,14 +584,14 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
               <!-- Footer -->
               <tr>
                 <td style="background-color: #F5F3EF; padding: 32px 48px; text-align: center; border-top: 1px solid ${c.outerBg};">
-                  <p style="margin: 0 0 16px; font-family: Georgia, serif; font-size: 14px; color: ${c.textPrimary};">
+                  <p style="margin: 0 0 16px; font-family: ${ty.headingFont}; font-size: 14px; color: ${c.textPrimary};">
                     Sade Chocolate
                   </p>
-                  <p style="margin: 0 0 8px; font-family: Arial, sans-serif; font-size: 11px; color: #999999; line-height: 1.6;">
+                  <p style="margin: 0 0 8px; font-family: ${ty.bodyFont}; font-size: 11px; color: #999999; line-height: 1.6;">
                     Yeşilbahçe Mah. Çınarlı Cd. 47/A<br>
                     Muratpaşa, Antalya 07160
                   </p>
-                  <p style="margin: 16px 0 0; font-family: Arial, sans-serif; font-size: 10px; color: #BBBBBB;">
+                  <p style="margin: 16px 0 0; font-family: ${ty.bodyFont}; font-size: 10px; color: #BBBBBB;">
                     Bu email ${email} adresine gönderilmiştir.<br>
                     <a href="https://sadechocolate.com/#/account" style="color: #C5A059; text-decoration: none;">Email tercihlerini yönet</a>
                   </p>
@@ -570,4 +614,248 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
     html: template,
     text: `Sade Chocolate bültenine hoş geldin!${t.discountEnabled ? ` İlk siparişinde %${t.discountPercent} indirim için ${t.discountCode} kodunu kullan.` : ''} Koleksiyonu keşfet: ${t.ctaUrl}`
   });
+};
+
+/**
+ * Kampanya Kodu Emaili - Özel Kampanya Duyurusu
+ */
+export const sendCampaignCodeEmail = async (
+  email: string,
+  firstName: string,
+  campaignCode: string,
+  bonusPoints: number,
+  description: string,
+  validUntil: string
+) => {
+  const expiryDate = new Date(validUntil).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const content = `
+    ${getEmailHeader('ÖZE L KAMPANYA')}
+
+    <!-- Campaign Hero -->
+    <div style="background: linear-gradient(135deg, #FFF5E6 0%, ${COLORS.cream} 100%); padding: 40px 20px; text-align: center; position: relative;">
+      <div style="font-size: 64px; margin-bottom: 16px;">🎁</div>
+      <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+        Sizin İçin Özel!
+      </h1>
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; margin: 0;">
+        ${description}
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 48px 40px;">
+      <!-- Greeting -->
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+        Merhaba ${firstName},
+      </p>
+
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+        Sizin için özel bir kampanya kodu hazırladık! İlk siparişinizde kullanabileceğiniz bu kod ile <strong style="color: ${COLORS.gold};">${bonusPoints} bonus puan</strong> kazanma fırsatını yakalayın.
+      </p>
+
+      <!-- Campaign Code Box -->
+      <div style="background: linear-gradient(135deg, ${COLORS.primary} 0%, #5D4740 100%); border-radius: 20px; padding: 32px; margin: 32px 0; text-align: center; box-shadow: 0 8px 30px rgba(75,56,50,0.2);">
+        <p style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.gold}; margin: 0 0 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold;">
+          Kampanya Kodunuz
+        </p>
+        <div style="background: white; border-radius: 12px; padding: 20px; margin: 0 auto; max-width: 300px;">
+          <code style="font-family: 'Courier New', monospace; font-size: 28px; color: ${COLORS.primary}; font-weight: bold; letter-spacing: 3px; display: block;">
+            ${campaignCode}
+          </code>
+        </div>
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.cream}; margin: 16px 0 0; opacity: 0.9;">
+          🎉 <strong style="color: ${COLORS.gold};">${bonusPoints} Puan</strong> kazanın!
+        </p>
+      </div>
+
+      <!-- How to Use -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin: 32px 0;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 14px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+          ✨ Nasıl Kullanılır?
+        </h3>
+        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding: 8px 0;">
+              <table>
+                <tr>
+                  <td style="padding-right: 12px; vertical-align: top;">
+                    <div style="width: 24px; height: 24px; background: ${COLORS.gold}; border-radius: 50%; color: white; text-align: center; line-height: 24px; font-size: 12px; font-weight: bold;">1</div>
+                  </td>
+                  <td>
+                    <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; line-height: 1.6;">
+                      Kayıt sayfamıza gidin ve hesabınızı oluşturun
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0;">
+              <table>
+                <tr>
+                  <td style="padding-right: 12px; vertical-align: top;">
+                    <div style="width: 24px; height: 24px; background: ${COLORS.gold}; border-radius: 50%; color: white; text-align: center; line-height: 24px; font-size: 12px; font-weight: bold;">2</div>
+                  </td>
+                  <td>
+                    <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; line-height: 1.6;">
+                      "Referans Kodu" alanına <strong style="color: ${COLORS.primary};">${campaignCode}</strong> kodunu girin
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0;">
+              <table>
+                <tr>
+                  <td style="padding-right: 12px; vertical-align: top;">
+                    <div style="width: 24px; height: 24px; background: ${COLORS.gold}; border-radius: 50%; color: white; text-align: center; line-height: 24px; font-size: 12px; font-weight: bold;">3</div>
+                  </td>
+                  <td>
+                    <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; line-height: 1.6;">
+                      İlk siparişinizi tamamlayın ve bonusunuzu kazanın!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Urgency -->
+      <div style="border-left: 4px solid ${COLORS.gold}; background: #FFF9F0; padding: 16px 20px; margin: 32px 0; border-radius: 8px;">
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; line-height: 1.6;">
+          ⏰ <strong>Son kullanma tarihi:</strong> ${expiryDate}<br>
+          Bu özel fırsatı kaçırmayın!
+        </p>
+      </div>
+
+      <!-- CTA -->
+      <div style="text-align: center; margin: 40px 0 20px;">
+        <a href="https://sadechocolate.com/#/register?ref=${campaignCode}" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
+          Hemen Kayıt Ol
+        </a>
+      </div>
+
+      <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; text-align: center; margin: 24px 0 0; line-height: 1.6;">
+        Sorularınız mı var? Müşteri hizmetlerimiz size yardımcı olmaktan mutluluk duyar.
+      </p>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `🎁 Sizin İçin Özel: ${bonusPoints} Puan Kazan!`,
+    html: wrapEmail(content),
+    text: `Merhaba ${firstName}! Sizin için özel kampanya kodu: ${campaignCode}. İlk siparişinizde ${bonusPoints} bonus puan kazanın! Son kullanma: ${expiryDate}. Kayıt ol: https://sadechocolate.com/#/register?ref=${campaignCode}`
+  });
+};
+
+/**
+ * Kampanya Hatırlatma Emaili - Süresi Dolmak Üzere
+ */
+export const sendCampaignReminderEmail = async (
+  email: string,
+  firstName: string,
+  campaignCode: string,
+  bonusPoints: number,
+  validUntil: string,
+  daysLeft: number
+) => {
+  const expiryDate = new Date(validUntil).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const content = `
+    ${getEmailHeader('SON FIRSAT')}
+
+    <!-- Urgency Hero -->
+    <div style="background: linear-gradient(135deg, #FFE6E6 0%, #FFF0E6 100%); padding: 40px 20px; text-align: center;">
+      <div style="font-size: 64px; margin-bottom: 16px;">⏰</div>
+      <h1 style="font-family: Georgia, serif; font-size: 32px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+        Son ${daysLeft} Gün!
+      </h1>
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; margin: 0;">
+        Özel kampanyanızı kullanmayı unutmayın
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 48px 40px;">
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+        Merhaba ${firstName},
+      </p>
+
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+        Size özel hazırladığımız <strong style="color: ${COLORS.gold};">${bonusPoints} puan</strong> kazandıran kampanya kodunuz <strong>${expiryDate}</strong> tarihinde sona eriyor. Bu fırsatı kaçırmayın!
+      </p>
+
+      <!-- Campaign Code Box -->
+      <div style="background: linear-gradient(135deg, #DC143C 0%, #B22222 100%); border-radius: 20px; padding: 32px; margin: 32px 0; text-align: center; box-shadow: 0 8px 30px rgba(220,20,60,0.2);">
+        <p style="font-family: Arial, sans-serif; font-size: 11px; color: white; margin: 0 0 12px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold;">
+          Kampanya Kodunuz
+        </p>
+        <div style="background: white; border-radius: 12px; padding: 20px; margin: 0 auto; max-width: 300px;">
+          <code style="font-family: 'Courier New', monospace; font-size: 28px; color: #DC143C; font-weight: bold; letter-spacing: 3px; display: block;">
+            ${campaignCode}
+          </code>
+        </div>
+        <p style="font-family: Georgia, serif; font-size: 20px; color: white; margin: 20px 0 0; font-weight: bold;">
+          Son ${daysLeft} Gün!
+        </p>
+      </div>
+
+      <!-- CTA -->
+      <div style="text-align: center; margin: 40px 0 20px;">
+        <a href="https://sadechocolate.com/#/register?ref=${campaignCode}" style="display: inline-block; background: #DC143C; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(220,20,60,0.3);">
+          Hemen Kullan
+        </a>
+      </div>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `⏰ Son ${daysLeft} Gün: ${bonusPoints} Puan Fırsatı!`,
+    html: wrapEmail(content),
+    text: `Merhaba ${firstName}! Kampanya kodunuz ${expiryDate} tarihinde sona eriyor. Son ${daysLeft} gün! Kod: ${campaignCode}. Kayıt ol: https://sadechocolate.com/#/register?ref=${campaignCode}`
+  });
+};
+
+/**
+ * Toplu Kampanya Emaili - Newsletter abonelerine
+ */
+export const sendBulkCampaignEmail = async (
+  emails: string[],
+  campaignCode: string,
+  bonusPoints: number,
+  description: string,
+  validUntil: string
+) => {
+  const promises = emails.map(email =>
+    sendCampaignCodeEmail(email, 'Değerli Müşterimiz', campaignCode, bonusPoints, description, validUntil)
+  );
+
+  try {
+    await Promise.allSettled(promises);
+    console.log(`📧 ${emails.length} adet kampanya emaili kuyruğa eklendi`);
+    return true;
+  } catch (error) {
+    console.error('❌ Toplu email gönderimi hatası:', error);
+    return false;
+  }
 };

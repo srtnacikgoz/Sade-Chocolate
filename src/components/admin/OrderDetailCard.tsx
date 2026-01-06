@@ -1,6 +1,7 @@
 import React from 'react';
 import { Order } from './tabs/OrdersTab';
-import { X, MapPin, FileText, Package, Droplets, Gift, Sparkles, Box } from 'lucide-react';
+import { X, MapPin, FileText, Package, Droplets, Gift, Box } from 'lucide-react';
+import { BrandIcon } from '../ui/BrandIcon';
 
 interface OrderDetailCardProps {
   order: Order | null;
@@ -90,7 +91,7 @@ export const OrderDetailCard: React.FC<OrderDetailCardProps> = ({ order, onClose
                 </div>
               </div>
               <div>
-                <h3 className="font-display font-bold italic text-lg mb-4 flex items-center gap-2 text-gray-700"><Sparkles size={18}/> Duyusal Profil</h3>
+                <h3 className="font-display font-bold italic text-lg mb-4 flex items-center gap-2 text-gray-700"><BrandIcon size={18}/> Duyusal Profil</h3>
                 <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border">
                    {/* Duyusal profil grafikleri */}
                    <p className="text-sm text-gray-600">Yoğunluk: [Grafik]</p>

@@ -55,6 +55,10 @@ export interface TrackingInfo {
   trackingNumber: string;
   addedAt: string;
   addedBy?: string;
+  barcode?: string;
+  estimatedDelivery?: string;
+  shipmentId?: string;
+  createdAt?: Date;
 }
 
 export interface OrderTag {
@@ -97,6 +101,9 @@ export interface Order {
     name: string;
     email: string;
     phone: string;
+    address?: string;
+    city?: string;
+    district?: string;
   };
   items: OrderItem[];
   status: OrderStatus;

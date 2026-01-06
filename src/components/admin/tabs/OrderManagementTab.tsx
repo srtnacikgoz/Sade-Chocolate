@@ -34,6 +34,7 @@ import { cleanupInvalidOrders } from '../../../services/cleanupOrders';
 import { seedMockOrders } from '../../../services/seedOrders';
 import { TierBadge } from '../../ui/TierBadge';
 import type { LoyaltyTier } from '../../../types/loyalty';
+import { CreateShipmentModal } from '../CreateShipmentModal';
 
 // --- STATUS BADGE ---
 const StatusBadge = ({ status }: { status: Order['status'] }) => {
@@ -2037,6 +2038,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isStatusChangeModalOpen, setIsStatusChangeModalOpen] = useState(false);
+  const [isCreateShipmentModalOpen, setIsCreateShipmentModalOpen] = useState(false);
 
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -2078,6 +2080,11 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
     }
     if (action === 'Kargo Etiketi Oluştur') {
       setIsShippingLabelModalOpen(true);
+      setIsDropdownOpen(false);
+      return;
+    }
+    if (action === 'Kargo Oluştur') {
+      setIsCreateShipmentModalOpen(true);
       setIsDropdownOpen(false);
       return;
     }
@@ -2385,6 +2392,13 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                     <span className="text-sm text-brown-900 dark:text-white">Kargo Etiketi Oluştur</span>
                   </button>
                   <button
+                    onClick={() => handleAction('Kargo Oluştur')}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                  >
+                    <Package size={16} className="text-green-600" />
+                    <span className="text-sm text-brown-900 dark:text-white">Kargo Oluştur (MNG)</span>
+                  </button>
+                  <button
                     onClick={() => handleAction('Etiket Ekle')}
                     className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
                   >
@@ -2671,6 +2685,20 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
         <ShippingLabelModal
           order={order}
           onClose={() => setIsShippingLabelModalOpen(false)}
+        />
+      )}
+
+      {/* Create Shipment Modal (MNG Kargo) */}
+      {isCreateShipmentModalOpen && (
+        <CreateShipmentModal
+          order={order}
+          onClose={() => setIsCreateShipmentModalOpen(false)}
+          onSuccess={(trackingNumber) => {
+            success(`Kargo başarıyla oluşturuldu: ${trackingNumber}`);
+          }}
+          onError={(message) => {
+            error(message);
+          }}
         />
       )}
 

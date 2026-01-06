@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { TypographySettings, FontConfig, ResponsiveFontSize } from '../../../types';
+import { TypographySettings, FontConfig, ResponsiveFontSize, WebFont } from '../../../types';
 import { Type, Save, RotateCcw, Eye, Monitor, Tablet, Smartphone, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { DEFAULT_WEB_FONTS, seedWebFonts } from '../../../utils/seedWebFonts';
 
 // Varsayılan typography ayarları
 const DEFAULT_TYPOGRAPHY: TypographySettings = {
@@ -39,28 +40,6 @@ const DEFAULT_TYPOGRAPHY: TypographySettings = {
   elementLineHeight: { h1: 1.1, h2: 1.2, h3: 1.3, h4: 1.4, body: 1.6, button: 1 },
   hoverColors: { primary: '#D4AF37', secondary: '#111827', accent: '#8B4513' }
 };
-
-const GOOGLE_FONTS = [
-  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins', 'Raleway', 'Nunito',
-  'Playfair Display', 'Merriweather', 'Cormorant', 'Crimson Text', 'Lora',
-  'Source Serif Pro', 'Work Sans', 'DM Sans', 'Plus Jakarta Sans'
-];
-
-const SYSTEM_FONTS = [
-  'Arial',
-  'Helvetica',
-  'Times New Roman',
-  'Georgia',
-  'Verdana',
-  'Trebuchet MS',
-  'Gill Sans',
-  'Courier New',
-  'serif',
-  'sans-serif',
-  'monospace'
-];
-
-const CUSTOM_FONTS = ['Santana']; // Özel yüklenmiş fontlar
 
 // Font Presets (Hazır Kombinasyonlar)
 const FONT_PRESETS = [
@@ -130,6 +109,7 @@ export const TypographyTab: React.FC = () => {
   const [settings, setSettings] = useState<TypographySettings>(DEFAULT_TYPOGRAPHY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [availableFonts, setAvailableFonts] = useState<WebFont[]>(DEFAULT_WEB_FONTS);
   const [activePreviewTab, setActivePreviewTab] = useState<'scale' | 'components' | 'pages'>('scale');
   const [expandedSections, setExpandedSections] = useState({
     presets: true,
@@ -141,6 +121,7 @@ export const TypographyTab: React.FC = () => {
     colors: false
   });
 
+  // Typography ayarlarını yükle
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -175,6 +156,35 @@ export const TypographyTab: React.FC = () => {
       }
     };
     loadSettings();
+  }, []);
+
+  // Web fontlarını yükle
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        const fontsRef = doc(db, 'site_settings', 'web_fonts');
+        const fontsSnap = await getDoc(fontsRef);
+
+        if (fontsSnap.exists()) {
+          const fonts = fontsSnap.data().fonts || DEFAULT_WEB_FONTS;
+          // Sadece aktif fontları yükle ve sırala
+          setAvailableFonts(
+            fonts
+              .filter((f: WebFont) => f.isActive !== false)
+              .sort((a: WebFont, b: WebFont) => (a.order || 0) - (b.order || 0))
+          );
+        } else {
+          // İlk kez - seed data yükle
+          await seedWebFonts();
+          setAvailableFonts(DEFAULT_WEB_FONTS);
+        }
+      } catch (error) {
+        console.error('Web fonts yüklenemedi:', error);
+        // Hata durumunda varsayılan fontları kullan
+        setAvailableFonts(DEFAULT_WEB_FONTS);
+      }
+    };
+    loadFonts();
   }, []);
 
   // Live preview için ayarları uygula
@@ -323,15 +333,19 @@ export const TypographyTab: React.FC = () => {
     const preset = FONT_PRESETS.find(p => p.id === presetId);
     if (!preset) return;
 
-    // Font source'u belirle (Google Fonts veya Custom)
+    // Font bilgisini Firestore'dan yüklenen listeden al
     const getFont = (family: string): FontConfig => {
-      if (CUSTOM_FONTS.includes(family)) {
-        return { family, source: 'custom', weights: [400, 700], fallback: 'Cormorant Garamond, Georgia, serif' };
-      } else if (GOOGLE_FONTS.includes(family)) {
-        return { family, source: 'google', weights: [300, 400, 600, 700], fallback: 'sans-serif' };
-      } else {
-        return { family, source: 'system', weights: [400, 700], fallback: 'sans-serif' };
+      const font = availableFonts.find(f => f.family === family);
+      if (font) {
+        return {
+          family: font.family,
+          source: font.source,
+          weights: font.weights || [400, 700],
+          fallback: font.fallback || (font.source === 'google' ? 'sans-serif' : 'serif')
+        };
       }
+      // Fallback: font bulunamazsa varsayılan değerler
+      return { family, source: 'system', weights: [400, 700], fallback: 'sans-serif' };
     };
 
     setSettings(prev => ({
@@ -441,10 +455,10 @@ export const TypographyTab: React.FC = () => {
               <div className="pb-2 border-b border-gray-200 dark:border-gray-700">
                 <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-2">BAŞLIKLAR</p>
                 <div className="space-y-3">
-                  <MiniFontSelector label="H1 Başlık" font={settings.h1Font} onChange={(u) => updateFont('h1Font', u)} />
-                  <MiniFontSelector label="H2 Başlık" font={settings.h2Font} onChange={(u) => updateFont('h2Font', u)} />
-                  <MiniFontSelector label="H3 Başlık" font={settings.h3Font} onChange={(u) => updateFont('h3Font', u)} />
-                  <MiniFontSelector label="H4 Başlık" font={settings.h4Font} onChange={(u) => updateFont('h4Font', u)} />
+                  <MiniFontSelector label="H1 Başlık" font={settings.h1Font} onChange={(u) => updateFont('h1Font', u)} availableFonts={availableFonts} />
+                  <MiniFontSelector label="H2 Başlık" font={settings.h2Font} onChange={(u) => updateFont('h2Font', u)} availableFonts={availableFonts} />
+                  <MiniFontSelector label="H3 Başlık" font={settings.h3Font} onChange={(u) => updateFont('h3Font', u)} availableFonts={availableFonts} />
+                  <MiniFontSelector label="H4 Başlık" font={settings.h4Font} onChange={(u) => updateFont('h4Font', u)} availableFonts={availableFonts} />
                 </div>
               </div>
 
@@ -452,8 +466,8 @@ export const TypographyTab: React.FC = () => {
               <div className="pt-2">
                 <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-2">DİĞER</p>
                 <div className="space-y-3">
-                  <MiniFontSelector label="Metin" font={settings.bodyFont} onChange={(u) => updateFont('bodyFont', u)} />
-                  <MiniFontSelector label="Display" font={settings.displayFont} onChange={(u) => updateFont('displayFont', u)} />
+                  <MiniFontSelector label="Metin" font={settings.bodyFont} onChange={(u) => updateFont('bodyFont', u)} availableFonts={availableFonts} />
+                  <MiniFontSelector label="Display" font={settings.displayFont} onChange={(u) => updateFont('displayFont', u)} availableFonts={availableFonts} />
 
                   {/* Logo - Korumalı */}
                   <div className="p-3 bg-gold/10 border border-gold/30 rounded-lg">
@@ -466,8 +480,8 @@ export const TypographyTab: React.FC = () => {
                     </div>
                   </div>
 
-                  <MiniFontSelector label="Buton" font={settings.buttonFont} onChange={(u) => updateFont('buttonFont', u)} />
-                  <MiniFontSelector label="Nav" font={settings.navFont} onChange={(u) => updateFont('navFont', u)} />
+                  <MiniFontSelector label="Buton" font={settings.buttonFont} onChange={(u) => updateFont('buttonFont', u)} availableFonts={availableFonts} />
+                  <MiniFontSelector label="Nav" font={settings.navFont} onChange={(u) => updateFont('navFont', u)} availableFonts={availableFonts} />
                 </div>
               </div>
             </div>
@@ -617,21 +631,25 @@ export const TypographyTab: React.FC = () => {
 };
 
 // Mini Font Selector
-const MiniFontSelector: React.FC<{ label: string; font: FontConfig; onChange: (u: Partial<FontConfig>) => void }> = ({ label, font, onChange }) => {
-  // Tüm fontları birleştir
-  const allFonts = [
-    ...CUSTOM_FONTS.map(f => ({ family: f, source: 'custom' as const })),
-    ...GOOGLE_FONTS.map(f => ({ family: f, source: 'google' as const })),
-    ...SYSTEM_FONTS.map(f => ({ family: f, source: 'system' as const }))
-  ];
+const MiniFontSelector: React.FC<{
+  label: string;
+  font: FontConfig;
+  onChange: (u: Partial<FontConfig>) => void;
+  availableFonts: WebFont[];
+}> = ({ label, font, onChange, availableFonts }) => {
+  // Fontları source'a göre grupla
+  const customFonts = availableFonts.filter(f => f.source === 'custom');
+  const googleFonts = availableFonts.filter(f => f.source === 'google');
+  const systemFonts = availableFonts.filter(f => f.source === 'system');
 
   const handleChange = (selectedFamily: string) => {
-    const selectedFont = allFonts.find(f => f.family === selectedFamily);
+    const selectedFont = availableFonts.find(f => f.family === selectedFamily);
     if (selectedFont) {
       onChange({
         family: selectedFont.family,
         source: selectedFont.source,
-        fallback: selectedFont.source === 'google' ? 'sans-serif' : 'serif'
+        fallback: selectedFont.fallback || (selectedFont.source === 'google' ? 'sans-serif' : 'serif'),
+        weights: selectedFont.weights
       });
     }
   };
@@ -644,15 +662,21 @@ const MiniFontSelector: React.FC<{ label: string; font: FontConfig; onChange: (u
         onChange={(e) => handleChange(e.target.value)}
         className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
       >
-        <optgroup label="⭐ Custom Fonts">
-          {CUSTOM_FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </optgroup>
-        <optgroup label="Google Fonts">
-          {GOOGLE_FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </optgroup>
-        <optgroup label="System Fonts">
-          {SYSTEM_FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-        </optgroup>
+        {customFonts.length > 0 && (
+          <optgroup label="⭐ Custom Fonts">
+            {customFonts.map(f => <option key={f.id} value={f.family}>{f.family}</option>)}
+          </optgroup>
+        )}
+        {googleFonts.length > 0 && (
+          <optgroup label="Google Fonts">
+            {googleFonts.map(f => <option key={f.id} value={f.family}>{f.family}</option>)}
+          </optgroup>
+        )}
+        {systemFonts.length > 0 && (
+          <optgroup label="System Fonts">
+            {systemFonts.map(f => <option key={f.id} value={f.family}>{f.family}</option>)}
+          </optgroup>
+        )}
       </select>
     </div>
   );

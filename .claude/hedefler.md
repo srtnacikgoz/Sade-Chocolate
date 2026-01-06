@@ -1,6 +1,6 @@
 # Sade Chocolate - Proje Durumu ve Hedefler
 
-> **Son Güncelleme:** 04 Ocak 2026
+> **Son Güncelleme:** 05 Ocak 2026
 
 ---
 
@@ -130,24 +130,28 @@
   - ~~Profesyonel logo dosyası (SVG/PNG)~~
   - ~~Header'da logo yerleştirme~~
   - ~~Favicon güncelleme~~
-- [ ] **kakaoLogo.svg optimizasyonu** (Opsiyonel)
-  - Mevcut dosya 1.4MB (çok büyük!)
-  - SVG optimize edilmeli (~10-50KB hedef)
-  - Gereksiz metadata temizlenmeli
+- [x] **kakaoLogo optimizasyonu** ✅ (05 Ocak 2026)
+  - SVG dosyası 1.5MB idi ve hiç kullanılmıyordu
+  - PNG versiyonu (64KB) zaten kullanımdaydı
+  - Gereksiz SVG dosyası silindi
+  - **Performans Kazancı:** %95.7 küçülme (1.5MB → 64KB)
 
 ### 📦 Öncelik 2.5: Envanter UX İyileştirmeleri
-- [ ] **Yeni Ürün Butonu Dropdown**
-  - "Yeni Ürün Ekle" butonuna tıklandığında kategori dropdown'ı açılsın
-  - Kullanıcı önce kategori seçsin (Tablet / Truffle / Kutu / Diğer)
-  - Seçime göre ilgili form açılsın
-- [ ] **Envanter Tab Filtreleme Mantığı**
-  - Problem: "Tabletler" butonuna basınca altında tekrar "Tablet/Truffle/Gift Box" seçenekleri çıkıyor
-  - Çözüm: Her tab kendi kategorisini otomatik filtrelesin, alt seçenekler kaldırılsın
-  - "Tüm Ürünler" tab'ında tüm kategoriler gösterilsin
-- [ ] **Bonbon Görünürlük Yönetimi**
-  - Bonbonlar varsayılan olarak sadece kutu içeriği için kullanılıyor
-  - Katalog sayfasında gösterilmemeli
-  - Admin'de "Katalogda Göster" checkbox'ı eklensin (opsiyonel)
+- [x] **Yeni Ürün Butonu Dropdown** ✅ (05 Ocak 2026)
+  - "Yeni Ürün" butonuna tıklandığında kategori dropdown'ı açılıyor
+  - Kullanıcı önce kategori seçiyor (Tablet / Truffle / Gift Box / Diğer)
+  - Seçime göre ProductForm ilgili kategori ile açılıyor
+  - Dropdown dışına tıklandığında otomatik kapanıyor
+- [x] **Envanter Tab Filtreleme Mantığı** ✅ (05 Ocak 2026)
+  - İki katmanlı filtre sistemi kaldırıldı
+  - Tek katman filtre: [TÜMÜ] [TABLETLER] [TRUFFLES] [KUTULAR] [BONBONLAR] [DİĞER]
+  - Her filtre kendi kategorisini otomatik gösteriyor
+  - Daha sezgisel ve hızlı ürün bulma
+- [x] **Bonbon Görünürlük Yönetimi** ✅ (Zaten Mevcut)
+  - Her ürün için "Katalogda Göster/Gizle" toggle butonu var
+  - Bonbonlar `isVisibleInCatalog: false` ile katalogdan gizlenebiliyor
+  - Catalog.tsx'te otomatik filtreleme çalışıyor
+  - Admin panelde görünürlük durumu açık şekilde gösteriliyor
 
 ### 🚚 Öncelik 3: Kargo Takip Sistemi
 - [x] **Backend hazır** - 03 Ocak 2026
@@ -162,7 +166,13 @@
   - TrackingNumberModal ile kargo takip numarası ekleme (zaten vardı)
   - Tracking eklendiğinde otomatik "Shipped" durumu
   - OrdersView'da "Kargoda" veya "Teslim Edildi" siparişlerde kargo takip sekmesi
-- [ ] **MNG Kargo otomatik gönderi oluşturma** (Opsiyonel)
+- [x] **MNG Kargo otomatik gönderi oluşturma** ✅ (05 Ocak 2026)
+  - Backend: createShipment Cloud Function
+  - Frontend: CreateShipmentModal komponenti
+  - Admin panel: "Kargo Oluştur (MNG)" butonu OrderManagementTab'a eklendi
+  - Sipariş detayında "Lojistik" dropdown menüsünden erişilebilir
+  - Otomatik tracking bilgisi ekleme ve sipariş durumu güncelleme
+  - Müşteri bilgileri, paket detayları (ağırlık, desi) ve soğuk paket seçeneği
 
 ### 📧 Öncelik 4: Email Bildirim Sistemi
 - [x] ~~**Email servis seçimi ve yapılandırma**~~ ✅ Tamamlandı (04 Ocak 2026)
@@ -302,10 +312,42 @@
 - TopBar dinamik mesaj sistemi (admin panelden yönetilen)
 
 
-account sayfasındaki tüm kart içindeki başlıklar menu bar altında kalıyor. siparişlerim, fatura bilgileri gibi başlıkların hepsi. düzeltilmeli.
-account sayfasında fatura bilgileri girerken vergi no rakam adeti ile sınırlı olmalı. fazlası yazılalamallı. hatta tc kimlik veya vergi no checkbox veya başka bir seçenek ile hangisi olduğu bilgisi alınmalı ve tc kimlik ise 11 hane, vergi no ise 10 hane olacak.
-acaba fatura bilgileri adres alanında mı olsa daha iyi olur. orada bir checkbox seçeneği ile fatura bilgileri alanı açlıp orada girilebilir herşey. ve tabi fatufa bilgilerim adresim ile aynı seçeneği tıklandığında da müşterinin bu durumu önemsemediği anlaşılır.
+✅ **Account Sayfası İyileştirmeleri** (05 Ocak 2026)
+  - Başlıklar menu bar altında kalma sorunu çözüldü
+  - Responsive padding-top ayarlandı (pt-24 md:pt-32 lg:pt-36)
+  - renderHeader'a pt-4 ve relative z-10 eklendi
 
-kayıtlı kullanıcı olarak alışveriş yapıyorum ve güvenli ödeme sayfasında tüm fatura bilgilerim kayıtlı olmasına rağmen burada yine fatura bilgilerimi girmemi istiyor. buna kesin bir kontrol, bir çözüm bulmamız lazım.
+✅ **Fatura Bilgileri Validasyonu** (Zaten Mevcut)
+  - InvoiceInfoView'da TC/Vergi No toggle butonları var
+  - TC Kimlik: 11 hane validasyonu (regex + maxLength)
+  - Vergi No: 10 hane validasyonu (regex + maxLength)
+  - Dinamik input maxLength sınırlaması çalışıyor
 
-admin panelinde email şablonlarına typografi özellikleri ekle
+✅ **Checkout Fatura Bilgileri Otomatik Yükleme** (05 Ocak 2026)
+  - useEffect'te tüm fatura profili alanları artık yükleniyor:
+    - Individual: firstName, lastName, tckn, city, district, address
+    - Corporate: companyName, taxOffice, taxNo, city, district, address
+  - Individual fatura formuna Ad/Soyad inputları eklendi
+  - Şehir/İlçe inputları fatura adresiyle birlikte eklendi
+  - Dropdown profil seçiminde tüm alanlar güncelleniyor
+
+✅ admin panelinde email şablonlarına typografi özellikleri ekle (05 Ocak 2026)
+  - emailService.ts'e varsayılan typography objesi eklendi
+  - Email HTML template'lerinde typography değişkenleri kullanılıyor
+  - Admin panelde mevcut font seçicileri ile entegre
+
+✅ **Envanter UX İyileştirmeleri** (05 Ocak 2026)
+  - **Brand Icon Sistemi**: Tüm Sparkles ikonları (19 yer, 15 dosya) BrandIcon ile değiştirildi
+  - **Yeni Ürün Dropdown**: Admin panelde "Yeni Ürün" butonu dropdown menü haline getirildi
+    - Kategori seçimi: Tablet / Truffle / Kutu / Diğer
+    - Her seçenek için doğru productType otomatik set ediliyor (tablet → 'tablet', kutu → 'box')
+    - Click outside handler ile otomatik kapanma
+    - Seçilen kategori ile ProductForm açılıyor
+    - Kategori isimlendirme uyumu: constants.ts ile dropdown etiketleri eşleştirildi
+  - **Tek Katman Filtreleme**: İki katmanlı karmaşık filtre sistemi basitleştirildi
+    - Yeni sistem: [TÜMÜ] [TABLETLER] [TRUFFLES] [KUTULAR] [BONBONLAR] [DİĞER]
+    - filterType state'i ile merkezi yönetim
+    - Daha sezgisel ve hızlı ürün bulma deneyimi
+  - **Bonbon Görünürlük**: Mevcut sistem doğrulandı
+    - isVisibleInCatalog toggle butonu her üründe aktif
+    - Catalog.tsx'te otomatik filtreleme çalışıyor

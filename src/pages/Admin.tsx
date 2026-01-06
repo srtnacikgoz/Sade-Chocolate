@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Sparkles, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes } from 'lucide-react';
+import { BrandIcon } from '../components/ui/BrandIcon';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -24,6 +25,7 @@ import { CompanyInfoTab } from '../components/admin/tabs/CompanyInfoTab';
 import { BoxConfigTab } from '../components/admin/tabs/BoxConfigTab';
 import { TypographyTab } from '../components/admin/tabs/TypographyTab';
 import { EmailTemplatesTab } from '../components/admin/tabs/EmailTemplatesTab';
+import { ReferralCampaignsTab } from '../components/admin/tabs/ReferralCampaignsTab';
 import { Building2 } from 'lucide-react';
 
 export const Admin = () => {
@@ -43,6 +45,17 @@ export const Admin = () => {
     toast.success('Çıkış yapıldı');
     navigate('/');
   };
+
+  // 🎯 Dropdown Click Outside Handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (newProductDropdownRef.current && !newProductDropdownRef.current.contains(event.target as Node)) {
+        setIsNewProductDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
   const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography'>('inventory');
@@ -81,6 +94,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   const [isBadgeInfoOpen, setIsBadgeInfoOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isNewProductDropdownOpen, setIsNewProductDropdownOpen] = useState(false);
+  const newProductDropdownRef = React.useRef<HTMLDivElement>(null);
   const [newBadge, setNewBadge] = useState<any>({
     name: { tr: '', en: '', ru: '' },
     bgColor: '#1a1a1a',
@@ -107,7 +122,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     { id: 'badges', label: 'Rozetler', icon: Tag, group: 'icerik' },
     { id: 'gift-notes', label: 'Hediye Notları', icon: Gift, group: 'icerik' },
     { id: 'email-templates', label: 'Email Şablonları', icon: Mail, group: 'icerik' },
-    { id: 'ai', label: 'AI Sommelier', icon: Sparkles, group: 'ai' },
+    { id: 'ai', label: 'AI Sommelier', icon: BrandIcon, group: 'ai' },
     { id: 'scenarios', label: 'Senaryolar', icon: MessageSquare, group: 'ai' },
     { id: 'analytics', label: 'Konuşma Logları', icon: BarChart3, group: 'ai' },
     { id: 'journey', label: 'Yolculuk Takibi', icon: TrendingUp, group: 'analitik' },
@@ -509,14 +524,9 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             {sidebarOpen && (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gold rounded-xl flex items-center justify-center">
-                  <span className="text-xl">🍫</span>
-                </div>
-                <div>
-                  <h1 className="font-display text-white font-bold text-lg italic">Sade</h1>
-                  <p className="text-[9px] text-slate-400 uppercase tracking-widest">Admin Panel</p>
-                </div>
+              <div>
+                <h1 className="font-display text-white font-bold text-lg italic">Sade</h1>
+                <p className="text-[9px] text-slate-400 uppercase tracking-widest">Admin Panel</p>
               </div>
             )}
             <button
@@ -635,12 +645,72 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
               {activeTab === 'inventory' && (
-                <Button
-                  onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
-                  className="bg-slate-900 text-white gap-2 text-sm font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-black transition-all"
-                >
-                  <Plus size={18} /> Yeni Ürün
-                </Button>
+                <div className="relative" ref={newProductDropdownRef}>
+                  <Button
+                    onClick={() => setIsNewProductDropdownOpen(!isNewProductDropdownOpen)}
+                    className="bg-slate-900 text-white gap-2 text-sm font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-black transition-all"
+                  >
+                    <Plus size={18} /> Yeni Ürün
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${isNewProductDropdownOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+
+                  {/* Dropdown Menu */}
+                  {isNewProductDropdownOpen && (
+                    <div className="absolute top-full mt-2 right-0 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {[
+                        { id: 'tablet', label: 'Tablet', icon: '▬', description: 'Tablet çikolata', productType: 'tablet' as ProductType },
+                        { id: 'truffle', label: 'Truffle', icon: '🍫', description: 'Dolgulu çikolata', productType: 'other' as ProductType },
+                        { id: 'gift-box', label: 'Kutu', icon: '🎁', description: 'Hediye kutusu', productType: 'box' as ProductType },
+                        { id: 'other', label: 'Diğer', icon: '📦', description: 'Diğer ürünler', productType: 'other' as ProductType }
+                      ].map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => {
+                            // Tam bir default Product objesi oluştur, kategori ve productType'ı set et
+                            const defaultProduct: Partial<Product> = {
+                              id: '',
+                              title: '',
+                              price: 0,
+                              currency: '₺',
+                              category: category.id === 'other' ? PRODUCT_CATEGORIES[0].id : category.id,
+                              origin: '',
+                              image: '',
+                              video: '',
+                              description: '',
+                              detailedDescription: '',
+                              tastingNotes: '',
+                              ingredients: '',
+                              allergens: '',
+                              isOutOfStock: false,
+                              locationStock: { yesilbahce: 0 },
+                              boxItems: [],
+                              images: [],
+                              productType: category.productType,
+                              showSensory: true,
+                              attributes: [],
+                              nutritionalValues: '',
+                              valueBadges: [],
+                              sensory: { intensity: 50, sweetness: 50, creaminess: 50, fruitiness: 0, acidity: 0, crunch: 0 },
+                              isBoxContent: false,
+                              boxContentIds: [],
+                              boxSize: 4
+                            };
+                            setEditingProduct(defaultProduct as Product);
+                            setIsFormOpen(true);
+                            setIsNewProductDropdownOpen(false);
+                          }}
+                          className="w-full px-5 py-3.5 text-left hover:bg-slate-50 transition-colors flex items-center gap-3 group border-b last:border-b-0 border-gray-50"
+                        >
+                          <span className="text-2xl">{category.icon}</span>
+                          <div className="flex-1">
+                            <div className="text-sm font-bold text-gray-900 group-hover:text-brown-900">{category.label}</div>
+                            <div className="text-xs text-gray-400">{category.description}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
               {(activeTab === 'cms' || activeTab === 'ai' || activeTab === 'gift-notes' || activeTab === 'taste-quiz' || activeTab === 'loyalty-settings') && (
                 <button
@@ -1664,7 +1734,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                   onClick={handleAddExampleBadges}
                   className="px-8 py-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-3xl text-sm font-bold uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-3"
                 >
-                  <Sparkles size={20} />
+                  <BrandIcon size={20} />
                   <span className="font-display text-lg">Örnek Rozetleri Ekle</span>
                 </button>
               </div>
@@ -1890,68 +1960,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
       ) : activeTab === 'journey' ? (
         <BehaviorTrackingTab />
       ) : activeTab === 'referrals' ? (
-        /* Referans Takibi */
-        <div className="space-y-6 animate-in fade-in duration-500">
-          {/* Stats */}
-          <div className="flex flex-wrap items-center gap-3 p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
-              <span className="text-lg font-bold text-emerald-600">{referrals.filter(r => r.bonusAwarded).length}</span>
-              <span className="text-[9px] text-gray-400 font-bold uppercase">Tamamlanan</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20">
-              <span className="text-lg font-bold text-amber-600">{referrals.filter(r => !r.bonusAwarded).length}</span>
-              <span className="text-[9px] text-gray-400 font-bold uppercase">Bekleyen</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/20">
-              <span className="text-lg font-bold text-blue-600">{referrals.length}</span>
-              <span className="text-[9px] text-gray-400 font-bold uppercase">Toplam</span>
-            </div>
-          </div>
-
-          {/* Referral List */}
-          <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-slate-50/30 dark:bg-dark-900/30">
-              <h3 className="font-display text-xl font-bold italic text-gray-900 dark:text-white">Referans Kayıtları</h3>
-              <p className="text-xs text-gray-500 mt-1">Davet edilen kullanıcılar ve bonus durumları</p>
-            </div>
-            <div className="divide-y divide-gray-50 dark:divide-gray-800">
-              {referrals.length === 0 ? (
-                <div className="p-12 text-center text-gray-400">
-                  <Gift size={48} className="mx-auto mb-4 opacity-30" />
-                  <p className="text-sm font-medium">Henüz referans kaydı yok</p>
-                </div>
-              ) : (
-                referrals.map((ref: any) => (
-                  <div key={ref.id} className="p-5 hover:bg-slate-50/50 dark:hover:bg-dark-900/50 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ref.bonusAwarded ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                        {ref.bonusAwarded ? '✓' : '⏳'}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm text-gray-900 dark:text-white">{ref.refereeEmail}</p>
-                        <p className="text-[10px] text-gray-400">
-                          Davet eden: {customers.find((c: any) => c.id === ref.referrerId)?.email || ref.referralCode}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                        ref.bonusAwarded
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                      }`}>
-                        {ref.bonusAwarded ? 'Ödül Verildi' : 'İlk Sipariş Bekleniyor'}
-                      </span>
-                      <p className="text-[10px] text-gray-400 mt-1">
-                        {new Date(ref.createdAt).toLocaleDateString('tr-TR')}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        <ReferralCampaignsTab />
       ) : activeTab === 'loyalty-settings' ? (
         <LoyaltySettingsPanel />
       ) : activeTab === 'taste-quiz' ? (

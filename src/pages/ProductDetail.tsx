@@ -13,7 +13,8 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
   ResponsiveContainer
 } from 'recharts';
-import { ChevronLeft, ChevronRight, Milk, Bean, Square, Nut, Cherry, Coffee, Sparkles, Cookie, Flame, IceCream, Wand2, Heart, Gift as GiftIcon, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Milk, Bean, Square, Nut, Cherry, Coffee, Cookie, Flame, IceCream, Wand2, Heart, Gift as GiftIcon, Star } from 'lucide-react';
+import { BrandIcon } from '../components/ui/BrandIcon';
 import { Emotion } from '../constants/giftNoteTemplates';
 import { generateGiftNotes, generateGiftNotesFromFirebase } from '../utils/giftNoteGenerator';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -31,9 +32,9 @@ const AttributeIcon = ({ iconId }: { iconId: string }) => {
     cookie: <Cookie size={16} />,
     flame: <Flame size={16} />,
     icecream: <IceCream size={16} />,
-    special: <Sparkles size={16} />
+    special: <BrandIcon size={16} />
   };
-  return icons[iconId] || <Sparkles size={16} />;
+  return icons[iconId] || <BrandIcon size={16} />;
 };
 const Accordion: React.FC<{ title: string; content?: string; defaultOpen?: boolean }> = ({ title, content, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);

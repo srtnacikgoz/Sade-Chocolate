@@ -11,7 +11,8 @@ import { Product, BoxConfig } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Package, Sparkles } from 'lucide-react';
+import { Package } from 'lucide-react';
+import { BrandIcon } from '../components/ui/BrandIcon';
 
 export const Home: React.FC = () => {
   const { addToCart } = useCart();
@@ -288,7 +289,7 @@ export const Home: React.FC = () => {
                       <div className="relative z-10 flex flex-col items-center">
                         <div className="w-28 h-28 bg-gradient-to-br from-gold to-brand-mustard rounded-3xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500 mb-6">
                           <Package className="text-white" size={56} />
-                          <Sparkles className="absolute -top-2 -right-2 text-white drop-shadow-lg" size={24} />
+                          <BrandIcon className="absolute -top-2 -right-2 text-white drop-shadow-lg" size={24} />
                         </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gold uppercase tracking-widest">
                           {boxConfig?.boxSizes?.filter(s => s.enabled).map((size, idx, arr) => (

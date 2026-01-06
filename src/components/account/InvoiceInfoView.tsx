@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useUser } from '../../context/UserContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
-import { 
-  Plus, Receipt, Trash2, Edit3, Check, AlertCircle, 
-  Loader2, Building2, User as UserIcon, ShieldCheck 
+import {
+  Plus, Receipt, Trash2, Edit3, Check, AlertCircle,
+  Loader2, Building2, User as UserIcon, ShieldCheck
 } from 'lucide-react';
 import { db, auth } from '../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../../data/turkeyLocations';
 
 export const InvoiceInfoView: React.FC = () => {
   const { user } = useUser();
@@ -18,7 +19,6 @@ export const InvoiceInfoView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [type, setType] = useState<'individual' | 'corporate'>('individual');
   const [errors, setErrors] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
@@ -34,26 +34,27 @@ export const InvoiceInfoView: React.FC = () => {
     address: ''
   });
 
-  // Läderach Stili Validasyon Paneli
+  // İlçeleri şehre göre filtrele
+  const availableDistricts = useMemo(() => {
+    const selectedCity = TURKEY_CITIES.find(c => c.name === formData.city);
+    return selectedCity?.districts || [];
+  }, [formData.city]);
+
+  // Validasyon - Tüm alanlar zorunlu
   const validate = () => {
     const newErrors: string[] = [];
-    const tcknRegex = /^[1-9][0-9]{10}$/;
-    const taxNoRegex = /^[0-9]{10,11}$/; // ✅ 10 veya 11 hane (Şahıs şirketleri için)
+    const taxNoRegex = /^[0-9]{10,11}$/; // Vergi No: 10 veya 11 hane
 
+    // Zorunlu alanlar
     if (!formData.title) newErrors.push('title');
+    if (!formData.firstName) newErrors.push('firstName');
+    if (!formData.lastName) newErrors.push('lastName');
+    if (!formData.companyName) newErrors.push('companyName');
+    if (!formData.taxOffice) newErrors.push('taxOffice');
+    if (!taxNoRegex.test(formData.taxNo)) newErrors.push('taxNo');
     if (!formData.city) newErrors.push('city');
-    if (!formData.district) newErrors.push('district'); // ✅ Zorunlu alan
+    if (!formData.district) newErrors.push('district');
     if (!formData.address) newErrors.push('address');
-
-    if (type === 'individual') {
-      if (!formData.firstName) newErrors.push('firstName');
-      if (!formData.lastName) newErrors.push('lastName');
-      if (!tcknRegex.test(formData.tckn)) newErrors.push('tckn');
-    } else {
-      if (!formData.companyName) newErrors.push('companyName');
-      if (!formData.taxOffice) newErrors.push('taxOffice');
-      if (!taxNoRegex.test(formData.taxNo)) newErrors.push('taxNo');
-    }
 
     setErrors(newErrors);
     return newErrors.length === 0;
@@ -73,25 +74,32 @@ export const InvoiceInfoView: React.FC = () => {
     try {
       const userRef = doc(db, 'users', currentUser.uid);
       const currentProfiles = user?.invoiceProfiles || [];
-      
+
       let updatedProfiles;
       if (editingId) {
-        updatedProfiles = currentProfiles.map((p: any) => 
-          p.id === editingId ? { ...formData, type, id: editingId } : p
+        updatedProfiles = currentProfiles.map((p: any) =>
+          p.id === editingId ? { ...formData, type: 'corporate', id: editingId } : p
         );
       } else {
-        const newProfile = { ...formData, type, id: `inv-${Date.now()}` };
+        const newProfile = { ...formData, type: 'corporate', id: `inv-${Date.now()}` };
         updatedProfiles = [...currentProfiles, newProfile];
       }
 
-      await updateDoc(userRef, { invoiceProfiles: updatedProfiles });
+      // Use setDoc with merge to handle cases where invoiceProfiles doesn't exist yet
+      await setDoc(userRef, { invoiceProfiles: updatedProfiles }, { merge: true });
       toast.success(editingId ? "Profil başarıyla güncellendi." : "Yeni fatura profili mühürlendi. ✨");
-      
+
       setIsAdding(false);
       setEditingId(null);
-      setFormData({ title: '', firstName: '', lastName: '', tckn: '', companyName: '', taxOffice: '', taxNo: '', city: '', address: '' });
-    } catch (err) {
-      toast.error("İşlem sırasında sunucu hatası oluştu.");
+      setFormData({ title: '', firstName: '', lastName: '', tckn: '', companyName: '', taxOffice: '', taxNo: '', city: '', district: '', address: '' });
+    } catch (err: any) {
+      console.error("❌ Fatura kaydetme hatası:", err);
+      console.error("Error details:", {
+        message: err.message,
+        code: err.code,
+        stack: err.stack
+      });
+      toast.error(`İşlem sırasında hata: ${err.message || 'Bilinmeyen hata'}`);
     } finally {
       setIsLoading(false);
     }
@@ -102,17 +110,17 @@ export const InvoiceInfoView: React.FC = () => {
     try {
       const userRef = doc(db, 'users', user.uid);
       const updatedProfiles = user.invoiceProfiles?.filter((p: any) => p.id !== profileId);
-      await updateDoc(userRef, { invoiceProfiles: updatedProfiles });
+      await setDoc(userRef, { invoiceProfiles: updatedProfiles }, { merge: true });
       toast.success("Profil sistemden kaldırıldı.");
       setConfirmDeleteId(null);
-    } catch (err) {
-      toast.error("Silme işlemi başarısız oldu.");
+    } catch (err: any) {
+      console.error("❌ Fatura silme hatası:", err);
+      toast.error(`Silme işlemi başarısız: ${err.message || 'Bilinmeyen hata'}`);
     }
   };
 
   const startEdit = (profile: any) => {
     setEditingId(profile.id);
-    setType(profile.type);
     setFormData({ ...profile });
     setIsAdding(true);
   };
@@ -153,8 +161,9 @@ export const InvoiceInfoView: React.FC = () => {
                 </div>
                 <h4 className="font-display text-xl font-bold dark:text-white italic uppercase mb-4">{profile.title}</h4>
                 <div className="space-y-1 text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">
-                  <p className="text-brown-900 dark:text-white">{profile.type === 'corporate' ? profile.companyName : `${profile.firstName} ${profile.lastName}`}</p>
-                  <p>{profile.type === 'corporate' ? `VN: ${profile.taxNo}` : `TC: ${profile.tckn}`}</p>
+                  <p className="text-brown-900 dark:text-white">{profile.firstName} {profile.lastName}</p>
+                  <p>{profile.companyName}</p>
+                  <p>VN: {profile.taxNo}</p>
                   <p className="opacity-60">{profile.city} / {profile.district}</p>
                 </div>
               </div>
@@ -163,7 +172,7 @@ export const InvoiceInfoView: React.FC = () => {
         </>
       ) : (
         /* LÄDERACH STYLE FATURA FORMU */
-        <div className="max-w-4xl animate-fade-in pb-20">
+        <div className="max-w-4xl mx-auto animate-fade-in pb-20">
           <div className="mb-12 flex items-center justify-between">
             <h3 className="font-display text-5xl font-bold dark:text-white italic tracking-tighter uppercase">
               {editingId ? 'Profili Güncelle' : 'Fatura Detayları'}
@@ -171,48 +180,79 @@ export const InvoiceInfoView: React.FC = () => {
             <button onClick={() => { setIsAdding(false); setEditingId(null); setErrors([]); }} className="text-[10px] font-black text-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors">İPTAL ET</button>
           </div>
 
-          {/* Segmented Control */}
-          <div className="bg-gray-50 dark:bg-dark-800 p-1.5 rounded-[24px] flex border border-gray-100 dark:border-gray-700 shadow-inner mb-10 max-w-sm">
-              <button type="button" onClick={() => setType('individual')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-[20px] transition-all ${type === 'individual' ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-lg' : 'text-gray-400'}`}>Bireysel</button>
-              <button type="button" onClick={() => setType('corporate')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-[20px] transition-all ${type === 'corporate' ? 'bg-white dark:bg-dark-900 text-brown-900 dark:text-gold shadow-lg' : 'text-gray-400'}`}>Kurumsal</button>
-          </div>
-
           <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="md:col-span-2">
-                <Input label="PROFİL BAŞLIĞI" placeholder="Örn: Şahsi Faturam, Şirket Bilgileri" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={`h-16 rounded-2xl border-2 transition-all ${errors.includes('title') ? 'border-red-600 bg-red-50/5' : 'border-gray-100 dark:border-gray-800'}`} />
+                <Input label="PROFİL BAŞLIĞI" placeholder="Örn: Şahsi Faturam, Şirket Bilgileri" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className={errors.includes('title') ? 'border-red-600 border-2 bg-red-50/5' : ''} />
              </div>
 
-             {type === 'individual' ? (
-                <>
-                  <Input label="AD" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('firstName') ? 'border-red-600' : ''}`} />
-                  <Input label="SOYAD" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('lastName') ? 'border-red-600' : ''}`} />
-                  <div className="md:col-span-2">
-                    <Input label="VERGİ / KİMLİK NO" placeholder="T.C. Kimlik Numaranız" value={formData.tckn} onChange={e => setFormData({...formData, tckn: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('tckn') ? 'border-red-600' : ''}`} />
-                  </div>
-                </>
-             ) : (
-                <>
-                  <div className="md:col-span-2">
-                    <Input label="ŞİRKET TAM UNVANI" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('companyName') ? 'border-red-600' : ''}`} />
-                  </div>
-                  <Input label="VERGİ DAİRESİ" value={formData.taxOffice} onChange={e => setFormData({...formData, taxOffice: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('taxOffice') ? 'border-red-600' : ''}`} />
-                  <Input label="VERGİ / KİMLİK NO" placeholder="Vergi Numaranız" value={formData.taxNo} onChange={e => setFormData({...formData, taxNo: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('taxNo') ? 'border-red-600' : ''}`} />
-                </>
-             )}
+             {/* BİLGİLER */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <Input label="AD" placeholder="Can" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className={errors.includes('firstName') ? 'border-red-600 border-2' : ''} />
+               <Input label="SOYAD" placeholder="Yılmaz" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className={errors.includes('lastName') ? 'border-red-600 border-2' : ''} />
+             </div>
+
+             <div className="md:col-span-2">
+               <Input label="ŞİRKET TAM UNVANI" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} className={errors.includes('companyName') ? 'border-red-600 border-2' : ''} />
+             </div>
+
+             <Input label="VERGİ DAİRESİ" value={formData.taxOffice} onChange={e => setFormData({...formData, taxOffice: e.target.value})} className={errors.includes('taxOffice') ? 'border-red-600 border-2' : ''} />
+             <Input
+               label="VERGİ NO"
+               placeholder="10 veya 11 haneli Vergi No"
+               value={formData.taxNo}
+               onChange={e => {
+                 const value = e.target.value.replace(/\D/g, '');
+                 if (value.length <= 11) {
+                   setFormData({...formData, taxNo: value});
+                 }
+               }}
+               maxLength={11}
+               inputMode="numeric"
+               className={`h-16 rounded-2xl border-2 ${errors.includes('taxNo') ? 'border-red-600' : ''}`}
+             />
 
              <div className="grid grid-cols-2 gap-4 md:col-span-2">
-                <Input label="ŞEHİR" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('city') ? 'border-red-600' : ''}`} />
-                <Input label="İLÇE" value={formData.district} onChange={e => setFormData({...formData, district: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('district') ? 'border-red-600' : ''}`} />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">ŞEHİR</label>
+                  <select
+                    value={formData.city}
+                    onChange={e => setFormData({...formData, city: e.target.value, district: ''})}
+                    className={`w-full h-16 px-4 rounded-md border bg-white dark:bg-dark-800 text-gray-900 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer ${errors.includes('city') ? 'border-red-500 border-2 bg-red-50 dark:bg-red-900/10 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-500/20' : 'border-gray-400 dark:border-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30'}
+                    bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3cpath%20fill%3D%22%23666%22%20d%3D%22M10.293%203.293L6%207.586%201.707%203.293A1%201%200%2000.293%204.707l5%205a1%201%200%20001.414%200l5-5a1%201%200%2010-1.414-1.414z%22%2F%3E%3c%2Fsvg%3E')]
+                    bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat`}
+                  >
+                    <option value="" className="text-gray-500">Şehir seçin...</option>
+                    {ALL_TURKEY_CITIES.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">İLÇE</label>
+                  <select
+                    value={formData.district}
+                    onChange={e => setFormData({...formData, district: e.target.value})}
+                    disabled={!formData.city || availableDistricts.length === 0}
+                    className={`w-full h-16 px-4 rounded-md border bg-white dark:bg-dark-800 text-gray-900 dark:text-white transition-all focus:outline-none appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${errors.includes('district') ? 'border-red-500 border-2 bg-red-50 dark:bg-red-900/10 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-500/20' : 'border-gray-400 dark:border-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30'}
+                    bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3cpath%20fill%3D%22%23666%22%20d%3D%22M10.293%203.293L6%207.586%201.707%203.293A1%201%200%2000.293%204.707l5%205a1%201%200%20001.414%200l5-5a1%201%200%2010-1.414-1.414z%22%2F%3E%3c%2Fsvg%3E')]
+                    bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat`}
+                  >
+                    <option value="" className="text-gray-500">{!formData.city ? 'Önce şehir seçin' : 'İlçe seçin...'}</option>
+                    {availableDistricts.map(district => (
+                      <option key={district} value={district}>{district}</option>
+                    ))}
+                  </select>
+                </div>
              </div>
              <div className="md:col-span-2">
-                <Input label="FATURA ADRESİ" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className={`h-16 rounded-2xl border-2 ${errors.includes('address') ? 'border-red-600' : ''}`} />
+                <Input label="FATURA ADRESİ" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className={errors.includes('address') ? 'border-red-600 border-2' : ''} />
              </div>
 
              {/* Hata Paneli */}
              {errors.length > 0 && (
                <div className="md:col-span-2 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl flex items-center gap-4 text-red-600">
                   <AlertCircle size={20} />
-                  <p className="text-[10px] font-black uppercase tracking-widest">Lütfen işaretli alanları kontrol edin (TCKN: 11 hane, Vergi No: 10 veya 11 hane).</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">Lütfen işaretli alanları kontrol edin (Vergi No: 10 veya 11 hane).</p>
                </div>
              )}
 

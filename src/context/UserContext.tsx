@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { auth, db } from '../lib/firebase';
+import { auth, db, functions } from '../lib/firebase';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -8,9 +8,9 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   GoogleAuthProvider,
-  signInWithPopup,
-  sendPasswordResetEmail
+  signInWithPopup
 } from 'firebase/auth';
+import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction, setDoc } from 'firebase/firestore';
 import { createOrderWithLoyalty } from '../services/orderService';
 import type { Order as LoyaltyOrder } from '../types/order';
@@ -160,7 +160,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    // Custom Firebase Function kullanarak SendGrid ile email gönder
+    const sendCustomPasswordResetEmail = httpsCallable(functions, 'sendCustomPasswordResetEmail');
+    await sendCustomPasswordResetEmail({ email });
   };
 
   const register = (profile: Omit<UserProfile, 'uid'>, pass: string) => {

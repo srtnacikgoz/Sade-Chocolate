@@ -3,7 +3,8 @@ import { Product, BoxItem, ProductBadge, ProductType } from '../../types';
 import { PRODUCT_CATEGORIES } from '../../constants';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Package, DollarSign, Image as ImageIcon, Video, Save, Activity, Info, AlertCircle, MapPin, Upload, X as CloseIcon, Loader2, Milk, Bean, Square, Nut, Cherry, Coffee, Sparkles, Cookie, Flame, IceCream } from 'lucide-react';
+import { Package, DollarSign, Image as ImageIcon, Video, Save, Activity, Info, AlertCircle, MapPin, Upload, X as CloseIcon, Loader2, Milk, Bean, Square, Nut, Cherry, Coffee, Cookie, Flame, IceCream } from 'lucide-react';
+import { BrandIcon } from '../ui/BrandIcon';
 
 // ✅ Senin seçebileceğin ikon kütüphanen
 const ICON_LIBRARY = [
@@ -16,7 +17,7 @@ const ICON_LIBRARY = [
   { id: 'cookie', icon: Cookie },
   { id: 'flame', icon: Flame },
   { id: 'icecream', icon: IceCream },
-  { id: 'special', icon: Sparkles }
+  { id: 'special', icon: BrandIcon }
 ];
 import { toast } from 'sonner';
 // ✅ Firebase Storage Araçları
@@ -58,7 +59,7 @@ const getAttrIcon = (name: string) => {
   if (lowerName.includes('fındık') || lowerName.includes('ceviz') || lowerName.includes('fıstık')) return <Nut size={14} />;
   if (lowerName.includes('meyve') || lowerName.includes('vişne')) return <Cherry size={14} />;
   if (lowerName.includes('kahve')) return <Coffee size={14} />;
-  return <Sparkles size={14} />;
+  return <BrandIcon size={14} />;
 };
 export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
   const [formData, setFormData] = useState<any>(product || {
@@ -78,6 +79,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     boxContentIds: [],
     boxSize: 4
   });
+
+  // 🔄 Product prop'u değiştiğinde formData'yı güncelle
+  useEffect(() => {
+    if (product) {
+      setFormData(product);
+    }
+  }, [product]);
 
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingAlternate, setIsUploadingAlternate] = useState(false);
@@ -578,6 +586,27 @@ const addAttribute = () => {
             </div>
           </div>
 
+         {/* --- KATEGORİ SEÇİMİ --- */}
+          <div className="bg-gradient-to-r from-brown-50 to-amber-50 p-6 rounded-[32px] border border-brown-200/50 space-y-4">
+            <label className="text-[10px] font-black text-brown-700 uppercase tracking-widest">Kategori</label>
+            <div className="flex gap-3">
+              {PRODUCT_CATEGORIES.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, category: cat.id })}
+                  className={`flex-1 px-5 py-3 rounded-xl border-2 transition-all text-sm font-bold ${
+                    formData.category === cat.id
+                      ? 'border-brown-900 bg-white text-brown-900 shadow-md'
+                      : 'border-slate-200 bg-white/50 text-slate-400 hover:border-brown-900/30'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
          {/* --- ÜRÜN TİPİ SEÇİMİ (Tablet vs Diğer) --- */}
           <div className="bg-gradient-to-r from-gold/5 to-amber-50 p-8 rounded-[40px] border border-gold/20 space-y-4">
             <div className="flex items-center justify-between">
@@ -807,7 +836,7 @@ const addAttribute = () => {
       <div className="p-10 bg-slate-50/50 rounded-[40px] border border-slate-100 space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sparkles size={20} className="text-gold" />
+            <BrandIcon size={20} className="text-gold" />
             <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Lezzet Havuzu</span>
           </div>
           <span className="text-[10px] text-slate-400 italic font-medium">Havuzdan seçim yapın veya yeni bir karakter oluşturun.</span>

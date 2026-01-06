@@ -28,6 +28,14 @@ export interface ShippingCost {
   weight: number;
 }
 
+export interface ShipmentCreationResult {
+  trackingNumber: string;
+  barcode: string;
+  carrier: string;
+  estimatedDelivery?: string;
+  shipmentId?: string;
+}
+
 // Status code mapping - MNG API durumlarını Türkçe'ye çevir
 const STATUS_MAP: Record<string, { status: ShipmentStatus['status']; text: string }> = {
   'BEKLEMEDE': { status: 'pending', text: 'Kargo hazırlanıyor' },
@@ -130,6 +138,41 @@ export const calculateShipping = async (params: {
     };
   } catch (error) {
     console.error('Kargo ücreti hesaplama hatası:', error);
+    return null;
+  }
+};
+
+/**
+ * Gönderi Oluşturma - MNG Kargo'da yeni gönderi oluşturur
+ * @param params - Gönderi parametreleri
+ * @returns Takip numarası ve barkod bilgileri
+ */
+export const createShipment = async (params: {
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  shippingAddress: string;
+  shippingCity?: string;
+  shippingDistrict?: string;
+  weight?: number;
+  desi?: number;
+  contentDescription?: string;
+  coldPackage?: boolean;
+}): Promise<ShipmentCreationResult | null> => {
+  try {
+    const createShipmentFn = httpsCallable(functions, 'createShipment');
+    const result = await createShipmentFn(params);
+    const data = result.data as any;
+
+    if (!data.success) {
+      console.error('Gönderi oluşturma hatası:', data);
+      return null;
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('Gönderi oluşturma hatası:', error);
     return null;
   }
 };

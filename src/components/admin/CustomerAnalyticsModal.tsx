@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Order } from './tabs/OrdersTab';
-import { X, User, Calendar, ShoppingBag, TrendingUp, Award, Heart, Sparkles, Gift, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, User, Calendar, ShoppingBag, TrendingUp, Award, Heart, Gift, AlertTriangle, CheckCircle } from 'lucide-react';
+import { BrandIcon } from '../ui/BrandIcon';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
@@ -239,7 +240,7 @@ export const CustomerAnalyticsModal: React.FC<CustomerAnalyticsModalProps> = ({
             {/* Ambassador & Taste DNA */}
             <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200">
               <h3 className="font-display font-bold text-sm mb-4 flex items-center gap-2 text-gray-700">
-                <Sparkles size={18} /> Özel Bilgiler
+                <BrandIcon size={18} /> Özel Bilgiler
               </h3>
               <div className="space-y-3">
                 {analytics.referralCount > 0 && (

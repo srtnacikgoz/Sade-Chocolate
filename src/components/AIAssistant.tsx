@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, addDoc, query, orderBy, serverTimestamp, where, limit } from 'firebase/firestore';
-import { Sparkles, X, Send, Loader2, ShoppingBag } from 'lucide-react';
+import { X, Send, Loader2, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+import { BrandIcon } from './ui/BrandIcon';
 import { generateAIResponse } from '../utils/aiResponseGenerator';
 import { useProducts } from '../context/ProductContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -277,7 +278,7 @@ export const AIAssistant: React.FC = () => {
           aria-haspopup="dialog"
           className="fixed bottom-24 right-6 z-50 w-16 h-16 bg-gradient-to-br from-gold to-amber-600 text-white rounded-full shadow-2xl hover:scale-110 hover:shadow-gold/50 transition-all duration-500 flex items-center justify-center group focus:outline-none focus:ring-4 focus:ring-gold/30"
         >
-          <Sparkles className="w-7 h-7 group-hover:rotate-180 transition-transform duration-700" />
+          <BrandIcon className="w-7 h-7 group-hover:rotate-180 transition-transform duration-700" />
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" aria-hidden="true" />
         </button>
       )}
@@ -297,7 +298,7 @@ export const AIAssistant: React.FC = () => {
             <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-gold to-amber-600 rounded-full flex items-center justify-center" aria-hidden="true">
-                  <Sparkles className="w-6 h-6 text-white" />
+                  <BrandIcon className="w-6 h-6 text-white" size={24} />
                 </div>
                 <div>
                   <h3 id="ai-sommelier-title" className="font-display text-xl font-bold text-brown-900 dark:text-white">AI Sommelier</h3>
