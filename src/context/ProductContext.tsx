@@ -4,6 +4,11 @@ import { db } from '../lib/firebase';
 import { collection, onSnapshot, updateDoc, doc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner'; // Modern bildirim sistemi
 
+interface ShippingSettings {
+  freeShippingLimit: number;
+  defaultShippingCost: number;
+}
+
 interface ProductContextType {
   products: Product[];
   loading: boolean;
@@ -11,8 +16,8 @@ interface ProductContextType {
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
-  settings: { freeShippingLimit: number };
-  updateShippingLimit: (newLimit: number) => Promise<void>;
+  settings: ShippingSettings;
+  updateShippingSettings: (updates: Partial<ShippingSettings>) => Promise<void>;
   selectedCategory: string;
   setSelectedCategory: React.Dispatch<React.SetStateAction<string>>;
   minPrice: number | '';
@@ -27,7 +32,10 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [settings, setSettings] = useState({ freeShippingLimit: 1500 });
+  const [settings, setSettings] = useState<ShippingSettings>({
+    freeShippingLimit: 1500,
+    defaultShippingCost: 95
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -67,11 +75,25 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw err;
     }
   };
-  const updateShippingLimit = async (newLimit: number) => {
+  // Firestore'dan kargo ayarlarını dinle
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'shipping'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSettings({
+          freeShippingLimit: data.freeShippingLimit ?? 1500,
+          defaultShippingCost: data.defaultShippingCost ?? 95
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const updateShippingSettings = async (updates: Partial<ShippingSettings>) => {
     try {
-      await updateDoc(doc(db, 'settings', 'shipping'), { freeShippingLimit: newLimit });
-      setSettings({ freeShippingLimit: newLimit });
-      toast.success('Kargo limiti güncellendi.');
+      await updateDoc(doc(db, 'settings', 'shipping'), updates);
+      setSettings(prev => ({ ...prev, ...updates }));
+      toast.success('Kargo ayarları güncellendi.');
     } catch (err) {
       toast.error('Ayarlar güncellenemedi.');
     }
@@ -100,7 +122,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   return (
     <ProductContext.Provider value={{
       products, loading, error, addProduct, updateProduct, deleteProduct,
-      settings, updateShippingLimit,
+      settings, updateShippingSettings,
       selectedCategory, setSelectedCategory,
       minPrice, setMinPrice,
       maxPrice, setMaxPrice,

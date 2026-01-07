@@ -26,7 +26,9 @@ import { BoxConfigTab } from '../components/admin/tabs/BoxConfigTab';
 import { TypographyTab } from '../components/admin/tabs/TypographyTab';
 import { EmailTemplatesTab } from '../components/admin/tabs/EmailTemplatesTab';
 import { ReferralCampaignsTab } from '../components/admin/tabs/ReferralCampaignsTab';
-import { Building2 } from 'lucide-react';
+import { ShippingSettingsTab } from '../components/admin/tabs/ShippingSettingsTab';
+import { Building2, Truck } from 'lucide-react';
+import { AdminSidebar } from '../components/admin/AdminSidebar';
 
 export const Admin = () => {
   const navigate = useNavigate();
@@ -58,7 +60,7 @@ export const Admin = () => {
   }, []);
 
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping'>('inventory');
   const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
@@ -503,131 +505,18 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
 
   return (
     <div className="flex min-h-screen bg-slate-100">
-      {/* Mobile Overlay */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* --- SIDEBAR --- */}
-      <aside className={`
-        fixed lg:sticky top-0 left-0 z-50 h-screen
-        ${sidebarOpen ? 'w-64' : 'w-20'}
-        ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        bg-gradient-to-b from-slate-900 to-slate-800
-        transition-all duration-300 ease-in-out
-        flex flex-col shadow-2xl
-      `}>
-        {/* Logo & Collapse */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            {sidebarOpen && (
-              <div>
-                <h1 className="font-display text-white font-bold text-lg italic">Sade</h1>
-                <p className="text-[9px] text-slate-400 uppercase tracking-widest">Admin Panel</p>
-              </div>
-            )}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden lg:flex p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-            >
-              <ChevronLeft size={20} className={`transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {/* Mobile close */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden p-2 text-slate-400 hover:text-white"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
-          {Object.entries(menuGroups).map(([groupKey, groupLabel]) => {
-            const groupItems = menuItems.filter(item => item.group === groupKey);
-            if (groupItems.length === 0) return null;
-
-            return (
-              <div key={groupKey}>
-                {sidebarOpen && (
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2">
-                    {groupLabel}
-                  </p>
-                )}
-                <div className="space-y-1">
-                  {groupItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id as any);
-                          setMobileSidebarOpen(false);
-                        }}
-                        className={`
-                          w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                          ${isActive
-                            ? 'bg-gold text-slate-900 shadow-lg shadow-gold/20'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                          }
-                        `}
-                        title={!sidebarOpen ? item.label : undefined}
-                      >
-                        <Icon size={20} className={isActive ? 'text-slate-900' : ''} />
-                        {sidebarOpen && (
-                          <span className={`text-sm font-medium ${isActive ? 'font-bold' : ''}`}>
-                            {item.label}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Bottom Actions */}
-        <div className="p-4 border-t border-white/10 space-y-2">
-          <button
-            onClick={() => navigate('/home')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all"
-          >
-            <Home size={20} />
-            {sidebarOpen && <span className="text-sm font-medium">Ana Sayfaya Dön</span>}
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-white hover:bg-red-500/20 transition-all"
-          >
-            <LogOut size={20} />
-            {sidebarOpen && <span className="text-sm font-medium">Çıkış Yap</span>}
-          </button>
-        </div>
-      </aside>
+      {/* --- LUXURY SIDEBAR --- */}
+      <AdminSidebar
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+        sidebarOpen={sidebarOpen}
+        onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
+        mobileSidebarOpen={mobileSidebarOpen}
+        onMobileSidebarToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+      />
 
       {/* --- MAIN CONTENT --- */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-0' : 'lg:ml-0'}`}>
-        {/* Mobile Header */}
-        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setMobileSidebarOpen(true)}
-            className="p-2 text-slate-600 hover:bg-slate-100 rounded-xl"
-          >
-            <Menu size={24} />
-          </button>
-          <div className="flex items-center gap-2">
-            <ActiveIcon size={20} className="text-gold" />
-            <span className="font-bold text-slate-800">{activeMenuItem?.label}</span>
-          </div>
-          <div className="w-10" /> {/* Spacer for centering */}
-        </div>
+      <main className="flex-1 transition-all duration-300 lg:ml-0">
 
         {/* Page Header */}
         <div className="bg-white border-b border-slate-200 px-8 py-6">
@@ -1975,6 +1864,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <TypographyTab />
       ) : activeTab === 'email-templates' ? (
         <EmailTemplatesTab />
+      ) : activeTab === 'shipping' ? (
+        <ShippingSettingsTab />
       ) : null}
         </div>
       </main>

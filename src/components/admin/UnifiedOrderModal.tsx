@@ -550,6 +550,54 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                     <p className="text-xs font-bold text-gray-500 mb-2">Ödeme Yöntemi</p>
                     <p className="text-sm text-gray-800">{order.paymentMethod || 'Kredi Kartı'}</p>
                   </div>
+
+                  {/* Kargo Maliyet Analizi - Sadece Admin Görür */}
+                  {(order.costAnalysis || order.payment?.shipping !== undefined) && (
+                    <div className="col-span-2 mt-4 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+                      <p className="text-xs font-black text-blue-800 mb-3 flex items-center gap-2">
+                        <TrendingUp size={14} />
+                        KARGO MALİYET ANALİZİ
+                      </p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
+                          <p className="text-[10px] text-gray-500 mb-1">Müşteriden Alınan</p>
+                          <p className="text-lg font-black text-gray-900">
+                            {order.costAnalysis?.customerPaid ?? order.payment?.shipping ?? 0}₺
+                          </p>
+                        </div>
+                        <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
+                          <p className="text-[10px] text-gray-500 mb-1">MNG Tahmini</p>
+                          <p className="text-lg font-black text-gray-900">
+                            {order.costAnalysis?.mngEstimate !== null && order.costAnalysis?.mngEstimate !== undefined
+                              ? `${order.costAnalysis.mngEstimate}₺`
+                              : <span className="text-xs text-gray-400">Hesaplanıyor...</span>
+                            }
+                          </p>
+                        </div>
+                        <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
+                          <p className="text-[10px] text-gray-500 mb-1">Kar/Zarar</p>
+                          <p className={`text-lg font-black ${
+                            order.costAnalysis?.profit === null || order.costAnalysis?.profit === undefined
+                              ? 'text-gray-400'
+                              : order.costAnalysis.profit >= 0
+                                ? 'text-emerald-600'
+                                : 'text-red-600'
+                          }`}>
+                            {order.costAnalysis?.profit !== null && order.costAnalysis?.profit !== undefined
+                              ? `${order.costAnalysis.profit >= 0 ? '+' : ''}${order.costAnalysis.profit.toFixed(0)}₺`
+                              : '-'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      {order.costAnalysis?.calculatedAt && (
+                        <p className="text-[10px] text-gray-400 mt-2 text-right">
+                          Hesaplama: {new Date(order.costAnalysis.calculatedAt).toLocaleString('tr-TR')}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div>
                     <p className="text-xs font-bold text-gray-500 mb-2">Sipariş Durumu Güncelle</p>
                     <div className="flex flex-wrap gap-2">

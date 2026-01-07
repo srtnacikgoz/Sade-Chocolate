@@ -36,15 +36,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendCustomPasswordResetEmail = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
+exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const params_1 = require("firebase-functions/params");
 const axios_1 = __importDefault(require("axios"));
 // Firebase Admin SDK initialization
 admin.initializeApp();
-// MNG Kargo API Base URL
-const MNG_API_BASE = 'https://testapi.mngkargo.com.tr/mngapi/api/standardqueryapi';
+// MNG Kargo API Base URLs
+const MNG_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/standardqueryapi';
+const MNG_CBS_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/cbsinfoapi';
 // Environment variables (Params API kullanarak)
 const MNG_CLIENT_ID = (0, params_1.defineString)('MNG_CLIENT_ID');
 const MNG_CLIENT_SECRET = (0, params_1.defineString)('MNG_CLIENT_SECRET');
@@ -285,6 +286,125 @@ exports.healthCheck = functions.https.onRequest(async (req, res) => {
             message: error.message
         });
     }
+});
+// ==========================================
+// CBS INFO API - Şehir/İlçe Bilgileri
+// ==========================================
+// CBS API için helper
+const cbsRequest = async (endpoint) => {
+    var _a, _b, _c, _d;
+    const config = getMNGConfig();
+    try {
+        const response = await (0, axios_1.default)({
+            method: 'GET',
+            url: `${MNG_CBS_API_BASE}${endpoint}`,
+            headers: {
+                'X-IBM-Client-Id': config.clientId,
+                'X-IBM-Client-Secret': config.clientSecret,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    }
+    catch (error) {
+        console.error('CBS API Error:', ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+        throw new functions.https.HttpsError('internal', ((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.detail) || 'CBS Info API hatası', (_d = error.response) === null || _d === void 0 ? void 0 : _d.data);
+    }
+};
+/**
+ * Şehir Listesi - MNG Kargo şehir kodlarını getirir
+ * Response: [{ code: "01", name: "Adana" }, ...]
+ */
+exports.getCities = functions.https.onCall(async () => {
+    functions.logger.info('Fetching cities from CBS API');
+    const cities = await cbsRequest('/getcities');
+    return {
+        success: true,
+        data: cities,
+        timestamp: new Date().toISOString()
+    };
+});
+/**
+ * İlçe Listesi - Şehir koduna göre ilçeleri getirir
+ * @param cityCode - Şehir kodu (örn: "34" İstanbul)
+ * Response: [{ cityCode: "34", cityName: "İstanbul", code: "1809", name: "Kadıköy" }, ...]
+ */
+exports.getDistricts = functions.https.onCall(async (request) => {
+    const { cityCode } = request.data;
+    if (!cityCode) {
+        throw new functions.https.HttpsError('invalid-argument', 'cityCode parametresi gerekli');
+    }
+    functions.logger.info('Fetching districts for city:', { cityCode });
+    const districts = await cbsRequest(`/getdistricts/${cityCode}`);
+    return {
+        success: true,
+        data: districts,
+        timestamp: new Date().toISOString()
+    };
+});
+/**
+ * Mahalle Listesi - Şehir ve ilçe koduna göre mahalleleri getirir
+ */
+exports.getNeighborhoods = functions.https.onCall(async (request) => {
+    const { cityCode, districtCode } = request.data;
+    if (!cityCode || !districtCode) {
+        throw new functions.https.HttpsError('invalid-argument', 'cityCode ve districtCode parametreleri gerekli');
+    }
+    functions.logger.info('Fetching neighborhoods:', { cityCode, districtCode });
+    const neighborhoods = await cbsRequest(`/getneighborhoods/${cityCode}/${districtCode}`);
+    return {
+        success: true,
+        data: neighborhoods,
+        timestamp: new Date().toISOString()
+    };
+});
+/**
+ * İlçe Kodu Bul - İlçe adına göre kod bulur
+ * Checkout'ta kullanmak için
+ */
+exports.findDistrictCode = functions.https.onCall(async (request) => {
+    const { cityCode, districtName } = request.data;
+    if (!cityCode || !districtName) {
+        throw new functions.https.HttpsError('invalid-argument', 'cityCode ve districtName parametreleri gerekli');
+    }
+    functions.logger.info('Finding district code:', { cityCode, districtName });
+    const districts = await cbsRequest(`/getdistricts/${cityCode}`);
+    // İlçe adını normalize et (büyük/küçük harf, Türkçe karakterler)
+    const normalizedName = districtName.toLowerCase()
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c');
+    const found = districts.find((d) => {
+        const dName = d.name.toLowerCase()
+            .replace(/ı/g, 'i')
+            .replace(/ğ/g, 'g')
+            .replace(/ü/g, 'u')
+            .replace(/ş/g, 's')
+            .replace(/ö/g, 'o')
+            .replace(/ç/g, 'c');
+        return dName === normalizedName || dName.includes(normalizedName) || normalizedName.includes(dName);
+    });
+    if (found) {
+        return {
+            success: true,
+            data: {
+                cityCode: found.cityCode,
+                cityName: found.cityName,
+                districtCode: found.code,
+                districtName: found.name
+            },
+            timestamp: new Date().toISOString()
+        };
+    }
+    return {
+        success: false,
+        error: 'İlçe bulunamadı',
+        availableDistricts: districts.map((d) => d.name),
+        timestamp: new Date().toISOString()
+    };
 });
 // ==========================================
 // SENDGRID EMAIL FUNCTIONS

@@ -3,7 +3,7 @@ import { Product, BoxItem, ProductBadge, ProductType } from '../../types';
 import { PRODUCT_CATEGORIES } from '../../constants';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Package, DollarSign, Image as ImageIcon, Video, Save, Activity, Info, AlertCircle, MapPin, Upload, X as CloseIcon, Loader2, Milk, Bean, Square, Nut, Cherry, Coffee, Cookie, Flame, IceCream } from 'lucide-react';
+import { Package, DollarSign, Image as ImageIcon, Video, Save, Activity, Info, AlertCircle, MapPin, Upload, X as CloseIcon, Loader2, Milk, Bean, Square, Nut, Cherry, Coffee, Cookie, Flame, IceCream, Truck, Scale, Ruler } from 'lucide-react';
 import { BrandIcon } from '../ui/BrandIcon';
 
 // ✅ Senin seçebileceğin ikon kütüphanen
@@ -77,7 +77,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     // 🎁 Kutu içeriği sistemi
     isBoxContent: false,
     boxContentIds: [],
-    boxSize: 4
+    boxSize: 4,
+    // 📦 Kargo bilgileri
+    weight: 0,
+    dimensions: { length: 0, width: 0, height: 0 }
   });
 
   // 🔄 Product prop'u değiştiğinde formData'yı güncelle
@@ -977,6 +980,103 @@ const addAttribute = () => {
             <div className="grid grid-cols-2 gap-4 pt-2">
               <textarea value={formData.nutritionalValues} onChange={e => setFormData({...formData, nutritionalValues: e.target.value})} placeholder="Besin Değerleri..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-slate-100" />
               <input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} placeholder="Menşei" className="p-4 bg-white rounded-2xl text-xs outline-none border border-slate-100" />
+            </div>
+          </FormAccordion>
+
+          <FormAccordion title="Kargo Bilgileri" icon={Truck}>
+            <div className="space-y-4 pt-2">
+              {/* Ağırlık */}
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  <Scale size={12} />
+                  Ürün Ağırlığı (gram)
+                </label>
+                <input
+                  type="number"
+                  value={formData.weight || ''}
+                  onChange={e => setFormData({...formData, weight: Number(e.target.value)})}
+                  placeholder="Örn: 100"
+                  className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold"
+                />
+              </div>
+
+              {/* Kutu Ölçüleri */}
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  <Ruler size={12} />
+                  Paket Ölçüleri (cm)
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <span className="text-[9px] text-slate-400 block mb-1">Uzunluk</span>
+                    <input
+                      type="number"
+                      value={formData.dimensions?.length || ''}
+                      onChange={e => setFormData({
+                        ...formData,
+                        dimensions: { ...formData.dimensions, length: Number(e.target.value) }
+                      })}
+                      placeholder="U"
+                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold text-center"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-400 block mb-1">Genişlik</span>
+                    <input
+                      type="number"
+                      value={formData.dimensions?.width || ''}
+                      onChange={e => setFormData({
+                        ...formData,
+                        dimensions: { ...formData.dimensions, width: Number(e.target.value) }
+                      })}
+                      placeholder="G"
+                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold text-center"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-400 block mb-1">Yükseklik</span>
+                    <input
+                      type="number"
+                      value={formData.dimensions?.height || ''}
+                      onChange={e => setFormData({
+                        ...formData,
+                        dimensions: { ...formData.dimensions, height: Number(e.target.value) }
+                      })}
+                      placeholder="Y"
+                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Desi Hesaplaması */}
+              {formData.dimensions?.length > 0 && formData.dimensions?.width > 0 && formData.dimensions?.height > 0 && (
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Hesaplanan Desi</p>
+                      <p className="text-[9px] text-blue-500 mt-1">
+                        ({formData.dimensions.length} × {formData.dimensions.width} × {formData.dimensions.height}) ÷ 3000
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-blue-700">
+                        {((formData.dimensions.length * formData.dimensions.width * formData.dimensions.height) / 3000).toFixed(2)}
+                      </p>
+                      <p className="text-[9px] text-blue-500">desi</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ağırlık vs Desi Karşılaştırma */}
+              {formData.weight > 0 && formData.dimensions?.length > 0 && formData.dimensions?.width > 0 && formData.dimensions?.height > 0 && (
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <p className="text-[9px] text-amber-700">
+                    <strong>Not:</strong> Kargo firmaları ağırlık ({(formData.weight / 1000).toFixed(2)} kg) ve desi ({((formData.dimensions.length * formData.dimensions.width * formData.dimensions.height) / 3000).toFixed(2)}) arasından büyük olanı ücretlendirir.
+                  </p>
+                </div>
+              )}
             </div>
           </FormAccordion>
         </div>

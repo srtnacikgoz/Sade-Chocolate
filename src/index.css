@@ -89,6 +89,24 @@ body:has([class*="z-[9999]"]) header {
 :root {
   font-family: 'Inter', sans-serif;
   --header-height: 80px; /* Masaüstü standart yüksekliğimiz */
+
+  /* Typography CSS Değişkenleri - Varsayılanlar (Firestore'dan güncellenir) */
+  --font-h1: 'Playfair Display', serif;
+  --font-h2: 'Playfair Display', serif;
+  --font-h3: 'Inter', sans-serif;
+  --font-h4: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-display: 'Playfair Display', serif;
+  --font-logo: 'Santana', 'Cormorant Garamond', serif;
+  --font-button: 'Inter', sans-serif;
+  --font-nav: 'Inter', sans-serif;
+  --font-label: 'Inter', sans-serif;
+  --font-caption: 'Inter', sans-serif;
+
+  /* Hover Renkleri */
+  --hover-primary: #D4AF37;
+  --hover-secondary: #111827;
+  --hover-accent: #8B4513;
 }
 
 @media (max-width: 1024px) {

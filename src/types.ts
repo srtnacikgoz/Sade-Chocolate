@@ -92,6 +92,15 @@ export interface Product {
 
   // 👁️ KATALOG GÖRÜNÜRLÜĞÜ
   isVisibleInCatalog?: boolean; // false ise katalogda gösterilmez (varsayılan: true)
+
+  // 📦 KARGO BİLGİLERİ
+  weight?: number;              // Ürün ağırlığı (gram)
+  dimensions?: {
+    length: number;             // Uzunluk (cm)
+    width: number;              // Genişlik (cm)
+    height: number;             // Yükseklik (cm)
+  };
+  // Desi otomatik hesaplanır: (U × G × Y) / 3000
 }
 export interface GiftOptions {
   isGift: boolean;

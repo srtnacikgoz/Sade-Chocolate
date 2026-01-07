@@ -23,7 +23,8 @@ import {
   Tag,
   Edit,
   RefreshCw,
-  XCircle
+  XCircle,
+  Landmark
 } from 'lucide-react';
 import { useOrderStore } from '../../../stores/orderStore';
 import type { Order } from '../../../types/order';
@@ -36,11 +37,75 @@ import { TierBadge } from '../../ui/TierBadge';
 import type { LoyaltyTier } from '../../../types/loyalty';
 import { CreateShipmentModal } from '../CreateShipmentModal';
 
+// --- EFT COUNTDOWN TIMER ---
+const EftCountdown = ({ deadline, compact = false }: { deadline: string; compact?: boolean }) => {
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; expired: boolean } | null>(null);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const deadlineTime = new Date(deadline).getTime();
+      const now = Date.now();
+      const diff = deadlineTime - now;
+
+      if (diff <= 0) {
+        return { hours: 0, minutes: 0, seconds: 0, expired: true };
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      return { hours, minutes, seconds, expired: false };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+    const interval = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [deadline]);
+
+  if (!timeLeft) return null;
+
+  if (timeLeft.expired) {
+    return (
+      <span className={`flex items-center gap-1 ${compact ? 'text-[8px]' : 'text-xs'} text-red-600 font-bold`}>
+        <XCircle size={compact ? 10 : 12} />
+        Süre Doldu
+      </span>
+    );
+  }
+
+  const isUrgent = timeLeft.hours < 2;
+
+  if (compact) {
+    return (
+      <span className={`flex items-center gap-1 text-[8px] font-mono font-bold ${isUrgent ? 'text-red-600' : 'text-amber-600'}`}>
+        <Clock size={10} />
+        {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+      </span>
+    );
+  }
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isUrgent ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'}`}>
+      <Clock size={14} className={isUrgent ? 'text-red-500' : 'text-amber-500'} />
+      <span className={`font-mono font-bold ${isUrgent ? 'text-red-600' : 'text-amber-600'}`}>
+        {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+      </span>
+      <span className={`text-[10px] ${isUrgent ? 'text-red-500' : 'text-amber-500'}`}>kaldı</span>
+    </div>
+  );
+};
+
 // --- STATUS BADGE ---
-const StatusBadge = ({ status }: { status: Order['status'] }) => {
-  const styles: Record<Order['status'], string> = {
+const StatusBadge = ({ status }: { status: Order['status'] | string }) => {
+  const styles: Record<string, string> = {
     'Pending Payment': 'bg-amber-100 text-amber-700 border-amber-300',
+    'pending': 'bg-amber-100 text-amber-700 border-amber-300',
     'Awaiting Prep': 'bg-brand-peach/30 text-brand-orange border-brand-peach',
+    'processing': 'bg-brand-peach/30 text-brand-orange border-brand-peach',
     'In Production': 'bg-brand-yellow/30 text-brand-mustard border-brand-yellow',
     'Ready for Packing': 'bg-brand-blue/30 text-blue-700 border-brand-blue',
     'Heat Hold': 'bg-orange-100 text-orange-700 border-orange-300',
@@ -49,9 +114,11 @@ const StatusBadge = ({ status }: { status: Order['status'] }) => {
     'Refunded': 'bg-purple-50 text-purple-600 border-purple-200'
   };
 
-  const labels: Record<Order['status'], string> = {
+  const labels: Record<string, string> = {
     'Pending Payment': 'Ödeme Bekleniyor',
+    'pending': 'Ödeme Bekleniyor',
     'Awaiting Prep': 'Hazırlık Bekliyor',
+    'processing': 'Hazırlanıyor',
     'In Production': 'Üretimde',
     'Ready for Packing': 'Paketlemeye Hazır',
     'Heat Hold': 'Isı Beklemesi',
@@ -60,9 +127,12 @@ const StatusBadge = ({ status }: { status: Order['status'] }) => {
     'Refunded': 'İade Edildi'
   };
 
+  const style = styles[status] || 'bg-gray-100 text-gray-700 border-gray-300';
+  const label = labels[status] || status;
+
   return (
-    <span className={`text-[9px] uppercase tracking-widest px-2 py-1 rounded-full border font-bold ${styles[status]}`}>
-      {labels[status]}
+    <span className={`text-[9px] uppercase tracking-widest px-2 py-1 rounded-full border font-bold ${style}`}>
+      {label}
     </span>
   );
 };
@@ -2222,9 +2292,9 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <StatusBadge status={order.status} />
-              {order.paymentMethod === 'eft' && (
+              {order.payment?.method === 'eft' && (
                 <span className="flex items-center gap-1 text-[9px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full border border-amber-300 dark:border-amber-700 font-bold uppercase">
-                  <i className="material-icons-outlined text-xs">account_balance</i> Havale/EFT
+                  <Landmark size={10} /> Havale/EFT
                 </span>
               )}
               {order.priority === 'High' && (
@@ -2232,20 +2302,22 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                   <AlertTriangle size={12} /> Acil
                 </span>
               )}
-              <span className="text-xs text-gray-400">{order.createdAt}</span>
+              <span className="text-xs text-gray-400">
+                {order.createdAt ? new Date(order.createdAt).toLocaleString('tr-TR') : '-'}
+              </span>
             </div>
 
-            {/* Pending Payment Alert */}
-            {order.status === 'Pending Payment' && order.paymentDeadline && (
+            {/* Pending Payment Alert with Countdown */}
+            {(order.status === 'Pending Payment' || order.status === 'pending' || order.payment?.status === 'pending') && order.paymentDeadline && (
               <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
-                <div className="flex items-center gap-3">
-                  <Clock size={20} className="text-amber-600" />
+                <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Ödeme Bekleniyor</p>
+                    <p className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-1">Ödeme Bekleniyor</p>
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Son ödeme tarihi: {new Date(order.paymentDeadline).toLocaleString('tr-TR')}
+                      Son ödeme: {new Date(order.paymentDeadline).toLocaleString('tr-TR')}
                     </p>
                   </div>
+                  <EftCountdown deadline={order.paymentDeadline} />
                   {order.bankTransferDiscount && order.bankTransferDiscount > 0 && (
                     <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full font-bold">
                       -₺{order.bankTransferDiscount.toFixed(2)} indirim
@@ -2299,6 +2371,53 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
               </div>
             </div>
           </div>
+
+          {/* Kargo Maliyet Analizi - Sadece Admin Görür */}
+          {(order.costAnalysis || order.payment?.shipping !== undefined) && (
+            <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
+              <h3 className="text-[10px] uppercase tracking-widest text-blue-700 dark:text-blue-300 font-bold mb-4 flex items-center gap-2">
+                <Truck size={14} />
+                Kargo Maliyet Analizi
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Müşteri Ödedi</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    ₺{(order.costAnalysis?.customerPaid ?? order.payment?.shipping ?? 0).toLocaleString('tr-TR')}
+                  </p>
+                </div>
+                <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">MNG Tahmini</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {order.costAnalysis?.mngEstimate !== null && order.costAnalysis?.mngEstimate !== undefined
+                      ? `₺${order.costAnalysis.mngEstimate.toLocaleString('tr-TR')}`
+                      : <span className="text-xs text-gray-400">Bekleniyor</span>
+                    }
+                  </p>
+                </div>
+                <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Kâr/Zarar</p>
+                  <p className={`text-lg font-bold ${
+                    order.costAnalysis?.profit === null || order.costAnalysis?.profit === undefined
+                      ? 'text-gray-400'
+                      : order.costAnalysis.profit >= 0
+                        ? 'text-emerald-600'
+                        : 'text-red-600'
+                  }`}>
+                    {order.costAnalysis?.profit !== null && order.costAnalysis?.profit !== undefined
+                      ? `${order.costAnalysis.profit >= 0 ? '+' : ''}₺${order.costAnalysis.profit.toFixed(0)}`
+                      : '-'
+                    }
+                  </p>
+                </div>
+              </div>
+              {!order.costAnalysis?.mngEstimate && (
+                <p className="text-[9px] text-blue-500 dark:text-blue-400 mt-3 text-center">
+                  MNG maliyet tahmini henüz hesaplanmadı. Yeni siparişlerde otomatik hesaplanır.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Timeline */}
           <div>
@@ -2948,6 +3067,46 @@ export const OrderManagementTab: React.FC = () => {
     inProduction: orders.filter(o => o.status === 'In Production').length
   };
 
+  // EFT bekleyen siparişleri filtrele
+  const pendingEftOrders = orders.filter(o =>
+    o.payment?.method === 'eft' &&
+    (o.status === 'Pending Payment' || o.status === 'pending' || o.payment?.status === 'pending')
+  );
+
+  // Ödeme onaylama fonksiyonu
+  const confirmPayment = async (order: Order) => {
+    try {
+      const { doc, updateDoc, arrayUnion, Timestamp } = await import('firebase/firestore');
+      const { db } = await import('../../../lib/firebase');
+
+      const orderRef = doc(db, 'orders', order.id.replace('SADE-', ''));
+      await updateDoc(orderRef, {
+        status: 'Awaiting Prep',
+        'payment.status': 'paid',
+        paymentConfirmedAt: new Date().toISOString(),
+        timeline: arrayUnion({
+          action: 'Ödeme onaylandı',
+          time: new Date().toLocaleString('tr-TR'),
+          note: 'Havale/EFT ödemesi manuel olarak onaylandı'
+        })
+      });
+
+      success(`✅ ${order.id} ödemesi onaylandı!`);
+    } catch (err: any) {
+      toastError(`❌ Ödeme onaylanamadı: ${err.message}`);
+    }
+  };
+
+  // Tutarları panoya kopyala
+  const copyAmountsToClipboard = () => {
+    const text = pendingEftOrders
+      .map(o => `${o.id}: ₺${(o.payment?.total || 0).toLocaleString('tr-TR')}`)
+      .join('\n');
+
+    navigator.clipboard.writeText(text);
+    success('📋 Tutarlar panoya kopyalandı!');
+  };
+
   // Loading state
   if (isLoading && !isInitialized) {
     return (
@@ -3040,6 +3199,86 @@ export const OrderManagementTab: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* EFT Ödeme Onay Paneli */}
+      {pendingEftOrders.length > 0 && (
+        <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-3xl border border-amber-200 dark:border-amber-800 overflow-hidden">
+          <div className="p-4 border-b border-amber-200 dark:border-amber-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
+                <Landmark className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-amber-900 dark:text-amber-200">Bekleyen EFT Ödemeleri</h3>
+                <p className="text-xs text-amber-600 dark:text-amber-400">{pendingEftOrders.length} sipariş ödeme bekliyor</p>
+              </div>
+            </div>
+            <button
+              onClick={copyAmountsToClipboard}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-800 border border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
+            >
+              <FileText size={14} />
+              Tutarları Kopyala
+            </button>
+          </div>
+
+          <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+            {pendingEftOrders.map(order => (
+              <div
+                key={order.id}
+                className="flex items-center gap-4 p-3 bg-white dark:bg-dark-800 rounded-xl border border-amber-100 dark:border-amber-900 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+              >
+                {/* Sipariş Bilgisi */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-display font-bold text-brown-900 dark:text-white">{order.id}</span>
+                    <span className="text-xs text-gray-400">{order.customer?.name}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{order.customer?.email}</p>
+                </div>
+
+                {/* Tutar */}
+                <div className="text-right">
+                  <p className="text-lg font-bold text-amber-600">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</p>
+                  {order.bankTransferDiscount && order.bankTransferDiscount > 0 && (
+                    <p className="text-[10px] text-emerald-600">-₺{order.bankTransferDiscount.toFixed(0)} indirim</p>
+                  )}
+                </div>
+
+                {/* Geri Sayım */}
+                <div className="w-28">
+                  {order.paymentDeadline ? (
+                    <EftCountdown deadline={order.paymentDeadline} compact />
+                  ) : (
+                    <span className="text-xs text-gray-400">Süre yok</span>
+                  )}
+                </div>
+
+                {/* Onay Butonu */}
+                <button
+                  onClick={() => {
+                    if (window.confirm(`${order.id} siparişinin ödemesini onaylamak istediğinize emin misiniz?\n\nTutar: ₺${(order.payment?.total || 0).toLocaleString('tr-TR')}`)) {
+                      confirmPayment(order);
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
+                >
+                  <CheckCircle2 size={14} />
+                  Onayla
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Toplam */}
+          <div className="p-4 bg-amber-100 dark:bg-amber-900/30 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between">
+            <span className="text-sm font-bold text-amber-800 dark:text-amber-200">Toplam Beklenen</span>
+            <span className="text-xl font-bold text-amber-600">
+              ₺{pendingEftOrders.reduce((sum, o) => sum + (o.payment?.total || 0), 0).toLocaleString('tr-TR')}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6">
@@ -3168,12 +3407,18 @@ export const OrderManagementTab: React.FC = () => {
                     <p className="text-xs text-gray-600 dark:text-gray-400">{order.items?.length || 0} ürün</p>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={order.status || 'Awaiting Prep'} />
-                      {order.paymentMethod === 'eft' && (
-                        <span className="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
-                          EFT
-                        </span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={order.status || 'Awaiting Prep'} />
+                        {order.payment?.method === 'eft' && (
+                          <span className="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
+                            EFT
+                          </span>
+                        )}
+                      </div>
+                      {/* EFT Countdown - sadece ödeme bekleyen siparişlerde */}
+                      {order.payment?.method === 'eft' && (order.status === 'Pending Payment' || order.status === 'pending' || order.payment?.status === 'pending') && order.paymentDeadline && (
+                        <EftCountdown deadline={order.paymentDeadline} compact />
                       )}
                     </div>
                   </td>

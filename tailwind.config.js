@@ -40,10 +40,22 @@ export default {
         },
       },
       fontFamily: {
-        // Zanaatkar Serif ve Modern Sans-Serif birlikteliği
-        display: ["Playfair Display", "serif"],
-        sans: ["Inter", "sans-serif"],
-        // Santana - Premium branding fontu (Türkçe desteği için serif fallback)
+        // Dinamik Typography (Firestore'dan yüklenen CSS değişkenleri)
+        'heading': 'var(--font-h1, "Playfair Display", serif)',
+        'h1': 'var(--font-h1, "Playfair Display", serif)',
+        'h2': 'var(--font-h2, "Playfair Display", serif)',
+        'h3': 'var(--font-h3, "Inter", sans-serif)',
+        'h4': 'var(--font-h4, "Inter", sans-serif)',
+        'body': 'var(--font-body, "Inter", sans-serif)',
+        'button': 'var(--font-button, "Inter", sans-serif)',
+        'nav': 'var(--font-nav, "Inter", sans-serif)',
+        'label': 'var(--font-label, "Inter", sans-serif)',
+        'caption': 'var(--font-caption, "Inter", sans-serif)',
+        // Ana font class'ları - Dinamik CSS değişkenleri kullanıyor
+        display: 'var(--font-display, "Playfair Display", serif)',
+        serif: 'var(--font-display, "Playfair Display", serif)',
+        sans: 'var(--font-body, "Inter", sans-serif)',
+        // Santana - Premium branding fontu (Logo için sabit - değişmez)
         santana: ["Santana", "Cormorant Garamond", "Georgia", "serif"],
         "santana-condensed": ["Santana Condensed", "Georgia", "serif"],
         "santana-xtra": ["Santana XtraCondensed", "Georgia", "serif"],

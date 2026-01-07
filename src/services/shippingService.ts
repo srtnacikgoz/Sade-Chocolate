@@ -4,6 +4,83 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../lib/firebase';
 
+// ==========================================
+// CBS INFO API - Şehir/İlçe Bilgileri
+// ==========================================
+
+export interface MNGCity {
+  code: string;
+  name: string;
+}
+
+export interface MNGDistrict {
+  cityCode: string;
+  cityName: string;
+  code: string;
+  name: string;
+}
+
+/**
+ * MNG Kargo şehir listesini getirir
+ */
+export const getMNGCities = async (): Promise<MNGCity[]> => {
+  try {
+    const getCitiesFn = httpsCallable(functions, 'getCities');
+    const result = await getCitiesFn();
+    const data = result.data as any;
+
+    if (data.success) {
+      return data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('MNG şehir listesi alınamadı:', error);
+    return [];
+  }
+};
+
+/**
+ * MNG Kargo ilçe listesini getirir
+ * @param cityCode - Şehir kodu (plaka kodu, örn: "34")
+ */
+export const getMNGDistricts = async (cityCode: string): Promise<MNGDistrict[]> => {
+  try {
+    const getDistrictsFn = httpsCallable(functions, 'getDistricts');
+    const result = await getDistrictsFn({ cityCode });
+    const data = result.data as any;
+
+    if (data.success) {
+      return data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('MNG ilçe listesi alınamadı:', error);
+    return [];
+  }
+};
+
+/**
+ * İlçe adına göre MNG ilçe kodunu bulur
+ * @param cityCode - Şehir kodu
+ * @param districtName - İlçe adı
+ */
+export const findMNGDistrictCode = async (cityCode: string, districtName: string): Promise<string | null> => {
+  try {
+    const findCodeFn = httpsCallable(functions, 'findDistrictCode');
+    const result = await findCodeFn({ cityCode, districtName });
+    const data = result.data as any;
+
+    if (data.success) {
+      return data.data.districtCode;
+    }
+    console.log('İlçe bulunamadı:', data.availableDistricts);
+    return null;
+  } catch (error) {
+    console.error('İlçe kodu bulunamadı:', error);
+    return null;
+  }
+};
+
 // Kargo Takip Durumu Tipleri
 export interface ShipmentMovement {
   date: string;

@@ -3,6 +3,8 @@
 // Order Status Type - Heat Hold ve Pending Payment dahil
 export type OrderStatus =
   | 'Pending Payment'    // EFT/Havale ödemesi bekleniyor
+  | 'pending'            // Lowercase alternatif (Checkout uyumu)
+  | 'processing'         // Hazırlanıyor (Checkout uyumu)
   | 'Awaiting Prep'
   | 'In Production'
   | 'Ready for Packing'
@@ -124,6 +126,8 @@ export interface Order {
     city: string;
   };
   payment: {
+    method?: PaymentMethod;  // 'card' | 'eft'
+    status?: 'pending' | 'paid' | 'failed';
     subtotal: number;
     shipping: number;
     tax: number;

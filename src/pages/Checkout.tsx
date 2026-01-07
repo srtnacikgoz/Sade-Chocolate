@@ -10,10 +10,11 @@ import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shipp
 import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { doc, getDoc, setDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, arrayUnion, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { CompanyInfo } from '../types';
 import { sendOrderConfirmationEmail } from '../services/emailService';
+import { calculateShipping, findMNGDistrictCode } from '../services/shippingService';
 import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
 import { AgreementModal } from '../components/legal/AgreementModal';
@@ -211,9 +212,10 @@ const [faturaDistrict, setFaturaDistrict] = useState(''); // Fatura ilçe
     return selectedCity?.districts || [];
   }, [faturaCity]);
 
-// Kargo Hesaplama Mantığı
+// Kargo Hesaplama Mantığı (Admin panelden ayarlanabilir)
 const freeShippingLimit = settings?.freeShippingLimit || 1500;
-const shippingCost = cartTotal >= freeShippingLimit ? 0 : 95; 
+const defaultShippingCost = settings?.defaultShippingCost || 95;
+const shippingCost = cartTotal >= freeShippingLimit ? 0 : defaultShippingCost; 
 const grandTotal = cartTotal + shippingCost;
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
@@ -528,10 +530,37 @@ const grandTotal = cartTotal + shippingCost;
     setIsSubmitting(true);
 
     try {
+      // Şehir kodunu bul (plaka kodu)
+      const shippingCity = isGuestMode ? guestData.city : addresses.find(a => a.id === selectedAddressId)?.city || '';
+      const shippingDistrict = isGuestMode ? guestData.district : addresses.find(a => a.id === selectedAddressId)?.district || '';
+      const cityData = TURKEY_CITIES.find(c => c.name === shippingCity);
+      const cityCode = cityData?.id?.toString() || '34'; // Default: İstanbul
+
+      // Toplam ağırlık ve desi hesapla
+      // Ürün verisi varsa kullan, yoksa varsayılan değerler (200g, 1 desi)
+      const totalWeightGram = items.reduce((sum, item) => {
+        const itemWeight = (item as any).weight || 200; // gram, varsayılan 200g
+        return sum + (item.quantity * itemWeight);
+      }, 0);
+      const totalWeight = totalWeightGram / 1000; // kg'a çevir
+
+      // Desi hesapla: (U × G × Y) / 3000 - her ürün için
+      const totalDesiFromDimensions = items.reduce((sum, item) => {
+        const dims = (item as any).dimensions;
+        if (dims?.length && dims?.width && dims?.height) {
+          const itemDesi = (dims.length * dims.width * dims.height) / 3000;
+          return sum + (item.quantity * itemDesi);
+        }
+        return sum + (item.quantity * 1); // Varsayılan 1 desi
+      }, 0);
+
+      // Kargo firması hangisi büyükse onu kullanır
+      const totalDesi = Math.max(1, Math.ceil(Math.max(totalWeight, totalDesiFromDimensions)));
+
       if (isGuestMode) {
         // Guest sipariş oluştur - Admin panelinin beklediği formatta
         const { addDoc, collection } = await import('firebase/firestore');
-        await addDoc(collection(db, 'orders'), {
+        const docRef = await addDoc(collection(db, 'orders'), {
           id: `SADE-${orderId}`,
           // Müşteri bilgileri (nested object - admin panel bu formatı bekliyor)
           customer: {
@@ -563,6 +592,13 @@ const grandTotal = cartTotal + shippingCost;
             total: finalTotal,
             status: paymentMethod === 'eft' ? 'pending' : 'paid'
           },
+          // Maliyet Analizi (Admin için - müşteri görmez)
+          costAnalysis: {
+            customerPaid: shippingCost,
+            mngEstimate: null, // API'den sonra güncellenecek
+            calculatedAt: null,
+            profit: null
+          },
           // Durum
           status: paymentMethod === 'eft' ? 'pending' : 'processing',
           ...(paymentMethod === 'eft' && { paymentDeadline: new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() }),
@@ -576,6 +612,34 @@ const grandTotal = cartTotal + shippingCost;
             note: paymentMethod === 'eft' ? 'Ödeme bekleniyor' : 'Sipariş alındı'
           }]
         });
+
+        // Arka planda MNG API'den gerçek kargo maliyetini hesapla (müşteriyi bekletmez)
+        (async () => {
+          try {
+            // Önce ilçe kodunu bul
+            const districtCode = await findMNGDistrictCode(cityCode, shippingDistrict);
+
+            // Kargo maliyetini hesapla
+            const mngCost = await calculateShipping({
+              cityCode,
+              districtCode: districtCode || '0',
+              address: guestData.address,
+              weight: totalWeight,
+              desi: totalDesi
+            });
+
+            if (mngCost) {
+              await updateDoc(doc(db, 'orders', docRef.id), {
+                'costAnalysis.mngEstimate': mngCost.total,
+                'costAnalysis.mngDistrictCode': districtCode,
+                'costAnalysis.calculatedAt': new Date().toISOString(),
+                'costAnalysis.profit': shippingCost - mngCost.total
+              });
+            }
+          } catch (err) {
+            console.log('MNG maliyet hesaplama hatası (önemli değil):', err);
+          }
+        })();
       } else {
         // Kayıtlı kullanıcı siparişi
         addOrder({

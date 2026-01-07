@@ -6,8 +6,9 @@ import axios from 'axios';
 // Firebase Admin SDK initialization
 admin.initializeApp();
 
-// MNG Kargo API Base URL
-const MNG_API_BASE = 'https://testapi.mngkargo.com.tr/mngapi/api/standardqueryapi';
+// MNG Kargo API Base URLs
+const MNG_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/standardqueryapi';
+const MNG_CBS_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/cbsinfoapi';
 
 // Environment variables (Params API kullanarak)
 const MNG_CLIENT_ID = defineString('MNG_CLIENT_ID');
@@ -315,6 +316,161 @@ export const healthCheck = functions.https.onRequest(async (req, res) => {
       message: error.message
     });
   }
+});
+
+// ==========================================
+// CBS INFO API - Şehir/İlçe Bilgileri
+// ==========================================
+
+// CBS API için helper
+const cbsRequest = async (endpoint: string) => {
+  const config = getMNGConfig();
+
+  try {
+    const response = await axios({
+      method: 'GET',
+      url: `${MNG_CBS_API_BASE}${endpoint}`,
+      headers: {
+        'X-IBM-Client-Id': config.clientId,
+        'X-IBM-Client-Secret': config.clientSecret,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('CBS API Error:', error.response?.data || error.message);
+    throw new functions.https.HttpsError(
+      'internal',
+      error.response?.data?.detail || 'CBS Info API hatası',
+      error.response?.data
+    );
+  }
+};
+
+/**
+ * Şehir Listesi - MNG Kargo şehir kodlarını getirir
+ * Response: [{ code: "01", name: "Adana" }, ...]
+ */
+export const getCities = functions.https.onCall(async () => {
+  functions.logger.info('Fetching cities from CBS API');
+
+  const cities = await cbsRequest('/getcities');
+
+  return {
+    success: true,
+    data: cities,
+    timestamp: new Date().toISOString()
+  };
+});
+
+/**
+ * İlçe Listesi - Şehir koduna göre ilçeleri getirir
+ * @param cityCode - Şehir kodu (örn: "34" İstanbul)
+ * Response: [{ cityCode: "34", cityName: "İstanbul", code: "1809", name: "Kadıköy" }, ...]
+ */
+export const getDistricts = functions.https.onCall(async (request) => {
+  const { cityCode } = request.data;
+
+  if (!cityCode) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'cityCode parametresi gerekli'
+    );
+  }
+
+  functions.logger.info('Fetching districts for city:', { cityCode });
+
+  const districts = await cbsRequest(`/getdistricts/${cityCode}`);
+
+  return {
+    success: true,
+    data: districts,
+    timestamp: new Date().toISOString()
+  };
+});
+
+/**
+ * Mahalle Listesi - Şehir ve ilçe koduna göre mahalleleri getirir
+ */
+export const getNeighborhoods = functions.https.onCall(async (request) => {
+  const { cityCode, districtCode } = request.data;
+
+  if (!cityCode || !districtCode) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'cityCode ve districtCode parametreleri gerekli'
+    );
+  }
+
+  functions.logger.info('Fetching neighborhoods:', { cityCode, districtCode });
+
+  const neighborhoods = await cbsRequest(`/getneighborhoods/${cityCode}/${districtCode}`);
+
+  return {
+    success: true,
+    data: neighborhoods,
+    timestamp: new Date().toISOString()
+  };
+});
+
+/**
+ * İlçe Kodu Bul - İlçe adına göre kod bulur
+ * Checkout'ta kullanmak için
+ */
+export const findDistrictCode = functions.https.onCall(async (request) => {
+  const { cityCode, districtName } = request.data;
+
+  if (!cityCode || !districtName) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'cityCode ve districtName parametreleri gerekli'
+    );
+  }
+
+  functions.logger.info('Finding district code:', { cityCode, districtName });
+
+  const districts = await cbsRequest(`/getdistricts/${cityCode}`);
+
+  // İlçe adını normalize et (büyük/küçük harf, Türkçe karakterler)
+  const normalizedName = districtName.toLowerCase()
+    .replace(/ı/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c');
+
+  const found = districts.find((d: any) => {
+    const dName = d.name.toLowerCase()
+      .replace(/ı/g, 'i')
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c');
+    return dName === normalizedName || dName.includes(normalizedName) || normalizedName.includes(dName);
+  });
+
+  if (found) {
+    return {
+      success: true,
+      data: {
+        cityCode: found.cityCode,
+        cityName: found.cityName,
+        districtCode: found.code,
+        districtName: found.name
+      },
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  return {
+    success: false,
+    error: 'İlçe bulunamadı',
+    availableDistricts: districts.map((d: any) => d.name),
+    timestamp: new Date().toISOString()
+  };
 });
 
 // ==========================================

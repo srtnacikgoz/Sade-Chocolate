@@ -12,6 +12,7 @@ import { BrandIcon } from '../components/ui/BrandIcon';
 import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { PRODUCT_CATEGORIES } from '../constants';
 
 export const Catalog: React.FC = () => {
   const { products, isLoading } = useProducts();
@@ -56,7 +57,9 @@ export const Catalog: React.FC = () => {
   const categories = useMemo(() => {
     if (isLoading) return [];
     const uniqueCategories = new Set<string>();
-    products.forEach(p => p.categories?.forEach(cat => uniqueCategories.add(cat)));
+    products.forEach(p => {
+      if (p.category) uniqueCategories.add(p.category);
+    });
     return ['all', ...Array.from(uniqueCategories)];
   }, [products, isLoading]);
 
@@ -103,9 +106,7 @@ export const Catalog: React.FC = () => {
     }
 
     if (selectedCategory !== 'all') {
-      currentProducts = currentProducts.filter(p =>
-        p.categories?.includes(selectedCategory)
-      );
+      currentProducts = currentProducts.filter(p => p.category === selectedCategory);
     }
 
     if (minPrice !== '') {
@@ -223,7 +224,9 @@ export const Catalog: React.FC = () => {
                     ) : (
                       categories.map(category => (
                         <option key={category} value={category}>
-                          {category === 'all' ? t('all_categories') : category.charAt(0).toUpperCase() + category.slice(1)}
+                          {category === 'all'
+                            ? t('all_categories')
+                            : PRODUCT_CATEGORIES.find(c => c.id === category)?.label || category}
                         </option>
                       ))
                     )}
