@@ -4,7 +4,7 @@
 
 ---
 
-## TAMAMLANAN ÖZELLİKLER
+<!-- TAMAMLANAN ÖZELLİKLER -->
 
 ### Sipariş & Ödeme Sistemi
 - [x] Havale/EFT ödeme seçeneği (%2 indirim ile)

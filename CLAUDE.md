@@ -2,12 +2,14 @@
 
 ## Oturum Başlangıcı
 
-**Her oturum başında `.claude/hedefler.md` dosyasını oku ve kullanıcıya:**
-1. Tamamlanan son özellikler
-2. Bekleyen hedefler
-3. Öncelikli görevler
+**Her oturum başında:**
+1. Önce `.claude/project-rules.md` dosyasını oku (proje kuralları ve standartları)
+2. Ardından `.claude/hedefler.md` dosyasını oku ve kullanıcıya:
+   - Tamamlanan son özellikler
+   - Bekleyen hedefler
+   - Öncelikli görevler
 
-hakkında kısa bir özet sun.
+   hakkında kısa bir özet sun.
 
 ---
 
