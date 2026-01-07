@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -16,6 +16,7 @@ import { CompanyInfo } from '../types';
 import { sendOrderConfirmationEmail } from '../services/emailService';
 import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
+import { AgreementModal } from '../components/legal/AgreementModal';
 
 export const Checkout: React.FC = () => {
   const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart } = useCart();
@@ -215,6 +216,7 @@ const freeShippingLimit = settings?.freeShippingLimit || 1500;
 const shippingCost = cartTotal >= freeShippingLimit ? 0 : 95; 
 const grandTotal = cartTotal + shippingCost;
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId] = useState(() => Math.floor(Math.random() * 900000) + 100000);
   const [showDraftRecovery, setShowDraftRecovery] = useState(false);
@@ -1551,7 +1553,17 @@ const grandTotal = cartTotal + shippingCost;
                   {agreedToTerms && <span className="material-icons-outlined text-white text-[16px] font-bold">check</span>}
                 </div>
                 <p className={`text-sm leading-relaxed transition-colors ${errors.terms ? 'text-red-500 font-bold' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-300'}`}>
-                  {t('i_agree_to')} <Link to="/legal/distance-sales" className="underline font-bold text-brown-900 dark:text-gold hover:text-gold dark:hover:text-brown-300 transition-colors">{t('terms_link')}</Link>.
+                  {t('i_agree_to')}{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAgreementModal(true);
+                    }}
+                    className="underline font-bold text-brown-900 dark:text-gold hover:text-gold dark:hover:text-brown-300 transition-colors"
+                  >
+                    {t('terms_link')}
+                  </button>.
                 </p>
               </div>
 
@@ -1751,6 +1763,67 @@ const grandTotal = cartTotal + shippingCost;
 )}
 
       </div>
+
+      {/* Mesafeli Satış Sözleşmesi Modal */}
+      <AgreementModal
+        isOpen={showAgreementModal}
+        onClose={() => setShowAgreementModal(false)}
+        buyer={{
+          fullName: isGuestMode
+            ? `${guestData.firstName} ${guestData.lastName}`
+            : addresses.find(a => a.id === selectedAddressId)
+              ? `${addresses.find(a => a.id === selectedAddressId)?.firstName} ${addresses.find(a => a.id === selectedAddressId)?.lastName}`
+              : user?.firstName && user?.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : 'Müşteri',
+          address: isGuestMode
+            ? `${guestData.address}, ${guestData.district}/${guestData.city}`
+            : addresses.find(a => a.id === selectedAddressId)?.street
+              ? `${addresses.find(a => a.id === selectedAddressId)?.street}, ${addresses.find(a => a.id === selectedAddressId)?.district}/${addresses.find(a => a.id === selectedAddressId)?.city}`
+              : '',
+          phone: isGuestMode
+            ? `${guestData.phoneCountry} ${guestData.phone}`
+            : addresses.find(a => a.id === selectedAddressId)?.phone || user?.phone || '',
+          email: isGuestMode ? guestData.email : user?.email || ''
+        }}
+        seller={{
+          companyName: 'Sade Unlu Mamülleri San ve Tic Ltd Şti', // Resmi ünvan - yasal belge
+          address: companyInfo?.branches?.[0]?.address
+            ? `${companyInfo.branches[0].address}, ${companyInfo.branches[0].city}`
+            : 'Yeşilbahçe mah. Çınarlı cd 47/A Muratpaşa Antalya',
+          phone: companyInfo?.generalPhone || '',
+          email: companyInfo?.generalEmail || '',
+          taxOffice: companyInfo?.taxOffice || 'Antalya Kurumlar',
+          taxNumber: companyInfo?.taxNumber || '7361500827'
+        }}
+        items={items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: item.price * item.quantity
+        }))}
+        shippingCost={shippingCost}
+        totalAmount={finalTotal}
+        invoice={{
+          type: invoiceType,
+          fullName: invoiceType === 'individual'
+            ? (isSameAsDelivery
+                ? (isGuestMode ? `${guestData.firstName} ${guestData.lastName}` : `${addresses.find(a => a.id === selectedAddressId)?.firstName || ''} ${addresses.find(a => a.id === selectedAddressId)?.lastName || ''}`)
+                : `${faturaFirstName} ${faturaLastName}`)
+            : undefined,
+          companyName: invoiceType === 'corporate' ? firmaUnvani : undefined,
+          taxOffice: invoiceType === 'corporate' ? vergiDairesi : undefined,
+          taxNumber: invoiceType === 'corporate' ? vergiNo : undefined,
+          tcKimlikNo: invoiceType === 'individual' ? tcKimlikNo : undefined,
+          address: isSameAsDelivery
+            ? (isGuestMode
+                ? `${guestData.address}, ${guestData.district}/${guestData.city}`
+                : `${addresses.find(a => a.id === selectedAddressId)?.street || ''}, ${addresses.find(a => a.id === selectedAddressId)?.district || ''}/${addresses.find(a => a.id === selectedAddressId)?.city || ''}`)
+            : `${faturaAdresi}, ${faturaDistrict}/${faturaCity}`,
+          phone: isGuestMode ? `${guestData.phoneCountry} ${guestData.phone}` : user?.phone || '',
+          email: isGuestMode ? guestData.email : user?.email || ''
+        }}
+      />
 
       <Footer />
     </main>

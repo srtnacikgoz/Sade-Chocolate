@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Mail, Send } from 'lucide-react';
 import { CompanyInfo } from '../types';
 import { sendNewsletterWelcomeEmail } from '../services/emailService';
+import { AgreementModal } from './legal/AgreementModal';
 
 interface FooterProps {
   onLogoClick?: () => void;
@@ -17,6 +18,7 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
 
   // Load company info from Firebase
   useEffect(() => {
@@ -154,9 +156,12 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           <Link to="/legal/pre-info" className="text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors">
             Ön Bilgilendirme
           </Link>
-          <Link to="/legal/distance-sales" className="text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors">
+          <button
+            onClick={() => setShowAgreementModal(true)}
+            className="text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors"
+          >
             Mesafeli Satış Sözleşmesi
-          </Link>
+          </button>
           <Link to="/legal/kvkk" className="text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors">
             KVKK
           </Link>
@@ -194,6 +199,43 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           Powered by Sade Patisserie • Antalya <span className="mx-2">•</span> {t('footer_rights')}
         </p>
       </div>
+
+      {/* Mesafeli Satış Sözleşmesi Modal - Önizleme */}
+      <AgreementModal
+        isOpen={showAgreementModal}
+        onClose={() => setShowAgreementModal(false)}
+        buyer={{
+          fullName: '[Sipariş sırasında doldurulacaktır]',
+          address: '[Sipariş sırasında doldurulacaktır]',
+          phone: '[Sipariş sırasında doldurulacaktır]',
+          email: '[Sipariş sırasında doldurulacaktır]'
+        }}
+        seller={{
+          companyName: 'Sade Unlu Mamülleri San ve Tic Ltd Şti', // Resmi ünvan - yasal belge
+          address: companyInfo?.branches?.[0]?.address
+            ? `${companyInfo.branches[0].address}, ${companyInfo.branches[0].city}`
+            : 'Yeşilbahçe mah. Çınarlı cd 47/A Muratpaşa Antalya',
+          phone: companyInfo?.generalPhone || '',
+          email: companyInfo?.generalEmail || '',
+          taxOffice: companyInfo?.taxOffice || 'Antalya Kurumlar',
+          taxNumber: companyInfo?.taxNumber || '7361500827'
+        }}
+        items={[{
+          name: '[Sipariş sırasında doldurulacaktır]',
+          quantity: 1,
+          unitPrice: 0,
+          totalPrice: 0
+        }]}
+        shippingCost={0}
+        totalAmount={0}
+        invoice={{
+          type: 'individual',
+          fullName: '[Sipariş sırasında doldurulacaktır]',
+          address: '[Sipariş sırasında doldurulacaktır]',
+          phone: '[Sipariş sırasında doldurulacaktır]',
+          email: '[Sipariş sırasında doldurulacaktır]'
+        }}
+      />
     </footer>
   );
 };
