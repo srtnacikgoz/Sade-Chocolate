@@ -2326,6 +2326,40 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                 </div>
               </div>
             )}
+
+            {/* Hediye Çantası ve Mesaj Uyarıları */}
+            {(order.hasGiftBag || order.isGift) && (
+              <div className="mt-4 space-y-3">
+                {order.hasGiftBag && (
+                  <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-2xl border-2 border-pink-300 dark:border-pink-700 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🛍️</span>
+                      <div>
+                        <p className="text-sm font-bold text-pink-700 dark:text-pink-300">Hediye Çantası İsteniyor!</p>
+                        <p className="text-xs text-pink-600 dark:text-pink-400">Bu siparişe hediye çantası eklemeyi unutmayın.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {order.isGift && (
+                  <div className="p-4 bg-gradient-to-r from-gold/10 to-amber-50 dark:from-gold/20 dark:to-amber-900/20 rounded-2xl border-2 border-gold dark:border-amber-600 animate-pulse">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">🎁</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Bu Bir Hediye Siparişi!</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">Fiyat bilgisi içermeyen fatura düzenleyin.</p>
+                        {order.giftMessage && (
+                          <div className="mt-2 p-3 bg-white dark:bg-dark-800 rounded-xl border border-gold/30">
+                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Hediye Mesajı:</p>
+                            <p className="text-sm text-brown-900 dark:text-white italic">"{order.giftMessage}"</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Product List */}
@@ -3408,11 +3442,23 @@ export const OrderManagementTab: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <StatusBadge status={order.status || 'Awaiting Prep'} />
                         {order.payment?.method === 'eft' && (
                           <span className="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
                             EFT
+                          </span>
+                        )}
+                        {/* Hediye Çantası Uyarısı */}
+                        {order.hasGiftBag && (
+                          <span className="text-[8px] bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 px-1.5 py-0.5 rounded font-bold animate-pulse flex items-center gap-1">
+                            🛍️ Çanta
+                          </span>
+                        )}
+                        {/* Hediye Mesajı Uyarısı */}
+                        {order.isGift && (
+                          <span className="text-[8px] bg-gold/20 dark:bg-gold/30 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold animate-pulse flex items-center gap-1">
+                            🎁 Hediye
                           </span>
                         )}
                       </div>

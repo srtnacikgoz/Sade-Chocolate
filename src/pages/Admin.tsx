@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes, Maximize2 } from 'lucide-react';
 import { BrandIcon } from '../components/ui/BrandIcon';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -85,6 +85,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   const [cmsData, setCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
   const [aboutCmsData, setAboutCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
   const [legalCmsData, setLegalCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
+  const [legalEditModal, setLegalEditModal] = useState<{ isOpen: boolean; lang: string; field: string; label: string; color: string } | null>(null);
   const [customers, setCustomers] = useState<any[]>([]);
   const [newsletterSubscribers, setNewsletterSubscribers] = useState<any[]>([]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
@@ -96,6 +97,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   const [isBadgeInfoOpen, setIsBadgeInfoOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isNewProductDropdownOpen, setIsNewProductDropdownOpen] = useState(false);
   const newProductDropdownRef = React.useRef<HTMLDivElement>(null);
   const [newBadge, setNewBadge] = useState<any>({
@@ -141,6 +143,24 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     ai: 'AI & Otomasyon',
     analitik: 'Analitik',
     ayarlar: 'Ayarlar',
+  };
+
+  // Bakım Modu Snapshot
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'site_settings', 'maintenance'), (docSnap) => {
+      if (docSnap.exists()) setMaintenanceMode(docSnap.data()?.enabled === true);
+    });
+    return () => unsub();
+  }, []);
+
+  // Bakım Modu Toggle
+  const toggleMaintenanceMode = async () => {
+    try {
+      await setDoc(doc(db, 'site_settings', 'maintenance'), { enabled: !maintenanceMode }, { merge: true });
+      toast.success(maintenanceMode ? 'Bakım modu kapatıldı' : 'Bakım modu açıldı');
+    } catch (error) {
+      toast.error('Bakım modu değiştirilemedi');
+    }
   };
 
   // Site İçeriği (CMS) Snapshot - Home
@@ -513,6 +533,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
         mobileSidebarOpen={mobileSidebarOpen}
         onMobileSidebarToggle={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+        pendingOrdersCount={orders.length}
       />
 
       {/* --- MAIN CONTENT --- */}
@@ -533,6 +554,22 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
+              {/* Bakım Modu Toggle */}
+              <button
+                onClick={toggleMaintenanceMode}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  maintenanceMode
+                    ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+                title={maintenanceMode ? 'Bakım modu aktif - Tıklayarak kapatın' : 'Bakım modunu aç'}
+              >
+                <span className="material-icons-outlined text-lg">
+                  {maintenanceMode ? 'construction' : 'build'}
+                </span>
+                {maintenanceMode ? 'Bakımdayız' : 'Bakım'}
+              </button>
+
               {activeTab === 'inventory' && (
                 <div className="relative" ref={newProductDropdownRef}>
                   <Button
@@ -1023,7 +1060,16 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         /* Legal CMS */
         <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {['tr', 'en', 'ru'].map((lang) => (
+          {['tr', 'en', 'ru'].map((lang) => {
+            const legalFields = [
+              { field: 'privacy_content', label: '📜 Gizlilik Politikası', color: 'blue', placeholder: 'Gizlilik politikası içeriği...' },
+              { field: 'shipping_content', label: '🚚 Teslimat Koşulları', color: 'orange', placeholder: 'Teslimat koşulları içeriği...' },
+              { field: 'preinfo_content', label: 'ℹ️ Ön Bilgilendirme', color: 'emerald', placeholder: 'Ön bilgilendirme içeriği...' },
+              { field: 'distance_sales_content', label: '📋 Mesafeli Satış Sözleşmesi', color: 'purple', placeholder: 'Mesafeli satış sözleşmesi içeriği...' },
+              { field: 'kvkk_content', label: '🔒 KVKK', color: 'red', placeholder: 'KVKK içeriği...' },
+              { field: 'refund_content', label: '↩️ İptal & İade', color: 'gold', placeholder: 'İptal ve iade politikası içeriği...' },
+            ];
+            return (
             <div key={lang} className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200/60 p-10 shadow-sm">
               <div className="flex items-center gap-4 mb-10">
                 <div className={`p-3.5 rounded-2xl ${lang === 'tr' ? 'bg-red-50 text-red-600' : lang === 'en' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
@@ -1032,81 +1078,93 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                 <span className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">{lang === 'tr' ? 'Türkçe (TR)' : lang === 'en' ? 'English (EN)' : 'Russian (RU)'}</span>
               </div>
               <div className="space-y-8">
-                {/* Privacy Policy */}
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4">📜 Gizlilik Politikası (Privacy)</label>
-                  <textarea
-                    value={legalCmsData?.[lang]?.privacy_content || ''}
-                    onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], privacy_content: e.target.value } })}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed"
-                    rows={12}
-                    placeholder="Gizlilik politikası içeriği..."
-                  />
-                </div>
-
-                {/* Shipping Terms */}
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <label className="block text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4">🚚 Teslimat Koşulları (Shipping)</label>
-                  <textarea
-                    value={legalCmsData?.[lang]?.shipping_content || ''}
-                    onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], shipping_content: e.target.value } })}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-orange-500/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed"
-                    rows={12}
-                    placeholder="Teslimat koşulları içeriği..."
-                  />
-                </div>
-
-                {/* Pre-Information */}
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4">ℹ️ Ön Bilgilendirme (Pre-Info)</label>
-                  <textarea
-                    value={legalCmsData?.[lang]?.preinfo_content || ''}
-                    onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], preinfo_content: e.target.value } })}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed"
-                    rows={12}
-                    placeholder="Ön bilgilendirme içeriği..."
-                  />
-                </div>
-
-                {/* Distance Sales Agreement */}
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <label className="block text-[10px] font-black text-purple-600 uppercase tracking-widest mb-4">📋 Mesafeli Satış Sözleşmesi (Distance Sales)</label>
-                  <textarea
-                    value={legalCmsData?.[lang]?.distance_sales_content || ''}
-                    onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], distance_sales_content: e.target.value } })}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-purple-500/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed"
-                    rows={12}
-                    placeholder="Mesafeli satış sözleşmesi içeriği..."
-                  />
-                </div>
-
-                {/* KVKK */}
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <label className="block text-[10px] font-black text-red-600 uppercase tracking-widest mb-4">🔒 KVKK (Data Protection)</label>
-                  <textarea
-                    value={legalCmsData?.[lang]?.kvkk_content || ''}
-                    onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], kvkk_content: e.target.value } })}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-red-500/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed"
-                    rows={12}
-                    placeholder="KVKK içeriği..."
-                  />
-                </div>
-
-                {/* Refund Policy */}
-                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
-                  <label className="block text-[10px] font-black text-gold uppercase tracking-widest mb-4">↩️ İptal & İade (Refund)</label>
-                  <textarea
-                    value={legalCmsData?.[lang]?.refund_content || ''}
-                    onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], refund_content: e.target.value } })}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-gold/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed"
-                    rows={12}
-                    placeholder="İptal ve iade politikası içeriği..."
-                  />
-                </div>
+                {legalFields.map(({ field, label, color, placeholder }) => (
+                  <div key={field} className="pt-6 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className={`text-[10px] font-black text-${color}-600 uppercase tracking-widest`}>{label}</label>
+                      <button
+                        onClick={() => setLegalEditModal({ isOpen: true, lang, field, label, color })}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-xl bg-${color}-50 text-${color}-600 hover:bg-${color}-100 transition-colors`}
+                      >
+                        <Maximize2 size={12} />
+                        Genişlet
+                      </button>
+                    </div>
+                    <textarea
+                      value={legalCmsData?.[lang]?.[field] || ''}
+                      onChange={(e) => setLegalCmsData({ ...legalCmsData, [lang]: { ...legalCmsData[lang], [field]: e.target.value } })}
+                      className={`w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-${color}-500/20 outline-none text-gray-900 dark:text-white font-mono leading-relaxed`}
+                      rows={6}
+                      placeholder={placeholder}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          )})}
         </div>
+
+        {/* Legal Edit Modal */}
+        {legalEditModal?.isOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setLegalEditModal(null)}
+            />
+            <div className="relative w-full max-w-5xl max-h-[90vh] bg-white dark:bg-dark-900 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className={`flex items-center justify-between px-8 py-5 border-b border-gray-200 dark:border-gray-800 bg-${legalEditModal.color}-50 dark:bg-${legalEditModal.color}-900/20`}>
+                <div className="flex items-center gap-4">
+                  <span className={`text-2xl`}>{legalEditModal.label.split(' ')[0]}</span>
+                  <div>
+                    <h2 className={`text-lg font-bold text-${legalEditModal.color}-700 dark:text-${legalEditModal.color}-400`}>
+                      {legalEditModal.label.substring(legalEditModal.label.indexOf(' ') + 1)}
+                    </h2>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {legalEditModal.lang === 'tr' ? 'Türkçe' : legalEditModal.lang === 'en' ? 'English' : 'Russian'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setLegalEditModal(null)}
+                  className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-8">
+                <textarea
+                  value={legalCmsData?.[legalEditModal.lang]?.[legalEditModal.field] || ''}
+                  onChange={(e) => setLegalCmsData({
+                    ...legalCmsData,
+                    [legalEditModal.lang]: {
+                      ...legalCmsData[legalEditModal.lang],
+                      [legalEditModal.field]: e.target.value
+                    }
+                  })}
+                  className={`w-full h-[60vh] bg-slate-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 text-sm focus:ring-2 focus:ring-${legalEditModal.color}-500/30 focus:border-${legalEditModal.color}-500 outline-none text-gray-900 dark:text-white font-mono leading-relaxed resize-none`}
+                  placeholder="İçeriği buraya yazın..."
+                  autoFocus
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-between px-8 py-5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-dark-800">
+                <p className="text-xs text-gray-400">
+                  {(legalCmsData?.[legalEditModal.lang]?.[legalEditModal.field] || '').length} karakter
+                </p>
+                <button
+                  onClick={() => setLegalEditModal(null)}
+                  className={`px-6 py-2.5 bg-${legalEditModal.color}-600 hover:bg-${legalEditModal.color}-700 text-white rounded-xl font-bold text-sm transition-colors`}
+                >
+                  Tamam
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         </>
         ) : null}
       </div>

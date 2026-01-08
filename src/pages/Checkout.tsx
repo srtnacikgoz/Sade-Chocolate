@@ -10,17 +10,17 @@ import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shipp
 import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { doc, getDoc, setDoc, arrayUnion, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, arrayUnion, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { CompanyInfo } from '../types';
 import { sendOrderConfirmationEmail } from '../services/emailService';
 import { calculateShipping, findMNGDistrictCode } from '../services/shippingService';
 import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
-import { AgreementModal } from '../components/legal/AgreementModal';
+import { X } from 'lucide-react';
 
 export const Checkout: React.FC = () => {
-  const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart } = useCart();
+  const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart, hasGiftBag } = useCart();
   const { isLoggedIn, loading, user, addOrder } = useUser();
 const addresses = user?.addresses || []; // Veriyi doğrudan kullanıcı profilinden alıyoruz
   const { settings } = useProducts(); // Admin panelinden gelen kargo limiti
@@ -215,11 +215,14 @@ const [faturaDistrict, setFaturaDistrict] = useState(''); // Fatura ilçe
 // Kargo Hesaplama Mantığı (Admin panelden ayarlanabilir)
 const freeShippingLimit = settings?.freeShippingLimit || 1500;
 const defaultShippingCost = settings?.defaultShippingCost || 95;
-const shippingCost = cartTotal >= freeShippingLimit ? 0 : defaultShippingCost; 
-const grandTotal = cartTotal + shippingCost;
+const shippingCost = cartTotal >= freeShippingLimit ? 0 : defaultShippingCost;
+const giftBagPrice = hasGiftBag && settings?.giftBag?.enabled ? (settings.giftBag.price || 0) : 0;
+const grandTotal = cartTotal + shippingCost + giftBagPrice;
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [legalContent, setLegalContent] = useState<any>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [successOrderData, setSuccessOrderData] = useState<{ total: number; subtotal: number; shipping: number; giftBag: number } | null>(null);
   const [orderId] = useState(() => Math.floor(Math.random() * 900000) + 100000);
   const [showDraftRecovery, setShowDraftRecovery] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
@@ -397,6 +400,14 @@ const grandTotal = cartTotal + shippingCost;
       }
     };
     loadCompanyInfo();
+  }, []);
+
+  // Load legal content from CMS
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'site_content', 'legal'), (doc) => {
+      if (doc.exists()) setLegalContent(doc.data());
+    });
+    return () => unsub();
   }, []);
 
   // Shipping alerts kontrolü
@@ -588,10 +599,16 @@ const grandTotal = cartTotal + shippingCost;
             method: paymentMethod,
             subtotal: cartTotal,
             shipping: shippingCost,
+            ...(giftBagPrice > 0 && { giftBag: giftBagPrice }),
             ...(bankTransferDiscount > 0 && { discount: bankTransferDiscount }),
             total: finalTotal,
             status: paymentMethod === 'eft' ? 'pending' : 'paid'
           },
+          // Hediye çantası seçimi
+          hasGiftBag: hasGiftBag && settings?.giftBag?.enabled,
+          // Hediye siparişi bilgileri
+          isGift: isGift,
+          ...(isGift && giftMessage && { giftMessage }),
           // Maliyet Analizi (Admin için - müşteri görmez)
           costAnalysis: {
             customerPaid: shippingCost,
@@ -649,10 +666,15 @@ const grandTotal = cartTotal + shippingCost;
           total: finalTotal,
           subtotal: cartTotal,
           shippingCost,
+          ...(giftBagPrice > 0 && { giftBagPrice }),
           ...(bankTransferDiscount > 0 && { bankTransferDiscount }),
           paymentMethod: paymentMethod,
           ...(paymentMethod === 'eft' && { paymentDeadline: new Date(Date.now() + (bankTransferSettings?.paymentDeadlineHours || 12) * 60 * 60 * 1000).toISOString() }),
           items: [...items],
+          // Hediye bilgileri
+          hasGiftBag: hasGiftBag && settings?.giftBag?.enabled,
+          isGift: isGift,
+          ...(isGift && giftMessage && { giftMessage }),
         });
       }
 
@@ -682,6 +704,13 @@ const grandTotal = cartTotal + shippingCost;
         });
       }
 
+      // Sipariş verilerini kaydet (clearCart'tan önce!)
+      setSuccessOrderData({
+        total: finalTotal,
+        subtotal: cartTotal,
+        shipping: shippingCost,
+        giftBag: giftBagPrice
+      });
       setIsSuccess(true);
       clearCart();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -799,8 +828,32 @@ const grandTotal = cartTotal + shippingCost;
             {/* Tutar */}
             <div className="bg-brown-900 dark:bg-dark-800 text-white p-4 rounded-2xl flex justify-between items-center">
               <span className="text-sm font-medium">Ödenecek Tutar</span>
-              <span className="text-2xl font-bold font-display">₺{finalTotal.toLocaleString('tr-TR')}</span>
+              <span className="text-2xl font-bold font-display">₺{(successOrderData?.total || finalTotal).toLocaleString('tr-TR')}</span>
             </div>
+
+            {/* Sipariş Özeti */}
+            {successOrderData && (
+              <div className="bg-gray-50 dark:bg-dark-900 p-4 rounded-2xl space-y-2 text-sm">
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Ara Toplam</span>
+                  <span>₺{successOrderData.subtotal.toLocaleString('tr-TR')}</span>
+                </div>
+                {successOrderData.giftBag > 0 && (
+                  <div className="flex justify-between text-pink-600">
+                    <span>Hediye Çantası</span>
+                    <span>+₺{successOrderData.giftBag.toLocaleString('tr-TR')}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>Kargo</span>
+                  <span>{successOrderData.shipping === 0 ? 'Ücretsiz' : `₺${successOrderData.shipping}`}</span>
+                </div>
+                <div className="flex justify-between font-bold text-brown-900 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <span>Toplam</span>
+                  <span>₺{successOrderData.total.toLocaleString('tr-TR')}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -944,6 +997,13 @@ const grandTotal = cartTotal + shippingCost;
                     {shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost}`}
                   </span>
                 </div>
+
+                {giftBagPrice > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="uppercase tracking-wider font-medium text-pink-500">Hediye Çantası</span>
+                    <span className="font-bold text-pink-500">+₺{giftBagPrice.toFixed(2)}</span>
+                  </div>
+                )}
 
                 {bankTransferDiscount > 0 && (
                   <div className="flex justify-between items-center text-sm">
@@ -1828,66 +1888,165 @@ const grandTotal = cartTotal + shippingCost;
 
       </div>
 
-      {/* Mesafeli Satış Sözleşmesi Modal */}
-      <AgreementModal
-        isOpen={showAgreementModal}
-        onClose={() => setShowAgreementModal(false)}
-        buyer={{
-          fullName: isGuestMode
-            ? `${guestData.firstName} ${guestData.lastName}`
-            : addresses.find(a => a.id === selectedAddressId)
-              ? `${addresses.find(a => a.id === selectedAddressId)?.firstName} ${addresses.find(a => a.id === selectedAddressId)?.lastName}`
-              : user?.firstName && user?.lastName
-                ? `${user.firstName} ${user.lastName}`
-                : 'Müşteri',
-          address: isGuestMode
-            ? `${guestData.address}, ${guestData.district}/${guestData.city}`
-            : addresses.find(a => a.id === selectedAddressId)?.street
-              ? `${addresses.find(a => a.id === selectedAddressId)?.street}, ${addresses.find(a => a.id === selectedAddressId)?.district}/${addresses.find(a => a.id === selectedAddressId)?.city}`
-              : '',
-          phone: isGuestMode
-            ? `${guestData.phoneCountry} ${guestData.phone}`
-            : addresses.find(a => a.id === selectedAddressId)?.phone || user?.phone || '',
-          email: isGuestMode ? guestData.email : user?.email || ''
-        }}
-        seller={{
-          companyName: 'Sade Unlu Mamülleri San ve Tic Ltd Şti', // Resmi ünvan - yasal belge
-          address: companyInfo?.branches?.[0]?.address
-            ? `${companyInfo.branches[0].address}, ${companyInfo.branches[0].city}`
-            : 'Yeşilbahçe mah. Çınarlı cd 47/A Muratpaşa Antalya',
-          phone: companyInfo?.generalPhone || '',
-          email: companyInfo?.generalEmail || '',
-          taxOffice: companyInfo?.taxOffice || 'Antalya Kurumlar',
-          taxNumber: companyInfo?.taxNumber || '7361500827'
-        }}
-        items={items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          totalPrice: item.price * item.quantity
-        }))}
-        shippingCost={shippingCost}
-        totalAmount={finalTotal}
-        invoice={{
-          type: invoiceType,
-          fullName: invoiceType === 'individual'
-            ? (isSameAsDelivery
-                ? (isGuestMode ? `${guestData.firstName} ${guestData.lastName}` : `${addresses.find(a => a.id === selectedAddressId)?.firstName || ''} ${addresses.find(a => a.id === selectedAddressId)?.lastName || ''}`)
-                : `${faturaFirstName} ${faturaLastName}`)
-            : undefined,
-          companyName: invoiceType === 'corporate' ? firmaUnvani : undefined,
-          taxOffice: invoiceType === 'corporate' ? vergiDairesi : undefined,
-          taxNumber: invoiceType === 'corporate' ? vergiNo : undefined,
-          tcKimlikNo: invoiceType === 'individual' ? tcKimlikNo : undefined,
-          address: isSameAsDelivery
-            ? (isGuestMode
-                ? `${guestData.address}, ${guestData.district}/${guestData.city}`
-                : `${addresses.find(a => a.id === selectedAddressId)?.street || ''}, ${addresses.find(a => a.id === selectedAddressId)?.district || ''}/${addresses.find(a => a.id === selectedAddressId)?.city || ''}`)
-            : `${faturaAdresi}, ${faturaDistrict}/${faturaCity}`,
-          phone: isGuestMode ? `${guestData.phoneCountry} ${guestData.phone}` : user?.phone || '',
-          email: isGuestMode ? guestData.email : user?.email || ''
-        }}
-      />
+      {/* Mesafeli Satış Sözleşmesi Modal - CMS + Dinamik Bilgiler */}
+      {showAgreementModal && (() => {
+        // Dinamik bilgileri hesapla
+        const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+        const buyerName = isGuestMode
+          ? `${guestData.firstName} ${guestData.lastName}`
+          : selectedAddress
+            ? `${selectedAddress.firstName} ${selectedAddress.lastName}`
+            : user?.firstName && user?.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : '';
+        const buyerAddress = isGuestMode
+          ? `${guestData.address}, ${guestData.district}/${guestData.city}`
+          : selectedAddress
+            ? `${selectedAddress.street}, ${selectedAddress.district}/${selectedAddress.city}`
+            : '';
+        const buyerPhone = isGuestMode
+          ? `${guestData.phoneCountry} ${guestData.phone}`
+          : selectedAddress?.phone || user?.phone || '';
+        const buyerEmail = isGuestMode ? guestData.email : user?.email || '';
+        const currentDate = new Date().toLocaleDateString('tr-TR');
+
+        return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAgreementModal(false)}
+          />
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-dark-900 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-8 py-5 border-b border-gray-200 dark:border-gray-800 bg-purple-50 dark:bg-purple-900/20">
+              <div className="flex items-center gap-4">
+                <span className="text-2xl">📋</span>
+                <h2 className="text-lg font-bold text-purple-700 dark:text-purple-400">
+                  Mesafeli Satış Sözleşmesi
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowAgreementModal(false)}
+                className="p-2 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+              {/* TARAFLAR */}
+              <section>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  TARAFLAR
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* SATICI */}
+                  <div className="bg-cream-50 dark:bg-dark-800 rounded-2xl p-5">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">SATICI</h4>
+                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">Ünvan:</span> {companyInfo?.companyName || 'Sade Patisserie'}</p>
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">Adres:</span> {companyInfo?.branches?.[0]?.address ? `${companyInfo.branches[0].address}, ${companyInfo.branches[0].city}` : 'Antalya'}</p>
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">Telefon:</span> {companyInfo?.generalPhone || ''}</p>
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">E-posta:</span> {companyInfo?.generalEmail || ''}</p>
+                      {companyInfo?.taxOffice && companyInfo?.taxNumber && (
+                        <p><span className="font-medium text-gray-700 dark:text-gray-300">Vergi:</span> {companyInfo.taxOffice} / {companyInfo.taxNumber}</p>
+                      )}
+                    </div>
+                  </div>
+                  {/* ALICI */}
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-5">
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">ALICI</h4>
+                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">Ad Soyad:</span> {buyerName || '-'}</p>
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">Adres:</span> {buyerAddress || '-'}</p>
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">Telefon:</span> {buyerPhone || '-'}</p>
+                      <p><span className="font-medium text-gray-700 dark:text-gray-300">E-posta:</span> {buyerEmail || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* SİPARİŞ BİLGİLERİ */}
+              <section>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  SİPARİŞ BİLGİLERİ
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 dark:bg-dark-800">
+                        <th className="text-left px-4 py-3 font-medium text-gray-700 dark:text-gray-300 rounded-tl-xl">Ürün</th>
+                        <th className="text-center px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Adet</th>
+                        <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300">Birim Fiyat</th>
+                        <th className="text-right px-4 py-3 font-medium text-gray-700 dark:text-gray-300 rounded-tr-xl">Toplam</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, idx) => (
+                        <tr key={idx} className="border-b border-gray-100 dark:border-gray-800">
+                          <td className="px-4 py-3 text-gray-900 dark:text-white">{item.name}</td>
+                          <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{item.quantity}</td>
+                          <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-400">₺{item.price.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-right text-gray-900 dark:text-white font-medium">₺{(item.price * item.quantity).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-50 dark:bg-dark-800">
+                        <td colSpan={3} className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">Kargo:</td>
+                        <td className="px-4 py-3 text-right text-gray-900 dark:text-white">{shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost.toFixed(2)}`}</td>
+                      </tr>
+                      <tr className="bg-purple-100 dark:bg-purple-900/30">
+                        <td colSpan={3} className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white rounded-bl-xl">TOPLAM:</td>
+                        <td className="px-4 py-3 text-right font-bold text-purple-700 dark:text-purple-400 rounded-br-xl">₺{finalTotal.toFixed(2)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </section>
+
+              {/* SÖZLEŞME METNİ (CMS'den) */}
+              <section>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                  SÖZLEŞME ŞARTLARI
+                </h3>
+                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                  {legalContent?.[language]?.distance_sales_content || legalContent?.tr?.distance_sales_content || 'İçerik yükleniyor...'}
+                </div>
+              </section>
+
+              {/* TARİH VE İMZA */}
+              <section className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-end text-sm">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">SATICI</p>
+                    <p className="text-gray-600 dark:text-gray-400">{companyInfo?.companyName || 'Sade Patisserie'}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-gray-500 dark:text-gray-400">{currentDate}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-gray-900 dark:text-white">ALICI</p>
+                    <p className="text-gray-600 dark:text-gray-400">{buyerName || '-'}</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end px-8 py-5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-dark-800">
+              <button
+                onClick={() => setShowAgreementModal(false)}
+                className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm transition-colors"
+              >
+                Okudum, Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       <Footer />
     </main>

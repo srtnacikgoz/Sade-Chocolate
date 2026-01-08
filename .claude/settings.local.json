@@ -31,7 +31,72 @@
       "Bash(ls:*)",
       "Bash(claude mcp list:*)",
       "Bash(firebase deploy:*)",
-      "Bash(git fetch:*)"
+      "Bash(chmod:*)",
+      "Bash(firebase init:*)",
+      "Bash(firebase functions:config:get:*)",
+      "Bash(firebase functions:log:*)",
+      "Bash(Select-String -Pattern \"error|Error|failed\" -Context 2,2)",
+      "Bash(firebase functions:list:*)",
+      "Bash(firebase functions:config:export:*)",
+      "Bash(git fetch:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(firebase functions:delete:*)",
+      "Bash(npx svgo:*)",
+      "Bash(npm run build:vite:*)",
+      "Bash(powershell -Command \"\\(Get-Item ''C:\\\\dev\\\\sade-chocolate\\\\public\\\\kakaologo.png''\\).Length / 1KB\")",
+      "Bash(magick identify:*)",
+      "Bash(python3:*)",
+      "Bash(pkill:*)",
+      "Bash(Get-Process)",
+      "Bash(Where-Object {$_ProcessName -like \"*node*\"})",
+      "Bash(Stop-Process -Force)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:gist.githubusercontent.com)",
+      "Bash(npm run build:dev:*)",
+      "Bash(npm run:*)",
+      "Bash(git push)",
+      "Bash(git restore:*)",
+      "Skill(frontend-design)",
+      "WebFetch(domain:apizone.mngkargo.com.tr)",
+      "Bash(npm run build:check:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: EFT ödeme sistemi, kargo hesaplama ve admin panel geliştirmeleri\n\nEFT Ödeme Sistemi:\n- Sipariş kartlarında EFT badge ve geri sayım timer\n- EFT Ödeme Onay Paneli \\(admin için bekleyen ödemeleri görme ve onaylama\\)\n- Pending/processing status desteği \\(Checkout uyumu\\)\n- payment.method ve payment.status field''ları\n\nKargo Hesaplama:\n- Ürünlere ağırlık \\(gram\\) ve boyut \\(cm\\) alanları\n- Otomatik desi hesaplaması \\(U×G×Y/3000\\)\n- Checkout''ta gerçek ürün verilerinden ağırlık/desi hesabı\n- Kargo Maliyet Analizi sipariş modalında\n\nShipping Settings Tab:\n- MNG Kargo API entegrasyonu\n- Kargo politikası yönetimi\n- Maliyet analizi ve istatistikler\n\nAdmin Panel:\n- AdminSidebar komponenti \\(modüler yapı\\)\n- About sayfası güncellemeleri\n- Catalog sayfa iyileştirmeleri\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  },
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/approval-notification.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash(firebase deploy.*)|Bash(git push.*)|Bash(npm run build.*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"[console]::beep(800,150)\"",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"'Hook triggered at ' + (Get-Date) | Out-File -Append -FilePath '.claude/hook-log.txt'; [console]::beep(1000,500)\"",
+            "timeout": 3
+          }
+        ]
+      }
     ]
   }
 }

@@ -59,6 +59,16 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
     }
   };
 
+  const handleStockStatusToggle = async (productId: string, currentStatus: boolean | undefined) => {
+    try {
+      const newStatus = !currentStatus;
+      await updateProduct(productId, { isOutOfStock: newStatus });
+      toast.success(newStatus ? 'Ürün tükendi olarak işaretlendi' : 'Ürün satışa açıldı');
+    } catch (err) {
+      toast.error('Stok durumu güncellenemedi.');
+    }
+  };
+
   const stats = useMemo(() => ({
     total: products.length,
     criticalStock: products.filter(p => (p.locationStock?.yesilbahce || 0) <= criticalStockThreshold).length,
@@ -95,28 +105,6 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* --- LOJİSTİK STRATEJİSİ KUTUSU (Kompakt) --- */}
-      <div className="mb-6 px-5 py-3 bg-gold/5 rounded-2xl border border-gold/15 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <TrendingUp size={18} className="text-gold" />
-          <span className="text-xs font-bold text-brown-900">Ücretsiz Kargo Limiti</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-brown-900">₺</span>
-          <input
-            type="number"
-            defaultValue={1500}
-            className="w-20 px-3 py-1.5 font-bold text-sm outline-none bg-white border border-gold/20 rounded-lg"
-          />
-          <button
-            className="bg-brown-900 text-white px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-gold transition-all"
-            onClick={() => toast.success('Kargo limiti güncellendi!')}
-          >
-            Kaydet
-          </button>
-        </div>
-      </div>
-
       {/* Stats Bar (Kompakt inline) */}
       <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
         {/* Ürün */}
@@ -242,6 +230,32 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-14">
+                {/* Stok Durumu Toggle */}
+                <div className="hidden md:flex flex-col items-center gap-2">
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Satış</span>
+                  <button
+                    onClick={() => handleStockStatusToggle(product.id, product.isOutOfStock)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                      !product.isOutOfStock
+                        ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                        : 'bg-red-50 text-red-500 hover:bg-red-100'
+                    }`}
+                    title={!product.isOutOfStock ? 'Satışta' : 'Tükendi'}
+                  >
+                    {!product.isOutOfStock ? (
+                      <>
+                        <span className="material-icons-outlined text-base">check_circle</span>
+                        <span className="text-[10px] font-bold">Satışta</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-icons-outlined text-base">remove_shopping_cart</span>
+                        <span className="text-[10px] font-bold">Tükendi</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 {/* Katalog Görünürlüğü Toggle */}
                 <div className="hidden md:flex flex-col items-center gap-2">
                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Katalog</span>

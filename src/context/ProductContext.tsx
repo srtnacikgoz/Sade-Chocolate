@@ -4,9 +4,17 @@ import { db } from '../lib/firebase';
 import { collection, onSnapshot, updateDoc, doc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner'; // Modern bildirim sistemi
 
+interface GiftBagSettings {
+  enabled: boolean;
+  price: number;
+  images: string[];
+  description: string;
+}
+
 interface ShippingSettings {
   freeShippingLimit: number;
   defaultShippingCost: number;
+  giftBag?: GiftBagSettings;
 }
 
 interface ProductContextType {
@@ -34,7 +42,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<ShippingSettings>({
     freeShippingLimit: 1500,
-    defaultShippingCost: 95
+    defaultShippingCost: 95,
+    giftBag: undefined
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +91,8 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         const data = docSnap.data();
         setSettings({
           freeShippingLimit: data.freeShippingLimit ?? 1500,
-          defaultShippingCost: data.defaultShippingCost ?? 95
+          defaultShippingCost: data.defaultShippingCost ?? 95,
+          giftBag: data.giftBag
         });
       }
     });

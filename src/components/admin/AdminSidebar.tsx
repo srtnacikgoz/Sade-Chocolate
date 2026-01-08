@@ -44,6 +44,7 @@ interface AdminSidebarProps {
   onSidebarToggle: () => void;
   mobileSidebarOpen: boolean;
   onMobileSidebarToggle: () => void;
+  pendingOrdersCount?: number;
 }
 
 const menuItems: MenuItem[] = [
@@ -82,6 +83,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onSidebarToggle,
   mobileSidebarOpen,
   onMobileSidebarToggle,
+  pendingOrdersCount = 0,
 }) => {
   const navigate = useNavigate();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -235,11 +237,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                           `} />
 
                           <span className={`
-                            text-sm transition-colors duration-200
+                            text-sm transition-colors duration-200 flex-1
                             ${isActive ? 'font-medium text-mocha-900' : 'text-mocha-900'}
                           `}>
                             {item.label}
                           </span>
+
+                          {/* Sipariş sayacı badge */}
+                          {item.id === 'operations' && pendingOrdersCount > 0 && (
+                            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                              {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
+                            </span>
+                          )}
                         </button>
                       );
                     })}

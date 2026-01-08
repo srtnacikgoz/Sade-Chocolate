@@ -329,10 +329,10 @@ export const Home: React.FC = () => {
             )}
 
             {premiumCollections.slice(0, 2).map((collection) => (
-              <div
+              <Link
                 key={collection.id}
+                to={`/product/${collection.id}`}
                 className="group cursor-pointer bg-white dark:bg-dark-800 rounded-[40px] overflow-hidden transition-all duration-700 hover:shadow-luxurious border border-gray-100 dark:border-gray-800"
-                onClick={() => addToCart(collection as any)}
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img src={collection.image} alt={collection.title} className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110" />
@@ -343,7 +343,7 @@ export const Home: React.FC = () => {
                   <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">{collection.description}</p>
                   <span className="font-display text-xl font-bold text-brown-900 dark:text-gold italic">₺{collection.price}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

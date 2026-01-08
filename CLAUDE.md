@@ -7,6 +7,8 @@
 2. `.claude/kişiselbağlam.md` - Kullanıcı tercihleri ve çalışma tarzı
 3. `.claude/fikirler.md` - Gelecek fikirler ve notlar
 4. `.claude/hedefler.md` - Hedefler ve görevler
+5. `.claude/FEEDBACK.md` - Bug, improvement, refactor ve todo kayıtları
+6. `.claude/GUNLUK.md` - Günlük çalışma kayıtları
 
 dosyalarını oku ve kullanıcıya:
 - Tamamlanan son özellikler
@@ -23,6 +25,28 @@ Sade Chocolate e-ticaret platformu. React + TypeScript + Firebase + Tailwind CSS
 ---
 
 ## Özel Dökümanlar
+
+### Proje Takip Dosyaları
+
+| Dosya | Amaç | Kullanım |
+|-------|------|----------|
+| `.claude/FEEDBACK.md` | Bug, improvement, refactor kayıtları | `/feedback` skill'i ile yönet veya manuel düzenle |
+| `.claude/GUNLUK.md` | Günlük çalışma kayıtları | Her oturum sonunda yapılan işleri kaydet |
+
+**FEEDBACK.md Kategorileri:**
+- `[BUG-XXX]` - Hatalar
+- `[IMP-XXX]` - İyileştirmeler
+- `[REFACTOR-XXX]` - Refactoring görevleri
+- `[TODO-XXX]` - Yapılacaklar
+
+**GUNLUK.md Formatı:**
+```markdown
+## YYYY-MM-DD
+### Yapılan İşler
+- İş açıklaması
+```
+
+---
 
 ### Araştırma Framework'leri
 

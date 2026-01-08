@@ -36,6 +36,7 @@ const LoginGateway = lazy(() => import('./pages/LoginGateway').then(m => ({ defa
 const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.Register })));
 const TastingQuiz = lazy(() => import('./pages/TastingQuiz').then(m => ({ default: m.TastingQuiz })));
 const Campaigns = lazy(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
+const Maintenance = lazy(() => import('./pages/Maintenance').then(m => ({ default: m.Maintenance })));
 
 // Minimal loading component - no spinner
 const PageLoader = () => (
@@ -51,6 +52,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAiEnabled, setIsAiEnabled] = useState(true); // Varsayılan aktif
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const { t } = useLanguage();
 
   // Firestore'dan AI Sommelier enabled durumunu dinle (canlı)
@@ -70,6 +72,31 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
     return () => unsubscribe();
   }, []);
+
+  // Firestore'dan bakım modu durumunu dinle
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'site_settings', 'maintenance'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setIsMaintenanceMode(docSnap.data()?.enabled === true);
+        }
+      },
+      (error) => {
+        console.error('Maintenance mode dinlenemedi:', error);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Bakım modunda admin hariç tüm sayfalar Maintenance gösterir
+  if (isMaintenanceMode && !isAdmin) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Maintenance />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream-100 dark:bg-dark-900 transition-colors duration-300">

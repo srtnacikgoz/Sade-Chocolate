@@ -589,6 +589,32 @@ const addAttribute = () => {
             </div>
           </div>
 
+          {/* --- STOK DURUMU --- */}
+          <div className={`p-6 rounded-[32px] border-2 transition-all ${formData.isOutOfStock ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${formData.isOutOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                  <span className="material-icons-outlined">{formData.isOutOfStock ? 'remove_shopping_cart' : 'check_circle'}</span>
+                </div>
+                <div>
+                  <label className={`text-[10px] font-black uppercase tracking-widest ${formData.isOutOfStock ? 'text-red-700' : 'text-emerald-700'}`}>
+                    Stok Durumu
+                  </label>
+                  <p className="text-xs text-slate-500">
+                    {formData.isOutOfStock ? 'Ürün şu anda tükendi' : 'Ürün stokta mevcut'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, isOutOfStock: !formData.isOutOfStock })}
+                className={`relative w-14 h-8 rounded-full transition-all ${formData.isOutOfStock ? 'bg-red-500' : 'bg-emerald-500'}`}
+              >
+                <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-all ${formData.isOutOfStock ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+          </div>
+
          {/* --- KATEGORİ SEÇİMİ --- */}
           <div className="bg-gradient-to-r from-brown-50 to-amber-50 p-6 rounded-[32px] border border-brown-200/50 space-y-4">
             <label className="text-[10px] font-black text-brown-700 uppercase tracking-widest">Kategori</label>

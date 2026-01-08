@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { useProducts } from '../context/ProductContext';
 import { Footer } from '../components/Footer';
-import { ShoppingBag, ArrowRight, Trash2, Gift, Info } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Trash2, Gift, Info, Plus } from 'lucide-react';
 
 export const Cart: React.FC = () => {
   const { items, updateQuantity, removeFromCart, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, hasGiftBag, setHasGiftBag } = useCart();
@@ -29,7 +29,7 @@ export const Cart: React.FC = () => {
   }
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto pt-32 pb-24 px-4 sm:px-8 lg:px-12 animate-fade-in bg-cream-100 dark:bg-dark-900 min-h-screen">
+    <main className="w-full max-w-screen-xl mx-auto pt-44 pb-24 px-4 sm:px-8 lg:px-12 animate-fade-in bg-cream-100 dark:bg-dark-900 min-h-screen">
       <div className="flex items-center gap-4 mb-16">
         <h1 className="font-display text-5xl font-bold italic dark:text-white">Sepetim</h1>
         <div className="h-px flex-1 bg-gray-100 dark:bg-dark-800"></div>
@@ -63,15 +63,23 @@ export const Cart: React.FC = () => {
               </div>
             ))}
           </div>
-          {hasGiftBag && (
+          {hasGiftBag && settings?.giftBag?.enabled && (
             <div className="flex gap-8 py-8 border-b border-gray-50 dark:border-dark-800 animate-in fade-in duration-500">
-              <div className="w-40 h-40 bg-gray-50 dark:bg-dark-800 rounded-[40px] flex items-center justify-center">
-                 <ShoppingBag className="text-gray-300" size={48} strokeWidth={1} />
+              <div className="w-40 h-40 bg-gray-50 dark:bg-dark-800 rounded-[40px] flex items-center justify-center overflow-hidden">
+                {settings.giftBag.images?.[0] ? (
+                  <img src={settings.giftBag.images[0]} alt="Hediye Çantası" className="w-full h-full object-cover" />
+                ) : (
+                  <ShoppingBag className="text-gray-300" size={48} strokeWidth={1} />
+                )}
               </div>
               <div className="flex-1 py-4 flex flex-col justify-center">
-                 <h3 className="font-display text-2xl italic dark:text-white">Sade Chocolate Hediye Çantası</h3>
+                 <h3 className="font-display text-2xl italic dark:text-white">
+                   {settings.giftBag.description || 'Hediye Çantası'}
+                 </h3>
                  <div className="flex justify-between items-center mt-4">
-                    <span className="text-[11px] font-black text-green-500 uppercase tracking-widest">Hediye (Ücretsiz)</span>
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${settings.giftBag.price > 0 ? 'text-brown-900 dark:text-gold' : 'text-green-500'}`}>
+                      {settings.giftBag.price > 0 ? `+₺${settings.giftBag.price}` : 'Ücretsiz'}
+                    </span>
                     <button onClick={() => setHasGiftBag(false)} className="text-[10px] font-black text-gray-300 hover:text-red-500 uppercase tracking-widest">Kaldır</button>
                  </div>
               </div>
@@ -80,48 +88,83 @@ export const Cart: React.FC = () => {
 
           {/* Hediye ve Çanta Seçenekleri */}
           <div className="space-y-6">
-            {/* Çanta Seçeneği */}
-            <div 
-              onClick={() => setHasGiftBag(!hasGiftBag)}
-              className={`p-8 rounded-[40px] border transition-all cursor-pointer flex items-center justify-between group ${hasGiftBag ? 'bg-gold/5 border-gold/20' : 'bg-white dark:bg-dark-800 border-gray-100 dark:border-gray-800 hover:border-gray-200'}`}
-            >
-              <div className="flex items-center gap-6">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${hasGiftBag ? 'bg-brown-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400'}`}>
-                  <ShoppingBag size={20} />
+            {/* Çanta Seçeneği - Sadece aktifse ve seçili değilse göster */}
+            {settings?.giftBag?.enabled && !hasGiftBag && (
+              <div
+                onClick={() => setHasGiftBag(true)}
+                className="p-8 rounded-[40px] border transition-all cursor-pointer flex items-center justify-between group bg-white dark:bg-dark-800 border-gray-100 dark:border-gray-800 hover:border-pink-300 hover:bg-pink-50/50 dark:hover:bg-pink-900/10"
+              >
+                <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all overflow-hidden bg-pink-50 dark:bg-pink-900/30 group-hover:scale-110">
+                    {settings.giftBag.images?.[0] ? (
+                      <img src={settings.giftBag.images[0]} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Gift size={24} className="text-pink-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-display text-xl italic dark:text-white leading-none group-hover:text-pink-600 transition-colors">Hediye Çantası İstiyorum</h4>
+                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-2">
+                      {settings.giftBag.description || 'Siparişinize özel çanta ekleyin'}
+                      <span className={`ml-2 ${settings.giftBag.price > 0 ? 'text-pink-500' : 'text-green-500'}`}>
+                        {settings.giftBag.price > 0 ? `(+₺${settings.giftBag.price})` : '(Ücretsiz)'}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-display text-xl italic dark:text-white leading-none">Hediye Çantası İstiyorum</h4>
-                  <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-2">Siparişinize ücretsiz çanta ekleyin</p>
+                <div className="w-8 h-8 rounded-full border-2 border-pink-200 flex items-center justify-center group-hover:border-pink-400 group-hover:bg-pink-100 transition-all">
+                  <Plus size={16} className="text-pink-300 group-hover:text-pink-500" />
                 </div>
               </div>
-              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${hasGiftBag ? 'bg-brown-900 border-brown-900 text-white' : 'border-gray-200'}`}>
-                {hasGiftBag && <ArrowRight size={14} />}
-              </div>
-            </div>
+            )}
 
-            {/* Hediye Notu */}
-            <div className="p-10 bg-gray-50 dark:bg-dark-800/50 rounded-[50px] border border-gray-100 dark:border-gray-800">
-               <label className="flex items-center gap-5 cursor-pointer mb-8" onClick={() => setIsGift(!isGift)}>
-                 <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all ${isGift ? 'bg-brown-900 border-brown-900 text-white shadow-md' : 'border-gray-200'}`}>
-                   {isGift && <ArrowRight size={16} />}
-                 </div>
-                 <span className="font-display text-2xl italic dark:text-white">Bu bir hediyedir</span>
-               </label>
-               
-               {isGift && (
-                 <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                   <textarea 
-                     placeholder="Mesajınızı buraya yazabilirsiniz..."
-                     value={giftMessage}
-                     onChange={e => setGiftMessage(e.target.value)}
-                     className="w-full p-8 bg-white dark:bg-dark-900 border-none rounded-[30px] shadow-inner text-base italic outline-none focus:ring-1 focus:ring-gold/30 min-h-[140px] dark:text-white"
-                   />
-                   <div className="mt-6 flex items-center gap-3 text-gray-400">
-                     <Info size={14} />
-                     <p className="text-[10px] font-bold uppercase tracking-widest">Fiyat bilgisi içermeyen fatura düzenlenecektir.</p>
-                   </div>
-                 </div>
-               )}
+            {/* Hediye Notu - Süslü Versiyon */}
+            <div className={`relative overflow-hidden rounded-[50px] border transition-all ${isGift ? 'bg-gradient-to-br from-gold/5 via-amber-50 to-orange-50 dark:from-gold/10 dark:via-amber-900/20 dark:to-orange-900/10 border-gold/20' : 'bg-gray-50 dark:bg-dark-800/50 border-gray-100 dark:border-gray-800'}`}>
+              {/* Dekoratif arka plan */}
+              {isGift && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-gold/10 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-200/20 rounded-full blur-2xl" />
+                </div>
+              )}
+
+              <div className="relative p-10">
+                <label className="flex items-center gap-5 cursor-pointer" onClick={() => setIsGift(!isGift)}>
+                  <div className={`w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all ${isGift ? 'bg-gradient-to-br from-gold to-amber-600 border-gold text-white shadow-lg shadow-gold/30' : 'border-gray-200 hover:border-gold/50'}`}>
+                    {isGift ? (
+                      <Gift size={18} />
+                    ) : (
+                      <Gift size={18} className="text-gray-300" />
+                    )}
+                  </div>
+                  <div>
+                    <span className={`font-display text-2xl italic transition-colors ${isGift ? 'text-brown-900 dark:text-gold' : 'dark:text-white'}`}>Bu bir hediyedir</span>
+                    {!isGift && <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">Özel bir mesaj ekleyin</p>}
+                  </div>
+                </label>
+
+                {isGift && (
+                  <div className="mt-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="relative">
+                      <div className="absolute -top-3 left-6 px-3 py-1 bg-gold/90 rounded-full">
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest">Hediye Mesajınız</span>
+                      </div>
+                      <textarea
+                        placeholder="Sevdiklerinize özel bir mesaj yazın..."
+                        value={giftMessage}
+                        onChange={e => setGiftMessage(e.target.value)}
+                        className="w-full p-8 pt-10 bg-white dark:bg-dark-900 border-2 border-gold/20 rounded-[30px] shadow-inner text-base italic outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/40 min-h-[160px] dark:text-white placeholder:text-gray-300"
+                      />
+                    </div>
+                    <div className="mt-6 flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-100 dark:border-amber-800/30">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center">
+                        <Info size={14} className="text-amber-600" />
+                      </div>
+                      <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300">Fiyat bilgisi içermeyen fatura düzenlenecektir.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -149,13 +192,21 @@ export const Cart: React.FC = () => {
                   <span>{t('subtotal')}</span>
                   <span className="dark:text-white">₺{cartTotal.toFixed(2)}</span>
                 </div>
+                {hasGiftBag && settings?.giftBag?.enabled && settings.giftBag.price > 0 && (
+                  <div className="flex justify-between text-sm text-gray-500 uppercase tracking-widest font-bold">
+                    <span>Hediye Çantası</span>
+                    <span className="text-pink-500">+₺{settings.giftBag.price.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-gray-500 uppercase tracking-widest font-bold">
                   <span>Kargo</span>
                   <span className={remaining <= 0 ? 'text-green-500' : 'dark:text-white'}>{remaining <= 0 ? 'Bedava' : 'Hesaplanacak'}</span>
                 </div>
                 <div className="pt-8 border-t border-gray-100 dark:border-gray-700 flex justify-between items-end">
                   <span className="font-display text-2xl italic dark:text-white">Toplam</span>
-                  <span className="font-display text-4xl font-bold text-brown-900 dark:text-gold italic">₺{cartTotal.toFixed(2)}</span>
+                  <span className="font-display text-4xl font-bold text-brown-900 dark:text-gold italic">
+                    ₺{(cartTotal + (hasGiftBag && settings?.giftBag?.price ? settings.giftBag.price : 0)).toFixed(2)}
+                  </span>
                 </div>
               </div>
 

@@ -108,6 +108,7 @@ const sendEmail = async (emailData: EmailData) => {
   try {
     await addDoc(collection(db, MAIL_COLLECTION), {
       to: emailData.to,
+      from: 'Sade Chocolate <bilgi@sadechocolate.com>',
       message: {
         subject: emailData.subject,
         html: emailData.html,

@@ -50,6 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   const handleAddToCart = (e: React.MouseEvent, qty: number = 1) => {
     e.preventDefault();
     e.stopPropagation();
+    if (product.isOutOfStock) return; // Tükendiyse sepete ekleme
     addToCart(product, qty);
   };
 
@@ -79,13 +80,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
         <div className="relative aspect-[4/5] bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden">
 
           {/* Rozetler */}
-          {currentBadge && (
+          {product.isOutOfStock ? (
+            <span className="absolute top-0 left-0 text-[10px] font-bold px-3 py-1 uppercase tracking-widest z-20 bg-gray-800 text-white">
+              Tükendi
+            </span>
+          ) : currentBadge && (
             <span
               className="absolute top-0 left-0 text-[10px] font-bold px-3 py-1 uppercase tracking-widest z-20"
               style={{ backgroundColor: currentBadge.bgColor, color: currentBadge.textColor }}
             >
               {currentBadge.name[language as 'tr' | 'en' | 'ru']}
             </span>
+          )}
+
+          {/* Tükendi Overlay */}
+          {product.isOutOfStock && (
+            <div className="absolute inset-0 bg-white/60 dark:bg-black/60 z-15 flex items-center justify-center">
+              <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Stokta Yok</span>
+            </div>
           )}
 
           {/* Ürün Görseli */}
@@ -138,22 +150,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
                 {product.currency || '₺'}{product.price.toFixed(2)}
               </span>
             </div>
-            <button
-              aria-label="Sepete Ekle"
-              onClick={(e) => handleAddToCart(e)}
-              className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 shadow-sm"
-            >
-              <span className="material-icons-outlined text-lg">add</span>
-            </button>
+            {!product.isOutOfStock && (
+              <button
+                aria-label="Sepete Ekle"
+                onClick={(e) => handleAddToCart(e)}
+                className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 shadow-sm"
+              >
+                <span className="material-icons-outlined text-lg">add</span>
+              </button>
+            )}
           </div>
-          
+
           {/* Mobil İçin Geniş Buton */}
-          <button
-  onClick={(e) => handleAddToCart(e)}
-  className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-mocha-900 dark:text-gray-100 border border-gold/20 bg-cream-50 dark:bg-transparent rounded-lg hover:bg-gold hover:text-white dark:hover:bg-gold transition-all duration-300 shadow-sm"
->
-            {t('add_to_cart')}
-          </button>
+          {product.isOutOfStock ? (
+            <div className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border border-gray-200 bg-gray-100 dark:bg-gray-800 dark:border-gray-700 rounded-lg text-center cursor-not-allowed">
+              Tükendi
+            </div>
+          ) : (
+            <button
+              onClick={(e) => handleAddToCart(e)}
+              className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-mocha-900 dark:text-gray-100 border border-gold/20 bg-cream-50 dark:bg-transparent rounded-lg hover:bg-gold hover:text-white dark:hover:bg-gold transition-all duration-300 shadow-sm"
+            >
+              {t('add_to_cart')}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -169,13 +189,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
         className="group bg-white dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-gray-50 dark:border-gray-800 relative cursor-pointer"
       >
         <div className="relative aspect-[3/2] bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden">
-          {currentBadge && (
+          {product.isOutOfStock ? (
+            <span className="absolute top-4 left-4 text-xs font-bold px-3 py-1.5 uppercase tracking-widest z-20 rounded-full bg-gray-800 text-white">
+              Tükendi
+            </span>
+          ) : currentBadge && (
             <span
               className="absolute top-4 left-4 text-xs font-bold px-3 py-1.5 uppercase tracking-widest z-20 rounded-full"
               style={{ backgroundColor: currentBadge.bgColor, color: currentBadge.textColor }}
             >
               {currentBadge.name[language as 'tr' | 'en' | 'ru']}
             </span>
+          )}
+          {product.isOutOfStock && (
+            <div className="absolute inset-0 bg-white/60 dark:bg-black/60 z-15 flex items-center justify-center">
+              <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Stokta Yok</span>
+            </div>
           )}
           <img
             src={currentImage}
@@ -218,12 +247,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
               </span>
             </div>
           </div>
-          <button
-            onClick={(e) => handleAddToCart(e)}
-            className="w-full py-3 bg-gold text-white font-semibold uppercase tracking-wider rounded-lg hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 shadow-lg text-sm"
-          >
-            {t('add_to_cart')}
-          </button>
+          {product.isOutOfStock ? (
+            <div className="w-full py-3 bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-semibold uppercase tracking-wider rounded-lg text-sm text-center cursor-not-allowed">
+              Tükendi
+            </div>
+          ) : (
+            <button
+              onClick={(e) => handleAddToCart(e)}
+              className="w-full py-3 bg-gold text-white font-semibold uppercase tracking-wider rounded-lg hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 shadow-lg text-sm"
+            >
+              {t('add_to_cart')}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -239,13 +274,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
         className="group bg-white dark:bg-dark-800 rounded-xl shadow-soft hover:shadow-hover transition-all duration-300 overflow-hidden flex border border-gray-50 dark:border-gray-800 items-center p-3 relative cursor-pointer"
       >
         <div className="relative w-24 h-24 flex-shrink-0 bg-[#F9F9F9] dark:bg-gray-800 rounded-lg overflow-hidden mr-3">
-          {currentBadge && (
+          {product.isOutOfStock ? (
+            <span className="absolute top-0 left-0 text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-widest z-20 rounded-tl-lg rounded-br-lg bg-gray-800 text-white">
+              Tükendi
+            </span>
+          ) : currentBadge && (
             <span
               className="absolute top-0 left-0 text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-widest z-20 rounded-tl-lg rounded-br-lg"
               style={{ backgroundColor: currentBadge.bgColor, color: currentBadge.textColor }}
             >
               {currentBadge.name[language as 'tr' | 'en' | 'ru']}
             </span>
+          )}
+          {product.isOutOfStock && (
+            <div className="absolute inset-0 bg-white/60 dark:bg-black/60 z-15" />
           )}
           <img
             src={currentImage}
@@ -285,33 +327,39 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
               </span>
             </div>
             
-            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
-              <button 
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-1 border border-gray-300 dark:border-gray-600 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <span className="material-icons-outlined text-base">remove</span>
-              </button>
-              <input 
-                className="w-8 text-center bg-transparent border-none focus:ring-0 p-0 text-sm font-medium text-gray-900 dark:text-white"
-                type="number" 
-                min="1"
-                value={quantity}
-                readOnly
-              />
-              <button 
-                onClick={() => setQuantity(quantity + 1)}
-                className="p-1 border border-gray-300 dark:border-gray-600 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <span className="material-icons-outlined text-base">add</span>
-              </button>
-              <button
-                onClick={(e) => handleAddToCart(e, quantity)}
-                className="ml-2 px-3 py-1.5 bg-gold text-white text-xs font-semibold rounded-full hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 whitespace-nowrap"
-              >
-                {t('add_to_cart')}
-              </button>
-            </div>
+            {product.isOutOfStock ? (
+              <span className="px-3 py-1.5 bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 text-xs font-semibold rounded-full">
+                Tükendi
+              </span>
+            ) : (
+              <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="p-1 border border-gray-300 dark:border-gray-600 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <span className="material-icons-outlined text-base">remove</span>
+                </button>
+                <input
+                  className="w-8 text-center bg-transparent border-none focus:ring-0 p-0 text-sm font-medium text-gray-900 dark:text-white"
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  readOnly
+                />
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="p-1 border border-gray-300 dark:border-gray-600 rounded-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <span className="material-icons-outlined text-base">add</span>
+                </button>
+                <button
+                  onClick={(e) => handleAddToCart(e, quantity)}
+                  className="ml-2 px-3 py-1.5 bg-gold text-white text-xs font-semibold rounded-full hover:bg-gray-900 dark:hover:bg-gray-900 hover:text-white transition-colors duration-300 whitespace-nowrap"
+                >
+                  {t('add_to_cart')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

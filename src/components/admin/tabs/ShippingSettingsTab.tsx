@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { Truck, Save, Package, DollarSign, TrendingUp, AlertCircle, CheckCircle, XCircle, BarChart3, RefreshCw } from 'lucide-react';
+import { Truck, Save, Package, DollarSign, TrendingUp, AlertCircle, CheckCircle, XCircle, BarChart3, RefreshCw, Gift, Plus, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUpload } from '../ImageUpload';
+
+interface GiftBagSettings {
+  enabled: boolean;
+  price: number;
+  images: string[];
+  description: string;
+}
 
 interface ShippingSettings {
   freeShippingLimit: number;
   defaultShippingCost: number;
+  giftBag?: GiftBagSettings;
 }
 
 interface CostAnalytics {
@@ -23,8 +32,15 @@ interface CostAnalytics {
 export const ShippingSettingsTab: React.FC = () => {
   const [settings, setSettings] = useState<ShippingSettings>({
     freeShippingLimit: 1500,
-    defaultShippingCost: 95
+    defaultShippingCost: 95,
+    giftBag: {
+      enabled: false,
+      price: 0,
+      images: [],
+      description: ''
+    }
   });
+  const [newImageIndex, setNewImageIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [analytics, setAnalytics] = useState<CostAnalytics | null>(null);
@@ -99,7 +115,13 @@ export const ShippingSettingsTab: React.FC = () => {
           const data = docSnap.data();
           setSettings({
             freeShippingLimit: data.freeShippingLimit ?? 1500,
-            defaultShippingCost: data.defaultShippingCost ?? 95
+            defaultShippingCost: data.defaultShippingCost ?? 95,
+            giftBag: data.giftBag ?? {
+              enabled: false,
+              price: 0,
+              images: [],
+              description: ''
+            }
           });
         }
       } catch (error) {
@@ -231,6 +253,179 @@ export const ShippingSettingsTab: React.FC = () => {
             Örnek: Sepet tutarı {settings.freeShippingLimit}₺ ve üzeri ise kargo ücretsiz
           </p>
         </div>
+      </div>
+
+      {/* Hediye Çantası Ayarları */}
+      <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center">
+              <Gift className="text-pink-600" size={20} />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white">Hediye Çantası</h3>
+              <p className="text-xs text-gray-500">Sepette "Hediye çantası istiyorum" seçeneği</p>
+            </div>
+          </div>
+
+          {/* Toggle */}
+          <button
+            onClick={() => setSettings(prev => ({
+              ...prev,
+              giftBag: { ...prev.giftBag!, enabled: !prev.giftBag?.enabled }
+            }))}
+            className={`relative w-14 h-7 rounded-full transition-colors ${
+              settings.giftBag?.enabled ? 'bg-pink-500' : 'bg-gray-300 dark:bg-gray-600'
+            }`}
+          >
+            <span
+              className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                settings.giftBag?.enabled ? 'translate-x-8' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {settings.giftBag?.enabled && (
+          <div className="space-y-6">
+            {/* Fiyat ve Açıklama */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                  Çanta Fiyatı (0 = Ücretsiz)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₺</span>
+                  <input
+                    type="number"
+                    value={settings.giftBag?.price || 0}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      giftBag: { ...prev.giftBag!, price: Number(e.target.value) }
+                    }))}
+                    className="w-full pl-10 pr-4 py-3 text-lg font-bold rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
+                    min="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                  Açıklama (Sepette görünür)
+                </label>
+                <input
+                  type="text"
+                  value={settings.giftBag?.description || ''}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    giftBag: { ...prev.giftBag!, description: e.target.value }
+                  }))}
+                  placeholder="Örn: Özel tasarım hediye çantası"
+                  className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Çanta Görselleri */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                Çanta Görselleri
+              </label>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Mevcut Görseller */}
+                {settings.giftBag?.images?.map((img, index) => (
+                  <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-900">
+                    <img src={img} alt={`Çanta ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => {
+                        const newImages = [...(settings.giftBag?.images || [])];
+                        newImages.splice(index, 1);
+                        setSettings(prev => ({
+                          ...prev,
+                          giftBag: { ...prev.giftBag!, images: newImages }
+                        }));
+                      }}
+                      className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Yeni Görsel Ekle Butonu */}
+                {(settings.giftBag?.images?.length || 0) < 6 && (
+                  <button
+                    onClick={() => setNewImageIndex((settings.giftBag?.images?.length || 0))}
+                    className="aspect-square rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-all flex flex-col items-center justify-center gap-2"
+                  >
+                    <Plus size={24} className="text-gray-400" />
+                    <span className="text-xs text-gray-400 font-medium">Görsel Ekle</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Görsel Yükleme Modal */}
+              {newImageIndex !== null && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 max-w-md w-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-bold text-gray-900 dark:text-white">Görsel Yükle</h4>
+                      <button
+                        onClick={() => setNewImageIndex(null)}
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-dark-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <ImageUpload
+                      label="Hediye Çantası Görseli"
+                      folder="gift-bags"
+                      value=""
+                      onChange={(url) => {
+                        if (url) {
+                          const newImages = [...(settings.giftBag?.images || []), url];
+                          setSettings(prev => ({
+                            ...prev,
+                            giftBag: { ...prev.giftBag!, images: newImages }
+                          }));
+                        }
+                        setNewImageIndex(null);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <p className="text-xs text-gray-400 mt-3">
+                En fazla 6 görsel ekleyebilirsiniz. Görseller sepette slider olarak gösterilecek.
+              </p>
+            </div>
+
+            {/* Önizleme */}
+            {settings.giftBag?.images && settings.giftBag.images.length > 0 && (
+              <div className="bg-pink-50 dark:bg-pink-900/20 rounded-xl p-4 border border-pink-200 dark:border-pink-800">
+                <p className="text-xs text-pink-600 dark:text-pink-400 font-bold mb-3">Sepette Görünüm Önizlemesi:</p>
+                <div className="flex items-center gap-3 bg-white dark:bg-dark-800 rounded-lg p-3">
+                  <img
+                    src={settings.giftBag.images[0]}
+                    alt="Preview"
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {settings.giftBag.description || 'Hediye Çantası'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {settings.giftBag.price > 0 ? `+₺${settings.giftBag.price}` : 'Ücretsiz'}
+                    </p>
+                  </div>
+                  <input type="checkbox" className="w-5 h-5 accent-pink-500" defaultChecked />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Preview */}
