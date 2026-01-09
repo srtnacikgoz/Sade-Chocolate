@@ -8,6 +8,8 @@ import { OrdersView } from '../components/account/OrdersView';
 import { AddressesView } from '../components/account/AddressesView';
 import { InvoiceInfoView } from '../components/account/InvoiceInfoView';
 import { LoyaltyPanel } from '../components/account/LoyaltyPanel';
+import { SettingsView } from '../components/account/SettingsView';
+import { HelpView } from '../components/account/HelpView';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import {
@@ -23,8 +25,20 @@ type AccountView = 'main' | 'orders' | 'addresses' | 'invoice' | 'settings' | 'h
 export const Account: React.FC = () => {
   const { isLoggedIn, user, login, loginWithGoogle, resetPassword, logout, orders, loading } = useUser();
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect'); // checkout gibi redirect parametresi
+  const viewParam = searchParams.get('view'); // orders, addresses gibi view parametresi
 
-  const [currentView, setCurrentView] = useState<AccountView>('main');
+  // URL'deki view parametresine göre başlangıç view'ını belirle
+  const getInitialView = (): AccountView => {
+    if (viewParam && ['orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
+      return viewParam as AccountView;
+    }
+    return 'main';
+  };
+
+  const [currentView, setCurrentView] = useState<AccountView>(getInitialView);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotEmailSent, setForgotEmailSent] = useState(false);
@@ -35,9 +49,21 @@ export const Account: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect'); // checkout gibi redirect parametresi
+
+  // Kullanıcı giriş yaptıysa ve redirect parametresi varsa yönlendir
+  useEffect(() => {
+    if (!loading && isLoggedIn && redirectTo) {
+      console.log('Redirecting to:', redirectTo);
+      navigate(`/${redirectTo}`, { replace: true });
+    }
+  }, [loading, isLoggedIn, redirectTo, navigate]);
+
+  // URL'de view parametresi varsa ilgili görünüme git
+  useEffect(() => {
+    if (isLoggedIn && viewParam && ['orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
+      setCurrentView(viewParam as AccountView);
+    }
+  }, [isLoggedIn, viewParam]);
 
   useEffect(() => {
     // Tema Başlatma: LocalStorage'dan oku, yoksa sistem tercihine bak
@@ -462,6 +488,8 @@ return (
                currentView === 'orders' ? t('my_orders') :
                currentView === 'addresses' ? t('my_addresses') :
                currentView === 'loyalty' ? 'Sadakat Programı' :
+               currentView === 'settings' ? t('settings') :
+               currentView === 'help' ? t('help_support') :
                t('invoice_info')
              )}
           </div>
@@ -470,6 +498,8 @@ return (
             {currentView === 'addresses' && <AddressesView />}
             {currentView === 'invoice' && <InvoiceInfoView />}
             {currentView === 'loyalty' && <LoyaltyPanel />}
+            {currentView === 'settings' && <SettingsView />}
+            {currentView === 'help' && <HelpView />}
           </div>
         </div>
       )}

@@ -319,7 +319,7 @@ const handleSave = async (e: React.FormEvent) => {
                countryCode={formData.phoneCountry}
                onValueChange={(value) => setFormData({...formData, phone: value})}
                onCountryCodeChange={(code) => setFormData({...formData, phoneCountry: code})}
-               placeholder="533 342 04 93"
+               placeholder="5** *** ** **"
                error={errors.includes('phone')}
              />
              {errors.includes('phone') && (

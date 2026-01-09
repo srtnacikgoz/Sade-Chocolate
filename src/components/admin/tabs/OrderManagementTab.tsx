@@ -2191,7 +2191,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
         variant: 'success',
         onConfirm: async () => {
           try {
-            await editOrder(order.id, {
+            await editOrder(order.firestoreId || order.id, {
               status: 'Awaiting Prep',
               paymentConfirmedAt: new Date().toISOString(),
               paymentConfirmedBy: 'admin'
@@ -2211,7 +2211,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleEmailSent = async () => {
     try {
-      await sendEmail(order.id);
+      await sendEmail(order.firestoreId || order.id);
       success(`Sipariş onay e-postası ${order.customer?.email || 'müşteri'} adresine gönderildi`);
     } catch (err: any) {
       error(`E-posta gönderilemedi: ${err.message}`);
@@ -2220,7 +2220,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleTrackingSaved = async (carrier: string, trackingNumber: string) => {
     try {
-      await addTracking(order.id, carrier, trackingNumber);
+      await addTracking(order.firestoreId || order.id, carrier, trackingNumber);
       success(`Kargo takip numarası eklendi: ${carrier} - ${trackingNumber}`);
     } catch (err: any) {
       error(`Takip numarası eklenemedi: ${err.message}`);
@@ -2229,7 +2229,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleTagSaved = async (tag: string, color: string) => {
     try {
-      await addTag(order.id, tag, color);
+      await addTag(order.firestoreId || order.id, tag, color);
       success(`"${tag}" etiketi eklendi`);
     } catch (err: any) {
       error(`Etiket eklenemedi: ${err.message}`);
@@ -2238,7 +2238,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleOrderEdit = async (updates: any) => {
     try {
-      await editOrder(order.id, updates);
+      await editOrder(order.firestoreId || order.id, updates);
       success('Sipariş bilgileri başarıyla güncellendi');
     } catch (err: any) {
       error(`Sipariş güncellenemedi: ${err.message}`);
@@ -2247,7 +2247,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleRefund = async (refundData: any) => {
     try {
-      await startRefund(order.id, refundData);
+      await startRefund(order.firestoreId || order.id, refundData);
       success(`İade işlemi başlatıldı: ₺${refundData.amount.toLocaleString('tr-TR')}`);
     } catch (err: any) {
       error(`İade başlatılamadı: ${err.message}`);
@@ -2256,7 +2256,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleCancel = async (cancelData: any) => {
     try {
-      await cancelOrder(order.id, cancelData);
+      await cancelOrder(order.firestoreId || order.id, cancelData);
       success('Sipariş başarıyla iptal edildi');
     } catch (err: any) {
       error(`Sipariş iptal edilemedi: ${err.message}`);
@@ -2265,7 +2265,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
 
   const handleStatusChange = async (newStatus: Order['status']) => {
     try {
-      await updateOrderStatus(order.id, newStatus);
+      await updateOrderStatus(order.firestoreId || order.id, newStatus);
       success(`Sipariş durumu güncellendi: ${newStatus}`);
     } catch (err: any) {
       error(`Durum güncellenemedi: ${err.message}`);
@@ -2295,6 +2295,17 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
               {order.payment?.method === 'eft' && (
                 <span className="flex items-center gap-1 text-[9px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full border border-amber-300 dark:border-amber-700 font-bold uppercase">
                   <Landmark size={10} /> Havale/EFT
+                </span>
+              )}
+              {order.payment?.method === 'card' && (
+                <span className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-bold uppercase ${
+                  order.payment?.status === 'paid'
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700'
+                    : order.payment?.status === 'failed'
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700'
+                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700'
+                }`}>
+                  💳 {order.payment?.cardAssociation || 'Kart'} {order.payment?.lastFourDigits ? `**** ${order.payment.lastFourDigits}` : ''}
                 </span>
               )}
               {order.priority === 'High' && (
@@ -2403,6 +2414,60 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                 <span className="text-brown-900 dark:text-white">Toplam</span>
                 <span className="text-brown-900 dark:text-white">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
               </div>
+
+              {/* İyzico Ödeme Detayları */}
+              {order.payment?.method === 'card' && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-3">Kart Ödeme Detayları</h4>
+                  <div className="space-y-2 text-xs">
+                    {order.payment.cardAssociation && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">Kart</span>
+                        <span className="text-brown-900 dark:text-white font-medium">
+                          {order.payment.cardAssociation} {order.payment.cardFamily && `(${order.payment.cardFamily})`}
+                        </span>
+                      </div>
+                    )}
+                    {order.payment.lastFourDigits && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">Kart No</span>
+                        <span className="text-brown-900 dark:text-white font-mono">**** **** **** {order.payment.lastFourDigits}</span>
+                      </div>
+                    )}
+                    {order.payment.iyzicoPaymentId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">İyzico ID</span>
+                        <span className="text-brown-900 dark:text-white font-mono text-[10px]">{order.payment.iyzicoPaymentId}</span>
+                      </div>
+                    )}
+                    {order.payment.paidPrice !== undefined && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">Ödenen</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">₺{order.payment.paidPrice.toLocaleString('tr-TR')}</span>
+                      </div>
+                    )}
+                    {order.payment.iyzicoCommissionFee !== undefined && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">İyzico Komisyon</span>
+                        <span className="text-orange-600 dark:text-orange-400">₺{order.payment.iyzicoCommissionFee.toLocaleString('tr-TR')}</span>
+                      </div>
+                    )}
+                    {order.payment.status === 'failed' && order.payment.failureReason && (
+                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                        <p className="text-[10px] text-red-600 dark:text-red-400 font-medium">
+                          ❌ Hata: {order.payment.failureReason}
+                        </p>
+                      </div>
+                    )}
+                    {order.payment.retryCount !== undefined && order.payment.retryCount > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 dark:text-gray-400">Deneme Sayısı</span>
+                        <span className="text-amber-600 dark:text-amber-400">{order.payment.retryCount}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -2674,7 +2739,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                             variant: 'warning',
                             onConfirm: async () => {
                               try {
-                                await removeTag(order.id, idx);
+                                await removeTag(order.firestoreId || order.id, idx);
                                 success(`"${tag.label}" etiketi kaldırıldı`);
                               } catch (err: any) {
                                 error(`Etiket kaldırılamadı: ${err.message}`);
@@ -2722,13 +2787,40 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
             </div>
           </div>
 
-          {/* Billing Address */}
+          {/* Billing/Invoice Info */}
           <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3">Fatura Adresi</h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-              {order.billing?.address || 'Adres yok'}<br />
-              {order.billing?.city || 'Şehir yok'}
-            </p>
+            <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3">Fatura Bilgileri</h4>
+            {order.invoice ? (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-800 dark:text-white">
+                  {order.invoice.type === 'corporate' ? (
+                    <>
+                      {order.invoice.companyName || 'Kurumsal Fatura'}
+                      {order.invoice.taxOffice && (
+                        <span className="block text-[10px] font-normal text-gray-500 mt-1">
+                          {order.invoice.taxOffice} - {order.invoice.taxNo}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    'Bireysel Fatura'
+                  )}
+                </p>
+                {order.invoice.address && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {order.invoice.address}
+                    {order.invoice.city && <>, {order.invoice.city}</>}
+                  </p>
+                )}
+              </div>
+            ) : order.billing ? (
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                {order.billing.address || 'Adres yok'}<br />
+                {order.billing.city || 'Şehir yok'}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 italic">Bireysel Fatura</p>
+            )}
           </div>
 
           {/* Gift Note */}
@@ -3033,6 +3125,7 @@ const LogisticsRulesPanel: React.FC = () => {
 export const OrderManagementTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'logistics'>('orders');
   const [filter, setFilter] = useState('All');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'card' | 'eft' | 'paid' | 'failed'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isSeedingOrders, setIsSeedingOrders] = useState(false);
@@ -3113,7 +3206,7 @@ export const OrderManagementTab: React.FC = () => {
       const { doc, updateDoc, arrayUnion, Timestamp } = await import('firebase/firestore');
       const { db } = await import('../../../lib/firebase');
 
-      const orderRef = doc(db, 'orders', order.id.replace('SADE-', ''));
+      const orderRef = doc(db, 'orders', order.firestoreId || order.id);
       await updateDoc(orderRef, {
         status: 'Awaiting Prep',
         'payment.status': 'paid',
@@ -3316,7 +3409,8 @@ export const OrderManagementTab: React.FC = () => {
 
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-3 flex-wrap items-center">
+          {/* Durum Filtreleri */}
           {['All', 'Pending Payment', 'Awaiting Prep', 'In Production', 'Ready for Packing'].map(f => {
             const labels: Record<string, string> = {
               'All': 'Tümü',
@@ -3344,6 +3438,42 @@ export const OrderManagementTab: React.FC = () => {
               </button>
             );
           })}
+
+          {/* Ayırıcı */}
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+
+          {/* Ödeme Filtreleri */}
+          <div className="flex gap-1.5">
+            {[
+              { key: 'all', label: 'Tüm Ödemeler', icon: '📊' },
+              { key: 'card', label: 'Kart', icon: '💳' },
+              { key: 'eft', label: 'EFT', icon: '🏦' },
+              { key: 'paid', label: 'Ödendi', icon: '✓' },
+              { key: 'failed', label: 'Başarısız', icon: '✗' }
+            ].map(({ key, label, icon }) => (
+              <button
+                key={key}
+                onClick={() => setPaymentFilter(key as typeof paymentFilter)}
+                className={`text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all font-bold flex items-center gap-1 ${
+                  paymentFilter === key
+                    ? key === 'paid'
+                      ? 'bg-emerald-500 text-white shadow'
+                      : key === 'failed'
+                        ? 'bg-red-500 text-white shadow'
+                        : key === 'card'
+                          ? 'bg-blue-500 text-white shadow'
+                          : key === 'eft'
+                            ? 'bg-amber-500 text-white shadow'
+                            : 'bg-gray-700 dark:bg-gray-600 text-white shadow'
+                    : 'bg-gray-50 dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 border border-gray-200 dark:border-gray-700'
+                }`}
+                title={label}
+              >
+                <span>{icon}</span>
+                <span className="hidden sm:inline">{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -3394,6 +3524,14 @@ export const OrderManagementTab: React.FC = () => {
           <tbody>
             {orders
               .filter(o => filter === 'All' || o.status === filter)
+              .filter(o => {
+                if (paymentFilter === 'all') return true;
+                if (paymentFilter === 'card') return o.payment?.method === 'card';
+                if (paymentFilter === 'eft') return o.payment?.method === 'eft';
+                if (paymentFilter === 'paid') return o.payment?.status === 'paid';
+                if (paymentFilter === 'failed') return o.payment?.status === 'failed';
+                return true;
+              })
               .map((order) => (
                 <tr
                   key={order.id}
@@ -3447,6 +3585,17 @@ export const OrderManagementTab: React.FC = () => {
                         {order.payment?.method === 'eft' && (
                           <span className="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
                             EFT
+                          </span>
+                        )}
+                        {order.payment?.method === 'card' && (
+                          <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold ${
+                            order.payment?.status === 'paid'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                              : order.payment?.status === 'failed'
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                          }`}>
+                            💳 {order.payment?.lastFourDigits ? `*${order.payment.lastFourDigits}` : 'Kart'}
                           </span>
                         )}
                         {/* Hediye Çantası Uyarısı */}

@@ -46,7 +46,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   countryCode,
   onValueChange,
   onCountryCodeChange,
-  placeholder = '533 342 04 93',
+  placeholder = '5** *** ** **',
   className = '',
   error = false
 }) => {

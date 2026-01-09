@@ -73,3 +73,9 @@ Bu dosya proje ile ilgili hataları, geri bildirimleri, iyileştirme önerilerin
   1. Vitest kurulumu + kritik hooks için unit testler
   2. Storybook kurulumu + UI bileşen izolasyonu
   3. CI/CD'de test zorunluluğu
+
+
+
+sipariş yönetimi sipariş arama search alanı çalışıyor mu
+Sipariş No:
+kullancı(hesapbım) sayfası içeriği mevcut şekildeki gibi kartlardan oluşmasın. başka bir düzene geçilim. daha ziyade linkler olsun, tıklandıkça gerekli sayfa açılsın. dandeleon, laderach ve marcolini araştırılabilir.

@@ -112,7 +112,8 @@ export const subscribeToOrders = (
         const data = doc.data();
         return {
           ...data,
-          id: doc.id,
+          id: data.id || doc.id, // SADE-XXXXXX formatını koru, yoksa Firestore ID kullan
+          firestoreId: doc.id,   // Firestore ID'yi ayrı sakla (editOrder için gerekli)
           // SLA hesapla (siparişten bu yana geçen dakika)
           sla: calculateSLA(data.createdAt),
           createdAt: data.createdAt?.toDate?.()?.toLocaleString('tr-TR') || data.createdAt,

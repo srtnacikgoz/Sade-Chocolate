@@ -98,7 +98,8 @@ export interface EditRecord {
 }
 
 export interface Order {
-  id: string;
+  id: string;           // User-friendly order number (SADE-XXXXXX)
+  firestoreId?: string; // Firestore document ID (for database operations)
   customer: {
     name: string;
     email: string;
@@ -121,9 +122,22 @@ export interface Order {
     city: string;
     estimatedDate: string;
   };
-  billing: {
+  billing?: {
     address: string;
     city: string;
+  };
+  invoice?: {
+    type: 'individual' | 'corporate';
+    title?: string;
+    firstName?: string;
+    lastName?: string;
+    tckn?: string;
+    companyName?: string;
+    taxOffice?: string;
+    taxNo?: string;
+    address?: string;
+    city?: string;
+    district?: string;
   };
   payment: {
     method?: PaymentMethod;  // 'card' | 'eft'
@@ -133,6 +147,23 @@ export interface Order {
     tax: number;
     discount: number;
     total: number;
+
+    // İyzico-specific fields (Card payments)
+    iyzicoPaymentId?: string;           // İyzico transaction ID
+    iyzicoToken?: string;               // Checkout form token
+    tokenExpireTime?: number;           // Token expiration timestamp
+    cardFamily?: string;                // 'Bonus', 'Maximum', 'Axess'
+    cardAssociation?: string;           // 'VISA', 'MASTER_CARD'
+    lastFourDigits?: string;            // **** **** **** 1234
+    installment?: number;               // Taksit sayısı (şimdilik 1)
+    paidPrice?: number;                 // İyzico'ya ödenen tutar
+    merchantCommissionRate?: number;    // Komisyon oranı
+    iyzicoCommissionFee?: number;       // İyzico komisyon ücreti
+
+    // Retry tracking
+    retryCount?: number;
+    lastRetryAt?: string;               // ISO date
+    failureReason?: string;             // Ödeme başarısız olursa hata mesajı
   };
   timeline: Array<{
     action: string;

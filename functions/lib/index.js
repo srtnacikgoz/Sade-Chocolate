@@ -36,11 +36,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
+exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const params_1 = require("firebase-functions/params");
+const v2_1 = require("firebase-functions/v2");
 const axios_1 = __importDefault(require("axios"));
+const iyzicoService = __importStar(require("./services/iyzicoService"));
+// Set global region for all functions
+(0, v2_1.setGlobalOptions)({ region: 'europe-west3' });
 // Firebase Admin SDK initialization
 admin.initializeApp();
 // MNG Kargo API Base URLs
@@ -526,6 +530,449 @@ exports.sendCustomPasswordResetEmail = functions.https.onCall(async (request) =>
             throw new functions.https.HttpsError('not-found', 'Bu email adresi ile kayıtlı bir hesap bulunamadı');
         }
         throw new functions.https.HttpsError('internal', 'Şifre sıfırlama emaili gönderilemedi');
+    }
+});
+// ============================================================
+// İYZİCO PAYMENT GATEWAY FUNCTIONS
+// ============================================================
+/**
+ * İyzico Checkout Form Başlatma
+ *
+ * @param {Object} data - {orderId: string}
+ * @param {Object} context - Firebase auth context
+ * @returns {Object} {token, checkoutFormContent, tokenExpireTime}
+ */
+exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
+    var _a, _b;
+    const { orderId } = request.data;
+    // Validation
+    if (!orderId) {
+        throw new functions.https.HttpsError('invalid-argument', 'orderId parametresi gerekli');
+    }
+    functions.logger.info('İyzico payment initialize request:', { orderId });
+    try {
+        // Firestore'dan order bilgisini al
+        const db = admin.firestore();
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'Sipariş bulunamadı');
+        }
+        const orderData = orderDoc.data();
+        // Order validation
+        if (((_a = orderData.payment) === null || _a === void 0 ? void 0 : _a.status) !== 'pending') {
+            throw new functions.https.HttpsError('failed-precondition', 'Sipariş zaten ödenmiş veya işlem sırasında');
+        }
+        if (((_b = orderData.payment) === null || _b === void 0 ? void 0 : _b.method) !== 'card') {
+            throw new functions.https.HttpsError('failed-precondition', 'Bu sipariş kart ödemesi için oluşturulmamış');
+        }
+        // İyzico Checkout Form başlat
+        const result = await iyzicoService.initializeCheckoutForm(orderData);
+        // Order'a token bilgisini ekle (tracking için)
+        await orderDoc.ref.update({
+            'payment.iyzicoToken': result.token,
+            'payment.tokenExpireTime': result.tokenExpireTime,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        functions.logger.info('İyzico payment initialized:', {
+            orderId,
+            token: result.token
+        });
+        return {
+            success: true,
+            token: result.token,
+            checkoutFormContent: result.checkoutFormContent,
+            tokenExpireTime: result.tokenExpireTime,
+            paymentPageUrl: result.paymentPageUrl
+        };
+    }
+    catch (error) {
+        functions.logger.error('İyzico payment initialize error:', error);
+        // İyzico HttpsError zaten fırlatılıyorsa, olduğu gibi fırlat
+        if (error.code && error.code.startsWith('functions/')) {
+            throw error;
+        }
+        // Diğer hatalar için generic error
+        throw new functions.https.HttpsError('internal', 'Ödeme başlatılamadı. Lütfen tekrar deneyin.', error.message);
+    }
+});
+/**
+ * İyzico Webhook Callback Handler
+ *
+ * @param {Request} req - HTTP request (POST from İyzico)
+ * @param {Response} res - HTTP response
+ */
+exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
+    var _a;
+    // CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return;
+    }
+    if (req.method !== 'POST') {
+        res.status(405).send('Method Not Allowed');
+        return;
+    }
+    try {
+        const { token } = req.body;
+        if (!token) {
+            functions.logger.error('İyzico callback: token eksik');
+            res.status(400).send('Token gerekli');
+            return;
+        }
+        functions.logger.info('İyzico callback alındı:', { token });
+        // İyzico'dan payment result al
+        const paymentResult = await iyzicoService.retrieveCheckoutForm(token);
+        const orderId = paymentResult.basketId; // conversationId olarak göndermiştik
+        if (!orderId) {
+            functions.logger.error('İyzico callback: orderId bulunamadı', paymentResult);
+            res.status(400).send('Order ID bulunamadı');
+            return;
+        }
+        // Firestore'dan order al (sipariş numarasına göre query)
+        const db = admin.firestore();
+        const ordersQuery = await db.collection('orders')
+            .where('id', '==', orderId)
+            .limit(1)
+            .get();
+        if (ordersQuery.empty) {
+            functions.logger.error('İyzico callback: order bulunamadı', { orderId });
+            res.status(404).send('Sipariş bulunamadı');
+            return;
+        }
+        const orderDoc = ordersQuery.docs[0];
+        const firestoreOrderId = orderDoc.id; // Firestore document ID
+        // Duplicate payment check (aynı token 2x işlenmesin)
+        const orderData = orderDoc.data();
+        if (((_a = orderData.payment) === null || _a === void 0 ? void 0 : _a.iyzicoPaymentId) === paymentResult.paymentId) {
+            functions.logger.warn('İyzico callback: duplicate payment', {
+                orderId,
+                firestoreOrderId,
+                paymentId: paymentResult.paymentId
+            });
+            // Zaten işlenmiş, success redirect
+            res.redirect(`https://sadechocolate.com/?payment=success&orderId=${firestoreOrderId}`);
+            return;
+        }
+        // Payment details extract et
+        const paymentDetails = iyzicoService.extractPaymentDetails(paymentResult);
+        // Payment başarılı mı?
+        const isSuccess = paymentResult.status === 'success' && paymentResult.paymentStatus === 'SUCCESS';
+        // Firestore update
+        const updateData = {
+            'payment.status': isSuccess ? 'paid' : 'failed',
+            'payment.iyzicoPaymentId': paymentDetails.iyzicoPaymentId,
+            'payment.iyzicoToken': paymentDetails.iyzicoToken,
+            'payment.cardFamily': paymentDetails.cardFamily,
+            'payment.cardAssociation': paymentDetails.cardAssociation,
+            'payment.lastFourDigits': paymentDetails.lastFourDigits,
+            'payment.installment': paymentDetails.installment,
+            'payment.paidPrice': paymentDetails.paidPrice,
+            'payment.merchantCommissionRate': paymentDetails.merchantCommissionRate,
+            'payment.iyzicoCommissionFee': paymentDetails.iyzicoCommissionFee,
+            'payment.failureReason': paymentDetails.failureReason,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        if (isSuccess) {
+            updateData.status = 'processing'; // Sipariş durumu: hazırlanmaya başladı
+            updateData.paymentConfirmedAt = admin.firestore.FieldValue.serverTimestamp();
+            // Timeline ekle
+            updateData.timeline = admin.firestore.FieldValue.arrayUnion({
+                action: 'Ödeme alındı',
+                time: new Date().toISOString(),
+                note: `${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
+            });
+        }
+        else {
+            // Failed payment
+            updateData['payment.retryCount'] = admin.firestore.FieldValue.increment(1);
+            updateData['payment.lastRetryAt'] = admin.firestore.FieldValue.serverTimestamp();
+        }
+        await orderDoc.ref.update(updateData);
+        functions.logger.info('İyzico payment processed:', {
+            orderId,
+            status: isSuccess ? 'success' : 'failed',
+            paymentId: paymentDetails.iyzicoPaymentId
+        });
+        // Email gönder (arka planda, hata tolere edilir)
+        const sendPaymentEmail = async () => {
+            var _a, _b, _c, _d, _e, _f;
+            try {
+                const customerEmail = (_a = orderData.customer) === null || _a === void 0 ? void 0 : _a.email;
+                const customerName = ((_b = orderData.customer) === null || _b === void 0 ? void 0 : _b.name) || 'Değerli Müşterimiz';
+                if (!customerEmail) {
+                    functions.logger.warn('Email gönderilemedi: customer email yok', { orderId });
+                    return;
+                }
+                // Marka renkleri
+                const COLORS = {
+                    primary: '#4B3832',
+                    gold: '#C5A059',
+                    cream: '#FDFCF0',
+                    text: '#333333',
+                    lightText: '#666666',
+                    border: '#E8E4DC'
+                };
+                // Email header
+                const emailHeader = (badge) => `
+            <div style="background: ${COLORS.primary}; padding: 48px 20px; text-align: center;">
+              <span style="font-family: Georgia, serif; font-size: 42px; color: white; font-weight: bold; letter-spacing: 3px;">SADE</span>
+              <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 8px 0 0; letter-spacing: 2px;">Chocolate</p>
+              <div style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 10px 24px; border-radius: 30px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; text-transform: uppercase;">
+                ${badge}
+              </div>
+            </div>
+          `;
+                // Email footer
+                const emailFooter = `
+            <div style="background: ${COLORS.cream}; padding: 40px 20px; text-align: center; border-top: 1px solid ${COLORS.border};">
+              <p style="font-family: Georgia, serif; font-size: 12px; color: ${COLORS.lightText}; margin: 0 0 8px; line-height: 1.6;">
+                Sade Chocolate<br>
+                Yeşilbahçe Mah. Çınarlı Cd. 47/A<br>
+                Muratpaşa, Antalya 07160
+              </p>
+              <p style="font-family: Georgia, serif; font-size: 12px; color: ${COLORS.lightText}; margin: 16px 0;">
+                Sorularınız için: <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none;">bilgi@sadechocolate.com</a>
+              </p>
+              <p style="font-family: Georgia, serif; font-size: 11px; color: #999; margin: 16px 0 0;">
+                © 2026 Sade Chocolate. Tüm hakları saklıdır.
+              </p>
+            </div>
+          `;
+                // Email wrapper
+                const wrapEmail = (content) => `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Sade Chocolate</title>
+            </head>
+            <body style="margin: 0; padding: 0; background: ${COLORS.cream}; font-family: Georgia, serif;">
+              <div style="max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                ${content}
+              </div>
+            </body>
+            </html>
+          `;
+                let emailHtml;
+                let emailSubject;
+                if (isSuccess) {
+                    // Payment Success Email
+                    const cardDisplayText = paymentDetails.cardAssociation && paymentDetails.lastFourDigits
+                        ? `${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
+                        : 'Kredi Kartı';
+                    const itemsHtml = (orderData.items || []).map((item) => `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text};">
+                  ${item.name}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: center; font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.lightText};">
+                  ${item.quantity}
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: right; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; font-weight: bold;">
+                  ₺${(item.price || 0).toFixed(2)}
+                </td>
+              </tr>
+            `).join('');
+                    const total = ((_c = orderData.payment) === null || _c === void 0 ? void 0 : _c.total) || 0;
+                    const subtotal = ((_d = orderData.payment) === null || _d === void 0 ? void 0 : _d.subtotal) || 0;
+                    const shipping = ((_e = orderData.payment) === null || _e === void 0 ? void 0 : _e.shipping) || 0;
+                    emailSubject = `Ödeme Onaylandı - Sipariş #${orderId}`;
+                    emailHtml = wrapEmail(`
+              ${emailHeader('Ödeme Onaylandı')}
+              <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); padding: 48px 20px; text-align: center;">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
+                  <span style="font-size: 40px; color: white;">✓</span>
+                </div>
+                <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+                  Ödemeniz Başarılı!
+                </h1>
+                <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
+                  ${cardDisplayText} ile ödeme tamamlandı
+                </p>
+              </div>
+              <div style="padding: 48px 40px;">
+                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
+                  Merhaba ${customerName},
+                </p>
+                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+                  <strong style="color: ${COLORS.gold};">#${orderId}</strong> numaralı siparişinizin ödemesi başarıyla tamamlandı. Siparişiniz en kısa sürede hazırlanıp kargoya verilecektir.
+                </p>
+                <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+                  <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th style="text-align: left; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase;">Ürün</th>
+                        <th style="text-align: center; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase;">Adet</th>
+                        <th style="text-align: right; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase;">Fiyat</th>
+                      </tr>
+                    </thead>
+                    <tbody>${itemsHtml}</tbody>
+                  </table>
+                </div>
+                <div style="background: ${COLORS.primary}; border-radius: 16px; padding: 24px; color: white;">
+                  <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0;">Ara Toplam</td>
+                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right;">₺${subtotal.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0;">Kargo</td>
+                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right;">${shipping === 0 ? 'Ücretsiz' : '₺' + shipping.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" style="padding: 12px 0 6px;"><div style="border-top: 1px solid rgba(255,255,255,0.2);"></div></td>
+                    </tr>
+                    <tr>
+                      <td style="font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: ${COLORS.gold};">Ödenen Tutar</td>
+                      <td style="font-family: Georgia, serif; font-size: 22px; font-weight: bold; text-align: right; color: ${COLORS.gold};">₺${total.toFixed(2)}</td>
+                    </tr>
+                  </table>
+                </div>
+                <div style="text-align: center; margin: 40px 0 20px;">
+                  <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                    Siparişi Takip Et
+                  </a>
+                </div>
+              </div>
+              ${emailFooter}
+            `);
+                }
+                else {
+                    // Payment Failed Email
+                    const total = ((_f = orderData.payment) === null || _f === void 0 ? void 0 : _f.total) || 0;
+                    const retryUrl = `https://sadechocolate.com/checkout?orderId=${orderId}&retry=true`;
+                    const errorMessage = paymentDetails.failureReason || 'Kart bilgilerinizi kontrol ediniz veya farklı bir kart deneyiniz.';
+                    emailSubject = `Ödeme Tamamlanamadı - Sipariş #${orderId}`;
+                    emailHtml = wrapEmail(`
+              ${emailHeader('Ödeme Başarısız')}
+              <div style="background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); padding: 48px 20px; text-align: center;">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #EF5350 0%, #E53935 100%); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
+                  <span style="font-size: 40px; color: white;">!</span>
+                </div>
+                <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+                  Ödeme Tamamlanamadı
+                </h1>
+                <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
+                  Sipariş #${orderId}
+                </p>
+              </div>
+              <div style="padding: 48px 40px;">
+                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
+                  Merhaba ${customerName},
+                </p>
+                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+                  <strong style="color: ${COLORS.gold};">₺${total.toFixed(2)}</strong> tutarındaki ödemeniz tamamlanamadı. Siparişiniz beklemede olup, ödemeyi tekrar deneyebilirsiniz.
+                </p>
+                <div style="background: #FFEBEE; border-left: 4px solid #EF5350; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
+                  <h4 style="font-family: Arial, sans-serif; font-size: 12px; color: #C62828; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">
+                    Hata Detayı
+                  </h4>
+                  <p style="font-family: Georgia, serif; font-size: 14px; color: #B71C1C; margin: 0; line-height: 1.6;">
+                    ${errorMessage}
+                  </p>
+                </div>
+                <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+                  <h3 style="font-family: Arial, sans-serif; font-size: 12px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    💡 Öneriler
+                  </h3>
+                  <ul style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; padding-left: 20px; line-height: 2;">
+                    <li>Kart bilgilerinizi kontrol edin</li>
+                    <li>Kartınızda yeterli bakiye olduğundan emin olun</li>
+                    <li>Farklı bir kart deneyebilirsiniz</li>
+                  </ul>
+                </div>
+                <div style="text-align: center; margin: 40px 0 20px;">
+                  <a href="${retryUrl}" style="display: inline-block; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                    Ödemeyi Tekrar Dene
+                  </a>
+                </div>
+              </div>
+              ${emailFooter}
+            `);
+                }
+                // Firestore mail collection'a ekle (Firebase Trigger Email extension)
+                await db.collection('mail').add({
+                    to: customerEmail,
+                    from: 'Sade Chocolate <bilgi@sadechocolate.com>',
+                    message: {
+                        subject: emailSubject,
+                        html: emailHtml
+                    },
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                functions.logger.info('Payment email kuyruğa eklendi:', { orderId, isSuccess });
+            }
+            catch (emailError) {
+                // Email hatası ana akışı engellememeli
+                functions.logger.error('Payment email hatası:', emailError);
+            }
+        };
+        // Email'i arka planda gönder (await yok, hata tolere edilir)
+        sendPaymentEmail().catch(err => functions.logger.error('Email background error:', err));
+        // Redirect (Firestore document ID kullan)
+        if (isSuccess) {
+            res.redirect(`https://sadechocolate.com/?payment=success&orderId=${firestoreOrderId}`);
+        }
+        else {
+            res.redirect(`https://sadechocolate.com/?payment=failed&orderId=${firestoreOrderId}&error=${encodeURIComponent(paymentDetails.failureReason || 'Ödeme başarısız')}`);
+        }
+    }
+    catch (error) {
+        functions.logger.error('İyzico callback error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+/**
+ * Retry Payment (Opsiyonel)
+ *
+ * @param {Object} data - {orderId: string}
+ * @returns {Object} - New checkout form
+ */
+exports.retryPayment = functions.https.onCall(async (request) => {
+    var _a;
+    const { orderId } = request.data;
+    if (!orderId) {
+        throw new functions.https.HttpsError('invalid-argument', 'orderId parametresi gerekli');
+    }
+    try {
+        const db = admin.firestore();
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+            throw new functions.https.HttpsError('not-found', 'Sipariş bulunamadı');
+        }
+        const orderData = orderDoc.data();
+        // Sadece failed veya pending siparişler için retry
+        if (((_a = orderData.payment) === null || _a === void 0 ? void 0 : _a.status) === 'paid') {
+            throw new functions.https.HttpsError('failed-precondition', 'Bu sipariş zaten ödenmiş');
+        }
+        // Payment status'u pending yap
+        await orderDoc.ref.update({
+            'payment.status': 'pending',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        // Yeni checkout form oluştur (initializeIyzicoPayment ile aynı)
+        const result = await iyzicoService.initializeCheckoutForm(orderData);
+        await orderDoc.ref.update({
+            'payment.iyzicoToken': result.token,
+            'payment.tokenExpireTime': result.tokenExpireTime
+        });
+        functions.logger.info('Payment retry başlatıldı:', { orderId });
+        return {
+            success: true,
+            token: result.token,
+            checkoutFormContent: result.checkoutFormContent,
+            tokenExpireTime: result.tokenExpireTime
+        };
+    }
+    catch (error) {
+        functions.logger.error('Retry payment error:', error);
+        if (error.code && error.code.startsWith('functions/')) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', 'Ödeme yeniden başlatılamadı', error.message);
     }
 });
 //# sourceMappingURL=index.js.map

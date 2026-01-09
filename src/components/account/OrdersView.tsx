@@ -2,25 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Package, Truck, CheckCircle2,
-  ChevronRight, ArrowRight, X, Clock, MapPin, Receipt, Navigation
+  ChevronRight, ArrowRight, X, Clock, MapPin, Receipt, Navigation, CreditCard, Building2
 } from 'lucide-react';
 import { ShipmentTracker } from './ShipmentTracker';
+import { Order } from '../../context/UserContext';
 
 // --- TİP TANIMLAMALARI ---
 export interface OrderItem {
   id: string;
   title: string;
+  name?: string;
   price: number;
   quantity: number;
   image?: string;
-}
-
-export interface Order {
-  id: string;
-  date: string;
-  total: number;
-  status: 'processing' | 'shipped' | 'delivered' | 'received';
-  items: OrderItem[];
 }
 
 interface OrdersViewProps {
@@ -83,7 +77,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sipariş No: #{order.id}</span>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sipariş No: #{order.orderNumber || order.id}</span>
                     <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${status.color}`}>
                       {status.icon} {status.label}
                     </div>
@@ -123,7 +117,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
             <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl z-10">
               <div className="space-y-1">
                 <span className="text-[10px] font-black text-gold uppercase tracking-[0.3em]">Sipariş Detayı</span>
-                <h3 className="font-display text-2xl font-bold dark:text-white italic tracking-tight uppercase">#{selectedOrder.id}</h3>
+                <h3 className="font-display text-2xl font-bold dark:text-white italic tracking-tight uppercase">#{selectedOrder.orderNumber || selectedOrder.id}</h3>
               </div>
               <button onClick={() => { setSelectedOrder(null); setShowTracking(false); }} className="w-12 h-12 bg-gray-50 dark:bg-dark-800 flex items-center justify-center rounded-2xl text-gray-400 hover:text-red-500 transition-all">
                 <X size={24} />
@@ -162,29 +156,81 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
             {showTracking ? (
               <ShipmentTracker orderId={selectedOrder.id} />
             ) : (
-            <div className="p-8 space-y-10">
+            <div className="p-8 space-y-8">
               {/* Zaman Çizelgesi Özeti */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-400">
-                    <Clock size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">SİPARİŞ TARİHİ</span>
+                    <Clock size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">TARİH</span>
                   </div>
                   <p className="text-xs font-bold dark:text-white">{(() => {
                     const d = new Date(selectedOrder.date);
-                    return isNaN(d.getTime()) ? selectedOrder.date : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    return isNaN(d.getTime()) ? selectedOrder.date : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
                   })()}</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-400">
-                    <Receipt size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">ÖDEME DURUMU</span>
+                    <Receipt size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">ÖDEME</span>
                   </div>
-                  <p className="text-xs font-bold text-emerald-500 uppercase">Ödendi</p>
+                  <p className={`text-xs font-bold uppercase ${selectedOrder.payment?.status === 'paid' ? 'text-emerald-500' : selectedOrder.payment?.status === 'failed' ? 'text-red-500' : 'text-amber-500'}`}>
+                    {selectedOrder.payment?.status === 'paid' ? 'Ödendi' : selectedOrder.payment?.status === 'failed' ? 'Başarısız' : 'Bekliyor'}
+                  </p>
                 </div>
-                <div className="space-y-2 col-span-2 md:col-span-1">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-gray-400">
-                    <MapPin size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">TESLİMAT</span>
+                    <CreditCard size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">YÖNTEM</span>
                   </div>
-                  <p className="text-xs font-bold dark:text-white opacity-80 uppercase tracking-tighter">Artisan Özel Kurye</p>
+                  <p className="text-xs font-bold dark:text-white uppercase">
+                    {selectedOrder.payment?.method === 'card' ? 'Kredi Kartı' : 'Havale/EFT'}
+                    {selectedOrder.payment?.cardInfo && <span className="text-gray-400 ml-1">{selectedOrder.payment.cardInfo}</span>}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Truck size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">KARGO</span>
+                  </div>
+                  <p className="text-xs font-bold dark:text-white uppercase tracking-tighter">MNG Kargo</p>
+                </div>
+              </div>
+
+              {/* Teslimat ve Fatura Bilgileri */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Teslimat Adresi */}
+                <div className="p-5 bg-gray-50 dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-400 mb-3">
+                    <MapPin size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">TESLİMAT ADRESİ</span>
+                  </div>
+                  {selectedOrder.shipping ? (
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold dark:text-white">{selectedOrder.shipping.address || 'Belirtilmemiş'}</p>
+                      <p className="text-[10px] text-gray-500">
+                        {[selectedOrder.shipping.district, selectedOrder.shipping.city].filter(Boolean).join(', ') || 'Şehir belirtilmemiş'}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">Adres bilgisi bulunamadı</p>
+                  )}
+                </div>
+
+                {/* Fatura Bilgileri */}
+                <div className="p-5 bg-gray-50 dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-400 mb-3">
+                    <Building2 size={14} /> <span className="text-[9px] font-black uppercase tracking-widest">FATURA BİLGİLERİ</span>
+                  </div>
+                  {selectedOrder.invoice ? (
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold dark:text-white">
+                        {selectedOrder.invoice.type === 'corporate' ? selectedOrder.invoice.name || 'Kurumsal' : 'Bireysel Fatura'}
+                      </p>
+                      {selectedOrder.invoice.type === 'corporate' && selectedOrder.invoice.taxOffice && (
+                        <p className="text-[10px] text-gray-500">
+                          {selectedOrder.invoice.taxOffice} - {selectedOrder.invoice.taxNo}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs dark:text-white">Bireysel Fatura</p>
+                  )}
                 </div>
               </div>
 
@@ -192,28 +238,46 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
               <div className="space-y-4">
                 <h5 className="text-[10px] font-black text-brown-900 dark:text-gold uppercase tracking-[0.3em]">Sipariş İçeriği</h5>
                 <div className="space-y-3">
-                  {selectedOrder.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  {selectedOrder.items.map((item: any, index: number) => (
+                    <div key={item.id || index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-white dark:bg-dark-900 rounded-xl overflow-hidden shadow-sm flex items-center justify-center border border-gray-50 dark:border-gray-700 text-gold">
-                           <ShoppingBag size={20} />
+                           {item.image ? (
+                             <img src={item.image} alt={item.name || item.title} className="w-full h-full object-cover" />
+                           ) : (
+                             <ShoppingBag size={20} />
+                           )}
                         </div>
                         <div>
-                          <h6 className="text-[11px] font-black dark:text-white uppercase tracking-wider">{item.title}</h6>
-                          <p className="text-[10px] text-gray-400 font-bold">{item.quantity} Adet × ₺{item.price.toLocaleString('tr-TR')}</p>
+                          <h6 className="text-[11px] font-black dark:text-white uppercase tracking-wider">{item.name || item.title || 'Ürün'}</h6>
+                          <p className="text-[10px] text-gray-400 font-bold">{item.quantity} Adet × ₺{(item.price || 0).toLocaleString('tr-TR')}</p>
                         </div>
                       </div>
-                      <span className="text-xs font-black dark:text-white">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</span>
+                      <span className="text-xs font-black dark:text-white">₺{((item.price || 0) * (item.quantity || 1)).toLocaleString('tr-TR')}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Toplam Özeti */}
-              <div className="p-8 bg-brown-900 dark:bg-gold text-white dark:text-black rounded-[32px] shadow-2xl">
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Genel Toplam</span>
-                  <span className="font-display text-4xl font-bold italic">₺{selectedOrder.total.toLocaleString('tr-TR')}</span>
+              <div className="p-6 bg-brown-900 dark:bg-gold text-white dark:text-black rounded-[24px] shadow-2xl">
+                <div className="space-y-3">
+                  {selectedOrder.subtotal && selectedOrder.subtotal !== selectedOrder.total && (
+                    <div className="flex justify-between items-center text-white/70 dark:text-black/70">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Ara Toplam</span>
+                      <span className="text-sm font-bold">₺{selectedOrder.subtotal.toLocaleString('tr-TR')}</span>
+                    </div>
+                  )}
+                  {selectedOrder.shippingCost !== undefined && selectedOrder.shippingCost > 0 && (
+                    <div className="flex justify-between items-center text-white/70 dark:text-black/70">
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Kargo</span>
+                      <span className="text-sm font-bold">₺{selectedOrder.shippingCost.toLocaleString('tr-TR')}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-3 border-t border-white/20 dark:border-black/20">
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Genel Toplam</span>
+                    <span className="font-display text-3xl font-bold italic">₺{selectedOrder.total.toLocaleString('tr-TR')}</span>
+                  </div>
                 </div>
               </div>
             </div>

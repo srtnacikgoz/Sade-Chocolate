@@ -294,7 +294,7 @@ export const sendOrderConfirmationEmail = async (
 
       <!-- Track Order CTA -->
       <div style="text-align: center; margin: 40px 0 20px;">
-        <a href="https://sadechocolate.com/#/account" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+        <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
           Siparişi Takip Et
         </a>
       </div>
@@ -834,6 +834,276 @@ export const sendCampaignReminderEmail = async (
     subject: `⏰ Son ${daysLeft} Gün: ${bonusPoints} Puan Fırsatı!`,
     html: wrapEmail(content),
     text: `Merhaba ${firstName}! Kampanya kodunuz ${expiryDate} tarihinde sona eriyor. Son ${daysLeft} gün! Kod: ${campaignCode}. Kayıt ol: https://sadechocolate.com/#/register?ref=${campaignCode}`
+  });
+};
+
+/**
+ * Ödeme Başarılı Emaili - Kredi Kartı ile Ödeme
+ */
+export const sendPaymentSuccessEmail = async (
+  email: string,
+  data: {
+    customerName: string;
+    orderId: string;
+    cardInfo?: string;           // **** 1234 (son 4 hane)
+    cardAssociation?: string;    // VISA, MASTER_CARD
+    items: Array<{ name: string; quantity: number; price: number }>;
+    subtotal: number;
+    shipping: number;
+    total: number;
+    loyaltyPointsEarned?: number;
+  }
+) => {
+  const itemsHtml = data.items.map(item => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text};">
+        ${item.name}
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: center; font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.lightText};">
+        ${item.quantity}
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: right; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; font-weight: bold;">
+        ₺${item.price.toFixed(2)}
+      </td>
+    </tr>
+  `).join('');
+
+  const cardDisplayText = data.cardAssociation && data.cardInfo
+    ? `${data.cardAssociation} **** ${data.cardInfo}`
+    : 'Kredi Kartı';
+
+  const content = `
+    ${getEmailHeader('Ödeme Onaylandı')}
+
+    <!-- Success Hero -->
+    <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); padding: 48px 20px; text-align: center;">
+      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(76,175,80,0.3);">
+        <span style="font-size: 40px; color: white;">✓</span>
+      </div>
+      <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+        Ödemeniz Başarılı!
+      </h1>
+      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
+        ${cardDisplayText} ile ödeme tamamlandı
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 48px 40px;">
+      <!-- Greeting -->
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
+        Merhaba ${data.customerName},
+      </p>
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+        <strong style="color: ${COLORS.gold};">#${data.orderId}</strong> numaralı siparişinizin ödemesi başarıyla tamamlandı. Siparişiniz en kısa sürede hazırlanıp kargoya verilecektir.
+      </p>
+
+      <!-- Payment Info -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <p style="font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.lightText}; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px;">
+              Ödeme Yöntemi
+            </p>
+            <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.primary}; margin: 0; font-weight: bold;">
+              💳 ${cardDisplayText}
+            </p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.lightText}; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px;">
+              İşlem Durumu
+            </p>
+            <p style="font-family: Arial, sans-serif; font-size: 12px; color: #4CAF50; margin: 0; font-weight: bold; background: #E8F5E9; padding: 4px 12px; border-radius: 20px;">
+              ✓ ONAYLANDI
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">
+          Sipariş Detayı
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Ürün</th>
+              <th style="text-align: center; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Adet</th>
+              <th style="text-align: right; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Fiyat</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals -->
+      <div style="background: ${COLORS.primary}; border-radius: 16px; padding: 24px; color: white;">
+        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0;">Ara Toplam</td>
+            <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right;">₺${data.subtotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0;">Kargo</td>
+            <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right;">${data.shipping === 0 ? 'Ücretsiz' : '₺' + data.shipping.toFixed(2)}</td>
+          </tr>
+          ${data.loyaltyPointsEarned ? `
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; color: ${COLORS.gold};">🎁 Kazanılan Puan</td>
+            <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right; color: ${COLORS.gold};">+${data.loyaltyPointsEarned}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td colspan="2" style="padding: 12px 0 6px;"><div style="border-top: 1px solid rgba(255,255,255,0.2);"></div></td>
+          </tr>
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: ${COLORS.gold};">Ödenen Tutar</td>
+            <td style="font-family: Georgia, serif; font-size: 22px; font-weight: bold; text-align: right; color: ${COLORS.gold};">₺${data.total.toFixed(2)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Next Steps -->
+      <div style="margin-top: 32px; padding: 24px; border: 1px solid #E8F5E9; border-radius: 16px; background: #F8FFF8;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 12px; color: #4CAF50; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">
+          Sonraki Adımlar
+        </h3>
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; line-height: 1.8;">
+          📦 Siparişiniz özenle hazırlanacak<br>
+          🚚 Kargoya verildiğinde takip numarası ile bilgilendirileceksiniz<br>
+          🍫 Tahmini teslimat: 1-3 iş günü
+        </p>
+      </div>
+
+      <!-- CTA -->
+      <div style="text-align: center; margin: 40px 0 20px;">
+        <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
+          Siparişi Takip Et
+        </a>
+      </div>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Ödeme Onaylandı - Sipariş #${data.orderId}`,
+    html: wrapEmail(content),
+    text: `Ödemeniz başarıyla tamamlandı! Sipariş No: #${data.orderId}. Ödenen Tutar: ₺${data.total.toFixed(2)}. ${cardDisplayText} ile ödeme yapıldı.`
+  });
+};
+
+/**
+ * Ödeme Başarısız Emaili - Retry Link ile
+ */
+export const sendPaymentFailedEmail = async (
+  email: string,
+  data: {
+    customerName: string;
+    orderId: string;
+    total: number;
+    failureReason?: string;
+    retryUrl: string;
+  }
+) => {
+  const errorMessage = data.failureReason || 'Kart bilgilerinizi kontrol ediniz veya farklı bir kart deneyiniz.';
+
+  const content = `
+    ${getEmailHeader('Ödeme Başarısız')}
+
+    <!-- Error Hero -->
+    <div style="background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); padding: 48px 20px; text-align: center;">
+      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #EF5350 0%, #E53935 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(239,83,80,0.3);">
+        <span style="font-size: 40px; color: white;">!</span>
+      </div>
+      <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+        Ödeme Tamamlanamadı
+      </h1>
+      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
+        Sipariş #${data.orderId}
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 48px 40px;">
+      <!-- Greeting -->
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
+        Merhaba ${data.customerName},
+      </p>
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
+        <strong style="color: ${COLORS.gold};">₺${data.total.toFixed(2)}</strong> tutarındaki ödemeniz tamamlanamadı. Siparişiniz beklemede olup, ödemeyi tekrar deneyebilirsiniz.
+      </p>
+
+      <!-- Error Box -->
+      <div style="background: #FFEBEE; border-left: 4px solid #EF5350; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
+        <h4 style="font-family: Arial, sans-serif; font-size: 12px; color: #C62828; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">
+          Hata Detayı
+        </h4>
+        <p style="font-family: Georgia, serif; font-size: 14px; color: #B71C1C; margin: 0; line-height: 1.6;">
+          ${errorMessage}
+        </p>
+      </div>
+
+      <!-- Suggestions -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 12px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+          💡 Öneriler
+        </h3>
+        <ul style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; padding-left: 20px; line-height: 2;">
+          <li>Kart bilgilerinizi kontrol edin (kart numarası, son kullanma tarihi, CVV)</li>
+          <li>Kartınızda yeterli bakiye olduğundan emin olun</li>
+          <li>3D Secure doğrulamasını başarıyla tamamladığınızdan emin olun</li>
+          <li>Farklı bir kredi/banka kartı ile deneyebilirsiniz</li>
+          <li>Sorun devam ederse bankanızla iletişime geçin</li>
+        </ul>
+      </div>
+
+      <!-- Order Summary -->
+      <div style="background: #FFF9F0; border: 1px solid ${COLORS.gold}; border-radius: 16px; padding: 20px; margin-bottom: 32px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <p style="font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.lightText}; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px;">
+              Bekleyen Sipariş
+            </p>
+            <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.primary}; margin: 0; font-weight: bold;">
+              #${data.orderId}
+            </p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.lightText}; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px;">
+              Toplam Tutar
+            </p>
+            <p style="font-family: Georgia, serif; font-size: 20px; color: ${COLORS.gold}; margin: 0; font-weight: bold;">
+              ₺${data.total.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Retry CTA -->
+      <div style="text-align: center; margin: 40px 0 20px;">
+        <a href="${data.retryUrl}" style="display: inline-block; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(76,175,80,0.3);">
+          Ödemeyi Tekrar Dene
+        </a>
+      </div>
+
+      <p style="font-family: Georgia, serif; font-size: 13px; color: ${COLORS.lightText}; text-align: center; margin: 24px 0 0; line-height: 1.6;">
+        Yardıma mı ihtiyacınız var? <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none;">bilgi@sadechocolate.com</a> adresinden bize ulaşabilirsiniz.
+      </p>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Ödeme Tamamlanamadı - Sipariş #${data.orderId}`,
+    html: wrapEmail(content),
+    text: `Ödemeniz tamamlanamadı. Sipariş No: #${data.orderId}. Tutar: ₺${data.total.toFixed(2)}. Tekrar denemek için: ${data.retryUrl}`
   });
 };
 

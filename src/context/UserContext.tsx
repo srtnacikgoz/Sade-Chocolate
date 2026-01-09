@@ -11,7 +11,7 @@ import {
   signInWithPopup
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction, setDoc, query, where, orderBy } from 'firebase/firestore';
 import { createOrderWithLoyalty } from '../services/orderService';
 import type { Order as LoyaltyOrder } from '../types/order';
 
@@ -51,15 +51,43 @@ export interface UserProfile {
 }
 
 export interface Order {
-  id: string;
+  id: string;              // Firestore document ID
+  orderNumber: string;     // User-friendly order number (SADE-XXXXXX)
   date: string;
-  status: 'pending' | 'preparing' | 'shipped' | 'delivered'; // Statüleri netleştirdik
+  status: 'pending' | 'preparing' | 'shipped' | 'delivered' | 'processing';
   total: number;
+  subtotal?: number;
+  shippingCost?: number;
   items: any[];
   userId?: string;
   customerName?: string;
   createdAt?: any;
-  
+
+  // Teslimat Bilgileri
+  shipping?: {
+    address: string;
+    city: string;
+    district?: string;
+    method?: string;
+  };
+
+  // Fatura Bilgileri
+  invoice?: {
+    type: 'individual' | 'corporate';
+    name?: string;
+    taxOffice?: string;
+    taxNo?: string;
+    address?: string;
+    city?: string;
+  };
+
+  // Ödeme Bilgileri
+  payment?: {
+    method: 'card' | 'eft';
+    status: 'pending' | 'paid' | 'failed';
+    cardInfo?: string;  // **** 1234
+  };
+
   // ✨ Lüks Operasyon Alanları
   giftDetails?: {
     isGift: boolean;
@@ -96,22 +124,105 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     let unsubscribeDoc: (() => void) | undefined;
+    let unsubscribeOrders: (() => void) | undefined;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (unsubscribeDoc) unsubscribeDoc();
+      if (unsubscribeOrders) unsubscribeOrders();
 
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
         unsubscribeDoc = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setUser({ uid: firebaseUser.uid, ...data } as UserProfile);
-            if (data.orders) setOrders(data.orders);
+            // Firestore + Firebase Auth verilerini birleştir (Firestore öncelikli, eksikse Auth'dan al)
+            setUser({
+              uid: firebaseUser.uid,
+              ...data,
+              // Firestore'da yoksa Firebase Auth'dan al
+              email: data.email || firebaseUser.email || '',
+              firstName: data.firstName || firebaseUser.displayName?.split(' ')[0] || '',
+              lastName: data.lastName || firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+              phone: data.phone || firebaseUser.phoneNumber || ''
+            } as UserProfile);
           } else {
-            setUser({ uid: firebaseUser.uid, email: firebaseUser.email } as any);
+            // Firestore belgesi yoksa Firebase Auth'dan oluştur
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              firstName: firebaseUser.displayName?.split(' ')[0] || '',
+              lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+              phone: firebaseUser.phoneNumber || ''
+            } as any);
           }
           setLoading(false);
         });
+
+        // Siparişleri orders collection'ından dinle (customer.email ile eşleştir)
+        const userEmail = firebaseUser.email;
+        if (userEmail) {
+          const ordersQuery = query(
+            collection(db, 'orders'),
+            where('customer.email', '==', userEmail)
+          );
+          unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+            const userOrders: Order[] = snapshot.docs.map(doc => {
+              const data = doc.data();
+
+              // Firestore Timestamp'i string'e çevir
+              let dateString = new Date().toISOString();
+              if (data.createdAt) {
+                if (typeof data.createdAt === 'string') {
+                  dateString = data.createdAt;
+                } else if (data.createdAt.toDate) {
+                  // Firestore Timestamp
+                  dateString = data.createdAt.toDate().toISOString();
+                } else if (data.createdAt.seconds) {
+                  // Raw timestamp object
+                  dateString = new Date(data.createdAt.seconds * 1000).toISOString();
+                }
+              }
+
+              return {
+                id: doc.id,
+                orderNumber: data.id || `SADE-${doc.id.substring(0, 6).toUpperCase()}`, // User-friendly order number
+                date: dateString,
+                status: data.status || 'pending',
+                total: data.payment?.total || 0,
+                subtotal: data.payment?.subtotal || 0,
+                shippingCost: data.payment?.shipping || 0,
+                items: data.items || [],
+                customerName: data.customer?.name || '',
+                userId: data.userId,
+                // Teslimat Bilgileri
+                shipping: data.shipping ? {
+                  address: data.shipping.address || '',
+                  city: data.shipping.city || '',
+                  district: data.shipping.district || '',
+                  method: data.shipping.method || 'standard'
+                } : undefined,
+                // Fatura Bilgileri
+                invoice: data.invoice ? {
+                  type: data.invoice.type || 'individual',
+                  name: data.invoice.name || data.invoice.companyName || '',
+                  taxOffice: data.invoice.taxOffice || '',
+                  taxNo: data.invoice.taxNo || '',
+                  address: data.invoice.address || '',
+                  city: data.invoice.city || ''
+                } : { type: 'individual' as const },
+                // Ödeme Bilgileri
+                payment: {
+                  method: data.payment?.method || 'card',
+                  status: data.payment?.status || 'pending',
+                  cardInfo: data.payment?.lastFourDigits ? `**** ${data.payment.lastFourDigits}` : undefined
+                }
+              } as Order;
+            });
+            // Tarihe göre sırala (en yeni en üstte)
+            userOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setOrders(userOrders);
+          });
+        }
       } else {
         setUser(null);
         setOrders([]);
@@ -122,6 +233,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       unsubscribeAuth();
       if (unsubscribeDoc) unsubscribeDoc();
+      if (unsubscribeOrders) unsubscribeOrders();
     };
   }, []);
 

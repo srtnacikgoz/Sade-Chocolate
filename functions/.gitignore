@@ -1,0 +1,4 @@
+
+# İyzico Environment Variables
+.env.production
+.env.sandbox

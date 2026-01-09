@@ -10,14 +10,16 @@ import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shipp
 import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { doc, getDoc, setDoc, arrayUnion, updateDoc, onSnapshot } from 'firebase/firestore';
-import { db, auth } from '../lib/firebase';
+import { doc, getDoc, setDoc, arrayUnion, updateDoc, onSnapshot, addDoc, collection } from 'firebase/firestore';
+import { db, auth, functions } from '../lib/firebase';
+import { httpsCallable, getFunctions } from 'firebase/functions';
 import { CompanyInfo } from '../types';
 import { sendOrderConfirmationEmail } from '../services/emailService';
 import { calculateShipping, findMNGDistrictCode } from '../services/shippingService';
 import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
+import { IyzicoCheckoutModal } from '../components/IyzicoCheckoutModal';
 
 export const Checkout: React.FC = () => {
   const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart, hasGiftBag } = useCart();
@@ -245,10 +247,18 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     phoneCountry: '+90'
   });
 
-  const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+
+  // İyzico Modal State
+  const [iyzicoModal, setIyzicoModal] = useState<{
+    isOpen: boolean;
+    token: string;
+    content: string;
+    orderId: string;
+  } | null>(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [copiedIban, setCopiedIban] = useState<string | null>(null);
 
   // Bank transfer hesaplama
@@ -419,18 +429,21 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       const nextShipDate = isBlackout ? formatDateTR(getNextShippingDate(today)) : '';
 
       // Heat Hold kontrolü - seçili adresin şehrine göre
+      // Misafir modunda guestData.city, kayıtlı kullanıcıda selectedAddress.city
       const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+      const cityToCheck = isGuestMode ? guestData.city : selectedAddress?.city;
+
       let isHeatHold = false;
       let temperature = 0;
       let heatHoldMessage = '';
 
-      if (selectedAddress?.city) {
+      if (cityToCheck) {
         try {
-          const weatherCheck = await checkWeatherForShipping(selectedAddress.city);
+          const weatherCheck = await checkWeatherForShipping(cityToCheck);
           isHeatHold = weatherCheck.requiresHeatHold;
           temperature = weatherCheck.weather.temperature;
           if (isHeatHold) {
-            heatHoldMessage = selectedAddress.city + ' için hava sıcaklığı ' + temperature + '°C';
+            heatHoldMessage = cityToCheck + ' için hava sıcaklığı ' + temperature + '°C';
           }
         } catch (error) {
           console.log('Weather check failed, using defaults');
@@ -446,34 +459,11 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       });
     };
 
-    if (selectedAddressId) {
+    // Misafir modunda veya kayıtlı adres seçildiğinde çalıştır
+    if (isGuestMode || selectedAddressId) {
       checkShippingAlerts();
     }
-  }, [selectedAddressId, addresses]);
-
-  const handleCardNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, '');
-    val = val.substring(0, 16);
-    const maskedVal = val.match(/.{1,4}/g)?.join(' ') || val;
-    setCardData({ ...cardData, number: maskedVal });
-    if (errors.cardNum) setErrors(prev => ({ ...prev, cardNum: '' }));
-  };
-
-  const handleExpiry = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, '');
-    val = val.substring(0, 4);
-    if (val.length > 2) {
-      val = val.substring(0, 2) + '/' + val.substring(2, 4);
-    }
-    setCardData({ ...cardData, expiry: val });
-    if (errors.cardExp) setErrors(prev => ({ ...prev, cardExp: '' }));
-  };
-
-  const handleCVV = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, '').substring(0, 3);
-    setCardData({ ...cardData, cvv: val });
-    if (errors.cardCvv) setErrors(prev => ({ ...prev, cardCvv: '' }));
-  };
+  }, [selectedAddressId, addresses, isGuestMode, guestData.city]);
 
   // Telefon numarası formatla - 0 ile başlamamalı
   const formatPhoneNumber = (value: string, countryCode: string) => {
@@ -493,6 +483,28 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     // Diğer ülkeler için basit format (max 15 digit)
     return digits.substring(0, 15);
   };
+
+  // İyzico Payment Complete Handler
+  const handleIyzicoPaymentComplete = useCallback((result: { status: 'success' | 'failed'; orderId: string }) => {
+    setIyzicoModal(null);
+    setPaymentProcessing(false);
+
+    if (result.status === 'success') {
+      toast.success('Ödemeniz başarıyla tamamlandı!');
+      // Sipariş verilerini kaydet
+      setSuccessOrderData({
+        total: finalTotal,
+        subtotal: cartTotal,
+        shipping: shippingCost,
+        giftBag: giftBagPrice
+      });
+      setIsSuccess(true);
+      clearCart();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      toast.error('Ödeme başarısız. Lütfen tekrar deneyin.');
+    }
+  }, [finalTotal, cartTotal, shippingCost, giftBagPrice, clearCart]);
 
   const handleCompleteOrder = async () => {
     const newErrors: Record<string, string> = {};
@@ -517,20 +529,40 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         newErrors.address = "Lütfen teslimat adresinizi eksiksiz girin.";
       }
     } else {
+      // Kayıtlı kullanıcı validasyonları
       if (!selectedAddressId) {
         newErrors.address = t('fill_delivery_info');
         setCurrentStep(1);
+      } else {
+        // Seçili adresin tüm bilgileri tam mı kontrol et
+        const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+        const missingFields: string[] = [];
+
+        if (!selectedAddr?.firstName || !selectedAddr?.lastName) {
+          missingFields.push('ad-soyad');
+        }
+        if (!selectedAddr?.phone) {
+          missingFields.push('telefon');
+        }
+        if (!selectedAddr?.city || !selectedAddr?.district) {
+          missingFields.push('şehir/ilçe');
+        }
+        if (!selectedAddr?.address && !selectedAddr?.street) {
+          missingFields.push('açık adres');
+        }
+
+        if (missingFields.length > 0) {
+          newErrors.address = `Seçili adreste eksik bilgi var: ${missingFields.join(', ')}. Lütfen adresi güncelleyin.`;
+          setCurrentStep(1);
+        }
       }
+
+      // Email kontrolü gerekli değil - kullanıcı giriş yapmış, Firebase Auth'ta email var
     }
 
     if (!agreedToTerms) newErrors.terms = language === 'tr' ? "Lütfen satış sözleşmesini onaylayın." : "Please agree to the terms.";
 
-    if (currentStep === 2 && paymentMethod === 'card') {
-      const cleanNum = cardData.number.replace(/\s/g, '');
-      if (cleanNum.length < 16) newErrors.cardNum = language === 'tr' ? "Geçersiz kart numarası." : "Invalid card number.";
-      if (cardData.expiry.length < 5) newErrors.cardExp = language === 'tr' ? "Geçersiz tarih." : "Invalid expiry.";
-      if (cardData.cvv.length < 3) newErrors.cardCvv = language === 'tr' ? "Geçersiz CVV." : "Invalid CVV.";
-    }
+    // Card payment artık İyzico iframe'de yapılıyor, frontend validation kaldırıldı
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -544,6 +576,139 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       // Şehir kodunu bul (plaka kodu)
       const shippingCity = isGuestMode ? guestData.city : addresses.find(a => a.id === selectedAddressId)?.city || '';
       const shippingDistrict = isGuestMode ? guestData.district : addresses.find(a => a.id === selectedAddressId)?.district || '';
+      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+      const shippingAddress = isGuestMode ? guestData.address : (selectedAddr?.address || selectedAddr?.street || '');
+
+      // Fatura bilgilerini hazırla
+      const selectedInvoiceProfile = user?.invoiceProfiles?.find((p: any) => p.id === selectedInvoiceProfileId);
+      const invoiceData = selectedInvoiceProfile ? {
+        type: selectedInvoiceProfile.type || 'individual',
+        title: selectedInvoiceProfile.title || '',
+        ...(selectedInvoiceProfile.type === 'corporate' ? {
+          companyName: selectedInvoiceProfile.companyName || firmaUnvani,
+          taxOffice: selectedInvoiceProfile.taxOffice || vergiDairesi,
+          taxNo: selectedInvoiceProfile.taxNo || vergiNo
+        } : {
+          firstName: selectedInvoiceProfile.firstName || faturaFirstName,
+          lastName: selectedInvoiceProfile.lastName || faturaLastName,
+          tckn: selectedInvoiceProfile.tckn || tcKimlikNo
+        }),
+        address: selectedInvoiceProfile.address || faturaAdresi,
+        city: selectedInvoiceProfile.city || faturaCity,
+        district: selectedInvoiceProfile.district || faturaDistrict
+      } : {
+        type: invoiceType,
+        ...(invoiceType === 'corporate' ? {
+          companyName: firmaUnvani,
+          taxOffice: vergiDairesi,
+          taxNo: vergiNo
+        } : {
+          firstName: faturaFirstName || (isGuestMode ? guestData.firstName : selectedAddr?.firstName),
+          lastName: faturaLastName || (isGuestMode ? guestData.lastName : selectedAddr?.lastName),
+          tckn: tcKimlikNo
+        }),
+        address: isSameAsDelivery ? shippingAddress : faturaAdresi,
+        city: isSameAsDelivery ? shippingCity : faturaCity,
+        district: isSameAsDelivery ? shippingDistrict : faturaDistrict
+      };
+
+      // =========== CARD PAYMENT - İYZİCO AKIŞI ===========
+      if (paymentMethod === 'card') {
+        setPaymentProcessing(true);
+
+        // Sipariş oluştur (status: pending, payment.method: card)
+        const cardOrderId = `SADE-${orderId}`;
+        const orderData = {
+          id: cardOrderId,
+          customer: {
+            name: isGuestMode
+              ? `${guestData.firstName} ${guestData.lastName}`
+              : `${selectedAddr?.firstName || ''} ${selectedAddr?.lastName || ''}`.trim() || 'Müşteri',
+            email: isGuestMode ? guestData.email : (user?.email || ''),
+            phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || '')
+          },
+          shipping: {
+            address: shippingAddress,
+            city: shippingCity,
+            district: shippingDistrict,
+            method: 'standard'
+          },
+          invoice: invoiceData,
+          items: items.map(item => ({
+            id: item.id,
+            name: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image
+          })),
+          payment: {
+            method: 'card' as const,
+            status: 'pending' as const,
+            subtotal: cartTotal,
+            shipping: shippingCost,
+            ...(giftBagPrice > 0 && { giftBag: giftBagPrice }),
+            total: finalTotal
+          },
+          hasGiftBag: hasGiftBag && settings?.giftBag?.enabled,
+          isGift: isGift,
+          ...(isGift && giftMessage && { giftMessage }),
+          status: 'pending',
+          isGuest: isGuestMode,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          timeline: [{
+            status: 'pending',
+            time: new Date().toLocaleString('tr-TR'),
+            note: 'Ödeme bekleniyor'
+          }]
+        };
+
+        // Firestore'a siparişi kaydet
+        const docRef = await addDoc(collection(db, 'orders'), orderData);
+        const firestoreOrderId = docRef.id;
+
+        // İyzico payment başlat (europe-west3 region - Frankfurt)
+        const functionsInstance = getFunctions(undefined, 'europe-west3');
+        const initializeIyzicoPayment = httpsCallable(functionsInstance, 'initializeIyzicoPayment');
+
+        try {
+          const result = await initializeIyzicoPayment({ orderId: firestoreOrderId });
+          const data = result.data as {
+            success: boolean;
+            token: string;
+            checkoutFormContent: string;
+            tokenExpireTime: number;
+          };
+
+          if (data.success && data.checkoutFormContent) {
+            // İyzico modal'ı aç
+            setIyzicoModal({
+              isOpen: true,
+              token: data.token,
+              content: data.checkoutFormContent,
+              orderId: firestoreOrderId
+            });
+            setIsSubmitting(false);
+            return; // Modal açıldı, fonksiyondan çık
+          } else {
+            throw new Error('Ödeme formu alınamadı');
+          }
+        } catch (iyzicoError: any) {
+          console.error('İyzico payment error:', iyzicoError);
+          // Siparişi sil veya iptal et
+          await updateDoc(doc(db, 'orders', firestoreOrderId), {
+            status: 'cancelled',
+            'payment.status': 'failed',
+            'payment.failureReason': iyzicoError.message || 'Ödeme başlatılamadı'
+          });
+          toast.error('Ödeme başlatılamadı. Lütfen tekrar deneyin.');
+          setPaymentProcessing(false);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // =========== EFT PAYMENT - MEVCUT AKIŞ ===========
       const cityData = TURKEY_CITIES.find(c => c.name === shippingCity);
       const cityCode = cityData?.id?.toString() || '34'; // Default: İstanbul
 
@@ -586,6 +751,8 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
             district: guestData.district,
             method: 'standard'
           },
+          // Fatura bilgileri
+          invoice: invoiceData,
           // Ürünler
           items: items.map(item => ({
             productId: item.id,
@@ -680,11 +847,12 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
 
       // Sipariş Onay Emaili Gönder
       const customerEmail = isGuestMode ? guestData.email : user?.email;
-      const customerName = isGuestMode ? `${guestData.firstName} ${guestData.lastName}` : `${user?.firstName} ${user?.lastName}`;
-      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+      const customerName = isGuestMode
+        ? `${guestData.firstName} ${guestData.lastName}`
+        : `${selectedAddr?.firstName || ''} ${selectedAddr?.lastName || ''}`.trim() || 'Değerli Müşterimiz';
       const customerAddress = isGuestMode
         ? `${guestData.address}, ${guestData.district}, ${guestData.city}`
-        : selectedAddr?.address || '';
+        : `${selectedAddr?.address || selectedAddr?.street || ''}, ${selectedAddr?.district || ''}, ${selectedAddr?.city || ''}`;
 
       if (customerEmail) {
         sendOrderConfirmationEmail(customerEmail, {
@@ -911,6 +1079,26 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   </h1>
 </div>
 
+      {/* Genel Hata Mesajları */}
+      {Object.keys(errors).length > 0 && (
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6">
+            <div className="flex items-start gap-3">
+              <span className="material-icons-outlined text-red-500 text-xl shrink-0">error</span>
+              <div className="space-y-3">
+                <p className="text-sm font-bold text-red-700 dark:text-red-400">Lütfen aşağıdaki hataları düzeltin:</p>
+                <ul className="text-sm text-red-600 dark:text-red-300 space-y-1 list-disc list-inside">
+                  {errors.email && <li>{errors.email}</li>}
+                  {errors.address && <li>{errors.address}</li>}
+                  {errors.terms && <li>{errors.terms}</li>}
+                  {errors.general && <li>{errors.general}</li>}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto space-y-8">
 
         {currentStep === 1 ? (
@@ -1126,7 +1314,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         {/* Formatlanmış telefon input */}
         <input
           type="tel"
-          placeholder={guestData.phoneCountry === '+90' ? '533 342 04 93' : 'Phone number'}
+          placeholder={guestData.phoneCountry === '+90' ? '5** *** ** **' : 'Phone number'}
           className="flex-1 h-16 px-6 rounded-md border border-gray-400 dark:border-gray-500 bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 font-medium focus:outline-none focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
           required
           value={guestData.phone}
@@ -1140,7 +1328,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         <p className="text-xs text-red-500 dark:text-red-400 mt-1 flex items-center gap-1">
           <span className="material-icons-outlined text-sm">error</span>
           {guestData.phoneCountry === '+90'
-            ? 'Türkiye için 10 haneli telefon numarası girin (örn: 533 342 04 93)'
+            ? 'Türkiye için 10 haneli telefon numarası girin (örn: 5XX XXX XX XX)'
             : 'En az 7 haneli telefon numarası girin'}
         </p>
       )}
@@ -1283,7 +1471,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                   <option value="+44">🇬🇧 +44</option>
                 </select>
                 <Input
-                  placeholder="533 342 04 93"
+                  placeholder="5** *** ** **"
                   value={newTempAddress.phone}
                   onChange={e => setNewTempAddress({...newTempAddress, phone: formatPhone(e.target.value, newTempAddress.phoneCountry)})}
                   className="flex-1 h-14 rounded-md"
@@ -1693,16 +1881,56 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
 
               <Button
                 onClick={() => {
+                  const newErrors: Record<string, string> = {};
+
                   // Guest mode için validasyon
-                  if (isGuestMode && !isGuestFormValid) {
-                    setErrors({ address: 'Lütfen tüm bilgileri eksiksiz doldurun.' });
+                  if (isGuestMode) {
+                    if (!isGuestFormValid) {
+                      newErrors.address = 'Lütfen tüm bilgileri eksiksiz doldurun.';
+                    }
+                    if (!guestData.email) {
+                      newErrors.email = 'Lütfen e-posta adresinizi girin.';
+                    }
+                  } else {
+                    // Kayıtlı kullanıcı validasyonu
+                    if (!selectedAddressId) {
+                      newErrors.address = 'Lütfen teslimat adresi seçin.';
+                    } else {
+                      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+                      const missingFields: string[] = [];
+
+                      if (!selectedAddr?.firstName || !selectedAddr?.lastName) {
+                        missingFields.push('ad-soyad');
+                      }
+                      if (!selectedAddr?.phone) {
+                        missingFields.push('telefon');
+                      }
+                      if (!selectedAddr?.city || !selectedAddr?.district) {
+                        missingFields.push('şehir/ilçe');
+                      }
+                      if (!selectedAddr?.address && !selectedAddr?.street) {
+                        missingFields.push('açık adres');
+                      }
+
+                      if (missingFields.length > 0) {
+                        newErrors.address = `Seçili adreste eksik bilgi var: ${missingFields.join(', ')}. Lütfen adresi güncelleyin.`;
+                      }
+                    }
+
+                    // Email kontrolü gerekli değil - kullanıcı giriş yapmış, Firebase Auth'ta email var
+                  }
+
+                  if (!agreedToTerms) {
+                    newErrors.terms = 'Lütfen satış sözleşmesini onaylayın.';
+                  }
+
+                  if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     return;
                   }
-                  if (!agreedToTerms) {
-                    setErrors({ terms: 'Lütfen satış sözleşmesini onaylayın.' });
-                    return;
-                  }
+
+                  setErrors({});
                   setCurrentStep(2);
                 }}
                 loading={isSubmitting}
@@ -1740,34 +1968,68 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       </div>
 
       {paymentMethod === 'card' ? (
-        <div className="space-y-4 animate-fade-in">
-          <Input label="KART ÜZERİNDEKİ İSİM" placeholder="CAN YILMAZ" className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all" />
-          <Input label="KART NUMARASI" placeholder="0000 0000 0000 0000" value={cardData.number} onChange={handleCardNumber} className={`h-16 rounded-md bg-white dark:bg-dark-800 border placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all ${errors.cardNum ? 'border-red-600 border-2 bg-red-50/5' : 'border-gray-400 dark:border-gray-500'}`} />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="S.K. TARİHİ" placeholder="AA/YY" value={cardData.expiry} onChange={handleExpiry} className={`h-16 rounded-md bg-white dark:bg-dark-800 border placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all ${errors.cardExp ? 'border-red-600 border-2' : 'border-gray-400 dark:border-gray-500'}`} />
-            <Input label="CVV" placeholder="***" type="password" value={cardData.cvv} onChange={handleCVV} className={`h-16 rounded-md bg-white dark:bg-dark-800 border placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all ${errors.cardCvv ? 'border-red-600 border-2' : 'border-gray-400 dark:border-gray-500'}`} />
+        <div className="space-y-6 animate-fade-in">
+          {/* İyzico Güvenli Ödeme Bilgi Kartı */}
+          <div className="p-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-3xl border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 bg-white dark:bg-dark-900 rounded-2xl flex items-center justify-center shadow-lg border border-gray-100 dark:border-gray-700">
+                <img
+                  src="/payment/iyzico/iyzico-logo-pack/checkout_iyzico_ile_ode/TR/Tr_Colored/iyzico_ile_ode_colored.svg"
+                  alt="iyzico"
+                  className="h-8"
+                />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white">Güvenli Ödeme</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Kredi kartı bilgileriniz İyzico tarafından korunur</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="flex items-center gap-2 p-3 bg-white/60 dark:bg-dark-900/60 rounded-xl">
+                <ShieldCheck className="text-emerald-600" size={18} />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">256-bit SSL</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-white/60 dark:bg-dark-900/60 rounded-xl">
+                <CreditCard className="text-blue-600" size={18} />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">3D Secure</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-white/60 dark:bg-dark-900/60 rounded-xl">
+                <CheckCircle2 className="text-purple-600" size={18} />
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">PCI DSS</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              "Siparişi Tamamla" butonuna bastığınızda güvenli ödeme sayfası açılacaktır.
+            </p>
           </div>
 
-          {/* Güvenli Ödeme - Iyzico */}
-          <div className="flex items-center justify-center gap-3 py-4 px-6 bg-gray-50 dark:bg-dark-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-            <ShieldCheck className="text-emerald-600 dark:text-emerald-400" size={20} />
-            <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">256-bit SSL ile güvenli ödeme</span>
-            <img
-              src="/payment/iyzico/iyzico-logo-pack/checkout_iyzico_ile_ode/TR/Tr_Colored/iyzico_ile_ode_colored.svg"
-              alt="iyzico ile öde"
-              className="h-6 opacity-80"
-            />
+          {/* Desteklenen Kartlar */}
+          <div className="flex items-center justify-center gap-4 py-4">
+            <span className="text-xs text-gray-400 uppercase tracking-wider">Desteklenen Kartlar:</span>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-8 bg-white dark:bg-dark-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                <span className="text-[10px] font-bold text-blue-600">VISA</span>
+              </div>
+              <div className="w-12 h-8 bg-white dark:bg-dark-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                <span className="text-[10px] font-bold text-orange-500">MC</span>
+              </div>
+              <div className="w-12 h-8 bg-white dark:bg-dark-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                <span className="text-[10px] font-bold text-blue-800">AMEX</span>
+              </div>
+            </div>
           </div>
 
           {/* Ödeme Butonu */}
           <Button
             onClick={handleCompleteOrder}
-            loading={isSubmitting}
-            disabled={isSubmitting}
+            loading={isSubmitting || paymentProcessing}
+            disabled={isSubmitting || paymentProcessing}
             size="lg"
             className="w-full h-20 shadow-2xl rounded-[30px] text-sm font-black uppercase tracking-[0.3em] bg-brown-900 dark:bg-gold text-white dark:text-black hover:scale-[1.02] active:scale-95 transition-all"
           >
-            {isSubmitting ? 'İŞLEM YAPILIYOR...' : 'ÖDEMEYE DEVAM ET'}
+            {isSubmitting || paymentProcessing ? 'İŞLEM YAPILIYOR...' : 'SİPARİŞİ TAMAMLA'}
           </Button>
         </div>
       ) : (
@@ -2047,6 +2309,21 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         </div>
         );
       })()}
+
+      {/* İyzico Checkout Modal */}
+      {iyzicoModal && (
+        <IyzicoCheckoutModal
+          isOpen={iyzicoModal.isOpen}
+          checkoutFormContent={iyzicoModal.content}
+          token={iyzicoModal.token}
+          orderId={iyzicoModal.orderId}
+          onClose={() => {
+            setIyzicoModal(null);
+            setPaymentProcessing(false);
+          }}
+          onPaymentComplete={handleIyzicoPaymentComplete}
+        />
+      )}
 
       <Footer />
     </main>

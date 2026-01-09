@@ -37,6 +37,7 @@ const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.R
 const TastingQuiz = lazy(() => import('./pages/TastingQuiz').then(m => ({ default: m.TastingQuiz })));
 const Campaigns = lazy(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
 const Maintenance = lazy(() => import('./pages/Maintenance').then(m => ({ default: m.Maintenance })));
+const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
 
 // Minimal loading component - no spinner
 const PageLoader = () => (
@@ -240,6 +241,31 @@ const loadGoogleFonts = (settings: TypographySettings) => {
 const App: React.FC = () => {
   const initializeLoyalty = useLoyaltyStore((state) => state.initialize);
 
+  // Payment callback redirect handler
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const payment = urlParams.get('payment');
+    const orderId = urlParams.get('orderId');
+    const error = urlParams.get('error');
+
+    if (payment && orderId) {
+      // Redirect to appropriate hash route (full page reload to clean URL)
+      if (payment === 'success') {
+        // Sepeti temizle (başarılı ödeme sonrası)
+        localStorage.removeItem('sade_cart');
+        window.location.href = `${window.location.origin}/#/order-confirmation/${orderId}`;
+      } else if (payment === 'failed') {
+        window.location.href = `${window.location.origin}/#/checkout?orderId=${orderId}&retry=true&error=${encodeURIComponent(error || 'Ödeme başarısız')}`;
+      }
+      return;
+    }
+
+    // Fix malformed URLs (cleanup old broken redirects)
+    if (window.location.pathname !== '/' && window.location.pathname.length > 1) {
+      window.location.href = `${window.location.origin}/#${window.location.hash.replace('#', '') || '/'}`;
+    }
+  }, []);
+
   useEffect(() => {
     // Tema Başlatma
     const storedTheme = localStorage.getItem('theme');
@@ -312,6 +338,7 @@ const App: React.FC = () => {
                     <Route path="/tasting-quiz" element={<TastingQuiz />} />
                     <Route path="/campaigns" element={<Campaigns />} />
                     <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                   </Routes>
                 </Suspense>
               </Layout>
