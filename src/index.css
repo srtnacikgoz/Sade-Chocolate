@@ -91,12 +91,12 @@ body:has([class*="z-[9999]"]) header {
   --header-height: 80px; /* Masaüstü standart yüksekliğimiz */
 
   /* Typography CSS Değişkenleri - Varsayılanlar (Firestore'dan güncellenir) */
-  --font-h1: 'Playfair Display', serif;
-  --font-h2: 'Playfair Display', serif;
-  --font-h3: 'Inter', sans-serif;
-  --font-h4: 'Inter', sans-serif;
+  --font-h1: 'Santana', 'Cormorant Garamond', Georgia, serif;
+  --font-h2: 'Santana', 'Cormorant Garamond', Georgia, serif;
+  --font-h3: 'Santana', 'Cormorant Garamond', Georgia, serif;
+  --font-h4: 'Santana', 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Inter', sans-serif;
-  --font-display: 'Playfair Display', serif;
+  --font-display: 'Santana', 'Cormorant Garamond', Georgia, serif;
   --font-logo: 'Santana', 'Cormorant Garamond', serif;
   --font-button: 'Inter', sans-serif;
   --font-nav: 'Inter', sans-serif;

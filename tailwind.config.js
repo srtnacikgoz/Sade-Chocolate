@@ -51,9 +51,9 @@ export default {
         'nav': 'var(--font-nav, "Inter", sans-serif)',
         'label': 'var(--font-label, "Inter", sans-serif)',
         'caption': 'var(--font-caption, "Inter", sans-serif)',
-        // Ana font class'ları - Dinamik CSS değişkenleri kullanıyor
-        display: 'var(--font-display, "Playfair Display", serif)',
-        serif: 'var(--font-display, "Playfair Display", serif)',
+        // Ana font class'ları - Santana kullanır (tüm başlıklar için)
+        display: ["Santana", "Cormorant Garamond", "Georgia", "serif"],
+        serif: ["Santana", "Cormorant Garamond", "Georgia", "serif"],
         sans: 'var(--font-body, "Inter", sans-serif)',
         // Santana - Premium branding fontu (Logo için sabit - değişmez)
         santana: ["Santana", "Cormorant Garamond", "Georgia", "serif"],

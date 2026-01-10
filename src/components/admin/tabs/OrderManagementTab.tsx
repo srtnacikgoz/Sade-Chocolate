@@ -36,6 +36,7 @@ import { seedMockOrders } from '../../../services/seedOrders';
 import { TierBadge } from '../../ui/TierBadge';
 import type { LoyaltyTier } from '../../../types/loyalty';
 import { CreateShipmentModal } from '../CreateShipmentModal';
+import { sendDeliveryConfirmationEmail, sendShippingNotificationEmail } from '../../../services/emailService';
 
 // --- EFT COUNTDOWN TIMER ---
 const EftCountdown = ({ deadline, compact = false }: { deadline: string; compact?: boolean }) => {
@@ -2267,6 +2268,22 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
     try {
       await updateOrderStatus(order.firestoreId || order.id, newStatus);
       success(`Sipariş durumu güncellendi: ${newStatus}`);
+
+      // Teslim edildi durumunda müşteriye email gönder
+      if (newStatus === 'Delivered' && order.customer?.email) {
+        const items = order.items?.map(item => ({
+          name: item.name || 'Ürün',
+          quantity: item.quantity || 1
+        })) || [];
+
+        sendDeliveryConfirmationEmail(order.customer.email, {
+          customerName: order.customer.name || 'Değerli Müşterimiz',
+          orderId: order.id,
+          deliveryDate: new Date().toISOString(),
+          items,
+          reviewUrl: `https://sadechocolate.com/#/account?view=orders&order=${order.id}`
+        }).catch(err => console.error('Teslimat emaili gönderilemedi:', err));
+      }
     } catch (err: any) {
       error(`Durum güncellenemedi: ${err.message}`);
     }
@@ -3129,6 +3146,7 @@ export const OrderManagementTab: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isSeedingOrders, setIsSeedingOrders] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Toast system
   const { toasts, removeToast, success, error: toastError, info } = useToast();
@@ -3498,8 +3516,10 @@ export const OrderManagementTab: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
-              placeholder="Sipariş Ara..."
-              className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-mustard outline-none text-xs uppercase tracking-widest dark:text-white"
+              placeholder="Sipariş No, Ad, Email, Telefon..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 w-64 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-mustard outline-none text-xs dark:text-white"
             />
           </div>
         </div>
@@ -3531,6 +3551,16 @@ export const OrderManagementTab: React.FC = () => {
                 if (paymentFilter === 'paid') return o.payment?.status === 'paid';
                 if (paymentFilter === 'failed') return o.payment?.status === 'failed';
                 return true;
+              })
+              .filter(o => {
+                if (!searchTerm.trim()) return true;
+                const term = searchTerm.toLowerCase();
+                return (
+                  o.id?.toLowerCase().includes(term) ||
+                  o.customer?.name?.toLowerCase().includes(term) ||
+                  o.customer?.email?.toLowerCase().includes(term) ||
+                  o.customer?.phone?.toLowerCase().includes(term)
+                );
               })
               .map((order) => (
                 <tr

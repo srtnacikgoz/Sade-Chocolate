@@ -1,6 +1,6 @@
 # Sade Chocolate - Proje Durumu ve Hedefler
 
-> **Son Güncelleme:** 05 Ocak 2026
+> **Son Güncelleme:** 10 Ocak 2026
 
 ---
 
@@ -120,10 +120,12 @@
 ## BEKLEYEN HEDEFLER
 
 ### 🎯 Öncelik 1: Ödeme Entegrasyonu (P0 - Kritik)
-- [ ] **Iyzico ödeme gateway** (Başvuru yapıldı, onay bekleniyor)
-  - Kart ödeme entegrasyonu
-  - 3D Secure desteği
-  - Test/prod environment ayrımı
+- [x] **Iyzico ödeme gateway** ✅ Tamamlandı (10 Ocak 2026)
+  - Kart ödeme entegrasyonu (`functions/src/services/iyzicoService.ts`)
+  - 3D Secure desteği (Checkout Form ile)
+  - Test/prod environment ayrımı (sandbox/production URL)
+  - Frontend: `IyzicoCheckoutModal.tsx` ve `OrderConfirmation.tsx`
+  - Callback handling ve payment validation
 
 ### 🏷️ Öncelik 2: Tasarım & Branding
 - [x] ~~**Logo tasarımı ve entegrasyonu**~~ ✅ Tamamlandı (03 Ocak 2026)
@@ -185,11 +187,16 @@
 - [x] ~~**Kargo bilgilendirme emaili**~~ ✅ Tamamlandı
 - [x] ~~**Hoş geldin emaili**~~ ✅ Tamamlandı
 
-- [ ] **Ödeme onay emaili** (Gelecek)
-  - Trigger: Admin ödemeyi onayladığında
+- [x] **Ödeme onay emaili** ✅ Tamamlandı (10 Ocak 2026)
+  - `sendPaymentSuccessEmail` template'i mevcut (emailService.ts:843)
+  - `sendPaymentFailedEmail` template'i de mevcut
+  - Kart bilgileri, sipariş detayları ve sonraki adımlar içeriyor
 
-- [ ] **Teslimat onay emaili** (Gelecek)
-  - Trigger: Sipariş durumu "Delivered" olduğunda
+- [x] **Teslimat onay emaili** ✅ Tamamlandı (10 Ocak 2026)
+  - `sendDeliveryConfirmationEmail` template'i (emailService.ts:1137)
+  - Teslim edilen ürünler listesi, lezzet ipuçları, yorum yazma CTA
+  - Trigger: Sipariş durumu "Delivered" olduğunda otomatik gönderim
+  - OrderManagementTab.tsx:handleStatusChange entegrasyonu
 
 - [ ] **Heat Hold bilgilendirme emaili** (Gelecek)
   - Trigger: Sipariş "Heat Hold" durumuna geçtiğinde
@@ -197,27 +204,23 @@
 - [ ] **WhatsApp bildirim** (Gelecek)
   - SMS/WhatsApp Business API entegrasyonu
 
-### 💡 Öncelik 4: Checkout UX İyileştirmeleri (Gelecek)
-- [ ] **Checkout sayfa düzeni yeniden tasarımı** ⚠️ KRITIK
-  - Problem: Ödeme bilgileri + sipariş özeti solda, "Siparişi Tamamla" butonu eksik
-  - Çözüm: Ortalı layout, her iki alan altında da buton
-  - Sayfa düzeni tutarlılığı: Tüm sayfalar aynı tarzı benimsemeli
-- [ ] **Form verisi persistence (LocalStorage/SessionStorage)**
-  - Problem: Sayfa değiştiğinde girilen bilgiler kayboluyor
-  - Çözüm: Form state'i otomatik kaydetme (her 2 saniyede bir)
-  - Recovery mekanizması: "Yarım kalan siparişiniz var, devam etmek ister misiniz?"
-- [ ] **Fatura adresi accordion**
-  - "Fatura adresim farklı" seçildiğinde accordion ile açılsın
-  - Tek tıkla genişle/daralt
-  - Smooth animasyon
-- [ ] **Google Places API entegrasyonu**
-  - Adres otomatik tamamlama
-  - Şehir/ilçe otomatik seçimi
-  - Konum tabanlı adres önerileri
-- [ ] **Havale/EFT ödeme geri sayım**
-  - Real-time countdown timer (örn: "11:45:23 kaldı")
-  - Süre dolmadan önce bildirim
-  - Sipariş detay sayfasında zamanlayıcı gösterimi
+### 💡 Öncelik 4: Checkout UX İyileştirmeleri
+- [x] **Checkout sayfa düzeni yeniden tasarımı** ✅ Tamamlandı
+  - Tek kolonlu, ortalı layout
+  - Adım adım form akışı
+- [x] **Form verisi persistence (LocalStorage)** ✅ Tamamlandı (10 Ocak 2026)
+  - Draft otomatik kaydetme (Checkout.tsx:121)
+  - Recovery mekanizması: "Yarım kalan siparişiniz var" dialog
+  - 48 saat expiry mekanizması
+  - `DRAFT_KEY` ve `DRAFT_TIMESTAMP_KEY` ile yönetim
+- [x] **Fatura adresi accordion** ✅ Tamamlandı (10 Ocak 2026)
+  - `isDeliveryOpen`, `isInvoiceOpen` accordion state'leri (Checkout.tsx:233)
+  - Smooth animasyon ile açılma/kapanma
+  - "Fatura adresim farklı" seçeneği çalışıyor
+- [x] **Havale/EFT ödeme geri sayım** ✅ Tamamlandı (10 Ocak 2026)
+  - Real-time countdown timer (Checkout.tsx:231, 340-366)
+  - `paymentCountdown` state ile saat:dakika:saniye gösterimi
+  - Sipariş success sayfasında görsel timer kartları
 
 ---
 

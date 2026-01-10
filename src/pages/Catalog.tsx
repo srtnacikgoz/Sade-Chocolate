@@ -148,7 +148,7 @@ export const Catalog: React.FC = () => {
   const SearchHeader = () => (
     <div className="text-center py-8 bg-cream-100 dark:bg-dark-900 rounded-lg mb-8">
       <h2 className="text-xl font-serif italic text-gray-500">{t('search_results_for')}</h2>
-      <p className="text-4xl font-display text-mocha-900 dark:text-white">"{searchTerm}"</p>
+      <p className="text-4xl font-santana text-mocha-900 dark:text-white">"{searchTerm}"</p>
       <p className="text-sm text-gray-400 mt-2">{sortedAndFilteredProducts.length} {t('products_found')}</p>
     </div>
   );
@@ -160,7 +160,7 @@ export const Catalog: React.FC = () => {
                 <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-10">
                   <div>
                     <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Size Özel Seçimler</span>
-                    <h2 className="font-display text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white italic tracking-tighter">{t('catalog_title')}</h2>
+                    <h2 className="font-santana text-6xl lg:text-7xl text-gray-900 dark:text-white">{t('catalog_title')}</h2>
                   </div>
                 </div>
               )}

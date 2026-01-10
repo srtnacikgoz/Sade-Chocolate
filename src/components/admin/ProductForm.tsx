@@ -451,44 +451,76 @@ const addAttribute = () => {
         {/* Sol: Görsel Yükleme */}
         <div className="col-span-4 space-y-6">
           {/* Ana Görsel */}
-          <div
-            onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-            onClick={() => !isUploading && fileInputRef.current?.click()}
-            className={`relative group h-64 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
-              ${dragActive ? 'border-brown-900 bg-brown-50' : 'border-slate-200 bg-slate-50 hover:border-brown-900/30'}
-              ${isUploading ? 'cursor-wait opacity-70' : ''}`}
-          >
-            <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={onFileChange} />
-            {formData.image && <img src={formData.image} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
-            <div className="relative z-10 text-center">
-              <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-3">
-                {isUploading ? <Loader2 className="animate-spin text-brown-900" /> : <Upload className="text-slate-400" />}
+          <div className="relative">
+            <div
+              onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              className={`relative group h-64 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
+                ${dragActive ? 'border-brown-900 bg-brown-50' : 'border-slate-200 bg-slate-50 hover:border-brown-900/30'}
+                ${isUploading ? 'cursor-wait opacity-70' : ''}`}
+            >
+              <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={onFileChange} />
+              {formData.image && <img src={formData.image} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
+              <div className="relative z-10 text-center">
+                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-3">
+                  {isUploading ? <Loader2 className="animate-spin text-brown-900" /> : <Upload className="text-slate-400" />}
+                </div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                  {isUploading ? 'YÜKLENİYOR...' : 'ANA GÖRSEL'}
+                </p>
               </div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-                {isUploading ? 'YÜKLENİYOR...' : 'ANA GÖRSEL'}
-              </p>
             </div>
+            {/* Ana Görsel Silme Butonu */}
+            {formData.image && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFormData({ ...formData, image: '' });
+                  toast.info('Ana görsel kaldırıldı');
+                }}
+                className="absolute top-3 right-3 z-20 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
 
           {/* Alternatif Görsel (Hover) */}
-          <div
-            onDragEnter={handleDragAlternate} onDragLeave={handleDragAlternate} onDragOver={handleDragAlternate} onDrop={handleDropAlternate}
-            onClick={() => !isUploadingAlternate && alternateFileInputRef.current?.click()}
-            className={`relative group h-48 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
-              ${dragActiveAlternate ? 'border-gold bg-gold/5' : 'border-slate-200 bg-slate-50 hover:border-gold/50'}
-              ${isUploadingAlternate ? 'cursor-wait opacity-70' : ''}`}
-          >
-            <input ref={alternateFileInputRef} type="file" className="hidden" accept="image/*" onChange={onAlternateFileChange} />
-            {formData.alternateImage && <img src={formData.alternateImage} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
-            <div className="relative z-10 text-center">
-              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-2">
-                {isUploadingAlternate ? <Loader2 className="animate-spin text-gold" /> : <Upload className="text-slate-400" size={18} />}
+          <div className="relative">
+            <div
+              onDragEnter={handleDragAlternate} onDragLeave={handleDragAlternate} onDragOver={handleDragAlternate} onDrop={handleDropAlternate}
+              onClick={() => !isUploadingAlternate && alternateFileInputRef.current?.click()}
+              className={`relative group h-48 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
+                ${dragActiveAlternate ? 'border-gold bg-gold/5' : 'border-slate-200 bg-slate-50 hover:border-gold/50'}
+                ${isUploadingAlternate ? 'cursor-wait opacity-70' : ''}`}
+            >
+              <input ref={alternateFileInputRef} type="file" className="hidden" accept="image/*" onChange={onAlternateFileChange} />
+              {formData.alternateImage && <img src={formData.alternateImage} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
+              <div className="relative z-10 text-center">
+                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-2">
+                  {isUploadingAlternate ? <Loader2 className="animate-spin text-gold" /> : <Upload className="text-slate-400" size={18} />}
+                </div>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                  {isUploadingAlternate ? 'YÜKLENİYOR...' : 'HOVER GÖRSELI'}
+                </p>
+                <p className="text-[7px] text-slate-300 mt-1">İsteğe bağlı</p>
               </div>
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-                {isUploadingAlternate ? 'YÜKLENİYOR...' : 'HOVER GÖRSELI'}
-              </p>
-              <p className="text-[7px] text-slate-300 mt-1">İsteğe bağlı</p>
             </div>
+            {/* Hover Görseli Silme Butonu */}
+            {formData.alternateImage && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFormData({ ...formData, alternateImage: '' });
+                  toast.info('Hover görseli kaldırıldı');
+                }}
+                className="absolute top-3 right-3 z-20 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
           </div>
 
           {/* ✅ Galeri Görselleri (Dandelion Tarzı) */}
@@ -615,16 +647,19 @@ const addAttribute = () => {
             </div>
           </div>
 
-         {/* --- KATEGORİ SEÇİMİ --- */}
+         {/* --- KATEGORİ SEÇİMİ (Dinamik + Yeni Ekleme) --- */}
           <div className="bg-gradient-to-r from-brown-50 to-amber-50 p-6 rounded-[32px] border border-brown-200/50 space-y-4">
-            <label className="text-[10px] font-black text-brown-700 uppercase tracking-widest">Kategori</label>
-            <div className="flex gap-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-brown-700 uppercase tracking-widest">Kategori</label>
+              <span className="text-[9px] text-slate-400 italic">Mevcut seç veya yeni ekle</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
               {PRODUCT_CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => setFormData({ ...formData, category: cat.id })}
-                  className={`flex-1 px-5 py-3 rounded-xl border-2 transition-all text-sm font-bold ${
+                  className={`px-5 py-3 rounded-xl border-2 transition-all text-sm font-bold ${
                     formData.category === cat.id
                       ? 'border-brown-900 bg-white text-brown-900 shadow-md'
                       : 'border-slate-200 bg-white/50 text-slate-400 hover:border-brown-900/30'
@@ -633,6 +668,39 @@ const addAttribute = () => {
                   {cat.label}
                 </button>
               ))}
+
+              {/* Yeni kategori ekleme veya mevcut kategori gösterme (PRODUCT_CATEGORIES dışında ise) */}
+              {!PRODUCT_CATEGORIES.find(c => c.id === formData.category) && formData.category && (
+                <button
+                  type="button"
+                  className="px-5 py-3 rounded-xl border-2 border-brown-900 bg-white text-brown-900 shadow-md text-sm font-bold"
+                >
+                  {formData.category.charAt(0).toUpperCase() + formData.category.slice(1)}
+                </button>
+              )}
+            </div>
+
+            {/* Yeni Kategori Input */}
+            <div className="flex gap-3 items-center pt-2 border-t border-brown-100">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Veya yeni:</span>
+              <input
+                type="text"
+                placeholder="Yeni kategori adı..."
+                className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brown-900/20 outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const input = e.target as HTMLInputElement;
+                    const newCategory = input.value.trim().toLowerCase().replace(/\s+/g, '-');
+                    if (newCategory) {
+                      setFormData({ ...formData, category: newCategory });
+                      input.value = '';
+                      toast.success(`"${newCategory}" kategorisi eklendi`);
+                    }
+                  }
+                }}
+              />
+              <span className="text-[8px] text-slate-300 italic">Enter'a bas</span>
             </div>
           </div>
 

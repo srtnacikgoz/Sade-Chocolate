@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Product } from '../../../types';
 import { PRODUCT_CATEGORIES } from '../../../constants';
-import { Package, AlertTriangle, LayoutGrid, TrendingUp, Search, Plus, Minus, Edit3, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Package, AlertTriangle, LayoutGrid, TrendingUp, Search, Plus, Minus, Edit3, Trash2, Eye, EyeOff, Layers } from 'lucide-react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { toast } from 'sonner';
 
@@ -21,7 +21,27 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   setIsFormOpen,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'tablets' | 'truffles' | 'boxes' | 'bonbons' | 'other'>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // Dinamik kategori listesi: Varsayılan kategoriler + ürünlerdeki benzersiz kategoriler
+  const dynamicCategories = useMemo(() => {
+    // Ürünlerdeki tüm benzersiz kategorileri al
+    const productCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+
+    // Varsayılan kategorilerden başla
+    const allCategories = [...PRODUCT_CATEGORIES];
+
+    // Ürünlerde olup varsayılanlarda olmayan kategorileri ekle
+    productCategories.forEach(cat => {
+      if (!allCategories.find(c => c.id === cat)) {
+        // Kategori adını capitalize et
+        const label = cat.charAt(0).toUpperCase() + cat.slice(1).replace(/-/g, ' ');
+        allCategories.push({ id: cat, label });
+      }
+    });
+
+    return allCategories;
+  }, [products]);
   const [criticalStockThreshold, setCriticalStockThreshold] = useState(() => {
     const saved = localStorage.getItem('criticalStockThreshold');
     return saved ? parseInt(saved, 10) : 5;
@@ -80,25 +100,11 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Tek katman filtre mantığı
+    // Dinamik kategori filtresi
     let matchesFilter = true;
-    if (filterType === 'tablets') {
-      // Tablet kategorisi VE kutu değil
-      matchesFilter = p.category === 'tablet' && p.productType !== 'box';
-    } else if (filterType === 'truffles') {
-      // Truffle kategorisi
-      matchesFilter = p.category === 'truffle';
-    } else if (filterType === 'boxes') {
-      // Kutu tipi ürünler
-      matchesFilter = p.productType === 'box';
-    } else if (filterType === 'bonbons') {
-      // Kutu içeriği için kullanılan ürünler
-      matchesFilter = p.isBoxContent === true;
-    } else if (filterType === 'other') {
-      // Yukarıdakilerin hiçbiri değil
-      matchesFilter = p.category !== 'tablet' && p.category !== 'truffle' && p.productType !== 'box' && !p.isBoxContent;
+    if (filterCategory !== 'all') {
+      matchesFilter = p.category === filterCategory;
     }
-    // filterType === 'all' ise hepsini göster
 
     return matchesSearch && matchesFilter;
   });
@@ -179,28 +185,47 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
       {/* Ürün Listesi Tablosu */}
       <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b flex flex-col gap-4 bg-slate-50/30">
-          {/* Tek Katman Filtre Sistemi */}
+          {/* Dinamik Kategori Filtre Sistemi */}
           <div className="flex flex-wrap gap-2 bg-gradient-to-r from-slate-50 to-slate-100 p-2 rounded-2xl border border-slate-200">
-            {[
-              { id: 'all', label: 'TÜMÜ', icon: '📦' },
-              { id: 'tablets', label: 'TABLETLER', icon: '▬' },
-              { id: 'truffles', label: 'TRUFFLES', icon: '🍫' },
-              { id: 'boxes', label: 'KUTULAR', icon: '🎁' },
-              { id: 'bonbons', label: 'BONBONLAR', icon: '🍬' },
-              { id: 'other', label: 'DİĞER', icon: '📋' }
-            ].map(type => (
-              <button
-                key={type.id}
-                onClick={() => setFilterType(type.id as any)}
-                className={`flex-1 min-w-[120px] px-5 py-3 text-[10px] font-black rounded-xl transition-all ${
-                  filterType === type.id
-                    ? 'bg-white shadow-md text-brown-900 ring-2 ring-brown-100'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
-                }`}
-              >
-                {type.icon} {type.label}
-              </button>
-            ))}
+            {/* Tümü Butonu */}
+            <button
+              onClick={() => setFilterCategory('all')}
+              className={`px-5 py-3 text-[10px] font-black rounded-xl transition-all flex items-center gap-2 ${
+                filterCategory === 'all'
+                  ? 'bg-white shadow-md text-brown-900 ring-2 ring-brown-100'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+              }`}
+            >
+              <Layers size={14} /> TÜMÜ
+              <span className="text-[9px] font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full ml-1">
+                {products.length}
+              </span>
+            </button>
+
+            {/* Dinamik Kategori Butonları */}
+            {dynamicCategories.map(cat => {
+              const count = products.filter(p => p.category === cat.id).length;
+              if (count === 0) return null; // Ürün yoksa gösterme
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setFilterCategory(cat.id)}
+                  className={`px-5 py-3 text-[10px] font-black rounded-xl transition-all flex items-center gap-2 ${
+                    filterCategory === cat.id
+                      ? 'bg-white shadow-md text-brown-900 ring-2 ring-brown-100'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+                  }`}
+                >
+                  {cat.label.toUpperCase()}
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                    filterCategory === cat.id ? 'bg-brown-100 text-brown-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="relative w-full md:max-w-sm">
@@ -222,7 +247,9 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                 <div>
                   <h4 className="font-display font-bold text-base italic text-gray-900 dark:text-white">{product.title}</h4>
                   <div className="flex items-center gap-3 mt-1.5">
-                    <span className="text-[10px] text-brown-900 dark:text-gold font-black bg-brown-50 dark:bg-brown-900/20 px-2.5 py-0.5 rounded uppercase tracking-wider">{PRODUCT_CATEGORIES.find(cat => cat.id === product.category)?.label}</span>
+                    <span className="text-[10px] text-brown-900 dark:text-gold font-black bg-brown-50 dark:bg-brown-900/20 px-2.5 py-0.5 rounded uppercase tracking-wider">
+                      {dynamicCategories.find(cat => cat.id === product.category)?.label || product.category || 'Kategorisiz'}
+                    </span>
                     <span className="text-sm font-mono font-bold text-gray-400 italic">₺{product.price.toFixed(2)}</span>
                     {(product.locationStock?.yesilbahce || 0) === 0 && <span className="text-[8px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black animate-pulse">STOK YOK</span>}
                     {(product.locationStock?.yesilbahce || 0) > 0 && (product.locationStock?.yesilbahce || 0) <= criticalStockThreshold && <span className="text-[8px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black">KRİTİK</span>}

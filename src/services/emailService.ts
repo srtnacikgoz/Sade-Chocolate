@@ -64,11 +64,8 @@ const getEmailFooter = (email: string) => `
 // Ortak email header
 const getEmailHeader = (badge?: string) => `
   <div style="background: ${COLORS.primary}; padding: 48px 20px; text-align: center;">
-    <!-- Logo -->
-    <div style="margin: 0;">
-      <span style="font-family: 'Santana', Georgia, serif; font-size: 42px; color: white; font-weight: bold; letter-spacing: 3px;">SADE</span>
-    </div>
-    <p style="font-family: 'Santana', Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 8px 0 0; letter-spacing: 2px; font-weight: normal;">Chocolate</p>
+    <!-- Logo - Santana fontu ile görsel -->
+    <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
     ${badge ? `
     <div style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 10px 24px; border-radius: 30px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; text-transform: uppercase;">
       ${badge}
@@ -388,17 +385,18 @@ export const sendShippingNotificationEmail = async (
 export const sendNewsletterWelcomeEmail = async (email: string) => {
   // Firestore'dan template ayarlarını çek
   let t = {
-    // Logo Customization
+    // Logo Customization - Yan yana: Sade (Bold) + Chocolate (Regular)
     logoImageUrl: 'https://sadechocolate.com/kakaologo.png',
     logoShowImage: true,
     logoImageSize: 60,
     logoColor: '#C5A059',
-    logoSadeText: 'SADE',
+    logoSadeText: 'Sade',
     logoChocolateText: 'Chocolate',
     logoSadeFont: "'Santana', Georgia, serif",
     logoChocolateFont: "'Santana', Georgia, serif",
     logoSadeSize: 28,
-    logoChocolateSize: 11,
+    logoChocolateSize: 28,
+    logoLayout: 'horizontal', // 'horizontal' = yan yana, 'vertical' = altlı üstlü
 
     // Content
     headerBadge: '✦ Hoş Geldin ✦',
@@ -512,11 +510,8 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
               <!-- Header Band -->
               <tr>
                 <td style="background-color: ${c.headerBg}; padding: 40px 48px; text-align: center;">
-                  ${logoShowImage ? `
-                  <img src="${logoImageUrl}" alt="Logo" width="${logoImageSize}" height="${logoImageSize}" style="display: block; margin: 0 auto 16px; max-width: 100%; height: auto;" />
-                  ` : ''}
-                  <h1 style="margin: 0; font-family: ${logoSadeFont}; font-size: ${logoSadeSize}px; font-weight: bold; letter-spacing: 6px; color: ${c.bodyBg};">${logoSadeText}</h1>
-                  <p style="margin: 8px 0 0; font-family: ${logoChocolateFont}; font-size: ${logoChocolateSize}px; letter-spacing: 4px; color: ${c.accent}; font-weight: normal;">${logoChocolateText}</p>
+                  <!-- Logo - Santana fontu ile görsel -->
+                  <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
                 </td>
               </tr>
 
@@ -1129,4 +1124,145 @@ export const sendBulkCampaignEmail = async (
     console.error('❌ Toplu email gönderimi hatası:', error);
     return false;
   }
+};
+
+/**
+ * Teslimat Onay Emaili - Sipariş teslim edildiğinde
+ */
+export const sendDeliveryConfirmationEmail = async (
+  email: string,
+  data: {
+    customerName: string;
+    orderId: string;
+    deliveryDate: string;
+    items: Array<{ name: string; quantity: number }>;
+    reviewUrl?: string;
+  }
+) => {
+  const deliveryDateFormatted = new Date(data.deliveryDate).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const itemsList = data.items.map(item => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text};">
+        🍫 ${item.name}
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: center; font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.lightText};">
+        x${item.quantity}
+      </td>
+    </tr>
+  `).join('');
+
+  const content = `
+    ${getEmailHeader('Teslim Edildi')}
+
+    <!-- Success Hero -->
+    <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); padding: 48px 20px; text-align: center;">
+      <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 30px rgba(76,175,80,0.3);">
+        <span style="font-size: 48px;">📦</span>
+      </div>
+      <h1 style="font-family: Georgia, serif; font-size: 32px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+        Siparişin Teslim Edildi!
+      </h1>
+      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
+        ${deliveryDateFormatted}
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 48px 40px;">
+      <!-- Greeting -->
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
+        Merhaba ${data.customerName},
+      </p>
+      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 32px;">
+        <strong style="color: ${COLORS.gold};">#${data.orderId}</strong> numaralı siparişin başarıyla teslim edildi. Umarız çikolatalarımız damak zevkine hitap eder!
+      </p>
+
+      <!-- Order Items -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">
+          Teslim Edilen Ürünler
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+          <tbody>
+            ${itemsList}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Chocolate Tips -->
+      <div style="background: linear-gradient(135deg, #FFF9F0 0%, #FFF5E6 100%); border-left: 4px solid ${COLORS.gold}; border-radius: 8px; padding: 24px; margin-bottom: 32px;">
+        <h4 style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.primary}; margin: 0 0 12px; font-style: italic;">
+          ✨ Lezzet İpuçları
+        </h4>
+        <ul style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>Saklama:</strong> Çikolatalarınızı 16-18°C serin ve kuru ortamda saklayın</li>
+          <li><strong>Tadım:</strong> Oda sıcaklığında (20-22°C) tüketin, aromaları daha iyi hissedeceksiniz</li>
+          <li><strong>Eşleştirme:</strong> Bitter çikolatalar kahve ile, sütlü çikolatalar çay ile mükemmel uyum sağlar</li>
+        </ul>
+      </div>
+
+      <!-- Feedback Request -->
+      <div style="background: ${COLORS.primary}; border-radius: 20px; padding: 32px; text-align: center; color: white;">
+        <h3 style="font-family: Georgia, serif; font-size: 22px; margin: 0 0 12px; font-weight: normal; font-style: italic;">
+          Deneyimini Paylaş
+        </h3>
+        <p style="font-family: Georgia, serif; font-size: 14px; opacity: 0.9; margin: 0 0 24px; line-height: 1.6;">
+          Geri bildirimin bizim için çok değerli. Çikolatalarımız hakkındaki düşüncelerini duymak isteriz!
+        </p>
+        ${data.reviewUrl ? `
+        <a href="${data.reviewUrl}" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+          Yorum Yaz
+        </a>
+        ` : `
+        <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+          Siparişlerimi Gör
+        </a>
+        `}
+      </div>
+
+      <!-- Social Share -->
+      <div style="margin-top: 32px; text-align: center;">
+        <p style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.lightText}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 2px;">
+          Bizi Sosyal Medyada Takip Et
+        </p>
+        <div>
+          <a href="https://instagram.com/sadechocolate" style="display: inline-block; width: 44px; height: 44px; background: ${COLORS.cream}; border-radius: 50%; margin: 0 8px; text-decoration: none; line-height: 44px;">
+            <span style="font-size: 20px;">📸</span>
+          </a>
+          <a href="https://facebook.com/sadechocolate" style="display: inline-block; width: 44px; height: 44px; background: ${COLORS.cream}; border-radius: 50%; margin: 0 8px; text-decoration: none; line-height: 44px;">
+            <span style="font-size: 20px;">👍</span>
+          </a>
+        </div>
+        <p style="font-family: Georgia, serif; font-size: 13px; color: ${COLORS.gold}; margin: 16px 0 0; font-style: italic;">
+          #SadeChocolate ile fotoğraflarını paylaş!
+        </p>
+      </div>
+
+      <!-- Thank You Note -->
+      <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid ${COLORS.border}; text-align: center;">
+        <p style="font-family: Georgia, serif; font-size: 18px; color: ${COLORS.primary}; margin: 0; font-style: italic;">
+          Bizi tercih ettiğin için teşekkürler!
+        </p>
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; margin: 12px 0 0;">
+          Bir sonraki siparişinde görüşmek üzere 🍫
+        </p>
+      </div>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Siparişin Teslim Edildi! #${data.orderId}`,
+    html: wrapEmail(content),
+    text: `Merhaba ${data.customerName}! #${data.orderId} numaralı siparişin ${deliveryDateFormatted} tarihinde teslim edildi. Afiyet olsun!`
+  });
 };

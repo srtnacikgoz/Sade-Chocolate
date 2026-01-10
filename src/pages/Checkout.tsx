@@ -5,7 +5,7 @@ import { useUser } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useProducts } from '../context/ProductContext';
 import { Footer } from '../components/Footer';
-import { ChevronRight, ChevronDown, ShieldCheck, CheckCircle2, MapPin, CreditCard, Plus, FileText, Building2, User, AlertTriangle, Thermometer, Calendar, Landmark, Copy, Check, Clock, Percent, RotateCcw } from 'lucide-react';
+import { ChevronRight, ChevronDown, ShieldCheck, CheckCircle2, MapPin, CreditCard, Plus, FileText, Building2, User, AlertTriangle, Thermometer, Calendar, Landmark, Copy, Check, Clock, Percent, RotateCcw, Gift } from 'lucide-react';
 import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shippingUtils';
 import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
@@ -1158,20 +1158,84 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                 ))}
               </div>
 
-              {/* Hediye Paketi */}
-              {isGift && (
-                <div className="mb-6 p-4 bg-gold/5 rounded-2xl border border-gold/10">
-                  <div className="flex items-center gap-2 mb-2 text-brown-900 dark:text-gold">
-                    <span className="material-icons-outlined text-sm">card_giftcard</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Hediye Paketi</span>
+              {/* Hediye Seçeneği */}
+              <div className="mb-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newStatus = !isGift;
+                    setIsGift(newStatus);
+                    if (!newStatus) setGiftMessage('');
+                  }}
+                  className={`w-full p-5 border rounded-2xl flex items-center justify-between group cursor-pointer transition-all duration-300 ${
+                    isGift
+                      ? 'border-gold bg-gold/5 shadow-md'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gold/50 hover:bg-gold/5'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                      isGift ? 'bg-gold text-white' : 'bg-gray-100 dark:bg-dark-700 text-gray-400'
+                    }`}>
+                      <Gift size={18} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">Bu bir hediye mi?</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {isGift ? 'Hediye notu ekleyebilirsiniz' : 'Fiyat bilgisi gizlenir, özel not eklenebilir'}
+                      </p>
+                    </div>
                   </div>
-                  {giftMessage && (
-                    <p className="text-xs italic text-gray-600 dark:text-gray-400 border-l-2 border-gold/30 pl-3 py-1">
-                      "{giftMessage}"
-                    </p>
-                  )}
-                </div>
-              )}
+                  <div className={`w-12 h-6 rounded-full relative transition-all ${
+                    isGift ? 'bg-gold' : 'bg-gray-200 dark:bg-gray-600'
+                  }`}>
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                      isGift ? 'right-1' : 'left-1'
+                    }`} />
+                  </div>
+                </button>
+
+                {/* Hediye Notu Formu */}
+                {isGift && (
+                  <div className="mt-4 p-5 bg-cream-50 dark:bg-dark-900 rounded-2xl border border-gold/10 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">
+                      Hediye Notunuz
+                    </label>
+                    <textarea
+                      value={giftMessage}
+                      onChange={(e) => setGiftMessage(e.target.value)}
+                      placeholder="Sevdiklerinize özel bir mesaj yazın..."
+                      className="w-full bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none transition-all resize-none"
+                      rows={3}
+                      maxLength={200}
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-[10px] text-gray-400 italic">
+                        Fiyat bilgisi faturada/irsaliyede gizlenecektir
+                      </p>
+                      <span className="text-[10px] text-gray-400">{giftMessage.length}/200</span>
+                    </div>
+
+                    {/* Not Kartı Önizleme */}
+                    {giftMessage && (
+                      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-3 text-center">Önizleme</p>
+                        <div className="relative max-w-xs mx-auto aspect-[4/3] bg-[#FFFEFA] dark:bg-dark-800/50 border border-gold/15 shadow-lg rounded-sm overflow-hidden flex flex-col items-center justify-center p-6">
+                          <div className="absolute top-0 left-0 w-full h-0.5 bg-gold/20" />
+                          <p className="text-sm text-mocha-900 dark:text-gray-200 leading-relaxed italic text-center">
+                            "{giftMessage}"
+                          </p>
+                          <div className="mt-auto pt-3">
+                            <p className="text-[7px] uppercase tracking-[0.3em] text-gold">
+                              <span className="font-bold">Sade</span> Chocolate
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Fiyat Özeti */}
               <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">

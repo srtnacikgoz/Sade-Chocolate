@@ -4,6 +4,46 @@ Bu dosya her oturumda yapilan isleri kayit eder.
 
 ---
 
+## 2026-01-10
+
+### Yapilan Isler
+
+#### Tipografi / Font Düzeltmeleri
+- Katalog sayfası "Tüm Ürünler" başlığı Santana fontu ile düzeltildi
+- Tailwind config'de `display` ve `serif` fontları doğrudan Santana array olarak güncellendi
+- `font-bold + italic` kombinasyonu sorunuydu (italic font dosyası yok), kaldırıldı
+
+#### Ürün Detay Sayfası İyileştirmeleri
+- Badge alanında gereksiz product ID gösterimi düzeltildi
+  - Sadece anlamlı değerler gösteriliyor: New, Bestseller, Limited, Özel, Yeni, Popüler
+- "Bu bir hediye mi?" bölümü kaldırıldı (checkout'a taşındı)
+- Tat Profili açıklaması eklendi (radar grafik altında dinamik metin)
+  - 0-100 ölçeğinde duyusal değerlere göre otomatik açıklama
+  - Sola dayalı, okunabilir format
+
+#### Checkout Hediye Seçeneği
+- Yeni interaktif hediye formu eklendi
+  - Toggle switch ile açılır/kapanır
+  - Textarea ile mesaj girişi (karakter sayacı)
+  - Önizleme kartı
+  - Gradient arka plan tasarımı
+
+#### Dinamik Kategori Sistemi
+- `constants.ts` güncellendi: bonbon, tablet, kutu kategorileri
+- `InventoryTab.tsx`: Ürünlerden otomatik kategori çıkarımı
+  - Her kategori için sayaç gösterimi
+  - Boş kategoriler gizleniyor
+- `ProductForm.tsx`: Yeni kategori ekleme özelliği
+  - Enter tuşu ile yeni kategori oluşturma
+  - Özel kategoriler seçilebilir butonlar olarak gösteriliyor
+
+#### Ürün Formu Görsel Yönetimi
+- Ana görsel silme butonu eklendi (kırmızı yuvarlak, Trash2 ikonu)
+- Hover görseli silme butonu eklendi
+- Galeri görselleri zaten silme özelliğine sahipti
+
+---
+
 ## 2026-01-08 (Oturum 2)
 
 ### Yapilan Isler
