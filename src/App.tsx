@@ -24,6 +24,7 @@ import { TypographySettings } from './types';
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Catalog = lazy(() => import('./pages/Catalog').then(m => ({ default: m.Catalog })));
 const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
+const Story = lazy(() => import('./pages/Story').then(m => ({ default: m.Story })));
 const Favorites = lazy(() => import('./pages/Favorites').then(m => ({ default: m.Favorites })));
 const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
@@ -329,6 +330,7 @@ const App: React.FC = () => {
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/account" element={<Account />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/hikaye" element={<Story />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/seed-data" element={<SeedData />} />
                     <Route path="/legal/:type" element={<Legal />} />

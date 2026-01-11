@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -174,6 +175,50 @@ const ExperienceItem: React.FC<{
   );
 };
 
+// Dynamic class mapper functions for About page CMS
+const getFontClass = (fontType: string) => {
+  const fontMap: Record<string, string> = {
+    sans: 'font-sans',
+    serif: 'font-serif',
+    display: 'font-display',
+    santana: 'font-santana',
+    handwriting: 'font-handwriting'
+  };
+  return fontMap[fontType] || 'font-sans';
+};
+
+const getColorClass = (colorType: string, darkMode: boolean = false) => {
+  const colorMap: Record<string, { light: string; dark: string }> = {
+    'mocha-900': { light: 'text-mocha-900', dark: 'dark:text-cream-50' },
+    'mocha-400': { light: 'text-mocha-400', dark: 'dark:text-mocha-200' },
+    'mocha-200': { light: 'text-mocha-200', dark: 'dark:text-mocha-400' },
+    'gold': { light: 'text-gold', dark: 'dark:text-gold' },
+    'cream-50': { light: 'text-cream-50', dark: 'dark:text-cream-50' },
+    'dark-900': { light: 'text-dark-900', dark: 'dark:text-cream-50' }
+  };
+  const colors = colorMap[colorType] || colorMap['mocha-900'];
+  return darkMode ? `${colors.light} ${colors.dark}` : colors.light;
+};
+
+const getAlignClass = (alignType: string) => {
+  const alignMap: Record<string, string> = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right'
+  };
+  return alignMap[alignType] || 'text-left';
+};
+
+const getTitleSizeClass = (sizeType: string) => {
+  const sizeMap: Record<string, string> = {
+    small: 'text-3xl sm:text-4xl lg:text-5xl',
+    medium: 'text-4xl sm:text-5xl lg:text-6xl',
+    large: 'text-5xl sm:text-6xl lg:text-7xl xl:text-8xl',
+    xlarge: 'text-6xl sm:text-7xl lg:text-8xl xl:text-9xl'
+  };
+  return sizeMap[sizeType] || sizeMap['large'];
+};
+
 export const About: React.FC = () => {
   const { language } = useLanguage();
   const [aboutData, setAboutData] = useState<any>(null);
@@ -226,6 +271,19 @@ export const About: React.FC = () => {
   const heroDescription = aboutData?.[language]?.hero_description || 'Sertan Açıkgöz\'ün butik pastanecilik vizyonuyla 2016\'dan bu yana Antalya\'da şekillenen Sade Patisserie, çikolatanın en saf halini modern bir sanat dalı olarak sunuyor.';
   const heroImage = aboutData?.[language]?.hero_image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPsg3jC391kW1kEstLZOiXYJ4jKeH3Ert6-SapPNTbe7UBTW72yhpEVQxRGouZVEwRX-i7uX-GpwZ9neF6MrhK2LhPe6QLacGfceRfOdJ_K37BAQLTzLKt_h8sx6qhFiqVyw5uaRjTbWGfD6oCOVh_xQvZflmUXHakFaeSX4YdxsGfUBIP8_OuhOi-G3sU22UrQfU6LFC8NSCm6Mw9eemRL8gBfnlKax26WRn4jZX4-iYvm7G3kRAGdqFhRT98yXL0F2g2l_aL3cs';
   const signature = aboutData?.[language]?.signature || 'Sertan Açıkgöz';
+
+  // Hero section dynamic styles from CMS
+  const heroLabelFont = getFontClass(aboutData?.[language]?.hero_label_font || 'sans');
+  const heroLabelAlign = getAlignClass(aboutData?.[language]?.hero_label_align || 'left');
+  const heroTitleFont = getFontClass(aboutData?.[language]?.hero_title_font || 'display');
+  const heroTitleColor = getColorClass(aboutData?.[language]?.hero_title_color || 'mocha-900', true);
+  const heroTitleSize = getTitleSizeClass(aboutData?.[language]?.hero_title_size || 'large');
+  const heroTitleAlign = getAlignClass(aboutData?.[language]?.hero_title_align || 'left');
+  const heroDescriptionFont = getFontClass(aboutData?.[language]?.hero_description_font || 'sans');
+  const heroDescriptionColor = getColorClass(aboutData?.[language]?.hero_description_color || 'mocha-400', true);
+  const signatureFont = getFontClass(aboutData?.[language]?.signature_font || 'handwriting');
+  const signatureColor = getColorClass(aboutData?.[language]?.signature_color || 'mocha-900', true);
+  const showSignature = aboutData?.[language]?.signature_visible !== false;
 
   const philosophyTitle = aboutData?.[language]?.philosophy_title || '"Çikolata, Damağınızda Biten Değil, Kalbinizde Başlayan Bir Hikayedir."';
   const philosophyDescription = aboutData?.[language]?.philosophy_description || 'Sade Chocolate olarak inancımız basit: Minimalizm, lezzetin en saf halidir. Endüstriyel işlemlerden, gereksiz katkı maddelerinden ve yapay boyalardan uzak duruyoruz. En kaliteli Belçika çikolatasını sanat eserlerine dönüştürüyoruz.';
@@ -292,7 +350,7 @@ export const About: React.FC = () => {
               {/* Label */}
               <span
                 className={`
-                  inline-block font-sans text-[11px] font-semibold tracking-[0.4em] text-gold uppercase mb-8
+                  inline-block ${heroLabelFont} text-[11px] font-semibold tracking-[0.4em] text-gold uppercase mb-8 ${heroLabelAlign}
                   transition-all duration-700 delay-100
                   ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
                 `}
@@ -301,7 +359,7 @@ export const About: React.FC = () => {
               </span>
 
               {/* Title with staggered animation */}
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl text-mocha-900 dark:text-cream-50 mb-10 leading-[0.95] tracking-tight">
+              <h1 className={`${heroTitleFont} ${heroTitleSize} ${heroTitleColor} mb-10 leading-[0.95] tracking-tight ${heroTitleAlign}`}>
                 {heroTitle.split('\n').map((line, i) => (
                   <span
                     key={i}
@@ -319,7 +377,7 @@ export const About: React.FC = () => {
               {/* Description */}
               <p
                 className={`
-                  text-lg lg:text-xl text-mocha-400 dark:text-mocha-200 leading-relaxed mb-12 max-w-xl
+                  ${heroDescriptionFont} text-lg lg:text-xl ${heroDescriptionColor} leading-relaxed mb-12 max-w-xl
                   transition-all duration-700 delay-500
                   ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                 `}
@@ -328,21 +386,23 @@ export const About: React.FC = () => {
               </p>
 
               {/* Signature */}
-              <div
-                className={`
-                  flex items-center gap-6
-                  transition-all duration-700 delay-700
-                  ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                `}
-              >
-                <div className="relative">
-                  <span className="font-santana text-4xl lg:text-5xl text-mocha-900 dark:text-cream-50 tracking-wide">
-                    {signature}
-                  </span>
-                  <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-gradient-to-r from-gold via-gold/50 to-transparent" />
+              {showSignature && (
+                <div
+                  className={`
+                    flex items-center gap-6
+                    transition-all duration-700 delay-700
+                    ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  `}
+                >
+                  <Link to="/hikaye" className="relative group cursor-pointer" title="Sade'nin Hikayesi">
+                    <span className={`${signatureFont} text-4xl lg:text-5xl ${signatureColor} tracking-wide transition-all duration-300 group-hover:text-gold`}>
+                      {signature}
+                    </span>
+                    <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-gradient-to-r from-gold via-gold/50 to-transparent group-hover:from-gold group-hover:via-gold group-hover:to-gold/50 transition-all duration-300" />
+                  </Link>
+                  <div className="h-px flex-1 bg-gradient-to-r from-mocha-200 dark:from-mocha-800 to-transparent" />
                 </div>
-                <div className="h-px flex-1 bg-gradient-to-r from-mocha-200 dark:from-mocha-800 to-transparent" />
-              </div>
+              )}
             </div>
 
             {/* Image with parallax */}

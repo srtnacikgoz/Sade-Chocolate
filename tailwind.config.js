@@ -59,6 +59,8 @@ export default {
         santana: ["Santana", "Cormorant Garamond", "Georgia", "serif"],
         "santana-condensed": ["Santana Condensed", "Georgia", "serif"],
         "santana-xtra": ["Santana XtraCondensed", "Georgia", "serif"],
+        // Handwriting - İmza için el yazısı fontu
+        handwriting: ["Brush Script MT", "Lucida Handwriting", "Apple Chancery", "cursive"],
       },
       boxShadow: {
         luxurious: "0 20px 40px -15px rgba(75, 56, 50, 0.15)", // Kahve tonlu yumuşak gölge

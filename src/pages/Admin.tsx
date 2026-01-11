@@ -64,7 +64,7 @@ export const Admin = () => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping'>('inventory');
   const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'legal'>('home');
+  const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'story' | 'legal'>('home');
   const [aiConfig, setAiConfig] = useState<any>({
     enabled: true, // AI Sommelier aktif/deaktif durumu
     persona: {
@@ -85,6 +85,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [cmsData, setCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
   const [aboutCmsData, setAboutCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
+  const [storyCmsData, setStoryCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
   const [legalCmsData, setLegalCmsData] = useState<any>({ tr: {}, en: {}, ru: {} });
   const [legalEditModal, setLegalEditModal] = useState<{ isOpen: boolean; lang: string; field: string; label: string; color: string } | null>(null);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -176,6 +177,14 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'site_content', 'about'), (doc) => {
       if (doc.exists()) setAboutCmsData(doc.data());
+    });
+    return () => unsub();
+  }, []);
+
+  // Site İçeriği (CMS) Snapshot - Story
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'cms', 'story'), (doc) => {
+      if (doc.exists()) setStoryCmsData(doc.data());
     });
     return () => unsub();
   }, []);
@@ -373,6 +382,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         await setDoc(doc(db, 'site_content', 'home'), cmsData, { merge: true });
       } else if (cmsPage === 'about') {
         await setDoc(doc(db, 'site_content', 'about'), aboutCmsData, { merge: true });
+      } else if (cmsPage === 'story') {
+        await setDoc(doc(db, 'cms', 'story'), storyCmsData, { merge: true });
       } else if (cmsPage === 'legal') {
         await setDoc(doc(db, 'site_content', 'legal'), legalCmsData, { merge: true });
       }
@@ -684,6 +695,13 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
             Hakkımızda
           </button>
           <button
+            onClick={() => setCmsPage('story')}
+            className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all ${cmsPage === 'story' ? 'bg-brown-900 text-white shadow-xl' : 'bg-white dark:bg-dark-800 text-gray-400 hover:bg-gray-50'}`}
+          >
+            <span className="material-icons-outlined text-lg mr-2 align-middle">auto_stories</span>
+            Hikaye
+          </button>
+          <button
             onClick={() => setCmsPage('legal')}
             className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all ${cmsPage === 'legal' ? 'bg-brown-900 text-white shadow-xl' : 'bg-white dark:bg-dark-800 text-gray-400 hover:bg-gray-50'}`}
           >
@@ -935,7 +953,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                 {/* Hero Image */}
                 <ImageUpload
                   value={aboutCmsData?.[lang]?.hero_image || ''}
-                  onChange={(url) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], hero_image: url } })}
+                  onChange={(url) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_image: url } })}
                   label="Ana Görsel (Sertan Açıkgöz)"
                   folder="about-images"
                 />
@@ -943,55 +961,162 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                 {/* Hero Section */}
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Üst Etiket</label>
-                  <input value={aboutCmsData?.[lang]?.hero_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], hero_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-4 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" placeholder="Örn: Hikayemiz" />
+                  <input value={aboutCmsData?.[lang]?.hero_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-4 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" placeholder="Örn: Hikayemiz" />
+                  {/* Kontroller */}
+                  <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Font</label>
+                      <select value={aboutCmsData?.[lang]?.hero_label_font || 'sans'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_label_font: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="sans">Sans (Modern)</option>
+                        <option value="serif">Serif (Klasik)</option>
+                        <option value="display">Display (Zarif)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Hizalama</label>
+                      <div className="flex gap-1 bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+                        {['left', 'center', 'right'].map(align => (
+                          <button key={align} type="button" onClick={() => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_label_align: align } })} className={`flex-1 px-1 py-1 rounded text-[8px] font-bold ${aboutCmsData?.[lang]?.hero_label_align === align || (!aboutCmsData?.[lang]?.hero_label_align && align === 'left') ? 'bg-gold text-white' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-800'}`}>
+                            {align === 'left' ? 'L' : align === 'center' ? 'C' : 'R'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Ana Başlık</label>
-                  <textarea value={aboutCmsData?.[lang]?.hero_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], hero_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display font-medium italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={3} placeholder="Örn: Hile Yok, Kalite Var." />
+                  <textarea value={aboutCmsData?.[lang]?.hero_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display font-medium italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={3} placeholder="Örn: Hile Yok, Kalite Var." />
+                  {/* Kontroller */}
+                  <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Font</label>
+                      <select value={aboutCmsData?.[lang]?.hero_title_font || 'display'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_title_font: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="display">Display (Zarif)</option>
+                        <option value="santana">Santana (Lüks)</option>
+                        <option value="serif">Serif (Klasik)</option>
+                        <option value="sans">Sans (Modern)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Renk</label>
+                      <select value={aboutCmsData?.[lang]?.hero_title_color || 'mocha-900'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_title_color: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="mocha-900">Mocha 900</option>
+                        <option value="gold">Gold</option>
+                        <option value="cream-50">Cream 50</option>
+                        <option value="dark-900">Dark 900</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Boyut</label>
+                      <select value={aboutCmsData?.[lang]?.hero_title_size || 'large'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_title_size: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="small">Küçük (3xl-5xl)</option>
+                        <option value="medium">Orta (4xl-6xl)</option>
+                        <option value="large">Büyük (5xl-8xl)</option>
+                        <option value="xlarge">Çok Büyük (6xl-9xl)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Hizalama</label>
+                      <div className="flex gap-1 bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+                        {['left', 'center', 'right'].map(align => (
+                          <button key={align} type="button" onClick={() => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_title_align: align } })} className={`flex-1 px-1 py-1 rounded text-[8px] font-bold ${aboutCmsData?.[lang]?.hero_title_align === align || (!aboutCmsData?.[lang]?.hero_title_align && align === 'left') ? 'bg-gold text-white' : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-800'}`}>
+                            {align === 'left' ? 'L' : align === 'center' ? 'C' : 'R'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Açıklama Paragrafı</label>
-                  <textarea value={aboutCmsData?.[lang]?.hero_description || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], hero_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={5} />
+                  <textarea value={aboutCmsData?.[lang]?.hero_description || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={5} />
+                  {/* Kontroller */}
+                  <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Font</label>
+                      <select value={aboutCmsData?.[lang]?.hero_description_font || 'sans'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_description_font: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="sans">Sans (Modern)</option>
+                        <option value="serif">Serif (Klasik)</option>
+                        <option value="display">Display (Zarif)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Renk</label>
+                      <select value={aboutCmsData?.[lang]?.hero_description_color || 'mocha-400'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), hero_description_color: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="mocha-400">Mocha 400</option>
+                        <option value="mocha-900">Mocha 900</option>
+                        <option value="gold">Gold</option>
+                        <option value="cream-50">Cream 50</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Signature (İmza)</label>
-                  <input value={aboutCmsData?.[lang]?.signature || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], signature: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-4 text-sm font-handwriting focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" placeholder="Örn: Sertan Açıkgöz" />
+                  <input value={aboutCmsData?.[lang]?.signature || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), signature: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-4 text-sm font-handwriting focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" placeholder="Örn: Sertan Açıkgöz" />
+                  {/* Kontroller */}
+                  <div className="mt-3 grid grid-cols-2 gap-3 px-4">
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Font</label>
+                      <select value={aboutCmsData?.[lang]?.signature_font || 'handwriting'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), signature_font: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="handwriting">Handwriting (El Yazısı)</option>
+                        <option value="santana">Santana (Lüks)</option>
+                        <option value="display">Display (Zarif)</option>
+                        <option value="sans">Sans (Modern)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-gray-400 mb-1">Renk</label>
+                      <select value={aboutCmsData?.[lang]?.signature_color || 'mocha-900'} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), signature_color: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="mocha-900">Mocha 900</option>
+                        <option value="gold">Gold</option>
+                        <option value="dark-900">Dark 900</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={aboutCmsData?.[lang]?.signature_visible !== false} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), signature_visible: e.target.checked } })} className="w-4 h-4 rounded border-gray-300" />
+                        <span className="text-[9px] font-bold text-gray-500">İmzayı göster</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Philosophy Section */}
                 <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
                   <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4">Felsefe Başlığı</label>
-                  <textarea value={aboutCmsData?.[lang]?.philosophy_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], philosophy_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display font-medium italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={3} />
+                  <textarea value={aboutCmsData?.[lang]?.philosophy_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), philosophy_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display font-medium italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={3} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4">Felsefe Açıklaması</label>
-                  <textarea value={aboutCmsData?.[lang]?.philosophy_description || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], philosophy_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={5} />
+                  <textarea value={aboutCmsData?.[lang]?.philosophy_description || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), philosophy_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={5} />
                 </div>
 
                 {/* Stats */}
                 <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
                   <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4">İstatistikler (4 Kart)</label>
-                  <input value={aboutCmsData?.[lang]?.stat1_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat1_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 1 Değer (Örn: 2016)" />
-                  <input value={aboutCmsData?.[lang]?.stat1_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat1_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 1 Etiket (Örn: Kuruluş)" />
+                  <input value={aboutCmsData?.[lang]?.stat1_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat1_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 1 Değer (Örn: 2016)" />
+                  <input value={aboutCmsData?.[lang]?.stat1_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat1_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 1 Etiket (Örn: Kuruluş)" />
 
-                  <input value={aboutCmsData?.[lang]?.stat2_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat2_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 2 Değer" />
-                  <input value={aboutCmsData?.[lang]?.stat2_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat2_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 2 Etiket" />
+                  <input value={aboutCmsData?.[lang]?.stat2_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat2_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 2 Değer" />
+                  <input value={aboutCmsData?.[lang]?.stat2_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat2_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 2 Etiket" />
 
-                  <input value={aboutCmsData?.[lang]?.stat3_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat3_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 3 Değer" />
-                  <input value={aboutCmsData?.[lang]?.stat3_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat3_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 3 Etiket" />
+                  <input value={aboutCmsData?.[lang]?.stat3_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat3_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 3 Değer" />
+                  <input value={aboutCmsData?.[lang]?.stat3_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat3_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 3 Etiket" />
 
-                  <input value={aboutCmsData?.[lang]?.stat4_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat4_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 4 Değer" />
-                  <input value={aboutCmsData?.[lang]?.stat4_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], stat4_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 4 Etiket" />
+                  <input value={aboutCmsData?.[lang]?.stat4_value || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat4_value: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" placeholder="Stat 4 Değer" />
+                  <input value={aboutCmsData?.[lang]?.stat4_label || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), stat4_label: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-xs outline-none text-gray-900 dark:text-white" placeholder="Stat 4 Etiket" />
                 </div>
 
                 {/* Delivery Section */}
                 <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
                   <label className="block text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4">Teslimat Başlığı</label>
-                  <textarea value={aboutCmsData?.[lang]?.delivery_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], delivery_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={2} />
+                  <textarea value={aboutCmsData?.[lang]?.delivery_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), delivery_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={2} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4">Teslimat Açıklaması</label>
-                  <textarea value={aboutCmsData?.[lang]?.delivery_description || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], delivery_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={5} />
+                  <textarea value={aboutCmsData?.[lang]?.delivery_description || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), delivery_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={5} />
                 </div>
 
                 {/* Experience Section - 3 Items */}
@@ -999,25 +1124,25 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                   <label className="block text-[10px] font-black text-purple-600 uppercase tracking-widest mb-4">Artizan Deneyim (3 Madde)</label>
                   <div>
                     <label className="block text-[9px] font-bold text-gray-400 mb-2">Madde 1 Başlık:</label>
-                    <input value={aboutCmsData?.[lang]?.exp1_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], exp1_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-2" placeholder="Örn: Gıda Boyasız" />
-                    <textarea value={aboutCmsData?.[lang]?.exp1_desc || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], exp1_desc: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" rows={2} placeholder="Açıklama" />
+                    <input value={aboutCmsData?.[lang]?.exp1_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), exp1_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-2" placeholder="Örn: Gıda Boyasız" />
+                    <textarea value={aboutCmsData?.[lang]?.exp1_desc || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), exp1_desc: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" rows={2} placeholder="Açıklama" />
                   </div>
                   <div>
                     <label className="block text-[9px] font-bold text-gray-400 mb-2">Madde 2 Başlık:</label>
-                    <input value={aboutCmsData?.[lang]?.exp2_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], exp2_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-2" />
-                    <textarea value={aboutCmsData?.[lang]?.exp2_desc || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], exp2_desc: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" rows={2} />
+                    <input value={aboutCmsData?.[lang]?.exp2_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), exp2_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-2" />
+                    <textarea value={aboutCmsData?.[lang]?.exp2_desc || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), exp2_desc: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" rows={2} />
                   </div>
                   <div>
                     <label className="block text-[9px] font-bold text-gray-400 mb-2">Madde 3 Başlık:</label>
-                    <input value={aboutCmsData?.[lang]?.exp3_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], exp3_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-2" />
-                    <textarea value={aboutCmsData?.[lang]?.exp3_desc || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], exp3_desc: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" rows={2} />
+                    <input value={aboutCmsData?.[lang]?.exp3_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), exp3_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-2" />
+                    <textarea value={aboutCmsData?.[lang]?.exp3_desc || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), exp3_desc: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white" rows={2} />
                   </div>
                 </div>
 
                 {/* Locations Section */}
                 <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
                   <label className="block text-[10px] font-black text-gold uppercase tracking-widest mb-4">Mağazalar Başlığı</label>
-                  <textarea value={aboutCmsData?.[lang]?.locations_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...aboutCmsData[lang], locations_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={2} placeholder="Örn: Atölyelerimiz & Şubelerimiz" />
+                  <textarea value={aboutCmsData?.[lang]?.locations_title || ''} onChange={(e) => setAboutCmsData({ ...aboutCmsData, [lang]: { ...(aboutCmsData?.[lang] || {}), locations_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-base font-display italic focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={2} placeholder="Örn: Atölyelerimiz & Şubelerimiz" />
                 </div>
               </div>
             </div>
@@ -1056,6 +1181,152 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
           </div>
         </div>
         )}
+        </>
+        ) : cmsPage === 'story' ? (
+        /* Story CMS */
+        <>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {['tr', 'en', 'ru'].map((lang) => (
+            <div key={lang} className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200/60 p-10 shadow-sm">
+              <div className="flex items-center gap-4 mb-10">
+                <div className={`p-3.5 rounded-2xl ${lang === 'tr' ? 'bg-red-50 text-red-600' : lang === 'en' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                  <span className="material-icons-outlined text-2xl">auto_stories</span>
+                </div>
+                <span className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">{lang === 'tr' ? 'Türkçe (TR)' : lang === 'en' ? 'English (EN)' : 'Russian (RU)'}</span>
+              </div>
+              <div className="space-y-8">
+                {/* Hero Section */}
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Ana Başlık</label>
+                  <input value={storyCmsData?.[lang]?.hero_title || ''} onChange={(e) => setStoryCmsData({ ...storyCmsData, [lang]: { ...(storyCmsData?.[lang] || {}), hero_title: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-4 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" placeholder="Örn: Sade'nin Hikayesi" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Alt Başlık</label>
+                  <input value={storyCmsData?.[lang]?.hero_subtitle || ''} onChange={(e) => setStoryCmsData({ ...storyCmsData, [lang]: { ...(storyCmsData?.[lang] || {}), hero_subtitle: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-4 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" placeholder="Örn: Bir Tutkunun Yolculuğu" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Hero Açıklama</label>
+                  <textarea value={storyCmsData?.[lang]?.hero_description || ''} onChange={(e) => setStoryCmsData({ ...storyCmsData, [lang]: { ...(storyCmsData?.[lang] || {}), hero_description: e.target.value } })} className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={3} />
+                </div>
+
+                {/* Dynamic Sections */}
+                <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center justify-between mb-6">
+                    <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest">Hikaye Bölümleri</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentSections = storyCmsData?.[lang]?.sections || [];
+                        setStoryCmsData({
+                          ...storyCmsData,
+                          [lang]: {
+                            ...(storyCmsData?.[lang] || {}),
+                            sections: [...currentSections, { title: '', content: '' }]
+                          }
+                        });
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+                    >
+                      <span className="material-icons-outlined text-sm">add</span>
+                      Yeni Bölüm
+                    </button>
+                  </div>
+
+                  {/* Sections List */}
+                  <div className="space-y-6">
+                    {(storyCmsData?.[lang]?.sections || []).map((section: any, index: number) => (
+                      <div key={index} className="p-6 bg-gray-50 dark:bg-dark-900 rounded-3xl border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-[9px] font-bold text-gray-400">BÖLÜM {index + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentSections = [...(storyCmsData?.[lang]?.sections || [])];
+                              currentSections.splice(index, 1);
+                              setStoryCmsData({
+                                ...storyCmsData,
+                                [lang]: {
+                                  ...(storyCmsData?.[lang] || {}),
+                                  sections: currentSections
+                                }
+                              });
+                            }}
+                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Bölümü Sil"
+                          >
+                            <span className="material-icons-outlined text-sm">delete</span>
+                          </button>
+                        </div>
+                        <input
+                          value={section.title || ''}
+                          onChange={(e) => {
+                            const currentSections = [...(storyCmsData?.[lang]?.sections || [])];
+                            currentSections[index] = { ...currentSections[index], title: e.target.value };
+                            setStoryCmsData({
+                              ...storyCmsData,
+                              [lang]: {
+                                ...(storyCmsData?.[lang] || {}),
+                                sections: currentSections
+                              }
+                            });
+                          }}
+                          className="w-full bg-white dark:bg-dark-800 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white mb-3"
+                          placeholder="Bölüm Başlığı (Örn: Başlangıç, Gelişim, Bugün...)"
+                        />
+
+                        {/* Image Upload */}
+                        <div className="mb-3">
+                          <ImageUpload
+                            value={section.image || ''}
+                            onChange={(url) => {
+                              const currentSections = [...(storyCmsData?.[lang]?.sections || [])];
+                              currentSections[index] = { ...currentSections[index], image: url };
+                              setStoryCmsData({
+                                ...storyCmsData,
+                                [lang]: {
+                                  ...(storyCmsData?.[lang] || {}),
+                                  sections: currentSections
+                                }
+                              });
+                            }}
+                            label="Bölüm Görseli (Opsiyonel)"
+                            folder="story-images"
+                          />
+                        </div>
+
+                        <textarea
+                          value={section.content || ''}
+                          onChange={(e) => {
+                            const currentSections = [...(storyCmsData?.[lang]?.sections || [])];
+                            currentSections[index] = { ...currentSections[index], content: e.target.value };
+                            setStoryCmsData({
+                              ...storyCmsData,
+                              [lang]: {
+                                ...(storyCmsData?.[lang] || {}),
+                                sections: currentSections
+                              }
+                            });
+                          }}
+                          className="w-full bg-white dark:bg-dark-800 border-none rounded-[20px] p-4 text-sm outline-none text-gray-900 dark:text-white"
+                          rows={6}
+                          placeholder="Bölüm içeriği... (Paragraflar için boş satır bırakın)"
+                        />
+                      </div>
+                    ))}
+
+                    {/* Empty State */}
+                    {(!storyCmsData?.[lang]?.sections || storyCmsData?.[lang]?.sections.length === 0) && (
+                      <div className="text-center py-12 text-gray-400">
+                        <span className="material-icons-outlined text-4xl mb-3 opacity-30">auto_stories</span>
+                        <p className="text-sm">Henüz bölüm eklenmemiş. "Yeni Bölüm" butonuna tıklayarak başlayın.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
         </>
         ) : cmsPage === 'legal' ? (
         /* Legal CMS */

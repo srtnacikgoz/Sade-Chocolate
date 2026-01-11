@@ -22,6 +22,7 @@ export const Home: React.FC = () => {
   const { t, language } = useLanguage();
 
   const [liveContent, setLiveContent] = useState<any>(null);
+  const [aboutContent, setAboutContent] = useState<any>(null);
   const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const clickCount = useRef(0);
@@ -30,6 +31,13 @@ export const Home: React.FC = () => {
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'site_content', 'home'), (doc) => {
       if (doc.exists()) setLiveContent(doc.data());
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'site_content', 'about'), (doc) => {
+      if (doc.exists()) setAboutContent(doc.data());
     });
     return () => unsub();
   }, []);
@@ -59,6 +67,7 @@ export const Home: React.FC = () => {
   const secretTitle = liveContent?.[language]?.secret_title || t('secret_title');
   const secretQuote = liveContent?.[language]?.secret_quote || t('secret_quote');
   const secretDesc = liveContent?.[language]?.secret_desc || t('secret_desc');
+  const signature = aboutContent?.[language]?.signature || 'Sertan Açıkgöz';
 
   const filterTags = useMemo(() => {
     const allTags = products.flatMap(p => p.tags || []);
@@ -223,12 +232,23 @@ export const Home: React.FC = () => {
             </h2>
           </div>
           <div className="relative pl-12 border-l border-gold/30">
-            <p className="font-serif text-lg lg:text-xl text-gray-600 dark:text-gray-400 leading-relaxed italic mb-8">
-              {secretDesc}
-            </p>
+            <div className="font-serif text-lg lg:text-xl text-gray-600 dark:text-gray-400 leading-relaxed italic mb-8 space-y-4">
+              {secretDesc.split('\n\n').map((paragraph: string, pIndex: number) => (
+                paragraph.trim() && (
+                  <p key={pIndex}>
+                    {paragraph.split('\n').map((line: string, lIndex: number) => (
+                      <React.Fragment key={lIndex}>
+                        {line}
+                        {lIndex < paragraph.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
+                )
+              ))}
+            </div>
             <div className="flex items-center gap-6">
               <div className="h-[1px] w-12 bg-gold/50"></div>
-              <span className="font-handwriting text-3xl text-gold">Sertan Açıkgöz</span>
+              <span className="font-handwriting text-3xl text-gold">{signature}</span>
             </div>
           </div>
         </div>
