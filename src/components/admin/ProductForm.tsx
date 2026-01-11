@@ -28,9 +28,9 @@ const FormAccordion = ({ title, icon: Icon, children }: { title: string, icon: a
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="border border-slate-100 rounded-[24px] overflow-hidden bg-slate-50/30">
-      <button 
+      <button
         type="button" onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-100/50 transition-all"
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-100/50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm text-slate-400">
@@ -38,10 +38,20 @@ const FormAccordion = ({ title, icon: Icon, children }: { title: string, icon: a
           </div>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{title}</span>
         </div>
-        <Plus size={16} className={`text-slate-300 transition-transform duration-300 ${isOpen ? 'rotate-45' : ''}`} />
+        <Plus size={16} className={`text-slate-300 transition-transform duration-200 ease-in-out ${isOpen ? 'rotate-45' : ''}`} />
       </button>
-      <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 p-4 pt-0' : 'max-h-0 opacity-0 pointer-events-none'}`}>
-        {children}
+      <div
+        className="grid transition-[grid-template-rows] duration-150 ease-in-out"
+        style={{
+          gridTemplateRows: isOpen ? '1fr' : '0fr',
+          willChange: 'grid-template-rows'
+        }}
+      >
+        <div className="overflow-hidden">
+          <div className="p-4 pt-0">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -97,6 +107,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
   const [dragActive, setDragActive] = useState(false);
   const [dragActiveAlternate, setDragActiveAlternate] = useState(false);
   const [dragActiveGallery, setDragActiveGallery] = useState(false);
+  const [draggedGalleryIndex, setDraggedGalleryIndex] = useState<number | null>(null);
   const [newAttr, setNewAttr] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('special'); // Varsayılan ikon
   // ✅ Dinamik Lezzet Havuzu (Başlangıçta boş veya temel öğelerle başlayabilir)
@@ -403,6 +414,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     toast.info("Görsel galeriden kaldırıldı");
   };
 
+  // Galeri sıralama fonksiyonları
+  const handleGalleryDragStart = (index: number) => {
+    setDraggedGalleryIndex(index);
+  };
+
+  const handleGalleryDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedGalleryIndex === null || draggedGalleryIndex === index) return;
+
+    const newImages = [...formData.images];
+    const draggedImage = newImages[draggedGalleryIndex];
+    newImages.splice(draggedGalleryIndex, 1);
+    newImages.splice(index, 0, draggedImage);
+
+    setFormData((prev: any) => ({ ...prev, images: newImages }));
+    setDraggedGalleryIndex(index);
+  };
+
+  const handleGalleryDragEnd = () => {
+    setDraggedGalleryIndex(null);
+  };
+
   const uploadBoxItemImage = async (file: File, index: number) => {
   try {
     setUploadingBoxIndex(index);
@@ -534,18 +567,35 @@ const addAttribute = () => {
             {formData.images && formData.images.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {formData.images.map((img: string, index: number) => (
-                  <div key={index} className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
-                    <img src={img} alt={`Galeri ${index + 1}`} className="w-full h-full object-cover" />
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={() => handleGalleryDragStart(index)}
+                    onDragOver={(e) => handleGalleryDragOver(e, index)}
+                    onDragEnd={handleGalleryDragEnd}
+                    className={`relative group w-16 h-16 rounded-xl overflow-hidden border-2 transition-all cursor-move ${
+                      draggedGalleryIndex === index
+                        ? 'border-gold scale-105 shadow-lg opacity-50'
+                        : 'border-slate-200 hover:border-gold/50'
+                    }`}
+                  >
+                    <img src={img} alt={`Galeri ${index + 1}`} className="w-full h-full object-cover pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => removeGalleryImage(index)}
-                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
                     >
                       <CloseIcon size={16} className="text-white" />
                     </button>
                     {index === 0 && (
                       <span className="absolute bottom-0 left-0 right-0 bg-gold text-white text-[6px] text-center py-0.5 font-black">ANA</span>
                     )}
+                    {/* Sürükleme İpucu */}
+                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <div className="w-4 h-4 bg-white/90 rounded-full flex items-center justify-center">
+                        <span className="material-icons-outlined text-[10px] text-slate-400">drag_indicator</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
