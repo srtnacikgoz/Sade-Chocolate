@@ -90,7 +90,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     boxSize: 4,
     // 📦 Kargo bilgileri
     weight: 0,
-    dimensions: { length: 0, width: 0, height: 0 }
+    dimensions: { length: 0, width: 0, height: 0 },
+    // 📊 Katalog sıralama
+    sortOrder: 0
   });
 
   // 🔄 Product prop'u değiştiğinde formData'yı güncelle
@@ -694,6 +696,28 @@ const addAttribute = () => {
               >
                 <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-all ${formData.isOutOfStock ? 'left-7' : 'left-1'}`} />
               </button>
+            </div>
+          </div>
+
+          {/* --- SIRA NUMARASI --- */}
+          <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-4 rounded-[24px] border border-slate-200/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500">
+                  <span className="material-icons-outlined text-lg">sort</span>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest block">Sıra Numarası</label>
+                  <span className="text-[9px] text-slate-400">Katalogda sıralama (düşük = önce)</span>
+                </div>
+              </div>
+              <input
+                type="number"
+                value={formData.sortOrder || 0}
+                onChange={e => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
+                className="w-20 p-3 bg-white border border-slate-200 rounded-xl text-center text-lg font-bold text-slate-700 focus:ring-2 focus:ring-gold/30 focus:border-gold"
+                min="0"
+              />
             </div>
           </div>
 

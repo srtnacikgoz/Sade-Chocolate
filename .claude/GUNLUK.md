@@ -4,6 +4,48 @@ Bu dosya her oturumda yapilan isleri kayit eder.
 
 ---
 
+## 2026-01-11
+
+### Yapilan Isler
+
+#### Katalog Ayarları Sistemi
+- Yeni `CatalogSettingsTab.tsx` admin tab'ı oluşturuldu
+  - Satır başına ürün sayısı ayarı (3, 4, 5, 6 kolon seçeneği)
+  - Varsayılan görünüm modu (Grid/List)
+  - "Kendi Kutunu Oluştur" kartı pozisyonu (İlk/Son/Gizli)
+  - **Varsayılan sıralama seçenekleri** (3 mod):
+    1. Manuel Sıralama (sortOrder numarasına göre)
+    2. Kategori Gruplama (tabletler, bonbonlar, kutular gruplu)
+    3. Stok Öncelikli (stokta olanlar önce, tükenenler sona)
+  - Canlı önizleme paneli
+- AdminSidebar.tsx'e "Katalog Ayarları" menü öğesi eklendi
+- Admin.tsx'e CatalogSettingsTab import ve render eklendi
+- Catalog.tsx güncellendi:
+  - Firestore'dan `site_settings/catalog` ayarları çekiliyor
+  - Grid kolon sayısı dinamik (lg:grid-cols-3/4/5/6)
+  - Varsayılan görünüm modu uygulanıyor
+  - Kutu kartı pozisyonu (first/last/hidden) destekleniyor
+  - 3 farklı sıralama modu implementasyonu
+
+#### Ürün Sıralama Sistemi
+- Product type'ına `sortOrder` field eklendi (types.ts)
+- ProductForm'a "Sıra Numarası" input'u eklendi
+  - Stok durumu alanının altında konumlandırıldı
+  - Düşük numara = önce görünür mantığı
+
+#### Font Sistemi Düzeltmesi
+- Tailwind config'de `font-display` ve `font-serif` CSS variable kullanacak şekilde güncellendi
+- Admin panelden font değişiklikleri artık tüm siteye yansıyor
+- `font-santana` logo için sabit kaldı (değişmez)
+
+#### Geri Bildirim Etiketi İyileştirmesi
+- FloatingFeedback.tsx güncellendi
+- Etiket pencere dışında gizli, hover'da içeri kayıyor
+- Hareket eden ok eklendi (dikkat çekici animasyon)
+- Hover'da ok kaybolup tam etiket görünüyor
+
+---
+
 ## 2026-01-10
 
 ### Yapilan Isler

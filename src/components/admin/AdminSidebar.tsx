@@ -22,13 +22,14 @@ import {
   Menu,
   X,
   Sparkles,
-  Truck
+  Truck,
+  LayoutGrid
 } from 'lucide-react';
 import { BrandIcon } from '../ui/BrandIcon';
 import { toast } from 'sonner';
 
 // Menu item type
-type TabId = 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping';
+type TabId = 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings';
 
 interface MenuItem {
   id: TabId;
@@ -66,6 +67,7 @@ const menuItems: MenuItem[] = [
   { id: 'box-config', label: 'Kutu Oluşturucu', icon: Boxes, group: 'ayarlar' },
   { id: 'typography', label: 'Typography', icon: Type, group: 'ayarlar' },
   { id: 'shipping', label: 'Kargo Ayarları', icon: Truck, group: 'ayarlar' },
+  { id: 'catalog-settings', label: 'Katalog Ayarları', icon: LayoutGrid, group: 'ayarlar' },
 ];
 
 const menuGroups: Record<string, { label: string; icon: React.ElementType }> = {

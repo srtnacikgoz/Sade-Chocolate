@@ -27,6 +27,7 @@ import { TypographyTab } from '../components/admin/tabs/TypographyTab';
 import { EmailTemplatesTab } from '../components/admin/tabs/EmailTemplatesTab';
 import { ReferralCampaignsTab } from '../components/admin/tabs/ReferralCampaignsTab';
 import { ShippingSettingsTab } from '../components/admin/tabs/ShippingSettingsTab';
+import { CatalogSettingsTab } from '../components/admin/tabs/CatalogSettingsTab';
 import { Building2, Truck } from 'lucide-react';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 
@@ -1924,6 +1925,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <EmailTemplatesTab />
       ) : activeTab === 'shipping' ? (
         <ShippingSettingsTab />
+      ) : activeTab === 'catalog-settings' ? (
+        <CatalogSettingsTab />
       ) : null}
         </div>
       </main>

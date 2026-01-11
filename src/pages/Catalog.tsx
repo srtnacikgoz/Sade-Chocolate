@@ -14,31 +14,66 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PRODUCT_CATEGORIES } from '../constants';
 
+interface CatalogSettings {
+  gridColumns: number;
+  defaultViewMode: 'grid' | 'list';
+  boxCardPosition: 'first' | 'last' | 'hidden';
+  defaultSortMode: 'manual' | 'category' | 'stock';
+}
+
+const DEFAULT_CATALOG_SETTINGS: CatalogSettings = {
+  gridColumns: 4,
+  defaultViewMode: 'grid',
+  boxCardPosition: 'first',
+  defaultSortMode: 'manual'
+};
+
+// Kategori sıralama önceliği
+const CATEGORY_ORDER: Record<string, number> = {
+  'tablet': 1,
+  'bonbon': 2,
+  'kutu': 3,
+  'box': 3,
+  'other': 99
+};
+
 export const Catalog: React.FC = () => {
   const { products, isLoading } = useProducts();
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.GRID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isBoxModalOpen, setIsBoxModalOpen] = useState(false);
   const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
+  const [catalogSettings, setCatalogSettings] = useState<CatalogSettings>(DEFAULT_CATALOG_SETTINGS);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.GRID);
   const { t } = useLanguage();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Firestore'dan box_config yapılandırmasını çek
+  // Firestore'dan box_config ve catalog ayarlarını çek
   useEffect(() => {
-    const fetchBoxConfig = async () => {
+    const fetchConfigs = async () => {
       try {
-        const docRef = doc(db, 'box_config', 'default');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setBoxConfig(docSnap.data() as BoxConfig);
+        // Box config
+        const boxDocRef = doc(db, 'box_config', 'default');
+        const boxDocSnap = await getDoc(boxDocRef);
+        if (boxDocSnap.exists()) {
+          setBoxConfig(boxDocSnap.data() as BoxConfig);
+        }
+
+        // Catalog settings
+        const catalogDocRef = doc(db, 'site_settings', 'catalog');
+        const catalogDocSnap = await getDoc(catalogDocRef);
+        if (catalogDocSnap.exists()) {
+          const settings = catalogDocSnap.data() as CatalogSettings;
+          setCatalogSettings({ ...DEFAULT_CATALOG_SETTINGS, ...settings });
+          // Varsayılan görünüm modunu ayarla
+          setViewMode(settings.defaultViewMode === 'list' ? ViewMode.LIST : ViewMode.GRID);
         }
       } catch (error) {
-        console.error('Box config yüklenemedi:', error);
+        console.error('Config yüklenemedi:', error);
       }
     };
-    fetchBoxConfig();
+    fetchConfigs();
   }, []);
 
   // URL parametrelerinden state'leri başlat
@@ -131,11 +166,37 @@ export const Catalog: React.FC = () => {
         currentProducts.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
         break;
       default:
+        // Admin panelden seçilen varsayılan sıralama
+        switch (catalogSettings.defaultSortMode) {
+          case 'manual':
+            // Manuel sıralama: sortOrder field'a göre (düşük önce)
+            currentProducts.sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999));
+            break;
+          case 'category':
+            // Kategori gruplama: önce kategoriye göre, sonra sortOrder'a göre
+            currentProducts.sort((a, b) => {
+              const catOrderA = CATEGORY_ORDER[a.category] || CATEGORY_ORDER['other'];
+              const catOrderB = CATEGORY_ORDER[b.category] || CATEGORY_ORDER['other'];
+              if (catOrderA !== catOrderB) return catOrderA - catOrderB;
+              return (a.sortOrder || 999) - (b.sortOrder || 999);
+            });
+            break;
+          case 'stock':
+            // Stok öncelikli: stokta olanlar önce, sonra sortOrder'a göre
+            currentProducts.sort((a, b) => {
+              // Stokta olan önce (isOutOfStock false veya undefined)
+              const stockA = a.isOutOfStock ? 1 : 0;
+              const stockB = b.isOutOfStock ? 1 : 0;
+              if (stockA !== stockB) return stockA - stockB;
+              return (a.sortOrder || 999) - (b.sortOrder || 999);
+            });
+            break;
+        }
         break;
     }
 
     return currentProducts;
-  }, [searchTerm, products, selectedCategory, minPrice, maxPrice, sortOrder]);
+  }, [searchTerm, products, selectedCategory, minPrice, maxPrice, sortOrder, catalogSettings.defaultSortMode]);
 
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product);
@@ -148,7 +209,7 @@ export const Catalog: React.FC = () => {
   const SearchHeader = () => (
     <div className="text-center py-8 bg-cream-100 dark:bg-dark-900 rounded-lg mb-8">
       <h2 className="text-xl font-serif italic text-gray-500">{t('search_results_for')}</h2>
-      <p className="text-4xl font-santana text-mocha-900 dark:text-white">"{searchTerm}"</p>
+      <p className="text-4xl font-h1 text-mocha-900 dark:text-white">"{searchTerm}"</p>
       <p className="text-sm text-gray-400 mt-2">{sortedAndFilteredProducts.length} {t('products_found')}</p>
     </div>
   );
@@ -160,7 +221,7 @@ export const Catalog: React.FC = () => {
                 <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-gray-100 dark:border-gray-800 pb-10">
                   <div>
                     <span className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">Size Özel Seçimler</span>
-                    <h2 className="font-santana text-6xl lg:text-7xl text-gray-900 dark:text-white">{t('catalog_title')}</h2>
+                    <h2 className="font-h1 text-6xl lg:text-7xl text-gray-900 dark:text-white">{t('catalog_title')}</h2>
                   </div>
                 </div>
               )}
@@ -280,9 +341,20 @@ export const Catalog: React.FC = () => {
             <p className="mt-4 text-gray-500">{t('loading_products')}</p>
           </div>
         ) : (
-          <div className={`grid gap-x-6 gap-y-10 transition-all duration-500 ${viewMode === ViewMode.GRID ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`}>
-            {/* Kendi Kutunu Oluştur - ProductCard Stili */}
-            {(boxConfig?.enabled !== false) && (
+          <div
+            className={`grid gap-x-6 gap-y-10 transition-all duration-500 ${
+              viewMode === ViewMode.GRID
+                ? `grid-cols-2 md:grid-cols-3 ${
+                    catalogSettings.gridColumns === 3 ? 'lg:grid-cols-3' :
+                    catalogSettings.gridColumns === 5 ? 'lg:grid-cols-5' :
+                    catalogSettings.gridColumns === 6 ? 'lg:grid-cols-6' :
+                    'lg:grid-cols-4'
+                  }`
+                : 'grid-cols-1'
+            }`}
+          >
+            {/* Kendi Kutunu Oluştur - ProductCard Stili (İlk Sırada) */}
+            {(boxConfig?.enabled !== false) && catalogSettings.boxCardPosition === 'first' && (
               <motion.div
                 onClick={() => setIsBoxModalOpen(true)}
                 className={`group bg-cream-50 dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-500 overflow-hidden flex flex-col h-full border border-gold/15 relative cursor-pointer text-left ${
@@ -369,6 +441,73 @@ export const Catalog: React.FC = () => {
                 onQuickView={handleQuickView}
               />
             ))}
+
+            {/* Kendi Kutunu Oluştur - Son Sırada */}
+            {(boxConfig?.enabled !== false) && catalogSettings.boxCardPosition === 'last' && (
+              <motion.div
+                onClick={() => setIsBoxModalOpen(true)}
+                className={`group bg-cream-50 dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-500 overflow-hidden flex flex-col h-full border border-gold/15 relative cursor-pointer text-left ${
+                  viewMode === ViewMode.LIST ? 'flex-row' : ''
+                }`}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <div className={`relative ${viewMode === ViewMode.LIST ? 'w-48 aspect-square' : 'aspect-[4/5]'} bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden`}>
+                  <span className="absolute top-0 left-0 text-[10px] font-bold px-3 py-1 uppercase tracking-widest z-20 bg-gold text-white">
+                    Özel
+                  </span>
+                  {boxConfig?.cardImage ? (
+                    <img
+                      src={boxConfig.cardImage}
+                      alt={boxConfig?.cardTitle || 'Kendi Kutunu Oluştur'}
+                      className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-300 ease-out"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gold/10 to-brand-mustard/20">
+                      <div className="relative">
+                        <div className="w-24 h-24 bg-gradient-to-br from-gold to-brand-mustard rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                          <Package className="text-white" size={48} />
+                        </div>
+                        <BrandIcon className="absolute -top-2 -right-2 text-gold drop-shadow-md" size={20} />
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-mocha-900/0 group-hover:bg-mocha-900/5 transition-colors duration-700" />
+                </div>
+                <div className={`p-4 flex flex-col flex-grow relative z-20 bg-cream-50 dark:bg-dark-800 ${viewMode === ViewMode.LIST ? 'justify-center' : ''}`}>
+                  <h3 className="font-display text-lg font-semibold leading-tight mb-1 text-gray-900 dark:text-gray-100 line-clamp-2 min-h-[3rem]">
+                    {boxConfig?.cardTitle || 'Kendi Kutunu Oluştur'}
+                  </h3>
+                  <p className="font-sans text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-1">
+                    {boxConfig?.cardSubtitle || 'Favori bonbonlarını seç'}
+                  </p>
+                  <div className="mt-auto flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-gold uppercase tracking-wider">
+                      {boxConfig?.boxSizes?.filter(s => s.enabled).slice(0, 3).map((size, idx, arr) => (
+                        <React.Fragment key={size.id}>
+                          <span>{size.size}'li</span>
+                          {idx < arr.length - 1 && <span className="text-gold/40">•</span>}
+                        </React.Fragment>
+                      )) || (
+                        <>
+                          <span>4'lü</span>
+                          <span className="text-gold/40">•</span>
+                          <span>8'li</span>
+                          <span className="text-gold/40">•</span>
+                          <span>16'lı</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="bg-gold text-white w-9 h-9 flex items-center justify-center rounded-full group-hover:bg-gray-900 dark:group-hover:bg-gray-900 transition-colors duration-300 shadow-sm">
+                      <span className="material-icons-outlined text-lg">add</span>
+                    </div>
+                  </div>
+                  <button className="w-full mt-3 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-mocha-900 dark:text-gray-100 border border-gold/20 bg-cream-50 dark:bg-transparent rounded-lg hover:bg-gold hover:text-white dark:hover:bg-gold transition-all duration-300 shadow-sm">
+                    {boxConfig?.ctaText || 'Kutuya Git'}
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
       </div>

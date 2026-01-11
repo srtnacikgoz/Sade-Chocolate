@@ -101,6 +101,9 @@ export interface Product {
     height: number;             // Yükseklik (cm)
   };
   // Desi otomatik hesaplanır: (U × G × Y) / 3000
+
+  // 📊 KATALOG SIRALAMA
+  sortOrder?: number;           // Manuel sıralama için (düşük = önce)
 }
 export interface GiftOptions {
   isGift: boolean;
