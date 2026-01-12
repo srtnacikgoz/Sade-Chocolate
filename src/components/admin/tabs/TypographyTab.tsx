@@ -16,6 +16,7 @@ const DEFAULT_TYPOGRAPHY: TypographySettings = {
   bodyFont: { family: 'Inter', source: 'google', weights: [300, 400, 600], fallback: 'sans-serif' },
   displayFont: { family: 'Playfair Display', source: 'google', weights: [400, 700], fallback: 'serif' },
   logoFont: { family: 'Santana', source: 'custom', weights: [400, 700], fallback: 'Cormorant Garamond, Georgia, serif' },
+  signatureFont: { family: 'Playfair Display', source: 'google', weights: [400, 700], fallback: 'serif' },
   buttonFont: { family: 'Inter', source: 'google', weights: [600, 700], fallback: 'sans-serif' },
   navFont: { family: 'Inter', source: 'google', weights: [500, 600], fallback: 'sans-serif' },
   labelFont: { family: 'Inter', source: 'google', weights: [500], fallback: 'sans-serif' },
@@ -238,6 +239,9 @@ export const TypographyTab: React.FC = () => {
     if (typo.logoFont) {
       root.style.setProperty('--font-logo', formatFontFamily(typo.logoFont.family, typo.logoFont.fallback));
     }
+    if (typo.signatureFont) {
+      root.style.setProperty('--font-signature', formatFontFamily(typo.signatureFont.family, typo.signatureFont.fallback));
+    }
     if (typo.buttonFont) {
       root.style.setProperty('--font-button', formatFontFamily(typo.buttonFont.family, typo.buttonFont.fallback));
     }
@@ -282,7 +286,7 @@ export const TypographyTab: React.FC = () => {
 
   const loadGoogleFonts = (typo: TypographySettings) => {
     const fonts: Array<{ family: string; weights: number[] }> = [];
-    [typo.h1Font, typo.h2Font, typo.h3Font, typo.h4Font, typo.bodyFont, typo.displayFont, typo.logoFont, typo.buttonFont, typo.navFont, typo.labelFont, typo.captionFont].forEach(font => {
+    [typo.h1Font, typo.h2Font, typo.h3Font, typo.h4Font, typo.bodyFont, typo.displayFont, typo.logoFont, typo.signatureFont, typo.buttonFont, typo.navFont, typo.labelFont, typo.captionFont].forEach(font => {
       if (font && font.source === 'google' && !fonts.find(f => f.family === font.family)) {
         fonts.push({ family: font.family, weights: font.weights });
       }
@@ -498,6 +502,7 @@ export const TypographyTab: React.FC = () => {
                     </div>
                   </div>
 
+                  <MiniFontSelector label="İmza (Signature)" font={settings.signatureFont || settings.h1Font} onChange={(u) => updateFont('signatureFont', u)} availableFonts={availableFonts} />
                   <MiniFontSelector label="Buton" font={settings.buttonFont} onChange={(u) => updateFont('buttonFont', u)} availableFonts={availableFonts} />
                   <MiniFontSelector label="Nav" font={settings.navFont} onChange={(u) => updateFont('navFont', u)} availableFonts={availableFonts} />
                 </div>

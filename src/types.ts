@@ -303,6 +303,7 @@ export interface TypographySettings {
   bodyFont: FontConfig;        // Normal metinler
   displayFont: FontConfig;     // Özel başlıklar (italic vb.)
   logoFont: FontConfig;        // Header logo
+  signatureFont?: FontConfig;  // İmza fontu (opsiyonel, yoksa H1 kullanılır)
   buttonFont: FontConfig;      // Butonlar
   navFont: FontConfig;         // Navigation/Menu
   labelFont: FontConfig;       // Form labels

@@ -98,6 +98,7 @@ body:has([class*="z-[9999]"]) header {
   --font-body: Inter, sans-serif;
   --font-display: "Playfair Display", serif;
   --font-logo: Santana, "Cormorant Garamond", serif;
+  --font-signature: "Playfair Display", serif;
   --font-button: Inter, sans-serif;
   --font-nav: Inter, sans-serif;
   --font-label: Inter, sans-serif;

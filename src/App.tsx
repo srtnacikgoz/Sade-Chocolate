@@ -178,6 +178,9 @@ const applyTypography = (settings: TypographySettings) => {
   if (settings.logoFont) {
     root.style.setProperty('--font-logo', formatFontFamily(settings.logoFont.family, settings.logoFont.fallback));
   }
+  if (settings.signatureFont) {
+    root.style.setProperty('--font-signature', formatFontFamily(settings.signatureFont.family, settings.signatureFont.fallback));
+  }
   if (settings.buttonFont) {
     root.style.setProperty('--font-button', formatFontFamily(settings.buttonFont.family, settings.buttonFont.fallback));
   }
@@ -219,6 +222,7 @@ const loadGoogleFonts = (settings: TypographySettings) => {
     settings.bodyFont,
     settings.displayFont,
     settings.logoFont,
+    settings.signatureFont,
     settings.buttonFont,
     settings.navFont,
     settings.labelFont,
