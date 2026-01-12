@@ -145,43 +145,50 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+// Font family değerini CSS için formatla (boşluk içeren isimler tırnak içinde olmalı)
+const formatFontFamily = (family: string, fallback: string): string => {
+  // Font ismi boşluk içeriyorsa tırnak içine al
+  const formattedFamily = family.includes(' ') ? `"${family}"` : family;
+  return `${formattedFamily}, ${fallback}`;
+};
+
 // Typography uygulama fonksiyonu
 const applyTypography = (settings: TypographySettings) => {
   const root = document.documentElement;
 
   // Font families - Başlıklar (Her seviye için ayrı)
   if (settings.h1Font) {
-    root.style.setProperty('--font-h1', `${settings.h1Font.family}, ${settings.h1Font.fallback}`);
+    root.style.setProperty('--font-h1', formatFontFamily(settings.h1Font.family, settings.h1Font.fallback));
   }
   if (settings.h2Font) {
-    root.style.setProperty('--font-h2', `${settings.h2Font.family}, ${settings.h2Font.fallback}`);
+    root.style.setProperty('--font-h2', formatFontFamily(settings.h2Font.family, settings.h2Font.fallback));
   }
   if (settings.h3Font) {
-    root.style.setProperty('--font-h3', `${settings.h3Font.family}, ${settings.h3Font.fallback}`);
+    root.style.setProperty('--font-h3', formatFontFamily(settings.h3Font.family, settings.h3Font.fallback));
   }
   if (settings.h4Font) {
-    root.style.setProperty('--font-h4', `${settings.h4Font.family}, ${settings.h4Font.fallback}`);
+    root.style.setProperty('--font-h4', formatFontFamily(settings.h4Font.family, settings.h4Font.fallback));
   }
   if (settings.bodyFont) {
-    root.style.setProperty('--font-body', `${settings.bodyFont.family}, ${settings.bodyFont.fallback}`);
+    root.style.setProperty('--font-body', formatFontFamily(settings.bodyFont.family, settings.bodyFont.fallback));
   }
   if (settings.displayFont) {
-    root.style.setProperty('--font-display', `${settings.displayFont.family}, ${settings.displayFont.fallback}`);
+    root.style.setProperty('--font-display', formatFontFamily(settings.displayFont.family, settings.displayFont.fallback));
   }
   if (settings.logoFont) {
-    root.style.setProperty('--font-logo', `${settings.logoFont.family}, ${settings.logoFont.fallback}`);
+    root.style.setProperty('--font-logo', formatFontFamily(settings.logoFont.family, settings.logoFont.fallback));
   }
   if (settings.buttonFont) {
-    root.style.setProperty('--font-button', `${settings.buttonFont.family}, ${settings.buttonFont.fallback}`);
+    root.style.setProperty('--font-button', formatFontFamily(settings.buttonFont.family, settings.buttonFont.fallback));
   }
   if (settings.navFont) {
-    root.style.setProperty('--font-nav', `${settings.navFont.family}, ${settings.navFont.fallback}`);
+    root.style.setProperty('--font-nav', formatFontFamily(settings.navFont.family, settings.navFont.fallback));
   }
   if (settings.labelFont) {
-    root.style.setProperty('--font-label', `${settings.labelFont.family}, ${settings.labelFont.fallback}`);
+    root.style.setProperty('--font-label', formatFontFamily(settings.labelFont.family, settings.labelFont.fallback));
   }
   if (settings.captionFont) {
-    root.style.setProperty('--font-caption', `${settings.captionFont.family}, ${settings.captionFont.fallback}`);
+    root.style.setProperty('--font-caption', formatFontFamily(settings.captionFont.family, settings.captionFont.fallback));
   }
 
   // Font sizes (responsive)

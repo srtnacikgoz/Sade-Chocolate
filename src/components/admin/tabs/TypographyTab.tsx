@@ -209,28 +209,46 @@ export const TypographyTab: React.FC = () => {
     }
   };
 
+  // Font family değerini CSS için formatla
+  const formatFontFamily = (family: string, fallback: string): string => {
+    const formattedFamily = family.includes(' ') ? `"${family}"` : family;
+    return `${formattedFamily}, ${fallback}`;
+  };
+
   const applyTypography = (typo: TypographySettings) => {
     const root = document.documentElement;
     if (typo.h1Font) {
-      root.style.setProperty('--font-h1', `${typo.h1Font.family}, ${typo.h1Font.fallback}`);
+      root.style.setProperty('--font-h1', formatFontFamily(typo.h1Font.family, typo.h1Font.fallback));
     }
     if (typo.h2Font) {
-      root.style.setProperty('--font-h2', `${typo.h2Font.family}, ${typo.h2Font.fallback}`);
+      root.style.setProperty('--font-h2', formatFontFamily(typo.h2Font.family, typo.h2Font.fallback));
     }
     if (typo.h3Font) {
-      root.style.setProperty('--font-h3', `${typo.h3Font.family}, ${typo.h3Font.fallback}`);
+      root.style.setProperty('--font-h3', formatFontFamily(typo.h3Font.family, typo.h3Font.fallback));
     }
     if (typo.h4Font) {
-      root.style.setProperty('--font-h4', `${typo.h4Font.family}, ${typo.h4Font.fallback}`);
+      root.style.setProperty('--font-h4', formatFontFamily(typo.h4Font.family, typo.h4Font.fallback));
     }
     if (typo.bodyFont) {
-      root.style.setProperty('--font-body', `${typo.bodyFont.family}, ${typo.bodyFont.fallback}`);
+      root.style.setProperty('--font-body', formatFontFamily(typo.bodyFont.family, typo.bodyFont.fallback));
     }
     if (typo.displayFont) {
-      root.style.setProperty('--font-display', `${typo.displayFont.family}, ${typo.displayFont.fallback}`);
+      root.style.setProperty('--font-display', formatFontFamily(typo.displayFont.family, typo.displayFont.fallback));
     }
     if (typo.logoFont) {
-      root.style.setProperty('--font-logo', `${typo.logoFont.family}, ${typo.logoFont.fallback}`);
+      root.style.setProperty('--font-logo', formatFontFamily(typo.logoFont.family, typo.logoFont.fallback));
+    }
+    if (typo.buttonFont) {
+      root.style.setProperty('--font-button', formatFontFamily(typo.buttonFont.family, typo.buttonFont.fallback));
+    }
+    if (typo.navFont) {
+      root.style.setProperty('--font-nav', formatFontFamily(typo.navFont.family, typo.navFont.fallback));
+    }
+    if (typo.labelFont) {
+      root.style.setProperty('--font-label', formatFontFamily(typo.labelFont.family, typo.labelFont.fallback));
+    }
+    if (typo.captionFont) {
+      root.style.setProperty('--font-caption', formatFontFamily(typo.captionFont.family, typo.captionFont.fallback));
     }
     if (typo.hoverColors) {
       root.style.setProperty('--hover-primary', typo.hoverColors.primary);
