@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLanguage } from '../context/LanguageContext';
 import { Footer } from '../components/Footer';
@@ -10,32 +10,27 @@ import { InvoiceInfoView } from '../components/account/InvoiceInfoView';
 import { LoyaltyPanel } from '../components/account/LoyaltyPanel';
 import { SettingsView } from '../components/account/SettingsView';
 import { HelpView } from '../components/account/HelpView';
+import { AccountSidebar, type AccountView } from '../components/account/AccountSidebar';
+import { AccountMobileNav } from '../components/account/AccountMobileNav';
+import { AccountOverview } from '../components/account/AccountOverview';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import {
-  ShoppingBag, MapPin, Receipt, Settings, HelpCircle,
-  LogOut, Moon, Sun, ArrowLeft, Check, Award, ArrowRight
-} from 'lucide-react';
-import { BrandIcon } from '../components/ui/BrandIcon';
-
-type AccountView = 'main' | 'orders' | 'addresses' | 'invoice' | 'settings' | 'help' | 'loyalty';
-
-
+import { Check, ArrowRight } from 'lucide-react';
 
 export const Account: React.FC = () => {
   const { isLoggedIn, user, login, loginWithGoogle, resetPassword, logout, orders, loading } = useUser();
   const { t, language } = useLanguage();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect'); // checkout gibi redirect parametresi
-  const viewParam = searchParams.get('view'); // orders, addresses gibi view parametresi
+  const [searchParams, setSearchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
+  const viewParam = searchParams.get('view');
 
   // URL'deki view parametresine göre başlangıç view'ını belirle
   const getInitialView = (): AccountView => {
-    if (viewParam && ['orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
+    if (viewParam && ['overview', 'orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
       return viewParam as AccountView;
     }
-    return 'main';
+    return 'overview';
   };
 
   const [currentView, setCurrentView] = useState<AccountView>(getInitialView);
@@ -53,43 +48,47 @@ export const Account: React.FC = () => {
   // Kullanıcı giriş yaptıysa ve redirect parametresi varsa yönlendir
   useEffect(() => {
     if (!loading && isLoggedIn && redirectTo) {
-      console.log('Redirecting to:', redirectTo);
       navigate(`/${redirectTo}`, { replace: true });
     }
   }, [loading, isLoggedIn, redirectTo, navigate]);
 
   // URL'de view parametresi varsa ilgili görünüme git
   useEffect(() => {
-    if (isLoggedIn && viewParam && ['orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
+    if (isLoggedIn && viewParam && ['overview', 'orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
       setCurrentView(viewParam as AccountView);
     }
   }, [isLoggedIn, viewParam]);
 
   useEffect(() => {
-    // Tema Başlatma: LocalStorage'dan oku, yoksa sistem tercihine bak
     const storedTheme = localStorage.getItem('theme');
     const isDarkInitial = storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
     setIsDark(isDarkInitial);
     document.documentElement.classList.toggle('dark', isDarkInitial);
-
     window.scrollTo(0, 0);
   }, [isLoggedIn, user]);
 
-  // View değiştiğinde scroll'u sıfırla
-  useEffect(() => {
+  // View değiştiğinde URL'i güncelle
+  const handleViewChange = (view: AccountView) => {
+    setCurrentView(view);
+    // URL'i güncelle (overview için parametreyi kaldır)
+    if (view === 'overview') {
+      searchParams.delete('view');
+    } else {
+      searchParams.set('view', view);
+    }
+    setSearchParams(searchParams, { replace: true });
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentView]);
+  };
 
   const toggleTheme = () => {
     const newIsDark = !isDark;
     setIsDark(newIsDark);
     if (newIsDark) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   };
 
@@ -100,12 +99,10 @@ export const Account: React.FC = () => {
 
     try {
       await login(email, pass, rememberMe);
-      // Giriş başarılı - redirect varsa oraya git
       if (redirectTo) {
         navigate(`/${redirectTo}`);
       }
     } catch (err: any) {
-      // Firebase auth hata kodlarını Türkçe mesajlara çevir
       const errorCode = err?.code || '';
       let errorMessage = language === 'tr' ? 'Giriş yapılırken bir hata oluştu.' : 'An error occurred during login.';
 
@@ -133,7 +130,6 @@ export const Account: React.FC = () => {
     try {
       await loginWithGoogle();
       toast.success('Google ile giriş başarılı!');
-      // Giriş başarılı - redirect varsa oraya git
       if (redirectTo) {
         navigate(`/${redirectTo}`);
       }
@@ -183,12 +179,12 @@ export const Account: React.FC = () => {
     }
   };
 
-// ✅ Oturum doğrulanırken şık bir bekleme ekranı göster
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-dark-900">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-none animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
           <p className="text-[10px] uppercase tracking-[0.5em] text-gold">
             <span className="font-santana font-bold">Sade</span> <span className="font-santana font-normal">Chocolate</span>
           </p>
@@ -196,12 +192,12 @@ export const Account: React.FC = () => {
       </div>
     );
   }
- if (!isLoggedIn) {
+
+  // Giriş yapmamış kullanıcılar için login formu
+  if (!isLoggedIn) {
     return (
       <main className="min-h-screen w-full flex flex-col items-center justify-center bg-cream-100 dark:bg-dark-900 px-6 py-12">
         <div className="w-full max-w-[420px] animate-fade-in">
-
-          {/* Ana Kart */}
           <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700 shadow-sm p-10 space-y-8">
             <div className="text-center space-y-3">
               <h1 className="font-display text-4xl font-bold italic text-brown-900 dark:text-white">Hoş Geldiniz</h1>
@@ -209,7 +205,6 @@ export const Account: React.FC = () => {
             </div>
 
             {showForgotPassword ? (
-              /* ŞİFREMİ UNUTTUM */
               <div className="space-y-6 animate-fade-in">
                 {!forgotEmailSent ? (
                   <form onSubmit={handleForgotPassword} className="space-y-6">
@@ -272,7 +267,6 @@ export const Account: React.FC = () => {
                 )}
               </div>
             ) : (
-              /* GİRİŞ FORMU */
               <form onSubmit={handleLogin} className="space-y-6 animate-fade-in">
                 <div className="space-y-4">
                   <Input label={t('email')} type="email" placeholder="isim@örnek.com" value={email} onChange={e => setEmail(e.target.value)} required />
@@ -304,7 +298,6 @@ export const Account: React.FC = () => {
                   {t('login_button')}
                 </Button>
 
-                {/* Ayraç */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
@@ -314,7 +307,6 @@ export const Account: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Google Giriş */}
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
@@ -330,7 +322,6 @@ export const Account: React.FC = () => {
                   Google ile Giriş
                 </button>
 
-                {/* Misafir Olarak Devam Et - Sadece checkout'a yönlendirme varsa göster */}
                 {(redirectTo === 'checkout' || !redirectTo) && (
                   <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
                     <button
@@ -345,7 +336,6 @@ export const Account: React.FC = () => {
                   </div>
                 )}
 
-                {/* Kayıt Ol Yönlendirmesi */}
                 <div className="text-center pt-4 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                     Henüz hesabınız yok mu?{' '}
@@ -366,134 +356,31 @@ export const Account: React.FC = () => {
     );
   }
 
-  const renderHeader = (title: string) => (
-    <div className="flex items-center gap-6 mb-12 pt-4 animate-fade-in relative z-10">
-      <button
-        onClick={() => setCurrentView('main')}
-        className="w-12 h-12 flex items-center justify-center bg-gray-50 dark:bg-dark-800 rounded-2xl hover:bg-gold hover:text-white transition-all shadow-sm"
-      >
-        <ArrowLeft size={20} />
-      </button>
-      <h2 className="font-display text-4xl lg:text-5xl font-bold dark:text-white italic tracking-tight">{title}</h2>
-    </div>
-  );
-return (
-    <main className="w-full max-w-screen-xl mx-auto pt-24 md:pt-32 lg:pt-36 pb-24 px-4 sm:px-6 lg:px-12 bg-white dark:bg-dark-900 min-h-screen animate-fade-in">
-      
-      {currentView === 'main' ? (
-        <div className="space-y-16">
-          {/* Katalog Stili Header */}
-          <div className="animate-fade-in">
-            <span className="font-sans text-[10px] lg:text-xs font-bold tracking-[0.4em] text-gold uppercase mb-3 block">
-              {t('account') || 'KİŞİSEL PANEL'}
-            </span>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div>
-                <h2 className="font-display text-5xl lg:text-7xl font-bold text-gray-900 dark:text-gray-100 italic tracking-tighter">
-   Hoş Geldin, <span className="text-gold">{user?.displayName?.split(' ')[0] || user?.firstName || user?.email?.split('@')[0] || 'Artisan'}</span>
-</h2>
-                <p className="text-gray-400 font-medium text-xs mt-4 uppercase tracking-widest">{user?.email}</p>
-              </div>
-              
-              {/* Tema & Çıkış - Katalog Buton Stili */}
-              <div className="flex items-center gap-4">
-                <button onClick={toggleTheme} className="h-14 px-6 border border-gray-100 dark:border-gray-800 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-dark-800 transition-all rounded-2xl">
-                  {isDark ? <Sun size={18} className="text-gold" /> : <Moon size={18} className="text-brown-900" />}
-                  <span className="text-[10px] font-black uppercase tracking-widest dark:text-white">{isDark ? 'AYDINLIK' : 'KARANLIK'}</span>
-                </button>
-                <button onClick={logout} className="h-14 px-6 bg-red-50 text-red-500 border border-red-100 flex items-center gap-3 hover:bg-red-500 hover:text-white transition-all rounded-2xl font-black text-[10px] uppercase tracking-widest">
-                  <LogOut size={18} /> ÇIKIŞ
-                </button>
-              </div>
-            </div>
-          </div>
+  // Giriş yapmış kullanıcılar için hesap paneli
+  return (
+    <div className="min-h-screen bg-cream-50 dark:bg-dark-900">
+      <div className="flex pt-28 lg:pt-32">
+        {/* Desktop Sidebar */}
+        <AccountSidebar
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          user={user}
+          ordersCount={orders.length}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          onLogout={logout}
+        />
 
-          {/* Menü Kartları - Katalog Ürün Kartı Düzeni */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Sadakat Kartı - Öne Çıkarılmış */}
-            <button
-              onClick={() => setCurrentView('loyalty')}
-              className="group relative bg-gradient-to-br from-gold/10 to-amber-50 dark:from-gold/20 dark:to-dark-800 border-2 border-gold/30 p-8 text-left transition-all hover:border-gold hover:shadow-[0_0_40px_rgba(212,175,55,0.15)] rounded-[32px] min-h-[220px] flex flex-col justify-between overflow-hidden md:col-span-2 lg:col-span-1"
-            >
-              <div className="w-12 h-12 bg-gold/20 border border-gold/30 flex items-center justify-center text-gold transition-all duration-500 group-hover:bg-gold group-hover:text-black rounded-2xl">
-                <Award size={20} />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display text-xl font-bold dark:text-white italic tracking-tight uppercase group-hover:text-gold transition-colors">Sadakat</h3>
-                  <span className="bg-gold text-black text-[10px] px-3 py-1 font-black rounded-full animate-pulse">PUAN</span>
-                </div>
-                <p className="text-[10px] text-gray-400 font-medium italic leading-relaxed uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                  Puanlarınız, seviyeniz ve avantajlar.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[2px] bg-gold transition-all duration-700 w-0 group-hover:w-full"></div>
-            </button>
-
-            {[
-              { id: 'orders', icon: <ShoppingBag size={20} />, label: t('my_orders'), count: orders.length, desc: 'Sipariş geçmişi ve anlık takip.' },
-              { id: 'addresses', icon: <MapPin size={20} />, label: t('my_addresses'), desc: 'Teslimat adreslerinizi yönetin.' },
-              { id: 'invoice', icon: <Receipt size={20} />, label: t('invoice_info'), desc: 'Fatura ve vergi detayları.' },
-              { id: 'settings', icon: <Settings size={20} />, label: t('settings'), desc: 'Profil ve dil tercihleri.' },
-              { id: 'help', icon: <HelpCircle size={20} />, label: t('help_support'), desc: 'Destek ekibimize ulaşın.' }
-            ].map((item) => (
-              <button 
-                key={item.id}
-                onClick={() => setCurrentView(item.id as AccountView)}
-                className="group relative bg-white dark:bg-dark-900 border border-gray-100 dark:border-gray-800 p-8 text-left transition-all hover:border-gold/50 hover:shadow-[0_0_40px_rgba(0,0,0,0.03)] rounded-[32px] min-h-[220px] flex flex-col justify-between overflow-hidden"
-              >
-                <div className="w-12 h-12 bg-gray-50 dark:bg-dark-800 border border-gray-100 dark:border-gray-800 flex items-center justify-center text-brown-900 dark:text-gold transition-all duration-500 group-hover:bg-brown-900 dark:group-hover:bg-gold group-hover:text-white dark:group-hover:text-black rounded-2xl">
-                  {item.icon}
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-display text-xl font-bold dark:text-white italic tracking-tight uppercase group-hover:text-gold transition-colors">{item.label}</h3>
-                    {item.count !== undefined && <span className="bg-gray-100 dark:bg-dark-800 text-gray-500 dark:text-gray-400 text-[10px] px-3 py-1 font-black rounded-none group-hover:bg-gold group-hover:text-black transition-all">{item.count}</span>}
-                  </div>
-                  <p className="text-[10px] text-gray-400 font-medium italic leading-relaxed uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                    {item.desc}
-                  </p>
-                </div>
-                {/* Alt Dekoratif Çizgi - Subtle Border Effect */}
-                <div className="absolute bottom-0 left-0 h-[2px] bg-gold transition-all duration-700 w-0 group-hover:w-full"></div>
-              </button>
-            ))}
-            
-            {/* Damak Tadı Quiz Kartı */}
-            <Link
-              to="/tasting-quiz"
-              className="group relative bg-gradient-to-br from-gold/5 to-amber-50 dark:from-gold/10 dark:to-dark-800 border border-gold/20 p-8 text-left transition-all hover:border-gold/50 hover:shadow-[0_0_40px_rgba(212,175,55,0.1)] rounded-[32px] min-h-[220px] flex flex-col justify-between overflow-hidden"
-            >
-              <div className="w-12 h-12 bg-gold/10 border border-gold/20 flex items-center justify-center text-gold transition-all duration-500 group-hover:bg-gold group-hover:text-black rounded-2xl">
-                <BrandIcon size={20} />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display text-xl font-bold dark:text-white italic tracking-tight uppercase group-hover:text-gold transition-colors">Damak Tadı</h3>
-                  <span className="bg-gold text-black text-[10px] px-3 py-1 font-black rounded-full animate-pulse">YENİ</span>
-                </div>
-                <p className="text-[10px] text-gray-400 font-medium italic leading-relaxed uppercase tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                  Çikolata tercihlerinizi keşfedin.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 h-[2px] bg-gold transition-all duration-700 w-0 group-hover:w-full"></div>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        /* ALT GÖRÜNÜMLER (Orders, Addresses vb.) - Katalog İçi Sayfa Yapısı */
-        <div className="animate-fade-in-up">
-          <div className="mb-12">
-             {renderHeader(
-               currentView === 'orders' ? t('my_orders') :
-               currentView === 'addresses' ? t('my_addresses') :
-               currentView === 'loyalty' ? 'Sadakat Programı' :
-               currentView === 'settings' ? t('settings') :
-               currentView === 'help' ? t('help_support') :
-               t('invoice_info')
-             )}
-          </div>
-          <div className="bg-white dark:bg-dark-900 rounded-none">
+        {/* Ana İçerik Alanı */}
+        <main className="flex-1 min-h-[calc(100vh-128px)] pb-24 lg:pb-12">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {currentView === 'overview' && (
+              <AccountOverview
+                user={user}
+                orders={orders}
+                onNavigate={handleViewChange}
+              />
+            )}
             {currentView === 'orders' && <OrdersView orders={orders} />}
             {currentView === 'addresses' && <AddressesView />}
             {currentView === 'invoice' && <InvoiceInfoView />}
@@ -501,11 +388,20 @@ return (
             {currentView === 'settings' && <SettingsView />}
             {currentView === 'help' && <HelpView />}
           </div>
-        </div>
-      )}
 
-      <Footer />
-    </main>
-);
+          {/* Footer - sadece desktop */}
+          <div className="hidden lg:block">
+            <Footer />
+          </div>
+        </main>
+      </div>
 
+      {/* Mobile Bottom Navigation */}
+      <AccountMobileNav
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        ordersCount={orders.length}
+      />
+    </div>
+  );
 };

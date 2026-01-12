@@ -6,6 +6,56 @@ import { Footer } from '../components/Footer';
 import { CompanyInfo } from '../types';
 import { MapPin, Phone, ExternalLink, Snowflake, BadgeCheck, Leaf, Droplets, Clock } from 'lucide-react';
 
+// CMS veri tipleri
+interface AboutCMSLanguageData {
+  hero_label?: string;
+  hero_title?: string;
+  hero_description?: string;
+  hero_image?: string;
+  signature?: string;
+  signature_font?: string;
+  signature_color?: string;
+  signature_visible?: boolean;
+  hero_description_font?: string;
+  hero_description_color?: string;
+  hero_title_size?: string;
+  hero_title_align?: string;
+  philosophy_title?: string;
+  philosophy_description?: string;
+  stat1_value?: string;
+  stat1_label?: string;
+  stat2_value?: string;
+  stat2_label?: string;
+  stat3_value?: string;
+  stat3_label?: string;
+  stat4_value?: string;
+  stat4_label?: string;
+  delivery_title?: string;
+  delivery_description?: string;
+  exp1_title?: string;
+  exp1_desc?: string;
+  exp2_title?: string;
+  exp2_desc?: string;
+  exp3_title?: string;
+  exp3_desc?: string;
+  locations_title?: string;
+}
+
+interface AboutCMSData {
+  tr?: AboutCMSLanguageData;
+  en?: AboutCMSLanguageData;
+  de?: AboutCMSLanguageData;
+  store1_name?: string;
+  store1_address?: string;
+  store1_phone?: string;
+  store1_map?: string;
+  store2_name?: string;
+  store2_address?: string;
+  store2_phone?: string;
+  store2_map?: string;
+  [key: string]: AboutCMSLanguageData | string | undefined;
+}
+
 // Hook for scroll-triggered animations
 const useScrollReveal = (threshold = 0.1) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -176,7 +226,7 @@ const ExperienceItem: React.FC<{
 
 export const About: React.FC = () => {
   const { language } = useLanguage();
-  const [aboutData, setAboutData] = useState<any>(null);
+  const [aboutData, setAboutData] = useState<AboutCMSData | null>(null);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [scrollY, setScrollY] = useState(0);

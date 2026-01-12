@@ -4,6 +4,22 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Footer } from '../components/Footer';
 
+// CMS veri tipleri
+interface StorySection {
+  title: string;
+  content: string;
+  image?: string;
+}
+
+interface StoryCMSData {
+  [lang: string]: {
+    hero_title?: string;
+    hero_subtitle?: string;
+    hero_description?: string;
+    sections?: StorySection[];
+  };
+}
+
 // Hook for scroll-triggered animations
 const useScrollReveal = (threshold = 0.1) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -27,9 +43,55 @@ const useScrollReveal = (threshold = 0.1) => {
   return { ref, isVisible };
 };
 
+// Ayrı bileşen - Hook'u map dışında çağırmak için
+const StorySectionItem: React.FC<{ section: StorySection }> = ({ section }) => {
+  const sectionReveal = useScrollReveal(0.1);
+
+  return (
+    <div
+      ref={sectionReveal.ref}
+      className={`
+        transition-all duration-1000
+        ${sectionReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
+      `}
+    >
+      <h2 className="font-display text-3xl lg:text-4xl text-mocha-900 dark:text-cream-50 mb-6">
+        {section.title}
+      </h2>
+
+      {/* Section Image */}
+      {section.image && (
+        <div className="mb-8 rounded-2xl overflow-hidden shadow-xl">
+          <img
+            src={section.image}
+            alt={section.title}
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      )}
+
+      {/* Section Content - Split by paragraphs */}
+      <div className="prose prose-lg dark:prose-invert max-w-none space-y-4">
+        {section.content.split('\n\n').map((paragraph: string, pIndex: number) => (
+          paragraph.trim() && (
+            <p key={pIndex} className="text-mocha-400 dark:text-mocha-200 leading-relaxed">
+              {paragraph.split('\n').map((line: string, lIndex: number) => (
+                <React.Fragment key={lIndex}>
+                  {line}
+                  {lIndex < paragraph.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
+            </p>
+          )
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const Story: React.FC = () => {
   const { language } = useLanguage();
-  const [storyData, setStoryData] = useState<any>(null);
+  const [storyData, setStoryData] = useState<StoryCMSData | null>(null);
   const [scrollY, setScrollY] = useState(0);
 
   // Parallax scroll effect
@@ -119,51 +181,9 @@ export const Story: React.FC = () => {
         <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-12">
           <div className="max-w-4xl mx-auto space-y-20">
             {/* Dynamic Sections */}
-            {sections.map((section: any, index: number) => {
-              const sectionReveal = useScrollReveal(0.1);
-
-              return (
-                <div
-                  key={index}
-                  ref={sectionReveal.ref}
-                  className={`
-                    transition-all duration-1000
-                    ${sectionReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
-                  `}
-                >
-                  <h2 className="font-display text-3xl lg:text-4xl text-mocha-900 dark:text-cream-50 mb-6">
-                    {section.title}
-                  </h2>
-
-                  {/* Section Image */}
-                  {section.image && (
-                    <div className="mb-8 rounded-2xl overflow-hidden shadow-xl">
-                      <img
-                        src={section.image}
-                        alt={section.title}
-                        className="w-full h-auto object-cover"
-                      />
-                    </div>
-                  )}
-
-                  {/* Section Content - Split by paragraphs */}
-                  <div className="prose prose-lg dark:prose-invert max-w-none space-y-4">
-                    {section.content.split('\n\n').map((paragraph: string, pIndex: number) => (
-                      paragraph.trim() && (
-                        <p key={pIndex} className="text-mocha-400 dark:text-mocha-200 leading-relaxed">
-                          {paragraph.split('\n').map((line: string, lIndex: number) => (
-                            <React.Fragment key={lIndex}>
-                              {line}
-                              {lIndex < paragraph.split('\n').length - 1 && <br />}
-                            </React.Fragment>
-                          ))}
-                        </p>
-                      )
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            {sections.map((section: StorySection, index: number) => (
+              <StorySectionItem key={index} section={section} />
+            ))}
 
             {/* Empty State */}
             {sections.length === 0 && (
