@@ -156,12 +156,19 @@ export const ProductDetail: React.FC = () => {
               )}
               {product.video ? (
                 <video src={product.video} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-              ) : (
+              ) : allImages.length > 0 || product.image ? (
                 <img
                   src={allImages[selectedImageIndex] || product.image}
                   alt={product.title}
                   className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                 />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-cream-100 dark:bg-dark-700">
+                  <div className="text-center text-mocha-300 dark:text-gray-600">
+                    <span className="material-icons-outlined text-6xl mb-2">image</span>
+                    <p className="text-sm">Görsel Yükleniyor...</p>
+                  </div>
+                </div>
               )}
               <button
                 onClick={() => toggleFavorite(product.id)}
@@ -465,15 +472,21 @@ export const ProductDetail: React.FC = () => {
       {boxContentProducts.map((bonbon: any, idx) => (
         <Link
           key={idx}
-          to={`/urun/${bonbon.id}`}
+          to={bonbon.slug ? `/bonbonlar/${bonbon.slug}` : `/product/${bonbon.id}`}
           className="group border-2 border-gray-100 dark:border-gray-800 rounded-3xl p-4 hover:border-gold dark:hover:border-gold transition-all hover:shadow-lg"
         >
           <div className="aspect-square rounded-2xl overflow-hidden mb-4">
-            <img
-              src={bonbon.image}
-              alt={bonbon.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
+            {bonbon.image ? (
+              <img
+                src={bonbon.image}
+                alt={bonbon.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-cream-100 dark:bg-dark-700">
+                <span className="material-icons-outlined text-3xl text-mocha-300 dark:text-gray-600">image</span>
+              </div>
+            )}
           </div>
           <h4 className="text-xs font-black uppercase tracking-widest text-brown-900 dark:text-gold text-center mb-2">
             {bonbon.title}
@@ -481,11 +494,6 @@ export const ProductDetail: React.FC = () => {
           {bonbon.description && (
             <p className="text-[10px] text-gray-500 dark:text-gray-400 italic text-center line-clamp-2">
               {bonbon.description}
-            </p>
-          )}
-          {bonbon.price && (
-            <p className="text-xs font-bold text-center mt-3 text-gray-900 dark:text-white">
-              ₺{bonbon.price}
             </p>
           )}
         </Link>

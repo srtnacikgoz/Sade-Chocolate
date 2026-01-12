@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Product, BoxConfig, BoxSizeOption } from '../types';
+import { Product, BoxConfig, BoxSizeOption, BoxPreset } from '../types';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
-import { X, ShoppingCart, Package, Plus, Check, Loader2 } from 'lucide-react';
+import { X, ShoppingCart, Package, Plus, Check, Loader2, Gift, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 // Varsayılan kutu boyutu seçenekleri (Firestore'dan yüklenemezse kullanılır)
@@ -19,17 +19,34 @@ interface CuratedBoxModalProps {
   isOpen: boolean;
   onClose: () => void;
   availableProducts?: Product[]; // Opsiyonel - verilmezse Firestore'dan çekilir
+  initialProduct?: Product; // Bonbon detay sayfasından gelen başlangıç ürünü
 }
 
-export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClose, availableProducts }) => {
+export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClose, availableProducts, initialProduct }) => {
   const [boxSizes, setBoxSizes] = useState<BoxSizeOption[]>(DEFAULT_BOX_SIZES);
   const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
   const [selectedBoxSize, setSelectedBoxSize] = useState(4);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [bonbonProducts, setBonbonProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedTaste, setSelectedTaste] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'custom' | 'presets'>('custom');
+  const [presets, setPresets] = useState<BoxPreset[]>([]);
+  const [isLoadingPresets, setIsLoadingPresets] = useState(false);
   const { addToCart } = useCart();
   const { t } = useLanguage();
+
+  // Unique tat profilleri
+  const tasteProfiles = useMemo(() => {
+    const all = bonbonProducts.flatMap(p => p.attributes || []);
+    return [...new Set(all)].sort();
+  }, [bonbonProducts]);
+
+  // Tat profiline göre filtrelenmiş bonbonlar
+  const filteredBonbons = useMemo(() => {
+    if (!selectedTaste) return bonbonProducts;
+    return bonbonProducts.filter(p => p.attributes?.includes(selectedTaste));
+  }, [bonbonProducts, selectedTaste]);
 
   // Firestore'dan box_config yapılandırmasını çek
   useEffect(() => {
@@ -84,6 +101,75 @@ export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClos
 
     fetchBonbons();
   }, [isOpen, availableProducts]);
+
+  // initialProduct verilmişse modal açıldığında otomatik ekle
+  useEffect(() => {
+    if (isOpen && initialProduct && selectedProducts.length === 0) {
+      setSelectedProducts([initialProduct]);
+    }
+  }, [isOpen, initialProduct]);
+
+  // Modal kapandığında seçimleri sıfırla
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedProducts([]);
+      setActiveTab('custom');
+    }
+  }, [isOpen]);
+
+  // Preset'leri yükle
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchPresets = async () => {
+      setIsLoadingPresets(true);
+      try {
+        const presetsQuery = query(
+          collection(db, 'box_presets'),
+          where('enabled', '==', true),
+          orderBy('sortOrder', 'asc')
+        );
+        const snapshot = await getDocs(presetsQuery);
+        const loadedPresets = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as BoxPreset[];
+        setPresets(loadedPresets);
+      } catch (error) {
+        console.error('Preset\'ler yüklenemedi:', error);
+      } finally {
+        setIsLoadingPresets(false);
+      }
+    };
+
+    fetchPresets();
+  }, [isOpen]);
+
+  // Preset seçildiğinde bonbonları yükle
+  const handleSelectPreset = async (preset: BoxPreset) => {
+    // Preset'in kutu boyutunu seç
+    const matchingBoxSize = boxSizes.find(b => b.size === preset.boxSize);
+    if (matchingBoxSize) {
+      setSelectedBoxSize(preset.boxSize);
+    }
+
+    // Preset'teki bonbonları bul ve selectedProducts'a ekle
+    const presetProducts: Product[] = [];
+    for (const productId of preset.productIds) {
+      const product = bonbonProducts.find(p => p.id === productId);
+      if (product) {
+        presetProducts.push(product);
+      }
+    }
+
+    if (presetProducts.length > 0) {
+      setSelectedProducts(presetProducts);
+      setActiveTab('custom');
+      toast.success(`"${preset.name}" kutusu yüklendi!`);
+    } else {
+      toast.error('Bu kutudaki bonbonlar bulunamadı');
+    }
+  };
 
   // Seçilen kutu boyutu bilgisi
   const currentBox = boxSizes.find(b => b.size === selectedBoxSize) || boxSizes[0];
@@ -175,6 +261,93 @@ export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClos
           {/* Sol Panel - Kutu Boyutu & Grid Görünümü */}
           <div className="lg:w-1/2 p-6 border-b lg:border-b-0 lg:border-r border-cream-100 dark:border-dark-700 overflow-y-auto">
 
+            {/* Sekme Butonları */}
+            {presets.length > 0 && (
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => setActiveTab('custom')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === 'custom'
+                      ? 'bg-gold text-white shadow-lg'
+                      : 'bg-cream-100 dark:bg-dark-600 text-mocha-600 dark:text-mocha-300 hover:bg-cream-200 dark:hover:bg-dark-500'
+                  }`}
+                >
+                  <Sparkles size={16} />
+                  Kendi Kutun
+                </button>
+                <button
+                  onClick={() => setActiveTab('presets')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all ${
+                    activeTab === 'presets'
+                      ? 'bg-purple-500 text-white shadow-lg'
+                      : 'bg-cream-100 dark:bg-dark-600 text-mocha-600 dark:text-mocha-300 hover:bg-cream-200 dark:hover:bg-dark-500'
+                  }`}
+                >
+                  <Gift size={16} />
+                  Hazır Kutular
+                </button>
+              </div>
+            )}
+
+            {/* Hazır Kutular Sekmesi */}
+            {activeTab === 'presets' ? (
+              <div>
+                <label className="text-[10px] font-black text-mocha-400 uppercase tracking-widest mb-3 block">
+                  Hazır Kutulardan Seç
+                </label>
+                {isLoadingPresets ? (
+                  <div className="text-center py-12 text-mocha-400">
+                    <Loader2 size={32} className="mx-auto mb-4 animate-spin opacity-50" />
+                    <p className="text-sm">Hazır kutular yükleniyor...</p>
+                  </div>
+                ) : presets.length === 0 ? (
+                  <div className="text-center py-12 text-mocha-400">
+                    <Gift size={48} className="mx-auto mb-4 opacity-30" />
+                    <p className="text-sm">Henüz hazır kutu yok</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {presets.map(preset => (
+                      <button
+                        key={preset.id}
+                        onClick={() => handleSelectPreset(preset)}
+                        className="w-full p-4 rounded-2xl border-2 border-cream-200 dark:border-dark-600 hover:border-purple-500/50 bg-cream-50 dark:bg-dark-700 transition-all text-left group"
+                      >
+                        <div className="flex gap-4">
+                          {/* Preset Görseli */}
+                          {preset.image ? (
+                            <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-cream-100 dark:bg-dark-600">
+                              <img src={preset.image} alt={preset.name} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="w-20 h-20 rounded-xl flex-shrink-0 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
+                              <Gift size={24} className="text-purple-400" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-brown-900 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                              {preset.name}
+                            </h4>
+                            <p className="text-xs text-mocha-500 line-clamp-2 mb-2">
+                              {preset.description}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-full">
+                                {preset.boxSize}'li kutu
+                              </span>
+                              <span className="text-[10px] font-bold text-mocha-400 bg-cream-200 dark:bg-dark-600 px-2 py-0.5 rounded-full">
+                                {preset.productIds.length} bonbon
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Kutu Boyutu Seçimi */}
             <div className="mb-6">
               <label className="text-[10px] font-black text-mocha-400 uppercase tracking-widest mb-3 block">
@@ -270,6 +443,8 @@ export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClos
                 })}
               </div>
             </div>
+              </>
+            )}
           </div>
 
           {/* Sağ Panel - Bonbon Seçimi */}
@@ -277,6 +452,35 @@ export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClos
             <label className="text-[10px] font-black text-mocha-400 uppercase tracking-widest mb-3 block">
               Bonbon Seç
             </label>
+
+            {/* Tat Profili Filtreleme */}
+            {tasteProfiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                <button
+                  onClick={() => setSelectedTaste(null)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
+                    !selectedTaste
+                      ? 'bg-gold text-white shadow-sm'
+                      : 'bg-cream-100 dark:bg-dark-600 text-mocha-600 dark:text-mocha-300 hover:bg-cream-200 dark:hover:bg-dark-500'
+                  }`}
+                >
+                  Tümü
+                </button>
+                {tasteProfiles.map(taste => (
+                  <button
+                    key={taste}
+                    onClick={() => setSelectedTaste(taste)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
+                      selectedTaste === taste
+                        ? 'bg-gold text-white shadow-sm'
+                        : 'bg-cream-100 dark:bg-dark-600 text-mocha-600 dark:text-mocha-300 hover:bg-cream-200 dark:hover:bg-dark-500'
+                    }`}
+                  >
+                    {taste}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {isLoading ? (
               <div className="text-center py-12 text-mocha-400">
@@ -288,9 +492,20 @@ export const CuratedBoxModal: React.FC<CuratedBoxModalProps> = ({ isOpen, onClos
                 <Package size={48} className="mx-auto mb-4 opacity-30" />
                 <p className="text-sm">Henüz seçilebilir bonbon yok</p>
               </div>
+            ) : filteredBonbons.length === 0 ? (
+              <div className="text-center py-12 text-mocha-400">
+                <Package size={48} className="mx-auto mb-4 opacity-30" />
+                <p className="text-sm">"{selectedTaste}" profilinde bonbon bulunamadı</p>
+                <button
+                  onClick={() => setSelectedTaste(null)}
+                  className="mt-3 text-xs text-gold hover:underline"
+                >
+                  Filtreyi temizle
+                </button>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {bonbonProducts.map(product => {
+                {filteredBonbons.map(product => {
                   const count = getProductCount(product.id);
                   const isDisabled = selectedProducts.length >= selectedBoxSize && count === 0;
 

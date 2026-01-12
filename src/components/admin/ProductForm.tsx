@@ -71,34 +71,39 @@ const getAttrIcon = (name: string) => {
   if (lowerName.includes('kahve')) return <Coffee size={14} />;
   return <BrandIcon size={14} />;
 };
-export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
-  const [formData, setFormData] = useState<any>(product || {
-    title: '', price: 0, currency: '₺', category: PRODUCT_CATEGORIES[0].id, origin: '', image: '', video: '',
-    description: '', detailedDescription: '', tastingNotes: '', ingredients: '', allergens: '',
-    isOutOfStock: false, locationStock: { yesilbahce: 0 },
-    boxItems: [],
-    images: [], // ✅ Dandelion tarzı çoklu görsel galerisi
-    productType: 'other' as ProductType, // ✅ Ürün tipi: tablet, filled, other
-    showSensory: true, // ✅ Varsayılan açık
-    attributes: [], // ✅ Boş özellik dizisi
-    nutritionalValues: '', // ✅ Besin değerleri
-    valueBadges: [], // ✅ Dinamik değer simgeleri
-    sensory: { intensity: 50, sweetness: 50, creaminess: 50, fruitiness: 0, acidity: 0, crunch: 0 },
-    // 🎁 Kutu içeriği sistemi
-    isBoxContent: false,
-    boxContentIds: [],
-    boxSize: 4,
-    // 📦 Kargo bilgileri
-    weight: 0,
-    dimensions: { length: 0, width: 0, height: 0 },
-    // 📊 Katalog sıralama
-    sortOrder: 0
-  });
+// Varsayılan form değerleri - eksik alanları doldurmak için
+const DEFAULT_FORM_VALUES = {
+  title: '', price: 0, currency: '₺', category: PRODUCT_CATEGORIES[0].id, origin: '', image: '', video: '',
+  description: '', detailedDescription: '', tastingNotes: '', ingredients: '', allergens: '',
+  isOutOfStock: false, locationStock: { yesilbahce: 0 },
+  boxItems: [],
+  images: [],
+  productType: 'other' as ProductType,
+  showSensory: true,
+  attributes: [],
+  nutritionalValues: '',
+  valueBadges: [],
+  sensory: { intensity: 50, sweetness: 50, creaminess: 50, fruitiness: 0, acidity: 0, crunch: 0 },
+  isBoxContent: false,
+  boxContentIds: [],
+  boxSize: 4,
+  weight: 0,
+  dimensions: { length: 0, width: 0, height: 0 },
+  sortOrder: 0
+};
 
-  // 🔄 Product prop'u değiştiğinde formData'yı güncelle
+export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
+  // Ürün varsa varsayılanlarla birleştir, yoksa sadece varsayılanları kullan
+  const [formData, setFormData] = useState<any>(() =>
+    product ? { ...DEFAULT_FORM_VALUES, ...product } : { ...DEFAULT_FORM_VALUES }
+  );
+
+  // 🔄 Product prop'u değiştiğinde formData'yı güncelle (varsayılanlarla birleştir)
   useEffect(() => {
     if (product) {
-      setFormData(product);
+      setFormData({ ...DEFAULT_FORM_VALUES, ...product });
+    } else {
+      setFormData({ ...DEFAULT_FORM_VALUES });
     }
   }, [product]);
 
@@ -119,18 +124,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     return saved ? JSON.parse(saved) : ['Sütlü Çikolata', 'Bitter Çikolata(%55)', 'Fındıklı'];
   });
 
-  // ✅ Koleksiyon Havuzu (Hafızalı)
-  const [collectionPool, setCollectionPool] = useState<string[]>(() => {
-    const saved = localStorage.getItem('sade_collection_pool');
-    return saved ? JSON.parse(saved) : ['Tablet', 'Gift Box', 'Truffle'];
-  });
-  const [newCollection, setNewCollection] = useState('');
   const [badges, setBadges] = useState<ProductBadge[]>([]);
   const [bonbonProducts, setBonbonProducts] = useState<Product[]>([]); // Kutu içeriği olarak seçilebilir ürünler
 
-  React.useEffect(() => {
-    localStorage.setItem('sade_collection_pool', JSON.stringify(collectionPool));
-  }, [collectionPool]);
 
   // Fetch badges from Firebase
   useEffect(() => {
@@ -191,23 +187,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     });
   };
 
-  // Kategori seçim/kaldırma (Checkbox mantığı)
-  const toggleCategory = (cat: string) => {
-    const current = formData.categories || [];
-    const next = current.includes(cat)
-      ? current.filter((c: string) => c !== cat)
-      : [...current, cat];
-    setFormData({ ...formData, categories: next });
-  };
-
-  const addToCollectionPool = () => {
-    if (!newCollection.trim()) return;
-    if (!collectionPool.includes(newCollection.trim())) {
-      setCollectionPool(prev => [...prev, newCollection.trim()]);
-    }
-    toggleCategory(newCollection.trim());
-    setNewCollection('');
-  };
   // ✅ Değer Etiketleri Havuzu (Hafızalı)
   const [badgePool, setBadgePool] = useState<{icon: string, label: string}[]>(() => {
     const saved = localStorage.getItem('sade_badge_pool');
@@ -240,15 +219,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
     toast.info(`${attrToDelete} havuzdan kaldırıldı.`);
   };
 
-  // ✅ Koleksiyon Havuzundan Silme
-  const removeFromCollectionPool = (catToDelete: string) => {
-    const updatedPool = collectionPool.filter(cat => cat !== catToDelete);
-    setCollectionPool(updatedPool);
-    if (formData.category === catToDelete) {
-      setFormData({ ...formData, category: updatedPool[0] || '' });
-    }
-    toast.info(`${catToDelete} koleksiyonu kaldırıldı.`);
-  };
 
   // Havuz her değiştiğinde tarayıcı hafızasına kaydet
   React.useEffect(() => {
@@ -916,41 +886,6 @@ const addAttribute = () => {
           </div>
          )}
 
-         {/* --- KOLEKSİYON YÖNETİMİ (DYNAMIC POOL) --- */}
-          <div className="bg-slate-50/50 p-8 rounded-[40px] border border-slate-100 space-y-6">
-            <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kategoriler</label>
-            </div>
-            
-            <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-200/60">
-              {collectionPool.map(cat => (
-  <div key={cat} className="relative group">
-    <button 
-      type="button" 
-      onClick={() => toggleCategory(cat)}
-      className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all border
-        ${formData.categories?.includes(cat) ? 'bg-brown-900 text-white border-brown-900 shadow-md' : 'bg-white text-slate-400 border-slate-200 hover:border-brown-900/30'}`}
-    >
-      {cat}
-    </button>
-    
-    {/* Silme Butonu - Sadece Hover'da görünür */}
-    <button
-      type="button"
-      onClick={(e) => { e.stopPropagation(); removeFromCollectionPool(cat); }}
-      className="absolute -top-2 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-red-600 z-10 scale-75 hover:scale-100"
-    >
-      <CloseIcon size={10} strokeWidth={3} />
-    </button>
-  </div>
-))}
-            </div>
-
-            <div className="flex gap-3">
-              <input value={newCollection} onChange={e => setNewCollection(e.target.value)} onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addToCollectionPool())} placeholder="Yeni kategori adı..." className="flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs outline-none" />
-              <button type="button" onClick={addToCollectionPool} className="px-6 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase hover:bg-brown-900 hover:text-white transition-all">HAVUZA EKLE</button>
-            </div>
-          </div>
         </div>
       </div>
 {/* --- DEĞER ETİKETLERİ YÖNETİMİ (CEO SELECTION) --- */}

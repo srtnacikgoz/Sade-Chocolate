@@ -13,11 +13,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PRODUCT_CATEGORIES } from '../constants';
+import { BonbonCollectionCard } from '../features/bonbon';
 
 interface CatalogSettings {
   gridColumns: number;
   defaultViewMode: 'grid' | 'list';
   boxCardPosition: 'first' | 'last' | 'hidden';
+  bonbonCardPosition: 'first' | 'last' | 'hidden';
   defaultSortMode: 'manual' | 'category' | 'stock';
 }
 
@@ -25,6 +27,7 @@ const DEFAULT_CATALOG_SETTINGS: CatalogSettings = {
   gridColumns: 4,
   defaultViewMode: 'grid',
   boxCardPosition: 'first',
+  bonbonCardPosition: 'first',
   defaultSortMode: 'manual'
 };
 
@@ -132,6 +135,9 @@ export const Catalog: React.FC = () => {
 
     // 👁️ Katalogda gizli ürünleri filtrele
     currentProducts = currentProducts.filter(p => p.isVisibleInCatalog !== false);
+
+    // 🍬 Bonbonları katalogdan gizle (kendi sayfalarında gösterilir)
+    currentProducts = currentProducts.filter(p => p.category !== 'bonbon');
 
     if (searchTerm) {
       currentProducts = currentProducts.filter(p =>
@@ -433,6 +439,11 @@ export const Catalog: React.FC = () => {
               </motion.div>
             )}
 
+            {/* Bonbon Koleksiyon Kartı - İlk sırada (kutu kartından sonra) */}
+            {viewMode === ViewMode.GRID && selectedCategory === 'all' && !searchTerm && catalogSettings.bonbonCardPosition === 'first' && (
+              <BonbonCollectionCard />
+            )}
+
             {sortedAndFilteredProducts.map(product => (
               <ProductCard
                 key={product.id}
@@ -441,6 +452,11 @@ export const Catalog: React.FC = () => {
                 onQuickView={handleQuickView}
               />
             ))}
+
+            {/* Bonbon Koleksiyon Kartı - Son sırada */}
+            {viewMode === ViewMode.GRID && selectedCategory === 'all' && !searchTerm && catalogSettings.bonbonCardPosition === 'last' && (
+              <BonbonCollectionCard />
+            )}
 
             {/* Kendi Kutunu Oluştur - Son Sırada */}
             {(boxConfig?.enabled !== false) && catalogSettings.boxCardPosition === 'last' && (

@@ -28,6 +28,7 @@ import { EmailTemplatesTab } from '../components/admin/tabs/EmailTemplatesTab';
 import { ReferralCampaignsTab } from '../components/admin/tabs/ReferralCampaignsTab';
 import { ShippingSettingsTab } from '../components/admin/tabs/ShippingSettingsTab';
 import { CatalogSettingsTab } from '../components/admin/tabs/CatalogSettingsTab';
+import { BonbonSettingsTab } from '../components/admin/tabs/BonbonSettingsTab';
 import { Building2, Truck } from 'lucide-react';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 
@@ -2198,6 +2199,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <ShippingSettingsTab />
       ) : activeTab === 'catalog-settings' ? (
         <CatalogSettingsTab />
+      ) : activeTab === 'bonbon-settings' ? (
+        <BonbonSettingsTab />
       ) : null}
         </div>
       </main>
@@ -2228,7 +2231,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                 product={editingProduct}
                 onSave={async (data) => {
                   try {
-                    if (editingProduct) await updateProduct(editingProduct.id, data);
+                    // editingProduct.id varsa güncelle, yoksa yeni ürün ekle
+                    if (editingProduct?.id) await updateProduct(editingProduct.id, data);
                     else await addProduct(data);
                     setIsFormOpen(false);
                     setEditingProduct(null);

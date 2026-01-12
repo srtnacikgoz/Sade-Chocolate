@@ -260,6 +260,21 @@ export interface BoxConfig {
   updatedBy?: string;
 }
 
+// Hazır Bonbon Kutuları Preset Sistemi
+export interface BoxPreset {
+  id: string;
+  name: string;                    // "Meyvemsi Seçki"
+  description: string;             // "Yaz meyvelerinin tatlı notaları"
+  boxSize: number;                 // 8 - Kutu kapasitesi
+  productIds: string[];            // Önceden seçilmiş bonbon ID'leri
+  image?: string;                  // Preset görseli (opsiyonel)
+  enabled: boolean;                // Aktif/Pasif
+  sortOrder: number;               // Sıralama önceliği
+  createdAt: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
 // Typography (Font) Ayarları
 export type FontSource = 'google' | 'custom' | 'system';
 

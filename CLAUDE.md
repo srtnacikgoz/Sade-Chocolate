@@ -10,7 +10,7 @@
 5. `.claude/FEEDBACK.md` - Bug, improvement, refactor ve todo kayıtları
 6. `.claude/GUNLUK.md` - Günlük çalışma kayıtları
 
-dosyalarını oku ve kullanıcıya:
+dosyalarını oku, kurallara sadık kal, oturum süresince uygula ve kullanıcıya:
 - Tamamlanan son özellikler
 - Bekleyen hedefler
 - Öncelikli görevler
@@ -20,7 +20,53 @@ hakkında kısa bir özet sun.
 ---
 
 ## Proje Hakkında
-Sade Chocolate e-ticaret platformu. React + TypeScript + Firebase + Tailwind CSS.
+
+Sade Chocolate e-ticaret platformu.
+
+**Tech Stack:**
+- **Frontend:** React 18 + TypeScript + Vite
+- **Styling:** Tailwind CSS (özel renk paleti)
+- **Backend:** Firebase (Firestore + Hosting + Auth + Functions)
+- **Ödeme:** İyzico (3D Secure) + Havale/EFT
+- **Email:** SendGrid (Firebase Extensions)
+- **Kargo:** MNG Kargo API entegrasyonu
+- **CDN/DNS:** Cloudflare
+
+---
+
+## Aktif Sistemler
+
+### Ödeme Sistemleri
+| Sistem | Durum | Dosyalar |
+|--------|-------|----------|
+| İyzico 3D Secure | Aktif | `functions/src/services/iyzicoService.ts`, `IyzicoCheckoutModal.tsx` |
+| Havale/EFT | Aktif | `Checkout.tsx` (%2 indirim, geri sayım timer) |
+
+### Email Sistemi
+| Template | Tetikleyici |
+|----------|-------------|
+| Hoş geldin | Kayıt sonrası |
+| Sipariş onayı | Checkout tamamlandığında |
+| Kargo bildirimi | Admin panel'den |
+| Ödeme başarılı/başarısız | İyzico callback |
+| Teslimat onayı | Sipariş "Delivered" olduğunda |
+
+**Dosya:** `src/services/emailService.ts`
+
+### Kargo Sistemi
+- MNG Kargo API entegrasyonu
+- Otomatik gönderi oluşturma
+- Takip numarası yönetimi
+- **Dosyalar:** `functions/src/services/mngCargoService.ts`, `CreateShipmentModal.tsx`
+
+### Admin Panel Özellikleri
+| Tab | Açıklama |
+|-----|----------|
+| Katalog Ayarları | Grid kolon sayısı, sıralama modu, kutu kartı pozisyonu |
+| Kargo Ayarları | Ücretsiz kargo limiti, hediye çantası sistemi |
+| Bakım Modu | Site geneli bakım ekranı toggle |
+| Kutu Oluşturucu | Dinamik kutu boyutları yönetimi |
+| Tipografi | H1-H4 font seçimi, logo koruması |
 
 ---
 
@@ -55,9 +101,40 @@ Sade Chocolate e-ticaret platformu. React + TypeScript + Firebase + Tailwind CSS
 | `docs/deep-research.md` | "deep research", "derinlemesine araştırma", "araştırma yap" | Yeni bir konuyu araştırırken bu framework'teki soruları kullan |
 | `docs/research-findings.md` | "araştırma kaydet", "bulguları kaydet", "research findings" | Araştırma tamamlandığında bulguları bu template'e göre kaydet |
 
-**Workflow:**
-1. Kullanıcı "X konusunda deep research yap" dediğinde → `deep-research.md` framework'ünü kullan
-2. Araştırma bitince "bulguları kaydet" dediğinde → `research-findings.md` template'ini doldur
+---
+
+## Firebase Collections
+
+### Ana Koleksiyonlar
+| Koleksiyon | Açıklama |
+|------------|----------|
+| `products` | Ürünler (sortOrder, isOutOfStock, isVisibleInCatalog) |
+| `orders` | Siparişler (hasGiftBag, isGift, giftMessage) |
+| `customers` | Müşteriler |
+| `taste_profiles` | Tadım profilleri |
+| `quiz_config` | Quiz yapılandırması |
+| `scenarios` | AI Sommelier senaryoları |
+| `loyalty_program` | Sadakat programı |
+| `mail` | Email queue (SendGrid Extension) |
+
+### Ayar Koleksiyonları
+| Koleksiyon/Doküman | Açıklama |
+|--------------------|----------|
+| `site_settings/catalog` | Grid ayarları, sıralama modu, kutu kartı pozisyonu |
+| `site_settings/maintenance` | Bakım modu durumu |
+| `settings/shipping` | Ücretsiz kargo limiti, hediye çantası ayarları |
+| `settings/payment` | İyzico credentials, EFT ayarları |
+
+---
+
+## Cloud Functions
+
+| Fonksiyon | Endpoint | Açıklama |
+|-----------|----------|----------|
+| `createIyzicoPayment` | `/iyzico/create` | Ödeme formu oluşturma |
+| `iyzicoCallback` | `/iyzico/callback` | 3D Secure callback |
+| `createShipment` | `/cargo/create` | MNG Kargo gönderi oluşturma |
+| `trackShipment` | `/cargo/track` | Kargo takip |
 
 ---
 
@@ -72,18 +149,6 @@ Projede tanımlı renkler (geçersiz renk kullanma):
 - `brand-*`
 
 **UYARI:** `chocolate-*` renkleri tanımlı DEĞİL, kullanma!
-
----
-
-## Firebase Collections
-
-- `products` - Ürünler
-- `orders` - Siparişler
-- `customers` - Müşteriler
-- `taste_profiles` - Tadım profilleri
-- `quiz_config` - Quiz yapılandırması
-- `scenarios` - AI Sommelier senaryoları
-- `loyalty_program` - Sadakat programı
 
 ---
 
@@ -121,23 +186,54 @@ Projede tanımlı renkler (geçersiz renk kullanma):
    - Yeni koleksiyon eklerken bu dosyayı güncelle
    - İlişkili veriler için tutarlı email/id referansları kullan
 
+5. **Site ayarları pattern**
+   - Global ayarlar: `site_settings/{feature}` dokümanda
+   - useEffect ile çek, loading state kullan
+   ```tsx
+   const [settings, setSettings] = useState<CatalogSettings | null>(null);
+   useEffect(() => {
+     const docRef = doc(db, 'site_settings', 'catalog');
+     getDoc(docRef).then(snap => setSettings(snap.data()));
+   }, []);
+   ```
+
 ### Email Sistemi
 
-5. **SendGrid domain yapılandırması**
+6. **SendGrid domain yapılandırması**
    - Cloudflare DNS'te sadece subdomain kısmını gir (örn: `em8082`, değil `em8082.domain.com`)
    - DMARC kaydı TXT tipinde olmalı, CNAME değil
    - Eski/kullanılmayan domain authentication kayıtlarını sil
 
+7. **Email template'leri**
+   - `emailService.ts` içinde tanımlı HTML template'ler
+   - Typography değişkenleri admin panelden yönetiliyor
+   - Gönderen: `Sade Chocolate <bilgi@sadechocolate.com>`
+
 ### UI/UX
 
-6. **Boş state gösterimi**
+8. **Boş state gösterimi**
    - Liste boşsa kullanıcıya anlamlı mesaj ve CTA göster
    - Loading durumunda skeleton veya spinner kullan
 
-7. **Toast mesajları**
+9. **Toast mesajları**
    - Başarı: `toast.success('İşlem tamamlandı')`
    - Hata: `toast.error('Bir hata oluştu')`
    - Türkçe ve kısa mesajlar kullan
+
+10. **Ürün görünürlük kontrolü**
+    - `isVisibleInCatalog: false` ile katalogdan gizle
+    - `isOutOfStock: true` ile "Tükendi" badge göster
+    - `sortOrder` ile manuel sıralama
+
+### Kod Kalitesi
+
+11. **Dosya boyutu limiti**
+    - Max 500 satır (ideal: 300-450)
+    - Büyük dosyalar refactor edilmeli
+
+12. **BrandIcon kullanımı**
+    - Sparkles ikonu yerine `BrandIcon` komponenti kullan
+    - Tutarlı marka kimliği için
 
 ---
 
@@ -147,3 +243,9 @@ Projede tanımlı renkler (geçersiz renk kullanma):
 - Admin paneli: `/admin` route
 - AI Sommelier: Senaryo bazlı akıllı asistan
 - Tadım Quiz: Firestore'dan dinamik sorular (`quiz_config/default`)
+
+---
+
+## İletişim Tarzı
+
+Her prompta mümkünse kısa da olsa fikrini sun. Proaktif öneriler ve alternatif yaklaşımlar önerilmeli.

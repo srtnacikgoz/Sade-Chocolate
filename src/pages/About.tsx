@@ -226,6 +226,23 @@ export const About: React.FC = () => {
   const heroDescription = aboutData?.[language]?.hero_description || 'Sertan Açıkgöz\'ün butik pastanecilik vizyonuyla 2016\'dan bu yana Antalya\'da şekillenen Sade Patisserie, çikolatanın en saf halini modern bir sanat dalı olarak sunuyor.';
   const heroImage = aboutData?.[language]?.hero_image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPsg3jC391kW1kEstLZOiXYJ4jKeH3Ert6-SapPNTbe7UBTW72yhpEVQxRGouZVEwRX-i7uX-GpwZ9neF6MrhK2LhPe6QLacGfceRfOdJ_K37BAQLTzLKt_h8sx6qhFiqVyw5uaRjTbWGfD6oCOVh_xQvZflmUXHakFaeSX4YdxsGfUBIP8_OuhOi-G3sU22UrQfU6LFC8NSCm6Mw9eemRL8gBfnlKax26WRn4jZX4-iYvm7G3kRAGdqFhRT98yXL0F2g2l_aL3cs';
   const signature = aboutData?.[language]?.signature || 'Sertan Açıkgöz';
+  const signatureFont = aboutData?.[language]?.signature_font || 'handwriting';
+  const signatureColor = aboutData?.[language]?.signature_color || 'mocha-900';
+  const signatureVisible = aboutData?.[language]?.signature_visible !== false;
+
+  const heroDescriptionFont = aboutData?.[language]?.hero_description_font || 'sans';
+  const heroDescriptionColor = aboutData?.[language]?.hero_description_color || 'mocha-400';
+  const heroTitleSize = aboutData?.[language]?.hero_title_size || 'large';
+  const heroTitleAlign = aboutData?.[language]?.hero_title_align || 'left';
+
+  // Title size class mapping
+  const titleSizeClass = heroTitleSize === 'small'
+    ? 'text-3xl sm:text-4xl lg:text-5xl'
+    : heroTitleSize === 'medium'
+      ? 'text-4xl sm:text-5xl lg:text-6xl'
+      : heroTitleSize === 'xlarge'
+        ? 'text-6xl sm:text-7xl lg:text-8xl xl:text-9xl'
+        : 'text-5xl sm:text-6xl lg:text-7xl xl:text-8xl'; // large (default)
 
   const philosophyTitle = aboutData?.[language]?.philosophy_title || '"Çikolata, Damağınızda Biten Değil, Kalbinizde Başlayan Bir Hikayedir."';
   const philosophyDescription = aboutData?.[language]?.philosophy_description || 'Sade Chocolate olarak inancımız basit: Minimalizm, lezzetin en saf halidir. Endüstriyel işlemlerden, gereksiz katkı maddelerinden ve yapay boyalardan uzak duruyoruz. En kaliteli Belçika çikolatasını sanat eserlerine dönüştürüyoruz.';
@@ -301,7 +318,9 @@ export const About: React.FC = () => {
               </span>
 
               {/* Title with staggered animation */}
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl xl:text-8xl text-mocha-900 dark:text-cream-50 mb-10 leading-[0.95] tracking-tight">
+              <h1 className={`font-display ${titleSizeClass} text-mocha-900 dark:text-cream-50 mb-10 leading-[0.95] tracking-tight ${
+                heroTitleAlign === 'center' ? 'text-center' : heroTitleAlign === 'right' ? 'text-right' : 'text-left'
+              }`}>
                 {heroTitle.split('\n').map((line, i) => (
                   <span
                     key={i}
@@ -319,30 +338,51 @@ export const About: React.FC = () => {
               {/* Description */}
               <p
                 className={`
-                  text-lg lg:text-xl text-mocha-400 dark:text-mocha-200 leading-relaxed mb-12 max-w-xl
+                  text-lg lg:text-xl leading-relaxed mb-12 max-w-xl
                   transition-all duration-700 delay-500
                   ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  ${heroDescriptionFont === 'serif' ? 'font-serif' : heroDescriptionFont === 'display' ? 'font-display' : 'font-sans'}
+                  ${heroDescriptionColor === 'mocha-900' ? 'text-mocha-900 dark:text-mocha-100'
+                    : heroDescriptionColor === 'gold' ? 'text-gold'
+                    : heroDescriptionColor === 'cream-50' ? 'text-cream-50'
+                    : 'text-mocha-400 dark:text-mocha-200'}
                 `}
               >
                 {heroDescription}
               </p>
 
               {/* Signature */}
-              <div
-                className={`
-                  flex items-center gap-6
-                  transition-all duration-700 delay-700
-                  ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-                `}
-              >
-                <div className="relative">
-                  <span className="font-signature text-4xl lg:text-5xl text-mocha-900 dark:text-cream-50 tracking-wide">
-                    {signature}
-                  </span>
-                  <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-gradient-to-r from-gold via-gold/50 to-transparent" />
+              {signatureVisible && (
+                <div
+                  className={`
+                    flex items-center gap-6
+                    transition-all duration-700 delay-700
+                    ${heroReveal.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                  `}
+                >
+                  <div className="relative">
+                    <span className={`text-4xl lg:text-5xl tracking-wide ${
+                      signatureFont === 'handwriting'
+                        ? 'font-signature'
+                        : signatureFont === 'santana'
+                          ? 'font-santana'
+                          : signatureFont === 'display'
+                            ? 'font-display'
+                            : 'font-sans'
+                    } ${
+                      signatureColor === 'gold'
+                        ? 'text-gold'
+                        : signatureColor === 'dark-900'
+                          ? 'text-dark-900 dark:text-cream-50'
+                          : 'text-mocha-900 dark:text-cream-50'
+                    }`}>
+                      {signature}
+                    </span>
+                    <div className="absolute -bottom-2 left-0 w-full h-0.5 bg-gradient-to-r from-gold via-gold/50 to-transparent" />
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-mocha-200 dark:from-mocha-800 to-transparent" />
                 </div>
-                <div className="h-px flex-1 bg-gradient-to-r from-mocha-200 dark:from-mocha-800 to-transparent" />
-              </div>
+              )}
             </div>
 
             {/* Image with parallax */}

@@ -4,6 +4,24 @@ import { db } from '../lib/firebase';
 import { collection, onSnapshot, updateDoc, doc, addDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner'; // Modern bildirim sistemi
 
+// Firestore'a göndermeden önce undefined değerleri temizle
+const cleanDataForFirestore = (obj: any): any => {
+  if (obj === null || obj === undefined) return null;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanDataForFirestore).filter(item => item !== undefined);
+  }
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = cleanDataForFirestore(value);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+};
+
 interface GiftBagSettings {
   enabled: boolean;
   price: number;
@@ -22,7 +40,7 @@ interface ProductContextType {
   loading: boolean;
   error: string | null;
   addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
-  updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
+  updateProduct: (id: string, updates: Partial<Product>, options?: { silent?: boolean }) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   settings: ShippingSettings;
   updateShippingSettings: (updates: Partial<ShippingSettings>) => Promise<void>;
@@ -54,11 +72,21 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     const q = query(collection(db, 'products'), orderBy('title', 'asc'));
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(q,
       (snapshot) => {
-        setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[]);
+        const loadedProducts = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(p => {
+            // ID'si boş olan ürünleri filtrele ve logla
+            if (!p.id) {
+              console.error('Product with empty ID found in Firestore:', p);
+              return false;
+            }
+            return true;
+          }) as Product[];
+        setProducts(loadedProducts);
         setLoading(false);
-      }, 
+      },
       (err) => {
         setError('Ürünler senkronize edilemedi.');
         toast.error('Veri bağlantı hatası!');
@@ -69,17 +97,23 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, []);
 
   // --- OPTIMISTIC UPDATE VE GÜÇLÜ HATA YÖNETİMİ ---
-  const updateProduct = async (id: string, updates: Partial<Product>) => {
+  const updateProduct = async (id: string, updates: Partial<Product>, options?: { silent?: boolean }) => {
     const previousProducts = [...products];
     // 1. UI'ı anında güncelle (Sürtünmesiz Akış)
     setProducts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
 
     try {
-      await updateDoc(doc(db, 'products', id), updates);
-      toast.success('Ürün başarıyla güncellendi.');
+      // Firestore için veriyi temizle (undefined değerleri kaldır)
+      const cleanedUpdates = cleanDataForFirestore(updates);
+      await updateDoc(doc(db, 'products', id), cleanedUpdates);
+      // Sessiz mod değilse toast göster
+      if (!options?.silent) {
+        toast.success('Ürün başarıyla güncellendi.');
+      }
     } catch (err) {
       // 2. Hata olursa eski veriye dön (Fail-Safe)
       setProducts(previousProducts);
+      console.error('Firestore güncelleme hatası:', err);
       toast.error('Güncelleme başarısız! Yetkiniz olmayabilir.');
       throw err;
     }
@@ -111,9 +145,14 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const addProduct = async (data: Omit<Product, 'id'>) => {
     try {
-      await addDoc(collection(db, 'products'), data);
+      // Firestore için veriyi temizle (undefined değerleri kaldır)
+      const cleanedData = cleanDataForFirestore(data);
+      // id alanını kaldır - Firestore kendi ID'sini oluşturacak
+      delete cleanedData.id;
+      await addDoc(collection(db, 'products'), cleanedData);
       toast.success('Yeni artisan ürün eklendi.');
     } catch (err) {
+      console.error('Firestore ekleme hatası:', err);
       toast.error('Ürün eklenemedi!');
       throw err;
     }

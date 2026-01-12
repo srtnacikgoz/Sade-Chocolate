@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { Header } from './components/Header';
@@ -39,6 +39,8 @@ const TastingQuiz = lazy(() => import('./pages/TastingQuiz').then(m => ({ defaul
 const Campaigns = lazy(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
 const Maintenance = lazy(() => import('./pages/Maintenance').then(m => ({ default: m.Maintenance })));
 const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
+const Bonbonlar = lazy(() => import('./pages/Bonbonlar'));
+const BonbonDetay = lazy(() => import('./pages/BonbonDetay'));
 
 // Minimal loading component - no spinner
 const PageLoader = () => (
@@ -178,8 +180,10 @@ const applyTypography = (settings: TypographySettings) => {
   if (settings.logoFont) {
     root.style.setProperty('--font-logo', formatFontFamily(settings.logoFont.family, settings.logoFont.fallback));
   }
-  if (settings.signatureFont) {
-    root.style.setProperty('--font-signature', formatFontFamily(settings.signatureFont.family, settings.signatureFont.fallback));
+  // signatureFont yoksa h1Font'u fallback olarak kullan
+  const sigFont = settings.signatureFont || settings.h1Font;
+  if (sigFont) {
+    root.style.setProperty('--font-signature', formatFontFamily(sigFont.family, sigFont.fallback));
   }
   if (settings.buttonFont) {
     root.style.setProperty('--font-button', formatFontFamily(settings.buttonFont.family, settings.buttonFont.fallback));
@@ -309,7 +313,12 @@ const App: React.FC = () => {
               settings = data as TypographySettings;
             }
 
+            console.log('[Typography] Loaded settings:', settings);
+            console.log('[Typography] signatureFont:', settings.signatureFont);
+            console.log('[Typography] h1Font:', settings.h1Font);
             applyTypography(settings);
+          } else {
+            console.log('[Typography] No typography document found in Firestore');
           }
         });
       } catch (error) {
@@ -338,6 +347,7 @@ const App: React.FC = () => {
                     <Route path="/home" element={<Home />} />
                     <Route path="/catalog" element={<Catalog />} />
                     <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/product" element={<Navigate to="/catalog" replace />} />
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/account" element={<Account />} />
                     <Route path="/about" element={<About />} />
@@ -352,6 +362,8 @@ const App: React.FC = () => {
                     <Route path="/campaigns" element={<Campaigns />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                    <Route path="/bonbonlar" element={<Bonbonlar />} />
+                    <Route path="/bonbonlar/:slug" element={<BonbonDetay />} />
                   </Routes>
                 </Suspense>
               </Layout>

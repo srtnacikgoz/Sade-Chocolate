@@ -239,8 +239,10 @@ export const TypographyTab: React.FC = () => {
     if (typo.logoFont) {
       root.style.setProperty('--font-logo', formatFontFamily(typo.logoFont.family, typo.logoFont.fallback));
     }
-    if (typo.signatureFont) {
-      root.style.setProperty('--font-signature', formatFontFamily(typo.signatureFont.family, typo.signatureFont.fallback));
+    // signatureFont yoksa h1Font'u fallback olarak kullan
+    const sigFont = typo.signatureFont || typo.h1Font;
+    if (sigFont) {
+      root.style.setProperty('--font-signature', formatFontFamily(sigFont.family, sigFont.fallback));
     }
     if (typo.buttonFont) {
       root.style.setProperty('--font-button', formatFontFamily(typo.buttonFont.family, typo.buttonFont.fallback));

@@ -68,6 +68,8 @@ export const Home: React.FC = () => {
   const secretQuote = liveContent?.[language]?.secret_quote || t('secret_quote');
   const secretDesc = liveContent?.[language]?.secret_desc || t('secret_desc');
   const signature = aboutContent?.[language]?.signature || 'Sertan Açıkgöz';
+  const signatureFont = aboutContent?.[language]?.signature_font || 'handwriting';
+  const signatureColor = aboutContent?.[language]?.signature_color || 'gold';
 
   const filterTags = useMemo(() => {
     const allTags = products.flatMap(p => p.tags || []);
@@ -232,23 +234,26 @@ export const Home: React.FC = () => {
             </h2>
           </div>
           <div className="relative pl-12 border-l border-gold/30">
-            <div className="font-serif text-lg lg:text-xl text-gray-600 dark:text-gray-400 leading-relaxed italic mb-8 space-y-4">
-              {secretDesc.split('\n\n').map((paragraph: string, pIndex: number) => (
-                paragraph.trim() && (
-                  <p key={pIndex}>
-                    {paragraph.split('\n').map((line: string, lIndex: number) => (
-                      <React.Fragment key={lIndex}>
-                        {line}
-                        {lIndex < paragraph.split('\n').length - 1 && <br />}
-                      </React.Fragment>
-                    ))}
-                  </p>
-                )
-              ))}
+            <div className="font-serif text-lg lg:text-xl text-gray-600 dark:text-gray-400 leading-relaxed italic mb-8 space-y-4 whitespace-pre-line">
+              {secretDesc}
             </div>
             <div className="flex items-center gap-6">
               <div className="h-[1px] w-12 bg-gold/50"></div>
-              <span className="font-handwriting text-3xl text-gold">{signature}</span>
+              <span className={`text-3xl ${
+                signatureFont === 'handwriting'
+                  ? 'font-signature'
+                  : signatureFont === 'santana'
+                    ? 'font-santana'
+                    : signatureFont === 'display'
+                      ? 'font-display'
+                      : 'font-sans'
+              } ${
+                signatureColor === 'mocha-900'
+                  ? 'text-mocha-900 dark:text-cream-50'
+                  : signatureColor === 'dark-900'
+                    ? 'text-dark-900 dark:text-cream-50'
+                    : 'text-gold'
+              }`}>{signature}</span>
             </div>
           </div>
         </div>
@@ -348,7 +353,7 @@ export const Home: React.FC = () => {
               </button>
             )}
 
-            {premiumCollections.slice(0, 2).map((collection) => (
+            {premiumCollections.filter(c => c?.id).slice(0, 2).map((collection) => (
               <Link
                 key={collection.id}
                 to={`/product/${collection.id}`}

@@ -44,6 +44,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   const currentImage = isHovered && product.alternateImage ? product.alternateImage : product.image;
 
   const handleCardClick = () => {
+    if (!product.id) {
+      console.error('Product ID is missing:', product);
+      return;
+    }
     navigate(`/product/${product.id}`);
   };
 
@@ -101,11 +105,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
           )}
 
           {/* Ürün Görseli */}
-          <img
-            src={currentImage}
-            alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-300 ease-out relative z-10"
-          />
+          {currentImage ? (
+            <img
+              src={currentImage}
+              alt={product.title}
+              className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-300 ease-out relative z-10"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-cream-100 dark:bg-dark-700 relative z-10">
+              <span className="material-icons-outlined text-4xl text-mocha-300 dark:text-gray-600">image</span>
+            </div>
+          )}
 {/* Altına şu katmanı ekle: Üzerine gelince oluşan sıcak bir iç gölge */}
 <div className="absolute inset-0 bg-mocha-900/0 group-hover:bg-mocha-900/5 transition-colors duration-700 z-15" />
 
@@ -206,11 +216,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
               <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Stokta Yok</span>
             </div>
           )}
-          <img
-            src={currentImage}
-            alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
-          />
+          {currentImage ? (
+            <img
+              src={currentImage}
+              alt={product.title}
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-cream-100 dark:bg-dark-700 z-10">
+              <span className="material-icons-outlined text-4xl text-mocha-300 dark:text-gray-600">image</span>
+            </div>
+          )}
 
           {/* Liste Görünümü Butonları */}
           <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
@@ -289,11 +305,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
           {product.isOutOfStock && (
             <div className="absolute inset-0 bg-white/60 dark:bg-black/60 z-15" />
           )}
-          <img
-            src={currentImage}
-            alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
-          />
+          {currentImage ? (
+            <img
+              src={currentImage}
+              alt={product.title}
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-cream-100 dark:bg-dark-700 z-10">
+              <span className="material-icons-outlined text-2xl text-mocha-300 dark:text-gray-600">image</span>
+            </div>
+          )}
           {/* Küçük Liste Görünümü Butonları */}
           <div className="absolute top-1 right-1 flex flex-col gap-1 z-30">
              <button 
