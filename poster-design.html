@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sade Chocolate - Poster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Josefin+Sans:wght@200;300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream-50: #FDFBF7;
+      --cream-100: #F9F5ED;
+      --cream-200: #F3EDE1;
+      --mocha-400: #8B7355;
+      --mocha-500: #6F5B45;
+      --mocha-600: #5C4A38;
+      --mocha-800: #3D2E1F;
+      --mocha-900: #2A1F14;
+      --gold-400: #C9A962;
+      --gold-500: #B8944D;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--mocha-900);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      font-family: 'Josefin Sans', sans-serif;
+    }
+
+    .poster {
+      width: 600px;
+      height: 900px;
+      background: linear-gradient(
+        175deg,
+        var(--cream-50) 0%,
+        var(--cream-100) 45%,
+        var(--cream-200) 100%
+      );
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 50px 100px -20px rgba(0, 0, 0, 0.5),
+        0 30px 60px -30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Subtle texture overlay */
+    .poster::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+    }
+
+    /* Elegant chocolate drip from top */
+    .chocolate-drip {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 280px;
+      background: linear-gradient(
+        180deg,
+        var(--mocha-800) 0%,
+        var(--mocha-600) 40%,
+        var(--mocha-500) 70%,
+        transparent 100%
+      );
+      border-radius: 0 0 60px 60px;
+      opacity: 0;
+      animation: dripIn 2s ease-out 0.5s forwards;
+    }
+
+    .chocolate-drip::before {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 30px;
+      background: var(--mocha-500);
+      border-radius: 50%;
+      opacity: 0;
+      animation: dropForm 0.8s ease-out 2s forwards;
+    }
+
+    @keyframes dripIn {
+      0% {
+        height: 0;
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        height: 280px;
+        opacity: 1;
+      }
+    }
+
+    @keyframes dropForm {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0);
+      }
+      50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.2);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+    }
+
+    /* Brand name - vertical on left */
+    .brand-vertical {
+      position: absolute;
+      left: 45px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-90deg);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mocha-400);
+      opacity: 0;
+      animation: fadeSlideIn 1.2s ease-out 1s forwards;
+    }
+
+    /* Main content area */
+    .content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      width: 80%;
+    }
+
+    /* Decorative line above */
+    .line-accent {
+      width: 1px;
+      height: 80px;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        var(--gold-400) 50%,
+        transparent 100%
+      );
+      margin: 0 auto 40px;
+      opacity: 0;
+      animation: lineGrow 1s ease-out 1.5s forwards;
+    }
+
+    @keyframes lineGrow {
+      0% {
+        height: 0;
+        opacity: 0;
+      }
+      100% {
+        height: 80px;
+        opacity: 1;
+      }
+    }
+
+    /* Main title */
+    .title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 72px;
+      font-weight: 300;
+      color: var(--mocha-800);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      opacity: 0;
+      animation: fadeSlideIn 1.2s ease-out 1.8s forwards;
+    }
+
+    .title-accent {
+      display: block;
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 0.5em;
+      color: var(--mocha-500);
+      margin-top: 5px;
+    }
+
+    /* Subtitle */
+    .subtitle {
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 200;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mocha-400);
+      margin-top: 30px;
+      opacity: 0;
+      animation: fadeSlideIn 1.2s ease-out 2.2s forwards;
+    }
+
+    /* Chocolate piece illustration */
+    .chocolate-piece {
+      position: absolute;
+      bottom: 180px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 100px;
+      opacity: 0;
+      animation: fadeSlideUp 1.2s ease-out 2.5s forwards;
+    }
+
+    .chocolate-square {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(
+        135deg,
+        var(--mocha-600) 0%,
+        var(--mocha-800) 50%,
+        var(--mocha-900) 100%
+      );
+      position: relative;
+      transform: rotate(45deg);
+      margin: 0 auto;
+      box-shadow:
+        8px 8px 20px rgba(45, 30, 15, 0.3),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.1);
+    }
+
+    .chocolate-square::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Gold accent circle */
+    .gold-circle {
+      position: absolute;
+      bottom: 195px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 140px;
+      border: 1px solid var(--gold-400);
+      border-radius: 50%;
+      opacity: 0;
+      animation: circleExpand 1.5s ease-out 2.3s forwards;
+    }
+
+    @keyframes circleExpand {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 0;
+      }
+      100% {
+        width: 140px;
+        height: 140px;
+        opacity: 0.4;
+      }
+    }
+
+    /* Bottom tagline */
+    .tagline {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-style: italic;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      color: var(--mocha-500);
+      opacity: 0;
+      animation: fadeSlideIn 1.2s ease-out 2.8s forwards;
+    }
+
+    /* Corner accents */
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: var(--gold-400);
+      border-style: solid;
+      border-width: 0;
+      opacity: 0;
+      animation: cornerFade 1s ease-out 3s forwards;
+    }
+
+    .corner-tl {
+      top: 30px;
+      left: 30px;
+      border-top-width: 1px;
+      border-left-width: 1px;
+    }
+
+    .corner-tr {
+      top: 30px;
+      right: 30px;
+      border-top-width: 1px;
+      border-right-width: 1px;
+    }
+
+    .corner-bl {
+      bottom: 30px;
+      left: 30px;
+      border-bottom-width: 1px;
+      border-left-width: 1px;
+    }
+
+    .corner-br {
+      bottom: 30px;
+      right: 30px;
+      border-bottom-width: 1px;
+      border-right-width: 1px;
+    }
+
+    @keyframes cornerFade {
+      0% { opacity: 0; }
+      100% { opacity: 0.5; }
+    }
+
+    /* Right side year */
+    .year {
+      position: absolute;
+      right: 45px;
+      bottom: 50%;
+      transform: translateY(50%) rotate(90deg);
+      font-family: 'Josefin Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 200;
+      letter-spacing: 0.3em;
+      color: var(--mocha-400);
+      opacity: 0;
+      animation: fadeSlideIn 1.2s ease-out 3.2s forwards;
+    }
+
+    @keyframes fadeSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeSlideUp {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    /* Floating cacao beans decoration */
+    .bean {
+      position: absolute;
+      width: 12px;
+      height: 20px;
+      background: var(--mocha-600);
+      border-radius: 50%;
+      opacity: 0;
+      animation: beanFloat 3s ease-in-out infinite;
+    }
+
+    .bean-1 {
+      top: 420px;
+      left: 80px;
+      transform: rotate(-30deg);
+      animation-delay: 3.5s;
+    }
+
+    .bean-2 {
+      top: 380px;
+      right: 100px;
+      transform: rotate(25deg) scale(0.8);
+      animation-delay: 3.8s;
+    }
+
+    .bean-3 {
+      top: 480px;
+      right: 70px;
+      transform: rotate(-15deg) scale(0.6);
+      animation-delay: 4s;
+    }
+
+    @keyframes beanFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(10px) rotate(-30deg);
+      }
+      20% {
+        opacity: 0.3;
+      }
+      50% {
+        transform: translateY(-5px) rotate(-25deg);
+      }
+      100% {
+        opacity: 0.3;
+        transform: translateY(10px) rotate(-30deg);
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .poster {
+        box-shadow: none;
+        width: 100%;
+        height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <!-- Chocolate drip from top -->
+    <div class="chocolate-drip"></div>
+
+    <!-- Corner accents -->
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <!-- Vertical brand name -->
+    <div class="brand-vertical">Bean to Bar Chocolate</div>
+
+    <!-- Year on right -->
+    <div class="year">Est. 2024</div>
+
+    <!-- Main content -->
+    <div class="content">
+      <div class="line-accent"></div>
+      <h1 class="title">
+        Sade
+        <span class="title-accent">Chocolate</span>
+      </h1>
+      <p class="subtitle">Artisan Çikolata Atölyesi</p>
+    </div>
+
+    <!-- Decorative gold circle -->
+    <div class="gold-circle"></div>
+
+    <!-- Chocolate piece -->
+    <div class="chocolate-piece">
+      <div class="chocolate-square"></div>
+    </div>
+
+    <!-- Floating beans -->
+    <div class="bean bean-1"></div>
+    <div class="bean bean-2"></div>
+    <div class="bean bean-3"></div>
+
+    <!-- Bottom tagline -->
+    <p class="tagline">Sadeliğin Lezzeti</p>
+  </div>
+</body>
+</html>

@@ -64,7 +64,8 @@
       "Bash(Copy-Item \"C:\\\\Users\\\\Hp\\\\.claude\\\\plans\\\\zany-hatching-pie.md\" \".skills\\\\iyzico-kurulum\\\\IMPLEMENTATION_PLAN.md\")",
       "Bash(timeout:*)",
       "Bash(firebase firestore:databases:list:*)",
-      "Bash(firebase firestore:databases:get:*)"
+      "Bash(firebase firestore:databases:get:*)",
+      "Bash(npx get-shit-done-cc --global)"
     ]
   },
   "hooks": {
