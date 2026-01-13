@@ -65,7 +65,9 @@
       "Bash(timeout:*)",
       "Bash(firebase firestore:databases:list:*)",
       "Bash(firebase firestore:databases:get:*)",
-      "Bash(npx get-shit-done-cc --global)"
+      "Bash(findstr:*)",
+      "Bash(if exist \"node_modules\\\\.vite\" rmdir /s /q \"node_modules\\\\.vite\")",
+      "Bash(npx vite:*)"
     ]
   },
   "hooks": {

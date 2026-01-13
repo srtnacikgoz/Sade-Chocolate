@@ -774,6 +774,30 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
                 <div>
                   <label className="block text-[10px] font-black text-gold uppercase tracking-widest mb-4">"Sade'nin Sırrı" Açıklama</label>
                   <textarea value={cmsData?.[lang]?.secret_desc || ''} onChange={(e) => setCmsData({ ...cmsData, [lang]: { ...cmsData[lang], secret_desc: e.target.value } })} placeholder="Felsefe ve yaklaşım..." className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-[24px] p-6 text-sm font-serif italic leading-relaxed focus:ring-2 focus:ring-brown-900/10 outline-none text-gray-900 dark:text-white" rows={4} />
+                {/* Ana Sayfa İmza Ayarları */}
+                <div className="mt-6 p-6 bg-gradient-to-br from-gold/5 to-transparent rounded-[24px] border border-gold/10">
+                  <label className="block text-[10px] font-black text-gold uppercase tracking-widest mb-4">İmza</label>
+                  <input value={cmsData?.[lang]?.signature || ''} onChange={(e) => setCmsData({ ...cmsData, [lang]: { ...cmsData[lang], signature: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-[16px] p-4 text-lg font-signature focus:ring-2 focus:ring-gold/20 outline-none text-gray-900 dark:text-white" placeholder="Örn: Sertan Açıkgöz" />
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Font Stili</label>
+                      <select value={cmsData?.[lang]?.signature_font || 'handwriting'} onChange={(e) => setCmsData({ ...cmsData, [lang]: { ...cmsData[lang], signature_font: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="handwriting">El Yazısı</option>
+                        <option value="santana">Santana</option>
+                        <option value="display">Display</option>
+                        <option value="sans">Sans Serif</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Renk</label>
+                      <select value={cmsData?.[lang]?.signature_color || 'gold'} onChange={(e) => setCmsData({ ...cmsData, [lang]: { ...cmsData[lang], signature_color: e.target.value } })} className="w-full bg-white dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-[10px] outline-none">
+                        <option value="gold">Altın</option>
+                        <option value="mocha-900">Kahve</option>
+                        <option value="dark-900">Koyu</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 <div className="mt-8">
   <label className="block text-[10px] font-black text-gold uppercase tracking-widest mb-4">Katalog Hızlı Etiketleri (Virgülle Ayır)</label>
   <input 

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Logo Generator - Sade Chocolate</title>
+
+  <!-- Santana Font -->
+  <style>
+    @font-face {
+      font-family: 'Santana';
+      src: url('/fonts/santana/Santana-Bold.ttf') format('truetype');
+      font-weight: bold;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Santana';
+      src: url('/fonts/santana/Santana.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a1a;
+      color: white;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #C5A059;
+    }
+
+    p.subtitle {
+      color: #888;
+      margin-bottom: 40px;
+    }
+
+    .preview-section {
+      background: #2a2a2a;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .preview-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    /* Logo Preview Container */
+    .logo-preview {
+      display: inline-block;
+      padding: 24px 48px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .logo-preview.dark-bg {
+      background: #4B3832;
+    }
+
+    .logo-preview.light-bg {
+      background: #FDFCF0;
+    }
+
+    /* Logo Styles */
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .logo-sade {
+      font-family: 'Santana', Georgia, serif;
+      font-weight: bold;
+      font-size: 42px;
+      letter-spacing: 2px;
+    }
+
+    .logo-chocolate {
+      font-family: 'Santana', Georgia, serif;
+      font-weight: normal;
+      font-size: 42px;
+      letter-spacing: 2px;
+    }
+
+    /* Dark background variant */
+    .dark-bg .logo-sade {
+      color: white;
+    }
+    .dark-bg .logo-chocolate {
+      color: #C5A059;
+    }
+
+    /* Light background variant */
+    .light-bg .logo-sade {
+      color: #4B3832;
+    }
+    .light-bg .logo-chocolate {
+      color: #C5A059;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    button {
+      background: #C5A059;
+      color: #4B3832;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #d4af68;
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: #333;
+      color: white;
+    }
+
+    button.secondary:hover {
+      background: #444;
+    }
+
+    /* Canvas (hidden, for export) */
+    #exportCanvas {
+      display: none;
+    }
+
+    /* Size options */
+    .size-options {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .size-option {
+      background: #333;
+      border: 2px solid transparent;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ccc;
+      transition: all 0.2s;
+    }
+
+    .size-option:hover {
+      border-color: #555;
+    }
+
+    .size-option.active {
+      border-color: #C5A059;
+      color: #C5A059;
+    }
+
+    .info {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 32px;
+    }
+
+    .info h3 {
+      color: #C5A059;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .info ul {
+      color: #888;
+      font-size: 13px;
+      padding-left: 20px;
+      line-height: 1.8;
+    }
+
+    .download-links {
+      margin-top: 24px;
+      padding: 16px;
+      background: #1a1a1a;
+      border-radius: 8px;
+    }
+
+    .download-links a {
+      color: #C5A059;
+      text-decoration: none;
+      display: block;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+
+    .download-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Logo Generator</h1>
+    <p class="subtitle">Sade Chocolate email template'leri için logo görseli oluştur</p>
+
+    <!-- Dark Background Preview -->
+    <div class="preview-section">
+      <div class="preview-label">Koyu Arka Plan (Email Header)</div>
+      <div class="logo-preview dark-bg" id="logoDark">
+        <div class="logo">
+          <span class="logo-sade">Sade</span>
+          <span class="logo-chocolate">Chocolate</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button onclick="downloadLogo('dark', 1)">PNG İndir (1x)</button>
+        <button onclick="downloadLogo('dark', 2)">PNG İndir (2x - Retina)</button>
+        <button class="secondary" onclick="downloadLogo('dark', 3)">PNG İndir (3x)</button>
+      </div>
+    </div>
+
+    <!-- Light Background Preview -->
+    <div class="preview-section">
+      <div class="preview-label">Açık Arka Plan (Alternatif)</div>
+      <div class="logo-preview light-bg" id="logoLight">
+        <div class="logo">
+          <span class="logo-sade">Sade</span>
+          <span class="logo-chocolate">Chocolate</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button onclick="downloadLogo('light', 1)">PNG İndir (1x)</button>
+        <button onclick="downloadLogo('light', 2)">PNG İndir (2x - Retina)</button>
+        <button class="secondary" onclick="downloadLogo('light', 3)">PNG İndir (3x)</button>
+      </div>
+    </div>
+
+    <!-- Transparent Background -->
+    <div class="preview-section">
+      <div class="preview-label">Şeffaf Arka Plan</div>
+      <div class="logo-preview" id="logoTransparent" style="background: repeating-conic-gradient(#333 0% 25%, #222 0% 50%) 50% / 20px 20px;">
+        <div class="logo">
+          <span class="logo-sade" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Sade</span>
+          <span class="logo-chocolate" style="color: #C5A059; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Chocolate</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button onclick="downloadLogo('transparent', 2)">PNG İndir (2x - Şeffaf)</button>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info">
+      <h3>Kullanım</h3>
+      <ul>
+        <li><strong>Email Header:</strong> Koyu arka planlı versiyonu kullan (250x40px önerilen)</li>
+        <li><strong>2x Retina:</strong> Keskin görüntü için 2x versiyonunu kullan, HTML'de width/height yarısı olarak belirt</li>
+        <li>İndirilen dosyayı <code>public/images/</code> klasörüne kopyala</li>
+        <li>Email template'inde: <code>&lt;img src="https://sadechocolate.com/images/email-logo-dark.png" width="250" /&gt;</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <canvas id="exportCanvas"></canvas>
+
+  <script>
+    async function downloadLogo(variant, scale) {
+      const canvas = document.getElementById('exportCanvas');
+      const ctx = canvas.getContext('2d');
+
+      // Base dimensions
+      const baseWidth = 300;
+      const baseHeight = 60;
+      const padding = 24;
+
+      // Scale for retina
+      canvas.width = (baseWidth + padding * 2) * scale;
+      canvas.height = (baseHeight + padding * 2) * scale;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Background
+      if (variant === 'dark') {
+        ctx.fillStyle = '#4B3832';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (variant === 'light') {
+        ctx.fillStyle = '#FDFCF0';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      // transparent = no fill
+
+      // Scale context
+      ctx.scale(scale, scale);
+
+      // Font settings
+      const fontSize = 42;
+
+      // Draw "Sade" (bold)
+      ctx.font = `bold ${fontSize}px Santana, Georgia, serif`;
+      ctx.textBaseline = 'middle';
+
+      if (variant === 'dark' || variant === 'transparent') {
+        ctx.fillStyle = 'white';
+      } else {
+        ctx.fillStyle = '#4B3832';
+      }
+
+      const sadeText = 'Sade';
+      ctx.fillText(sadeText, padding, (baseHeight + padding * 2) / 2);
+
+      const sadeWidth = ctx.measureText(sadeText).width;
+
+      // Draw "Chocolate" (regular)
+      ctx.font = `normal ${fontSize}px Santana, Georgia, serif`;
+      ctx.fillStyle = '#C5A059';
+      ctx.fillText('Chocolate', padding + sadeWidth + 12, (baseHeight + padding * 2) / 2);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `email-logo-${variant}-${scale}x.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Wait for font to load
+    document.fonts.ready.then(() => {
+      console.log('Santana font loaded');
+    });
+  </script>
+</body>
+</html>

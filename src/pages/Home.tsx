@@ -22,7 +22,6 @@ export const Home: React.FC = () => {
   const { t, language } = useLanguage();
 
   const [liveContent, setLiveContent] = useState<any>(null);
-  const [aboutContent, setAboutContent] = useState<any>(null);
   const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const clickCount = useRef(0);
@@ -31,13 +30,6 @@ export const Home: React.FC = () => {
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'site_content', 'home'), (doc) => {
       if (doc.exists()) setLiveContent(doc.data());
-    });
-    return () => unsub();
-  }, []);
-
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'site_content', 'about'), (doc) => {
-      if (doc.exists()) setAboutContent(doc.data());
     });
     return () => unsub();
   }, []);
@@ -67,9 +59,10 @@ export const Home: React.FC = () => {
   const secretTitle = liveContent?.[language]?.secret_title || t('secret_title');
   const secretQuote = liveContent?.[language]?.secret_quote || t('secret_quote');
   const secretDesc = liveContent?.[language]?.secret_desc || t('secret_desc');
-  const signature = aboutContent?.[language]?.signature || 'Sertan Açıkgöz';
-  const signatureFont = aboutContent?.[language]?.signature_font || 'handwriting';
-  const signatureColor = aboutContent?.[language]?.signature_color || 'gold';
+  // Ana sayfa imzası - bağımsız (site_content/home'dan)
+  const signature = liveContent?.[language]?.signature || 'Sertan Açıkgöz';
+  const signatureFont = liveContent?.[language]?.signature_font || 'handwriting';
+  const signatureColor = liveContent?.[language]?.signature_color || 'gold';
 
   const filterTags = useMemo(() => {
     const allTags = products.flatMap(p => p.tags || []);

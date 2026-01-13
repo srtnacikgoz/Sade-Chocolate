@@ -142,7 +142,7 @@ const initializeCheckoutForm = async (orderData) => {
         currency: Iyzipay.CURRENCY.TRY,
         basketId: orderData.id,
         paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-        callbackUrl: `${process.env.FUNCTIONS_EMULATOR ? 'http://localhost:5001' : 'https://europe-west3-sade-chocolate-prod.cloudfunctions.net/handleIyzicoCallback'}`,
+        callbackUrl: `${process.env.FUNCTIONS_EMULATOR ? 'http://localhost:5001' : 'https://handleiyzicocallback-3jgp7kw3lq-ey.a.run.app'}`,
         enabledInstallments: [1], // Sadece tek çekim
         buyer,
         shippingAddress,
