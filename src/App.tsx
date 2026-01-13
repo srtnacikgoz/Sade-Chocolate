@@ -28,6 +28,7 @@ const Story = lazy(() => import('./pages/Story').then(m => ({ default: m.Story }
 const Favorites = lazy(() => import('./pages/Favorites').then(m => ({ default: m.Favorites })));
 const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
+const AdminSetup = lazy(() => import('./pages/AdminSetup').then(m => ({ default: m.AdminSetup })));
 const Legal = lazy(() => import('./pages/Legal').then(m => ({ default: m.Legal })));
 const Checkout = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
 const ProductDetail = lazy(() => import('./pages/ProductDetail').then(m => ({ default: m.ProductDetail })));
@@ -50,7 +51,7 @@ const PageLoader = () => (
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   // Splash sayfası kaldırıldı - isSplash artık kullanılmıyor
-  const isAdmin = location.pathname === '/admin' || location.pathname === '/seed-data';
+  const isAdmin = location.pathname === '/admin' || location.pathname === '/admin-setup' || location.pathname === '/seed-data';
   const isCheckout = location.pathname === '/checkout';
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -353,6 +354,7 @@ const App: React.FC = () => {
                     <Route path="/about" element={<About />} />
                     <Route path="/hikaye" element={<Story />} />
                     <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin-setup" element={<AdminSetup />} />
                     <Route path="/seed-data" element={<SeedData />} />
                     <Route path="/legal/:type" element={<Legal />} />
                     <Route path="/cart" element={<Cart />} />

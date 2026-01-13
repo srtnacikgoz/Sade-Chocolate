@@ -1,0 +1,65 @@
+{"users": [
+{
+  "localId": "3zwxm7OCE2b4FH8s0bRzdQ5mcu73",
+  "email": "patisserie.sade@gmail.com",
+  "emailVerified": true,
+  "passwordHash": "YM37fweM7G/ZmrQGM+So7TggRPTs9S8ChxJdULorTPdQE9HLTcVtknoEQ3WxkzpOynWAo9WxNEQLzdKre5+U7w==",
+  "salt": "9S+wMMTV7mWS5A==",
+  "displayName": "Sertan Açıkgöz",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKgrIFHQOI5u3-QvWBAMiLhbwseIuBnPUAzqKtBUzYPlOfWbxZ4=s96-c",
+  "lastSignedInAt": "1767532916297",
+  "createdAt": "1767532916297",
+  "providerUserInfo": []
+},
+{
+  "localId": "EqSAqz0n0jhE7IlAmR965FFk83R2",
+  "email": "sertan23@hotmail.com",
+  "emailVerified": false,
+  "passwordHash": "6YTFVlIAAG/2LxfOIZHSYVu9yh3Rqr20VNIDNiY3CyrcWgRGEmA7nUXqNGPYsX1FqEw9NyNRFf5eAn+6DJ8MWA==",
+  "salt": "BKN15JuqjIvU4g==",
+  "createdAt": "1766135817488",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "UdMbKqG4SigYANs73zWDJezIjrE2",
+  "email": "srtn.acikgoz@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "Znt8Za6BJX/vCVpC3ZCiniH85vAQjV0W2T1hjSYz7HbnQBfsOMZ6S8lrosvH76FgCqYSwkdUnA938gA4nJd8wA==",
+  "salt": "y3uv1+Vh35F8wQ==",
+  "displayName": "Sertan Açıkgöz",
+  "lastSignedInAt": "1767953170090",
+  "createdAt": "1766388875247",
+  "providerUserInfo": []
+},
+{
+  "localId": "Yjpx6F3RfjTgYzUwW58oCDUxlwJ3",
+  "email": "bilgi@sadepatisserie.com",
+  "emailVerified": true,
+  "passwordHash": "rk1SS4t7IipmGDjLJlH5jra08FXoIThbiEY8S8Iu5CX+Xfk5e7THQjEn782gl5ixRHPgVyvRJlOE4pCglQJvyQ==",
+  "salt": "sDIGCRqNO7fJ/g==",
+  "displayName": "sertan açıkgöz",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIFf-3YfnXdETNErsOqxe3_T-UKEcfDRAp_y9X3YSamFQutyw=s96-c",
+  "lastSignedInAt": "1768241669326",
+  "createdAt": "1767692740236",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "113520188034155412516",
+      "email": "bilgi@sadepatisserie.com",
+      "displayName": "sertan açıkgöz",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocIFf-3YfnXdETNErsOqxe3_T-UKEcfDRAp_y9X3YSamFQutyw=s96-c"
+    }
+  ]
+},
+{
+  "localId": "ud25OttXM2h2s3tJjjRgw25jv813",
+  "email": "bilgi@sadechocolate.com",
+  "emailVerified": false,
+  "passwordHash": "zaUvVO0D+83RLbFmRXFMOEm3ozAeuCsHs8lNaBcGJLPtam/SWoCrJw7CL77BVYXPKvZ5MGu3Gy8Wvc0Guc50lw==",
+  "salt": "6rCPR8RGNSuvDw==",
+  "displayName": "Sertan Açıkgöz",
+  "lastSignedInAt": "1768321433587",
+  "createdAt": "1768321433587",
+  "providerUserInfo": []
+}]}

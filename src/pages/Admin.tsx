@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { PRODUCT_CATEGORIES } from '../constants';
-import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes, Maximize2 } from 'lucide-react';
+import { Package, Type, Save, Globe, X, Users, Mail, Calendar, Filter, Tag, Eye, EyeOff, Info, Lightbulb, ChevronDown, Plus, ShoppingCart, TrendingUp, AlertTriangle, LayoutGrid, Search, Edit3, Trash2, Minus, LogOut, Menu, Home, MessageSquare, BarChart3, Heart, Gift, Settings, ChevronLeft, Boxes, Maximize2, Shield } from 'lucide-react';
 import { BrandIcon } from '../components/ui/BrandIcon';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { doc, onSnapshot, setDoc, collection, getDocs, query, orderBy, addDoc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
+import { onAuthStateChanged, signOut, getIdTokenResult } from 'firebase/auth';
 import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
 import { ProductForm } from '../components/admin/ProductForm';
@@ -29,40 +30,19 @@ import { ReferralCampaignsTab } from '../components/admin/tabs/ReferralCampaigns
 import { ShippingSettingsTab } from '../components/admin/tabs/ShippingSettingsTab';
 import { CatalogSettingsTab } from '../components/admin/tabs/CatalogSettingsTab';
 import { BonbonSettingsTab } from '../components/admin/tabs/BonbonSettingsTab';
+import { AdminManagementTab } from '../components/admin/tabs/AdminManagementTab';
 import { Building2, Truck } from 'lucide-react';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 
 export const Admin = () => {
   const navigate = useNavigate();
-
-  // 🔐 Admin Authentication Check
-  useEffect(() => {
-    const isAuthenticated = sessionStorage.getItem('admin_authenticated');
-    if (isAuthenticated !== 'true') {
-      navigate('/');
-    }
-  }, [navigate]);
-
-  // 🚪 Logout Handler
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_authenticated');
-    toast.success('Çıkış yapıldı');
-    navigate('/');
-  };
-
-  // 🎯 Dropdown Click Outside Handler
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (newProductDropdownRef.current && !newProductDropdownRef.current.contains(event.target as Node)) {
-        setIsNewProductDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping'>('inventory');
+
+  // ========== ALL useState HOOKS FIRST ==========
+  const [isAdminVerified, setIsAdminVerified] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'admin-management'>('inventory');
   const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'story' | 'legal'>('home');
@@ -138,6 +118,7 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     { id: 'company-info', label: 'Şirket Künyesi', icon: Building2, group: 'ayarlar' },
     { id: 'box-config', label: 'Kutu Oluşturucu', icon: Boxes, group: 'ayarlar' },
     { id: 'typography', label: 'Typography', icon: Type, group: 'ayarlar' },
+    { id: 'admin-management', label: 'Admin Yönetimi', icon: Shield, group: 'ayarlar' },
   ] as const;
 
   const menuGroups = {
@@ -147,6 +128,45 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
     analitik: 'Analitik',
     ayarlar: 'Ayarlar',
   };
+
+  // ========== ALL useEffect HOOKS ==========
+
+  // 🔐 Admin Authentication Check with Firebase Custom Claims
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const idTokenResult = await getIdTokenResult(user, true);
+          if (idTokenResult.claims.admin === true) {
+            setIsAdminVerified(true);
+            setAdminEmail(user.email);
+          } else {
+            toast.error('Admin yetkisi bulunamadı');
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Admin verification error:', error);
+          toast.error('Yetkilendirme hatası');
+          navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
+      setIsCheckingAuth(false);
+    });
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // 🎯 Dropdown Click Outside Handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (newProductDropdownRef.current && !newProductDropdownRef.current.contains(event.target as Node)) {
+        setIsNewProductDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Bakım Modu Snapshot
   useEffect(() => {
@@ -320,6 +340,43 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
 
     return () => unsub();
   }, []);
+
+  // ========== EARLY RETURNS (after all hooks) ==========
+
+  // 🚪 Logout Handler
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success('Çıkış yapıldı');
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Çıkış yapılırken hata oluştu');
+    }
+  };
+
+  // Auth kontrol ekranı
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-cream-50 dark:bg-dark-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Shield size={32} className="text-gold" />
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Yetki kontrol ediliyor...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Admin yetkisi yoksa boş döndür (navigate zaten çalışacak)
+  if (!isAdminVerified) {
+    return null;
+  }
+
+  // ========== HELPER FUNCTIONS ==========
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
@@ -2225,6 +2282,8 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <CatalogSettingsTab />
       ) : activeTab === 'bonbon-settings' ? (
         <BonbonSettingsTab />
+      ) : activeTab === 'admin-management' ? (
+        <AdminManagementTab />
       ) : null}
         </div>
       </main>

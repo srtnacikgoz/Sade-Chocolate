@@ -24,13 +24,14 @@ import {
   Sparkles,
   Truck,
   LayoutGrid,
-  Candy
+  Candy,
+  Shield
 } from 'lucide-react';
 import { BrandIcon } from '../ui/BrandIcon';
 import { toast } from 'sonner';
 
 // Menu item type
-type TabId = 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings';
+type TabId = 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management';
 
 interface MenuItem {
   id: TabId;
@@ -70,6 +71,7 @@ const menuItems: MenuItem[] = [
   { id: 'shipping', label: 'Kargo Ayarları', icon: Truck, group: 'ayarlar' },
   { id: 'catalog-settings', label: 'Katalog Ayarları', icon: LayoutGrid, group: 'ayarlar' },
   { id: 'bonbon-settings', label: 'Bonbon Kartı', icon: Candy, group: 'ayarlar' },
+  { id: 'admin-management', label: 'Admin Yönetimi', icon: Shield, group: 'ayarlar' },
 ];
 
 const menuGroups: Record<string, { label: string; icon: React.ElementType }> = {

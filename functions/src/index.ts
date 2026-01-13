@@ -1148,3 +1148,278 @@ export const retryPayment = functions.https.onCall(async (request: any) => {
       );
     }
   });
+
+// ============================================================
+// ADMIN AUTHENTICATION - Firebase Custom Claims
+// ============================================================
+
+// Admin master key - Environment variable'dan alınır (ilk kurulum için)
+const ADMIN_MASTER_KEY = defineString('ADMIN_MASTER_KEY', { default: '' });
+
+/**
+ * Admin Claim Ekleme
+ * Yeni bir kullanıcıya admin yetkisi verir
+ *
+ * @param {string} targetEmail - Admin yapılacak kullanıcının emaili
+ * @param {string} masterKey - Güvenlik anahtarı (ilk kurulum için)
+ * @returns {Object} - İşlem sonucu
+ */
+export const setAdminClaim = functions.https.onCall(async (request: any) => {
+  const { targetEmail, masterKey } = request.data;
+  const callerUid = request.auth?.uid;
+
+  // Validation
+  if (!targetEmail) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'targetEmail parametresi gerekli'
+    );
+  }
+
+  // Authorization check - ya mevcut admin ya da master key
+  let isAuthorized = false;
+
+  // 1. Master key ile yetkilendirme (ilk kurulum için)
+  const configuredMasterKey = ADMIN_MASTER_KEY.value();
+  if (masterKey && configuredMasterKey && masterKey === configuredMasterKey) {
+    isAuthorized = true;
+    functions.logger.info('Admin claim: Master key ile yetkilendirme', { targetEmail });
+  }
+
+  // 2. Mevcut admin ile yetkilendirme
+  if (!isAuthorized && callerUid) {
+    try {
+      const callerUser = await admin.auth().getUser(callerUid);
+      if (callerUser.customClaims?.admin === true) {
+        isAuthorized = true;
+        functions.logger.info('Admin claim: Mevcut admin ile yetkilendirme', {
+          callerEmail: callerUser.email,
+          targetEmail
+        });
+      }
+    } catch (error) {
+      functions.logger.error('Caller user fetch error:', error);
+    }
+  }
+
+  if (!isAuthorized) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Bu işlem için yetkiniz yok'
+    );
+  }
+
+  try {
+    // Target user'ı email ile bul
+    const targetUser = await admin.auth().getUserByEmail(targetEmail);
+
+    // Custom claim ekle
+    await admin.auth().setCustomUserClaims(targetUser.uid, {
+      ...targetUser.customClaims,
+      admin: true,
+      adminGrantedAt: new Date().toISOString()
+    });
+
+    // Firestore'da admin kaydı oluştur (audit log)
+    const db = admin.firestore();
+    await db.collection('admin_users').doc(targetUser.uid).set({
+      email: targetEmail,
+      uid: targetUser.uid,
+      grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+      grantedBy: callerUid || 'master_key',
+      active: true
+    });
+
+    functions.logger.info('Admin claim başarıyla eklendi:', { targetEmail, targetUid: targetUser.uid });
+
+    return {
+      success: true,
+      message: `${targetEmail} artık admin`,
+      uid: targetUser.uid
+    };
+
+  } catch (error: any) {
+    functions.logger.error('setAdminClaim error:', error);
+
+    if (error.code === 'auth/user-not-found') {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'Bu email ile kayıtlı kullanıcı bulunamadı'
+      );
+    }
+
+    throw new functions.https.HttpsError(
+      'internal',
+      'Admin yetkisi eklenemedi',
+      error.message
+    );
+  }
+});
+
+/**
+ * Admin Claim Kaldırma
+ * Bir kullanıcının admin yetkisini kaldırır
+ *
+ * @param {string} targetEmail - Admin yetkisi kaldırılacak kullanıcı
+ * @returns {Object} - İşlem sonucu
+ */
+export const removeAdminClaim = functions.https.onCall(async (request: any) => {
+  const { targetEmail } = request.data;
+  const callerUid = request.auth?.uid;
+
+  if (!targetEmail) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'targetEmail parametresi gerekli'
+    );
+  }
+
+  // Sadece mevcut admin kaldırabilir
+  if (!callerUid) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Giriş yapmalısınız'
+    );
+  }
+
+  const callerUser = await admin.auth().getUser(callerUid);
+  if (callerUser.customClaims?.admin !== true) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Bu işlem için admin yetkisi gerekli'
+    );
+  }
+
+  try {
+    const targetUser = await admin.auth().getUserByEmail(targetEmail);
+
+    // Kendi yetkisini kaldıramaz (güvenlik)
+    if (targetUser.uid === callerUid) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Kendi admin yetkinizi kaldıramazsınız'
+      );
+    }
+
+    // Admin claim'i kaldır
+    const currentClaims = targetUser.customClaims || {};
+    delete currentClaims.admin;
+    delete currentClaims.adminGrantedAt;
+    await admin.auth().setCustomUserClaims(targetUser.uid, currentClaims);
+
+    // Firestore kaydını güncelle
+    const db = admin.firestore();
+    await db.collection('admin_users').doc(targetUser.uid).update({
+      active: false,
+      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedBy: callerUid
+    });
+
+    functions.logger.info('Admin claim kaldırıldı:', { targetEmail, targetUid: targetUser.uid });
+
+    return {
+      success: true,
+      message: `${targetEmail} artık admin değil`
+    };
+
+  } catch (error: any) {
+    functions.logger.error('removeAdminClaim error:', error);
+
+    if (error.code === 'auth/user-not-found') {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'Kullanıcı bulunamadı'
+      );
+    }
+
+    throw new functions.https.HttpsError(
+      'internal',
+      'Admin yetkisi kaldırılamadı',
+      error.message
+    );
+  }
+});
+
+/**
+ * Admin Durumu Kontrolü
+ * Kullanıcının admin olup olmadığını kontrol eder
+ *
+ * @returns {Object} - Admin durumu
+ */
+export const checkAdminStatus = functions.https.onCall(async (request: any) => {
+  const callerUid = request.auth?.uid;
+
+  if (!callerUid) {
+    return {
+      isAdmin: false,
+      reason: 'not_authenticated'
+    };
+  }
+
+  try {
+    const user = await admin.auth().getUser(callerUid);
+    const isAdmin = user.customClaims?.admin === true;
+
+    return {
+      isAdmin,
+      email: user.email,
+      adminGrantedAt: user.customClaims?.adminGrantedAt || null
+    };
+
+  } catch (error: any) {
+    functions.logger.error('checkAdminStatus error:', error);
+    return {
+      isAdmin: false,
+      reason: 'error'
+    };
+  }
+});
+
+/**
+ * Admin Listesi
+ * Tüm admin kullanıcılarını listeler (sadece adminler görebilir)
+ *
+ * @returns {Array} - Admin listesi
+ */
+export const listAdmins = functions.https.onCall(async (request: any) => {
+  const callerUid = request.auth?.uid;
+
+  if (!callerUid) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Giriş yapmalısınız'
+    );
+  }
+
+  const callerUser = await admin.auth().getUser(callerUid);
+  if (callerUser.customClaims?.admin !== true) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Bu işlem için admin yetkisi gerekli'
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+    const adminsSnapshot = await db.collection('admin_users')
+      .where('active', '==', true)
+      .get();
+
+    const admins = adminsSnapshot.docs.map(doc => ({
+      uid: doc.id,
+      ...doc.data()
+    }));
+
+    return {
+      success: true,
+      admins
+    };
+
+  } catch (error: any) {
+    functions.logger.error('listAdmins error:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      'Admin listesi alınamadı'
+    );
+  }
+});

@@ -67,7 +67,16 @@
       "Bash(firebase firestore:databases:get:*)",
       "Bash(findstr:*)",
       "Bash(if exist \"node_modules\\\\.vite\" rmdir /s /q \"node_modules\\\\.vite\")",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(firebase functions:secrets:get:*)",
+      "Bash(firebase functions:secrets:access:*)",
+      "Bash(firebase auth:export:*)",
+      "Bash(gcloud identity platform users update:*)",
+      "Bash(npx firebase functions:shell:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(export GOOGLE_APPLICATION_CREDENTIALS=\"\")",
+      "Bash(FIREBASE_AUTH_EMULATOR_HOST=\"\" GCLOUD_PROJECT=sade-chocolate-prod node:*)",
+      "WebFetch(domain:sade-chocolate-prod.web.app)"
     ]
   },
   "hooks": {
