@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useProducts } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -34,12 +34,12 @@ const AttributeIcon = ({ iconId }: { iconId: string }) => {
 };
 const Accordion: React.FC<{ title: string; content?: string; defaultOpen?: boolean }> = ({ title, content, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  
+
   if (!content || content.trim() === "" || content.includes("undefined")) return null;
 
   return (
     <div className="border-b border-gray-100 dark:border-gray-800">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full py-7 flex items-center justify-between text-left group transition-all"
       >
@@ -48,7 +48,7 @@ const Accordion: React.FC<{ title: string; content?: string; defaultOpen?: boole
           <ChevronRight className={`transition-colors duration-500 ${isOpen ? 'text-gold' : 'text-gray-300'}`} size={16} />
         </div>
       </button>
-      
+
       {/* 🪄 SMOOTH GRID ANIMATION: İçerik ne kadar uzun olursa olsun akışkan açılır */}
       <div className={`grid transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] ${isOpen ? 'grid-rows-[1fr] opacity-100 mb-8' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className="overflow-hidden">
@@ -60,15 +60,85 @@ const Accordion: React.FC<{ title: string; content?: string; defaultOpen?: boole
     </div>
   );
 };
+
+// 🎁 Kutu İçeriği Accordion - Bonbon kartları ile
+const BoxContentAccordion: React.FC<{
+  bonbons: any[];
+  boxSize?: number;
+  boxProduct?: { id: string; title: string };
+  defaultOpen?: boolean
+}> = ({ bonbons, boxSize, boxProduct, defaultOpen = true }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  if (!bonbons || bonbons.length === 0) return null;
+
+  const title = `Kutu İçeriği (${boxSize || bonbons.length} Bonbon)`;
+
+  return (
+    <div className="border-b border-gray-100 dark:border-gray-800">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full py-7 flex items-center justify-between text-left group transition-all"
+      >
+        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-500 group-hover:text-brown-900 dark:group-hover:text-gold transition-colors">{title}</span>
+        <div className={`p-2 rounded-full transition-all duration-500 ${isOpen ? 'bg-gold/10 rotate-90' : 'group-hover:bg-gray-50'}`}>
+          <ChevronRight className={`transition-colors duration-500 ${isOpen ? 'text-gold' : 'text-gray-300'}`} size={16} />
+        </div>
+      </button>
+
+      {/* Açık/Kapalı durumu - overflow-y-hidden ile dikey animasyon, yatay scroll serbest */}
+      <div
+        className={`transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+          isOpen ? 'max-h-[300px] opacity-100 mb-8' : 'max-h-0 opacity-0 overflow-hidden'
+        }`}
+      >
+        {/* Yatay Scroll Bonbon Kartları */}
+        <div className="flex gap-4 overflow-x-auto pb-4 pr-4 scrollbar-thin scrollbar-thumb-gold/30 scrollbar-track-transparent">
+          {bonbons.map((bonbon: any, idx: number) => (
+            <Link
+              key={`${bonbon.id}-${idx}`}
+              to={`/bonbonlar/${bonbon.slug || bonbon.id}`}
+              state={{ fromBox: boxProduct }}
+              className="flex-shrink-0 w-[130px] group/card"
+            >
+              {/* Görsel */}
+              <div className="w-[130px] h-[130px] rounded-2xl overflow-hidden mb-3 border-2 border-gray-100 dark:border-gray-800 group-hover/card:border-gold transition-all duration-300 bg-cream-50 dark:bg-dark-800">
+                {bonbon.image ? (
+                  <img
+                    src={bonbon.image}
+                    alt={bonbon.title}
+                    className="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="material-icons-outlined text-3xl text-mocha-300 dark:text-gray-600">image</span>
+                  </div>
+                )}
+              </div>
+              {/* İsim */}
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-brown-900 dark:text-white text-center group-hover/card:text-gold transition-colors line-clamp-2">
+                {bonbon.title}
+              </h4>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { products } = useProducts();
   const { addToCart, toggleFavorite, isFavorite } = useCart();
   const { t } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'ingredients' | 'shipping'>('desc');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  // 🔙 Kutudan gelindiyse geri dönüş bilgisi
+  const fromBox = (location.state as any)?.fromBox as { id: string; title: string } | undefined;
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
 
@@ -94,7 +164,207 @@ export const ProductDetail: React.FC = () => {
       .map(id => products.find(p => p.id === id))
       .filter(Boolean); // undefined olanları çıkar
   }, [product, products]);
-  
+
+  // 🧮 KUTU İÇİN OTOMATİK HESAPLANAN DEĞERLER
+  // Bonbonların içeriklerinden profesyonel liste oluşturma
+  const computedIngredients = useMemo(() => {
+    // Kutu değilse veya bonbon yoksa ürünün kendi değerini kullan
+    if (product?.productType !== 'box' || boxContentProducts.length === 0) {
+      return product?.ingredients;
+    }
+
+    // Tüm bonbonların içeriklerini topla
+    const allIngredients = boxContentProducts
+      .map((b: any) => b.ingredients)
+      .filter(Boolean)
+      .join(', ');
+
+    if (!allIngredients) return product?.ingredients;
+
+    // Normalize mapping - farklı yazımları standartlaştır
+    const normalizeMap: Record<string, string> = {
+      // Emülgatörler
+      'emülgatör: lesitin (soya)': '__EMULSIFIER__',
+      'emülgatör: soya lesitini': '__EMULSIFIER__',
+      'emülgatör (soya lesitini)': '__EMULSIFIER__',
+      'emülgatör: lesitin': '__EMULSIFIER__',
+      'soya lesitini': '__EMULSIFIER__',
+      'lesitin (soya)': '__EMULSIFIER__',
+      // Asitlik düzenleyiciler
+      'asitlik düzenleyici (sitrik asit)': '__ACIDITY__',
+      'asitlik düzenleyici: sitrik asit': '__ACIDITY__',
+      'sitrik asit': '__ACIDITY__',
+      // Aroma vericiler
+      'doğal vanilya aroması': '__AROMA__',
+      'vanilya aroması': '__AROMA__',
+      'aroma verici: doğal vanilya': '__AROMA__',
+    };
+
+    // Kategoriler
+    const categories = {
+      emulsifier: false,
+      acidity: false,
+      aroma: false,
+    };
+
+    // Her içeriği parçala
+    const parts = allIngredients
+      .split(',')
+      .map((i: string) => i.trim())
+      .filter((i: string) => i.length > 0);
+
+    const seenBase = new Set<string>();
+    const mainIngredients: string[] = [];
+
+    for (const part of parts) {
+      // Önce normalize mapping kontrolü
+      const lowerPart = part.toLowerCase();
+      let isSpecialCategory = false;
+
+      for (const [pattern, category] of Object.entries(normalizeMap)) {
+        if (lowerPart.includes(pattern) || pattern.includes(lowerPart.replace(/[():%]/g, '').trim())) {
+          if (category === '__EMULSIFIER__') categories.emulsifier = true;
+          if (category === '__ACIDITY__') categories.acidity = true;
+          if (category === '__AROMA__') categories.aroma = true;
+          isSpecialCategory = true;
+          break;
+        }
+      }
+
+      if (isSpecialCategory) continue;
+
+      // Ana içerikler için base kelimeyi çıkar
+      const base = part
+        .replace(/\s*\([^)]*\)/g, '')   // Parantez içini çıkar
+        .replace(/\s*%\s*[\d.]+/g, '')  // Yüzdeleri çıkar
+        .replace(/[:]/g, '')            // İki nokta çıkar
+        .trim()
+        .toLowerCase();
+
+      if (base && base.length > 1 && !seenBase.has(base)) {
+        seenBase.add(base);
+        // Temiz format: sadece isim, yüzdesiz
+        const cleanName = part
+          .replace(/\s*\([^)]*\)/g, '')
+          .replace(/\s*%\s*[\d.]+/g, '')
+          .replace(/[:]/g, '')
+          .trim();
+        // İlk harf büyük
+        mainIngredients.push(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
+      }
+    }
+
+    // Sonucu formatla
+    let result = mainIngredients.join(', ');
+
+    // Özel kategorileri ekle
+    const specialParts: string[] = [];
+    if (categories.emulsifier) specialParts.push('Emülgatör: Soya Lesitini');
+    if (categories.acidity) specialParts.push('Asitlik Düzenleyici: Sitrik Asit');
+    if (categories.aroma) specialParts.push('Aroma Verici: Doğal Vanilya Aroması');
+
+    if (specialParts.length > 0) {
+      result += '.\n\n' + specialParts.join('. ') + '.';
+    }
+
+    return result;
+  }, [product, boxContentProducts]);
+
+  // Alerjenler - akıllı unique liste (kelime bazında tekrar önleme)
+  const computedAllergens = useMemo(() => {
+    if (product?.productType !== 'box' || boxContentProducts.length === 0) {
+      return product?.allergens;
+    }
+
+    const allAllergens = boxContentProducts
+      .map((b: any) => b.allergens)
+      .filter(Boolean)
+      .join(', ');
+
+    if (!allAllergens) return product?.allergens;
+
+    // Virgül ve "ve" ile parçala
+    const parts = allAllergens
+      .split(/[,]/)
+      .map((a: string) => a.trim())
+      .filter((a: string) => a.length > 0);
+
+    // Her parçayı normalize ederek kelime gruplarına ayır
+    const seenPhrases = new Set<string>();
+    const uniqueParts: string[] = [];
+
+    for (const part of parts) {
+      // Normalize: küçük harf, fazla boşlukları temizle
+      const normalized = part.toLowerCase().replace(/\s+/g, ' ').trim();
+
+      // Bu ifade veya çok benzer bir ifade daha önce eklendi mi?
+      // "eser miktarda X içerebilir" kalıplarını tek seferde al
+      const isRedundant = [...seenPhrases].some(seen => {
+        // Biri diğerini içeriyorsa veya %80+ kelime örtüşmesi varsa atla
+        if (seen.includes(normalized) || normalized.includes(seen)) return true;
+
+        // Kelime bazında örtüşme kontrolü
+        const seenWords = new Set(seen.split(' '));
+        const currentWords = normalized.split(' ');
+        const overlap = currentWords.filter(w => seenWords.has(w)).length;
+        const overlapRatio = overlap / Math.max(seenWords.size, currentWords.length);
+        return overlapRatio > 0.7; // %70'ten fazla örtüşme varsa tekrar say
+      });
+
+      if (!isRedundant) {
+        seenPhrases.add(normalized);
+        // Orijinal formatı koru (ilk harf büyük)
+        uniqueParts.push(part.charAt(0).toUpperCase() + part.slice(1));
+      }
+    }
+
+    return uniqueParts.join(', ');
+  }, [product, boxContentProducts]);
+
+  // Besin değerleri - bonbon başına ortalama veya toplam
+  const computedNutritionalValues = useMemo(() => {
+    if (product?.productType !== 'box' || boxContentProducts.length === 0) {
+      return product?.nutritionalValues;
+    }
+
+    // Eğer kutunun kendi besin değeri varsa onu kullan
+    if (product?.nutritionalValues) return product.nutritionalValues;
+
+    // Bonbonlardan besin değeri olan varsa genel bilgi göster
+    const hasNutrition = boxContentProducts.some((b: any) => b.nutritionalValues);
+    if (hasNutrition) {
+      return `Bu kutu ${boxContentProducts.length} adet el yapımı bonbon içermektedir. Her bonbonun detaylı besin değerleri için ilgili ürün sayfasını ziyaret edebilirsiniz.`;
+    }
+
+    return undefined;
+  }, [product, boxContentProducts]);
+
+  // Menşei bilgisi
+  const computedOrigin = useMemo(() => {
+    if (product?.productType !== 'box' || boxContentProducts.length === 0) {
+      return product?.origin;
+    }
+
+    // Eğer kutunun kendi origin'i varsa onu kullan
+    if (product?.origin) return product.origin;
+
+    // Bonbonlardan unique origin'leri topla
+    const origins = boxContentProducts
+      .map((b: any) => b.origin)
+      .filter(Boolean);
+
+    if (origins.length === 0) {
+      return 'Sade Chocolate Atölyesi, Antalya';
+    }
+
+    const uniqueOrigins = [...new Set(origins)];
+    if (uniqueOrigins.length === 1) {
+      return uniqueOrigins[0];
+    }
+
+    return `Çeşitli menşei: ${uniqueOrigins.join(', ')}`;
+  }, [product, boxContentProducts]);
+
   const relatedProducts = useMemo(() => {
     if (!product) return [];
     // 1. Aynı kategoriye sahip diğer ürünleri bul (Küçük/Büyük harf duyarsız)
@@ -129,17 +399,17 @@ export const ProductDetail: React.FC = () => {
   const isOut = product.isOutOfStock;
 
   return (
-    <main className="w-full max-w-screen-xl mx-auto pt-20 pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen">
+    <main className="w-full max-w-screen-xl mx-auto pt-40 pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen">
       <div className="animate-fade-in">
-        
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-3 mb-12 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-          <Link to="/home" className="hover:text-brown-900 dark:hover:text-white transition-colors">Sade</Link>
-          <span className="material-icons-outlined text-[10px]">chevron_right</span>
-          <Link to="/catalog" className="hover:text-brown-900 dark:hover:text-white transition-colors">Koleksiyonlar</Link>
-          <span className="material-icons-outlined text-[10px]">chevron_right</span>
-          <span className="text-gold">{product.title}</span>
-        </nav>
+
+        {/* 🔙 Geri Dön Butonu */}
+        <Link
+          to={fromBox ? `/product/${fromBox.id}` : '/catalog'}
+          className="inline-flex items-center gap-2 mb-8 px-4 py-2 bg-cream-200/50 hover:bg-cream-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-mocha-600 dark:text-gray-300 rounded-full text-xs font-bold uppercase tracking-wider transition-all group"
+        >
+          <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          <span>{fromBox ? `${fromBox.title} Kutusuna Dön` : 'Koleksiyonlar'}</span>
+        </Link>
 
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
           
@@ -357,150 +627,26 @@ export const ProductDetail: React.FC = () => {
            {/* Läderach Style Accordion Details */}
             <div className="mt-12 border-t border-gray-100 dark:border-gray-800">
               <Accordion title="Ürün Hikayesi & Detay" content={product.detailedDescription} defaultOpen={true} />
-              <Accordion title="İçindekiler & Alerjen" content={product.ingredients + (product.allergens ? `\n\nAlerjen: ${product.allergens}` : '')} />
-              <Accordion title="Besin Değerleri" content={product.nutritionalValues} />
-              <Accordion title="Üretim & Menşei" content={product.origin} />
+
+              {/* 🎁 Kutu İçeriği - Sadece kutu ürünlerinde */}
+              {product.productType === 'box' && (
+                <BoxContentAccordion
+                  bonbons={boxContentProducts}
+                  boxSize={product.boxSize}
+                  boxProduct={{ id: product.id, title: product.title }}
+                  defaultOpen={true}
+                />
+              )}
+
+              <Accordion
+                title="İçindekiler & Alerjen"
+                content={computedIngredients + (computedAllergens ? `\n\nAlerjen: ${computedAllergens}` : '')}
+              />
+              <Accordion title="Besin Değerleri" content={computedNutritionalValues} />
+              <Accordion title="Üretim & Menşei" content={computedOrigin} />
             </div>
           </div>
         </div>
-
-        {/* --- MARCOLINI STYLE BOX CONTENT SLIDER --- */}
-{product.boxItems && product.boxItems.length > 0 && (
-  <section className="mt-32 pt-24 border-t border-gray-50 dark:border-gray-800 relative group/slider">
-    <div className="text-center mb-16">
-      <span className="text-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">Koleksiyon İçeriği</span>
-      <h2 className="font-display text-4xl italic dark:text-white">Kutudaki Sanat</h2>
-    </div>
-
-    <div className="relative px-4 lg:px-12">
-      {/* Sol Ok */}
-      <button 
-        onClick={() => {
-  const scrollAmount = window.innerWidth >= 1024 ? 1000 : 300;
-  document.getElementById('box-slider')?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-}}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 text-gray-300 hover:text-gold transition-colors opacity-0 group-hover/slider:opacity-100 hidden md:block"
-      >
-        <ChevronLeft size={48} strokeWidth={1} />
-      </button>
-
-      {/* Slider Alanı: Tek sırada 6 ürün sığacak şekilde optimize edildi */}
-      <div 
-        id="box-slider"
-        className="flex overflow-x-auto hide-scrollbar snap-x snap-mandatory gap-6 pb-8 touch-pan-x scroll-smooth"
-      >
-        {product.boxItems.map((item) => (
-          <div
-            key={item.id}
-            className="flex-shrink-0 w-[180px] lg:w-[220px] snap-start flex flex-col items-center text-center group"
-          >
-            {/* Görsel: Dandelion & Sade Stil */}
-            <div className="w-28 h-28 sm:w-36 sm:h-36 mb-6 rounded-full shadow-luxurious border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-dark-800 transition-transform duration-700 group-hover:scale-110">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-contain p-2"
-              />
-            </div>
-
-            {/* Yüzde ve Menşei (Dandelion Tarzı) */}
-            {(item.percentage || item.origin) && (
-              <div className="flex items-center justify-center gap-2 mb-3">
-                {item.percentage && (
-                  <span className="text-gold font-bold text-sm">{item.percentage}%</span>
-                )}
-                {item.percentage && item.origin && (
-                  <span className="text-gray-300">•</span>
-                )}
-                {item.origin && (
-                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{item.origin}</span>
-                )}
-              </div>
-            )}
-
-            {/* İsim */}
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-brown-900 dark:text-gold mb-2">
-              {item.name}
-            </h4>
-
-            {/* Açıklama */}
-            <p className="text-[10px] leading-relaxed text-gray-500 dark:text-gray-400 italic line-clamp-2 px-2 mb-3">
-              {item.description}
-            </p>
-
-            {/* Tasting Notes (Dandelion Tarzı) */}
-            {item.tastingNotes && item.tastingNotes.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-1.5 px-2">
-                {item.tastingNotes.map((note, idx) => (
-                  <span
-                    key={idx}
-                    className="text-[8px] font-bold uppercase tracking-wider text-gold/80 bg-gold/10 px-2 py-1 rounded-full"
-                  >
-                    {note}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Sağ Ok */}
-      <button 
-        onClick={() => {
-  const scrollAmount = window.innerWidth >= 1024 ? 1000 : 300;
-  document.getElementById('box-slider')?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-}}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 text-gray-300 hover:text-gold transition-colors opacity-0 group-hover/slider:opacity-100 hidden md:block"
-      >
-        <ChevronRight size={48} strokeWidth={1} />
-      </button>
-    </div>
-  </section>
-)}
-
-{/* --- 🎁 YENİ SİSTEM: KUTU İÇERİĞİ (boxContentIds) --- */}
-{product.productType === 'box' && boxContentProducts.length > 0 && (
-  <section className="mt-32 pt-24 border-t border-gray-50 dark:border-gray-800">
-    <div className="text-center mb-16">
-      <span className="text-gold text-[10px] font-bold uppercase tracking-[0.4em] mb-4 block">Kutu İçeriği</span>
-      <h2 className="font-display text-4xl italic dark:text-white">Seçilen Bonbonlar</h2>
-      <p className="text-xs text-gray-400 mt-2">{product.boxSize || boxContentProducts.length} Adet Bonbon</p>
-    </div>
-
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {boxContentProducts.map((bonbon: any, idx) => (
-        <Link
-          key={idx}
-          to={bonbon.slug ? `/bonbonlar/${bonbon.slug}` : `/product/${bonbon.id}`}
-          className="group border-2 border-gray-100 dark:border-gray-800 rounded-3xl p-4 hover:border-gold dark:hover:border-gold transition-all hover:shadow-lg"
-        >
-          <div className="aspect-square rounded-2xl overflow-hidden mb-4">
-            {bonbon.image ? (
-              <img
-                src={bonbon.image}
-                alt={bonbon.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-cream-100 dark:bg-dark-700">
-                <span className="material-icons-outlined text-3xl text-mocha-300 dark:text-gray-600">image</span>
-              </div>
-            )}
-          </div>
-          <h4 className="text-xs font-black uppercase tracking-widest text-brown-900 dark:text-gold text-center mb-2">
-            {bonbon.title}
-          </h4>
-          {bonbon.description && (
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 italic text-center line-clamp-2">
-              {bonbon.description}
-            </p>
-          )}
-        </Link>
-      ))}
-    </div>
-  </section>
-)}
 
        {/* --- LÄDERACH STYLE: YOU MAY ALSO LIKE --- */}
         {relatedProducts.length > 0 && (

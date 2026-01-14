@@ -1220,15 +1220,28 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                     {giftMessage && (
                       <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                         <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-3 text-center">Önizleme</p>
-                        <div className="relative max-w-xs mx-auto aspect-[4/3] bg-[#FFFEFA] dark:bg-dark-800/50 border border-gold/15 shadow-lg rounded-sm overflow-hidden flex flex-col items-center justify-center p-6">
-                          <div className="absolute top-0 left-0 w-full h-0.5 bg-gold/20" />
-                          <p className="text-sm text-mocha-900 dark:text-gray-200 leading-relaxed italic text-center">
-                            "{giftMessage}"
-                          </p>
-                          <div className="mt-auto pt-3">
-                            <p className="text-[7px] uppercase tracking-[0.3em] text-gold">
-                              <span className="font-bold">Sade</span> Chocolate
+                        <div className="relative max-w-xs mx-auto aspect-square bg-white dark:bg-dark-800/50 shadow-lg rounded-2xl overflow-hidden flex flex-col p-8">
+                          {/* Köşe Blob'ları - Kurumsal Renkler */}
+                          <div className="absolute -top-8 -left-8 w-28 h-28 bg-[#a4d1e8] rounded-full opacity-70 blur-sm" />
+                          <div className="absolute -top-6 -right-10 w-24 h-32 bg-[#e7c57d] rounded-full opacity-70 blur-sm" />
+                          <div className="absolute -bottom-10 -left-6 w-20 h-24 bg-[#a4d4bc] rounded-full opacity-60 blur-sm" />
+                          <div className="absolute bottom-4 -left-4 w-16 h-20 bg-[#e7c57d] rounded-full opacity-50 blur-sm" />
+                          <div className="absolute -bottom-8 -right-8 w-24 h-28 bg-[#e59a77] rounded-full opacity-60 blur-sm" />
+
+                          {/* Hediye Notu - Ortada */}
+                          <div className="relative z-10 flex-1 flex items-center justify-center">
+                            <p className="text-sm text-mocha-900 dark:text-gray-200 leading-relaxed italic text-center px-4">
+                              "{giftMessage}"
                             </p>
+                          </div>
+
+                          {/* Logo - Altta */}
+                          <div className="relative z-10 flex justify-center">
+                            <img
+                              src="/images/email-logo-dark.png"
+                              alt="Sade Chocolate"
+                              className="h-8 object-contain opacity-60 invert"
+                            />
                           </div>
                         </div>
                       </div>

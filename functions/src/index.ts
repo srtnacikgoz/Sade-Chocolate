@@ -1,6 +1,5 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { defineString } from 'firebase-functions/params';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as iyzicoService from './services/iyzicoService';
@@ -15,42 +14,36 @@ admin.initializeApp();
 const MNG_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/standardqueryapi';
 const MNG_CBS_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/cbsinfoapi';
 
-// Environment variables (Params API kullanarak)
-const MNG_CLIENT_ID = defineString('MNG_CLIENT_ID');
-const MNG_CLIENT_SECRET = defineString('MNG_CLIENT_SECRET');
-const MNG_JWT_TOKEN = defineString('MNG_JWT_TOKEN', { default: '' }); // Opsiyonel
-
+// MNG credentials - loaded from .env file in functions directory
 const getMNGConfig = () => {
-  const clientId = MNG_CLIENT_ID.value();
-  const clientSecret = MNG_CLIENT_SECRET.value();
-  const jwtToken = MNG_JWT_TOKEN.value();
+  const clientId = process.env.MNG_CLIENT_ID || '';
+  const clientSecret = process.env.MNG_CLIENT_SECRET || '';
+
+  functions.logger.info('MNG Config check:', {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    clientIdLength: clientId.length
+  });
 
   if (!clientId || !clientSecret) {
-    throw new Error('MNG API credentials not configured');
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'MNG API credentials not configured in .env file'
+    );
   }
 
-  return {
-    clientId,
-    clientSecret,
-    jwtToken
-  };
+  return { clientId, clientSecret };
 };
 
 // Helper function to make authenticated requests
 const mngRequest = async (endpoint: string, method: 'GET' | 'POST' = 'GET', data?: any) => {
   const config = getMNGConfig();
 
-  // Build headers - JWT token opsiyonel
-  const headers: any = {
+  const headers = {
     'X-IBM-Client-Id': config.clientId,
     'X-IBM-Client-Secret': config.clientSecret,
     'Content-Type': 'application/json'
   };
-
-  // Eğer JWT token varsa ekle
-  if (config.jwtToken) {
-    headers['Authorization'] = `Bearer ${config.jwtToken}`;
-  }
 
   try {
     const response = await axios({
@@ -344,7 +337,7 @@ const cbsRequest = async (endpoint: string) => {
 
     return response.data;
   } catch (error: any) {
-    console.error('CBS API Error:', error.response?.data || error.message);
+    functions.logger.error('CBS API Error:', error.response?.data || error.message);
     throw new functions.https.HttpsError(
       'internal',
       error.response?.data?.detail || 'CBS Info API hatası',
@@ -856,8 +849,7 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
           // Email header
           const emailHeader = (badge: string) => `
             <div style="background: ${COLORS.primary}; padding: 48px 20px; text-align: center;">
-              <span style="font-family: Georgia, serif; font-size: 42px; color: white; font-weight: bold; letter-spacing: 3px;">SADE</span>
-              <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 8px 0 0; letter-spacing: 2px;">Chocolate</p>
+              <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
               <div style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 10px 24px; border-radius: 30px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; text-transform: uppercase;">
                 ${badge}
               </div>
@@ -1154,7 +1146,7 @@ export const retryPayment = functions.https.onCall(async (request: any) => {
 // ============================================================
 
 // Admin master key - Environment variable'dan alınır (ilk kurulum için)
-const ADMIN_MASTER_KEY = defineString('ADMIN_MASTER_KEY', { default: '' });
+const getAdminMasterKey = () => process.env.ADMIN_MASTER_KEY || '';
 
 /**
  * Admin Claim Ekleme
@@ -1180,7 +1172,7 @@ export const setAdminClaim = functions.https.onCall(async (request: any) => {
   let isAuthorized = false;
 
   // 1. Master key ile yetkilendirme (ilk kurulum için)
-  const configuredMasterKey = ADMIN_MASTER_KEY.value();
+  const configuredMasterKey = getAdminMasterKey();
   if (masterKey && configuredMasterKey && masterKey === configuredMasterKey) {
     isAuthorized = true;
     functions.logger.info('Admin claim: Master key ile yetkilendirme', { targetEmail });

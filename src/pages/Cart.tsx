@@ -14,6 +14,8 @@ export const Cart: React.FC = () => {
   const navigate = useNavigate();
 
   const freeShippingLimit = settings?.freeShippingLimit || 1500;
+  const defaultShippingCost = settings?.defaultShippingCost || 95;
+  const shippingCost = cartTotal >= freeShippingLimit ? 0 : defaultShippingCost;
   const remaining = freeShippingLimit - cartTotal;
   const progress = Math.min((cartTotal / freeShippingLimit) * 100, 100);
 
@@ -200,12 +202,14 @@ export const Cart: React.FC = () => {
                 )}
                 <div className="flex justify-between text-sm text-gray-500 uppercase tracking-widest font-bold">
                   <span>Kargo</span>
-                  <span className={remaining <= 0 ? 'text-green-500' : 'dark:text-white'}>{remaining <= 0 ? 'Bedava' : 'Hesaplanacak'}</span>
+                  <span className={shippingCost === 0 ? 'text-green-500' : 'dark:text-white'}>
+                    {shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="pt-8 border-t border-gray-100 dark:border-gray-700 flex justify-between items-end">
                   <span className="font-display text-2xl italic dark:text-white">Toplam</span>
                   <span className="font-display text-4xl font-bold text-brown-900 dark:text-gold italic">
-                    ₺{(cartTotal + (hasGiftBag && settings?.giftBag?.price ? settings.giftBag.price : 0)).toFixed(2)}
+                    ₺{(cartTotal + shippingCost + (hasGiftBag && settings?.giftBag?.price ? settings.giftBag.price : 0)).toFixed(2)}
                   </span>
                 </div>
               </div>

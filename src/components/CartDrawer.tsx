@@ -8,6 +8,8 @@ export const CartDrawer: React.FC = () => {
   const { items, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage } = useCart();
   const { settings } = useProducts(); // Admin limitini al
   const freeShippingLimit = settings?.freeShippingLimit || 1500;
+  const defaultShippingCost = settings?.defaultShippingCost || 95;
+  const shippingCost = cartTotal >= freeShippingLimit ? 0 : defaultShippingCost;
   const remaining = freeShippingLimit - cartTotal;
   const progress = Math.min((cartTotal / freeShippingLimit) * 100, 100);
   const { t } = useLanguage();
@@ -141,12 +143,21 @@ export const CartDrawer: React.FC = () => {
           {/* Footer Summary */}
           {items.length > 0 && (
             <div className="border-t border-gray-100 dark:border-gray-800 py-8 px-8 bg-gray-50/50 dark:bg-dark-800/50 shadow-[0_-15px_50px_rgba(0,0,0,0.05)]">
-              <div className="flex justify-between items-end mb-6">
-                <div className="flex flex-col">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-1">{t('subtotal')}</p>
-                  <p className="text-xs text-gray-500 italic">Antalya Atölyesinden Ücretsiz Kargo</p>
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">{t('subtotal')}</span>
+                  <span className="text-sm font-bold dark:text-white">₺{cartTotal.toFixed(2)}</span>
                 </div>
-                <p className="font-display text-5xl font-bold text-brown-900 dark:text-gold italic tracking-tighter leading-none">₺{cartTotal.toFixed(2)}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Kargo</span>
+                  <span className={`text-sm font-bold ${shippingCost === 0 ? 'text-green-500' : 'dark:text-white'}`}>
+                    {shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost.toFixed(2)}`}
+                  </span>
+                </div>
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-end">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Toplam</span>
+                  <span className="font-display text-4xl font-bold text-brown-900 dark:text-gold italic tracking-tighter leading-none">₺{(cartTotal + shippingCost).toFixed(2)}</span>
+                </div>
               </div>
               <p className="mb-8 text-[10px] text-gray-400 italic text-center leading-relaxed font-sans">
                  * Siparişiniz özel ısı yalıtımlı paketler ve buz aküleri ile kargoya verilir.

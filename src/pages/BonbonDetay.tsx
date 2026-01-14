@@ -2,20 +2,54 @@
 // Tek bonbon detay sayfası
 
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Package } from 'lucide-react';
+import { useParams, useLocation, Link } from 'react-router-dom';
+import { ArrowLeft, Package, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useBonbonDetail, BonbonCard } from '../features/bonbon';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
 
+// Accordion bileşeni - Grid-based smooth animasyon
+const Accordion: React.FC<{ title: string; content?: string; defaultOpen?: boolean }> = ({ title, content, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  if (!content || content.trim() === "" || content.includes("undefined")) return null;
+
+  return (
+    <div className="border-b border-cream-200">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full py-5 flex items-center justify-between text-left group transition-all"
+      >
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-mocha-500 group-hover:text-mocha-800 transition-colors">{title}</span>
+        <div className={`p-1.5 rounded-full transition-all duration-500 ${isOpen ? 'bg-gold/10 rotate-90' : 'group-hover:bg-cream-100'}`}>
+          <ChevronRight className={`transition-colors duration-500 ${isOpen ? 'text-gold' : 'text-mocha-300'}`} size={14} />
+        </div>
+      </button>
+
+      {/* Grid-based smooth animasyon - titreme yapmaz */}
+      <div className={`grid transition-all duration-500 ease-out ${isOpen ? 'grid-rows-[1fr] opacity-100 mb-6' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <p className="text-sm leading-relaxed text-mocha-600 whitespace-pre-line">
+            {content}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function BonbonDetay() {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const { bonbon, relatedBonbons, loading, error } = useBonbonDetail(slug);
   const [isBoxModalOpen, setIsBoxModalOpen] = useState(false);
+
+  // 🔙 Kutudan gelindiyse geri dönüş bilgisi
+  const fromBox = (location.state as any)?.fromBox as { id: string; title: string } | undefined;
 
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream-50 pt-32">
+      <div className="min-h-screen bg-cream-50 pt-40">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="animate-pulse">
@@ -37,7 +71,7 @@ export default function BonbonDetay() {
   // Hata state
   if (error || !bonbon) {
     return (
-      <div className="min-h-screen bg-cream-50 pt-32">
+      <div className="min-h-screen bg-cream-50 pt-40">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-md mx-auto text-center">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-cream-100 flex items-center justify-center">
@@ -74,20 +108,20 @@ export default function BonbonDetay() {
     );
   }
 
-  const { title, description, detailedDescription, image, images, attributes, tastingNotes } = bonbon;
+  const { title, description, detailedDescription, image, images, attributes, tastingNotes, ingredients, allergens, nutritionalValues, origin } = bonbon;
   const displayImage = image || images?.[0];
 
   return (
-    <div className="min-h-screen bg-cream-50 pt-32">
+    <div className="min-h-screen bg-cream-50 pt-40">
       <div className="container mx-auto px-4 py-8">
-        {/* Geri butonu */}
+        {/* 🔙 Geri Dön Butonu */}
         <div className="max-w-4xl mx-auto mb-6">
           <Link
-            to="/bonbonlar"
-            className="inline-flex items-center text-mocha-600 hover:text-mocha-800 transition-colors"
+            to={fromBox ? `/product/${fromBox.id}` : '/bonbonlar'}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-cream-200/50 hover:bg-cream-200 text-mocha-600 rounded-full text-xs font-bold uppercase tracking-wider transition-all group"
           >
-            <ArrowLeft className="mr-2 w-4 h-4" />
-            <span>Koleksiyona Dön</span>
+            <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <span>{fromBox ? `${fromBox.title} Kutusuna Dön` : 'Bonbon Koleksiyonu'}</span>
           </Link>
         </div>
 
@@ -168,8 +202,8 @@ export default function BonbonDetay() {
               </div>
             )}
 
-            {/* Kutuya Ekle Butonu */}
-            {bonbon.isBoxContent !== false && (
+            {/* Kutuya Ekle Butonu - Sadece kutudan gelmediğinde göster */}
+            {!fromBox && bonbon.isBoxContent !== false && (
               <div className="mt-8 pt-8 border-t border-cream-100">
                 <button
                   onClick={() => setIsBoxModalOpen(true)}
@@ -181,6 +215,25 @@ export default function BonbonDetay() {
                 <p className="text-xs text-mocha-400 mt-3">
                   Bu bonbonu kendi kutuna ekleyebilirsin
                 </p>
+              </div>
+            )}
+
+            {/* 📋 Ürün Bilgileri Accordion'ları */}
+            {(ingredients || allergens || nutritionalValues || origin) && (
+              <div className="mt-8 pt-8 border-t border-cream-100 text-left">
+                <Accordion
+                  title="İçindekiler & Alerjen"
+                  content={ingredients + (allergens ? `\n\nAlerjen: ${allergens}` : '')}
+                  defaultOpen={false}
+                />
+                <Accordion
+                  title="Besin Değerleri"
+                  content={nutritionalValues}
+                />
+                <Accordion
+                  title="Üretim & Menşei"
+                  content={origin}
+                />
               </div>
             )}
           </div>

@@ -24,7 +24,8 @@ import {
   Edit,
   RefreshCw,
   XCircle,
-  Landmark
+  Landmark,
+  Trash2
 } from 'lucide-react';
 import { useOrderStore } from '../../../stores/orderStore';
 import type { Order } from '../../../types/order';
@@ -2110,6 +2111,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isStatusChangeModalOpen, setIsStatusChangeModalOpen] = useState(false);
   const [isCreateShipmentModalOpen, setIsCreateShipmentModalOpen] = useState(false);
+  const [isCalculatingMNG, setIsCalculatingMNG] = useState(false);
 
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -2131,7 +2133,91 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const editOrder = useOrderStore((state) => state.editOrder);
   const startRefund = useOrderStore((state) => state.startRefund);
   const cancelOrder = useOrderStore((state) => state.cancelOrder);
+  const deleteOrder = useOrderStore((state) => state.deleteOrder);
   const updateOrderStatus = useOrderStore((state) => state.updateOrderStatus);
+
+  // MNG Maliyet Hesaplama
+  const handleCalculateMNGCost = async (order: Order) => {
+    setIsCalculatingMNG(true);
+    try {
+      // Şehir kodunu bul
+      const cityName = order.shipping?.city?.split('/')[0]?.trim() || order.shipping?.city;
+      const TURKEY_CITIES: { [key: string]: string } = {
+        'Adana': '01', 'Adıyaman': '02', 'Afyonkarahisar': '03', 'Ağrı': '04', 'Amasya': '05',
+        'Ankara': '06', 'Antalya': '07', 'Artvin': '08', 'Aydın': '09', 'Balıkesir': '10',
+        'Bilecik': '11', 'Bingöl': '12', 'Bitlis': '13', 'Bolu': '14', 'Burdur': '15',
+        'Bursa': '16', 'Çanakkale': '17', 'Çankırı': '18', 'Çorum': '19', 'Denizli': '20',
+        'Diyarbakır': '21', 'Edirne': '22', 'Elazığ': '23', 'Erzincan': '24', 'Erzurum': '25',
+        'Eskişehir': '26', 'Gaziantep': '27', 'Giresun': '28', 'Gümüşhane': '29', 'Hakkari': '30',
+        'Hatay': '31', 'Isparta': '32', 'Mersin': '33', 'İstanbul': '34', 'İzmir': '35',
+        'Kars': '36', 'Kastamonu': '37', 'Kayseri': '38', 'Kırklareli': '39', 'Kırşehir': '40',
+        'Kocaeli': '41', 'Konya': '42', 'Kütahya': '43', 'Malatya': '44', 'Manisa': '45',
+        'Kahramanmaraş': '46', 'Mardin': '47', 'Muğla': '48', 'Muş': '49', 'Nevşehir': '50',
+        'Niğde': '51', 'Ordu': '52', 'Rize': '53', 'Sakarya': '54', 'Samsun': '55',
+        'Siirt': '56', 'Sinop': '57', 'Sivas': '58', 'Tekirdağ': '59', 'Tokat': '60',
+        'Trabzon': '61', 'Tunceli': '62', 'Şanlıurfa': '63', 'Uşak': '64', 'Van': '65',
+        'Yozgat': '66', 'Zonguldak': '67', 'Aksaray': '68', 'Bayburt': '69', 'Karaman': '70',
+        'Kırıkkale': '71', 'Batman': '72', 'Şırnak': '73', 'Bartın': '74', 'Ardahan': '75',
+        'Iğdır': '76', 'Yalova': '77', 'Karabük': '78', 'Kilis': '79', 'Osmaniye': '80', 'Düzce': '81'
+      };
+      const cityCode = TURKEY_CITIES[cityName || ''] || '07'; // Default: Antalya
+      const districtName = order.shipping?.district || 'Muratpaşa';
+
+      // Ürünlerden ağırlık ve desi hesapla
+      const totalWeightGram = (order.items || []).reduce((sum, item: any) => {
+        const itemWeight = item.weight || 200; // gram
+        return sum + ((item.quantity || 1) * itemWeight);
+      }, 0);
+      const totalWeight = totalWeightGram / 1000;
+
+      const totalDesiFromDimensions = (order.items || []).reduce((sum, item: any) => {
+        const dims = item.dimensions;
+        if (dims?.length && dims?.width && dims?.height) {
+          const itemDesi = (dims.length * dims.width * dims.height) / 3000;
+          return sum + ((item.quantity || 1) * itemDesi);
+        }
+        return sum + ((item.quantity || 1) * 1);
+      }, 0);
+      const totalDesi = Math.max(1, Math.ceil(Math.max(totalWeight, totalDesiFromDimensions)));
+
+      // MNG API çağır
+      const { calculateShipping, findMNGDistrictCode } = await import('../../../services/shippingService');
+      const districtCode = await findMNGDistrictCode(cityCode, districtName);
+
+      const mngCost = await calculateShipping({
+        cityCode,
+        districtCode: districtCode || '0',
+        address: order.shipping?.address || '',
+        weight: totalWeight,
+        desi: totalDesi
+      });
+
+      if (mngCost) {
+        // Firestore'da güncelle
+        const { doc, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('../../../lib/firebase');
+        const docId = order.firestoreId || order.id;
+        const customerPaid = order.payment?.shipping || 0;
+
+        await updateDoc(doc(db, 'orders', docId), {
+          'costAnalysis.mngEstimate': mngCost.total,
+          'costAnalysis.mngDistrictCode': districtCode,
+          'costAnalysis.customerPaid': customerPaid,
+          'costAnalysis.calculatedAt': new Date().toISOString(),
+          'costAnalysis.profit': customerPaid - mngCost.total
+        });
+
+        success(`✅ MNG tahmini: ₺${mngCost.total} | Kâr: ₺${(customerPaid - mngCost.total).toFixed(0)}`);
+      } else {
+        error('❌ MNG maliyeti hesaplanamadı. API yanıt vermedi.');
+      }
+    } catch (err: any) {
+      console.error('MNG hesaplama hatası:', err);
+      error(`❌ Hesaplama hatası: ${err.message}`);
+    } finally {
+      setIsCalculatingMNG(false);
+    }
+  };
 
   const handleAction = (action: string) => {
     if (action === 'E-posta Gönder') {
@@ -2179,8 +2265,51 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
       setIsDropdownOpen(false);
       return;
     }
+    if (action === 'Ödeme Alınamadı - İptal') {
+      // Ödeme alınamadı için özel iptal işlemi
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Ödeme Alınamadı - Sipariş İptali',
+        message: `Sipariş #${order.id} için ödeme süresi doldu ve ödeme alınamadı. Siparişi iptal etmek ve müşteriye bilgilendirme emaili göndermek istiyor musunuz?`,
+        variant: 'danger',
+        onConfirm: async () => {
+          try {
+            await cancelOrder(order.firestoreId || order.id, {
+              reason: 'Ödeme Alınamadı',
+              notifyCustomer: true,
+              refundPayment: false,
+              notes: 'Havale/EFT ödemesi süresinde yapılmadığı için otomatik iptal.'
+            });
+            success('Sipariş iptal edildi ve müşteriye bilgilendirme emaili gönderildi.');
+          } catch (err: any) {
+            error(`İptal hatası: ${err.message}`);
+          }
+        }
+      });
+      setIsDropdownOpen(false);
+      return;
+    }
     if (action === 'Durumu Değiştir') {
       setIsStatusChangeModalOpen(true);
+      setIsDropdownOpen(false);
+      return;
+    }
+    if (action === 'Siparişi Sil') {
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Siparişi Kalıcı Olarak Sil',
+        message: `⚠️ DİKKAT: #${order.id} numaralı sipariş veritabanından kalıcı olarak silinecek!\n\nBu işlem geri alınamaz. Devam etmek istiyor musunuz?`,
+        variant: 'danger',
+        onConfirm: async () => {
+          try {
+            await deleteOrder(order.firestoreId || order.id);
+            success(`✅ Sipariş #${order.id} başarıyla silindi.`);
+            onClose(); // Paneli kapat
+          } catch (err: any) {
+            error(`❌ Silme hatası: ${err.message}`);
+          }
+        }
+      });
       setIsDropdownOpen(false);
       return;
     }
@@ -2528,9 +2657,25 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                 </div>
               </div>
               {!order.costAnalysis?.mngEstimate && (
-                <p className="text-[9px] text-blue-500 dark:text-blue-400 mt-3 text-center">
-                  MNG maliyet tahmini henüz hesaplanmadı. Yeni siparişlerde otomatik hesaplanır.
-                </p>
+                <div className="mt-3 text-center">
+                  <button
+                    onClick={() => handleCalculateMNGCost(order)}
+                    disabled={isCalculatingMNG}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs font-bold rounded-xl transition-colors"
+                  >
+                    {isCalculatingMNG ? (
+                      <>
+                        <RefreshCw size={12} className="animate-spin" />
+                        Hesaplanıyor...
+                      </>
+                    ) : (
+                      <>
+                        <Truck size={12} />
+                        MNG Maliyetini Hesapla
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -2606,6 +2751,13 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                       <span className="text-sm text-brown-900 dark:text-white font-medium">Ödemeyi Onayla</span>
                       <span className="ml-auto text-[9px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded-full font-bold">Havale/EFT</span>
                     </button>
+                    <button
+                      onClick={() => handleAction('Ödeme Alınamadı - İptal')}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors text-left"
+                    >
+                      <XCircle size={16} className="text-red-600" />
+                      <span className="text-sm text-red-600 font-medium">Ödeme Alınamadı - İptal</span>
+                    </button>
                   </div>
                 )}
 
@@ -2672,6 +2824,13 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                   >
                     <XCircle size={16} className="text-red-600" />
                     <span className="text-sm text-red-600">Siparişi İptal Et</span>
+                  </button>
+                  <button
+                    onClick={() => handleAction('Siparişi Sil')}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors text-left border-t border-red-100 dark:border-red-900/50 mt-2 pt-2"
+                  >
+                    <Trash2 size={16} className="text-red-700" />
+                    <span className="text-sm text-red-700 font-bold">Siparişi Sil</span>
                   </button>
                 </div>
               </div>
@@ -3157,6 +3316,7 @@ export const OrderManagementTab: React.FC = () => {
   const error = useOrderStore((state) => state.error);
   const initialize = useOrderStore((state) => state.initialize);
   const isInitialized = useOrderStore((state) => state.isInitialized);
+  const cancelOrder = useOrderStore((state) => state.cancelOrder);
 
   // 🔥 Initialize Firestore connection on mount
   useEffect(() => {
@@ -3212,9 +3372,10 @@ export const OrderManagementTab: React.FC = () => {
     inProduction: orders.filter(o => o.status === 'In Production').length
   };
 
-  // EFT bekleyen siparişleri filtrele
+  // EFT bekleyen siparişleri filtrele (iptal edilenler hariç)
   const pendingEftOrders = orders.filter(o =>
     o.payment?.method === 'eft' &&
+    o.status !== 'Cancelled' &&
     (o.status === 'Pending Payment' || o.status === 'pending' || o.payment?.status === 'pending')
   );
 
@@ -3239,6 +3400,21 @@ export const OrderManagementTab: React.FC = () => {
       success(`✅ ${order.id} ödemesi onaylandı!`);
     } catch (err: any) {
       toastError(`❌ Ödeme onaylanamadı: ${err.message}`);
+    }
+  };
+
+  // Hızlı iptal fonksiyonu - Ödeme alınamadı
+  const cancelOrderQuick = async (order: Order) => {
+    try {
+      await cancelOrder(order.firestoreId || order.id, {
+        reason: 'Ödeme Alınamadı',
+        notifyCustomer: true,
+        refundPayment: false,
+        notes: 'Havale/EFT ödemesi süresinde yapılmadığı için iptal edildi.'
+      });
+      success(`✅ ${order.id} iptal edildi ve müşteriye email gönderildi.`);
+    } catch (err: any) {
+      toastError(`❌ Sipariş iptal edilemedi: ${err.message}`);
     }
   };
 
@@ -3411,6 +3587,21 @@ export const OrderManagementTab: React.FC = () => {
                   <CheckCircle2 size={14} />
                   Onayla
                 </button>
+
+                {/* İptal Butonu - Süre dolmuşsa göster */}
+                {order.paymentDeadline && new Date(order.paymentDeadline).getTime() < Date.now() && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`${order.id} siparişini ödeme alınamadığı için iptal etmek istediğinize emin misiniz?\n\nMüşteriye bilgilendirme emaili gönderilecektir.`)) {
+                        cancelOrderQuick(order);
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-colors whitespace-nowrap"
+                  >
+                    <XCircle size={14} />
+                    İptal
+                  </button>
+                )}
               </div>
             ))}
           </div>

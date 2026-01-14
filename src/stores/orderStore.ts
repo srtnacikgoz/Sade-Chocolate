@@ -141,6 +141,7 @@ interface OrderStore {
     refundPayment: boolean;
     notes?: string;
   }) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
   sendEmail: (orderId: string) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
 }
@@ -194,7 +195,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // 🔄 Update Order Status
   updateOrderStatus: async (orderId, newStatus) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -217,7 +218,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
       // Real-time listener will update the store automatically
     } catch (error: any) {
       console.error('❌ Error updating order status:', error);
@@ -228,7 +230,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // 📦 Add Tracking Number
   addTracking: async (orderId, carrier, trackingNumber) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -257,7 +259,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
     } catch (error: any) {
       console.error('❌ Error adding tracking:', error);
       set({ error: error.message });
@@ -267,7 +270,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // 🏷️ Add Tag
   addTag: async (orderId, label, color) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -291,7 +294,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
     } catch (error: any) {
       console.error('❌ Error adding tag:', error);
       set({ error: error.message });
@@ -301,7 +305,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // 🗑️ Remove Tag
   removeTag: async (orderId, tagIndex) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order || !order.tags) {
       throw new Error(`Order ${orderId} not found or has no tags`);
     }
@@ -321,7 +325,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
     } catch (error: any) {
       console.error('❌ Error removing tag:', error);
       set({ error: error.message });
@@ -331,7 +336,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // ✏️ Edit Order
   editOrder: async (orderId, updates) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -451,7 +456,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
       const cleanedUpdates = cleanNestedObject(updatedOrderData);
 
-      await updateOrder(orderId, cleanedUpdates);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, cleanedUpdates);
     } catch (error: any) {
       console.error('❌ Error editing order:', error);
       set({ error: error.message });
@@ -461,7 +467,7 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // 💰 Start Refund
   startRefund: async (orderId, refundData) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -488,7 +494,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
     } catch (error: any) {
       console.error('❌ Error starting refund:', error);
       set({ error: error.message });
@@ -498,7 +505,9 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
 
   // ❌ Cancel Order
   cancelOrder: async (orderId, cancelData) => {
-    const order = get().orders.find(o => o.id === orderId);
+    // Hem id hem firestoreId ile ara
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
+
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -520,7 +529,19 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      // Firestore'da güncelle - firestoreId varsa onu kullan
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
+
+      // 📧 Müşteriye iptal emaili gönder
+      if (cancelData.notifyCustomer && order.customer?.email) {
+        try {
+          const { sendOrderCancellationEmail } = await import('../services/emailService');
+          await sendOrderCancellationEmail(order, cancelData.reason);
+        } catch (emailError) {
+          console.error('❌ Failed to send cancellation email:', emailError);
+        }
+      }
     } catch (error: any) {
       console.error('❌ Error cancelling order:', error);
       set({ error: error.message });
@@ -528,9 +549,33 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
     }
   },
 
+  // 🗑️ Delete Order (Firestore'dan tamamen sil)
+  deleteOrder: async (orderId) => {
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
+
+    if (!order) {
+      throw new Error(`Order ${orderId} not found`);
+    }
+
+    try {
+      const { deleteOrder: deleteOrderFromFirestore } = await import('../services/orderService');
+      const docId = order.firestoreId || orderId;
+      await deleteOrderFromFirestore(docId);
+
+      // Local state'den de kaldır
+      set(state => ({
+        orders: state.orders.filter(o => o.id !== order.id && o.firestoreId !== order.firestoreId)
+      }));
+    } catch (error: any) {
+      console.error('❌ Error deleting order:', error);
+      set({ error: error.message });
+      throw error;
+    }
+  },
+
   // 📧 Send Email
   sendEmail: async (orderId) => {
-    const order = get().orders.find(o => o.id === orderId);
+    const order = get().orders.find(o => o.id === orderId || o.firestoreId === orderId);
     if (!order) {
       throw new Error(`Order ${orderId} not found`);
     }
@@ -547,7 +592,8 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
         ]
       };
 
-      await updateOrder(orderId, updatedOrder);
+      const docId = order.firestoreId || orderId;
+      await updateOrder(docId, updatedOrder);
     } catch (error: any) {
       console.error('❌ Error sending email:', error);
       set({ error: error.message });

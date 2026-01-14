@@ -1266,3 +1266,104 @@ export const sendDeliveryConfirmationEmail = async (
     text: `Merhaba ${data.customerName}! #${data.orderId} numaralı siparişin ${deliveryDateFormatted} tarihinde teslim edildi. Afiyet olsun!`
   });
 };
+
+/**
+ * Sipariş İptal Emaili - Ödeme Alınamadı durumu için özel şablon
+ */
+export const sendOrderCancellationEmail = async (
+  order: any,
+  cancelReason: string
+) => {
+  const customerName = order.customer?.name?.split(' ')[0] || 'Değerli Müşterimiz';
+  const email = order.customer?.email;
+  const orderId = order.id?.substring(0, 8) || order.id;
+
+  if (!email) {
+    console.error('❌ Email adresi bulunamadı');
+    return false;
+  }
+
+  // Ödeme alınamadı için özel mesaj
+  const isPaymentNotReceived = cancelReason === 'Ödeme Alınamadı';
+
+  const content = `
+    ${getEmailHeader()}
+
+    <!-- İptal Banner -->
+    <div style="background: linear-gradient(135deg, #FEE2E2 0%, #FFF5F5 100%); padding: 40px 20px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 16px;">😔</div>
+      <h1 style="font-family: Georgia, serif; font-size: 28px; color: #991B1B; margin: 0; font-weight: normal; font-style: italic;">
+        Siparişiniz İptal Edildi
+      </h1>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 48px 40px;">
+      <p style="font-family: Georgia, serif; font-size: 18px; color: ${COLORS.primary}; margin: 0 0 24px;">
+        Merhaba ${customerName},
+      </p>
+
+      ${isPaymentNotReceived ? `
+      <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 16px; padding: 20px; margin: 0 0 24px;">
+        <p style="font-family: Georgia, serif; font-size: 15px; color: #92400E; margin: 0; line-height: 1.7;">
+          <strong>⏰ Ödeme Süresi Doldu</strong><br>
+          Havale/EFT ödemesi belirlenen süre içinde tarafımıza ulaşmadığından siparişiniz iptal edilmiştir.
+        </p>
+      </div>
+      ` : `
+      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0 0 24px; line-height: 1.7;">
+        <strong>#${orderId}</strong> numaralı siparişiniz "${cancelReason}" nedeniyle iptal edilmiştir.
+      </p>
+      `}
+
+      <!-- Sipariş Özeti -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin: 24px 0;">
+        <p style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.gold}; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 2px;">
+          İptal Edilen Sipariş
+        </p>
+        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; padding: 8px 0;">Sipariş No</td>
+            <td style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; padding: 8px 0; text-align: right; font-weight: bold;">#${orderId}</td>
+          </tr>
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; padding: 8px 0;">Toplam Tutar</td>
+            <td style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; padding: 8px 0; text-align: right; font-weight: bold;">₺${(order.payment?.total || 0).toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; padding: 8px 0;">İptal Nedeni</td>
+            <td style="font-family: Georgia, serif; font-size: 14px; color: #DC2626; padding: 8px 0; text-align: right; font-weight: bold;">${cancelReason}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Yeniden Sipariş CTA -->
+      <div style="text-align: center; margin: 32px 0;">
+        <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0 0 20px;">
+          ${isPaymentNotReceived ? 'Siparişinizi yeniden oluşturmak isterseniz:' : 'Size yardımcı olmak için buradayız:'}
+        </p>
+        <a href="https://sadechocolate.com/#/catalog" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+          ${isPaymentNotReceived ? 'Yeniden Sipariş Ver' : 'Mağazaya Git'}
+        </a>
+      </div>
+
+      <!-- İletişim Bilgisi -->
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid ${COLORS.border}; text-align: center;">
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; margin: 0; line-height: 1.7;">
+          Sorularınız için bize ulaşabilirsiniz:<br>
+          <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none;">bilgi@sadechocolate.com</a> |
+          <a href="tel:+902423211234" style="color: ${COLORS.gold}; text-decoration: none;">0242 321 12 34</a>
+        </p>
+      </div>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Siparişiniz İptal Edildi - #${orderId}`,
+    html: wrapEmail(content),
+    text: `Merhaba ${customerName}! #${orderId} numaralı siparişiniz "${cancelReason}" nedeniyle iptal edilmiştir. Sorularınız için bilgi@sadechocolate.com adresine ulaşabilirsiniz.`
+  });
+};

@@ -32,6 +32,6 @@ export const db = initializeFirestore(app, {
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
-export const functions = getFunctions(app, 'us-central1');
+export const functions = getFunctions(app, 'europe-west3');
 
 export default app;
