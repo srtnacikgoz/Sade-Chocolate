@@ -201,7 +201,7 @@ export const Home: React.FC = () => {
       <div key={iteration} className="flex gap-10 shrink-0">
         {(liveContent?.[language]?.featured_tags
   ? liveContent[language].featured_tags.split(',').filter((t: string) => t.trim() !== '')
-  : ['SINGLE-ORIGIN', 'BEAN-TO-BAR', 'ETHICALLY SOURCED', 'ARTISAN', 'SMALL BATCH']
+  : ['SINGLE-ORIGIN', 'HANDCRAFTED', 'ETHICALLY SOURCED', 'ARTISAN', 'SMALL BATCH']
 ).map((text: string, idx: number) => (
           <span
   key={`${iteration}-${idx}`}

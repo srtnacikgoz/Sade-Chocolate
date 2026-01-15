@@ -1,8 +1,10 @@
 // src/services/shippingService.ts
 // MNG Kargo API entegrasyonu için client-side service
+// API çalışmadığında statik verilere fallback yapar
 
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../lib/firebase';
+import { TURKEY_CITIES, TURKEY_DISTRICTS, DEFAULT_SHIPPING_COST } from '../data/turkeyData';
 
 // ==========================================
 // CBS INFO API - Şehir/İlçe Bilgileri
@@ -22,6 +24,7 @@ export interface MNGDistrict {
 
 /**
  * MNG Kargo şehir listesini getirir
+ * API çalışmazsa statik listeye fallback yapar
  */
 export const getMNGCities = async (): Promise<MNGCity[]> => {
   try {
@@ -29,18 +32,21 @@ export const getMNGCities = async (): Promise<MNGCity[]> => {
     const result = await getCitiesFn();
     const data = result.data as any;
 
-    if (data.success) {
+    if (data.success && data.data?.length > 0) {
       return data.data;
     }
-    return [];
+    // Fallback to static data
+    console.log('MNG API yanıt vermedi, statik veri kullanılıyor');
+    return TURKEY_CITIES;
   } catch (error) {
-    console.error('MNG şehir listesi alınamadı:', error);
-    return [];
+    console.warn('MNG şehir listesi alınamadı, statik veri kullanılıyor:', error);
+    return TURKEY_CITIES;
   }
 };
 
 /**
  * MNG Kargo ilçe listesini getirir
+ * API çalışmazsa statik listeye fallback yapar
  * @param cityCode - Şehir kodu (plaka kodu, örn: "34")
  */
 export const getMNGDistricts = async (cityCode: string): Promise<MNGDistrict[]> => {
@@ -49,18 +55,21 @@ export const getMNGDistricts = async (cityCode: string): Promise<MNGDistrict[]> 
     const result = await getDistrictsFn({ cityCode });
     const data = result.data as any;
 
-    if (data.success) {
+    if (data.success && data.data?.length > 0) {
       return data.data;
     }
-    return [];
+    // Fallback to static data
+    console.log('MNG API yanıt vermedi, statik veri kullanılıyor');
+    return TURKEY_DISTRICTS[cityCode] || [];
   } catch (error) {
-    console.error('MNG ilçe listesi alınamadı:', error);
-    return [];
+    console.warn('MNG ilçe listesi alınamadı, statik veri kullanılıyor:', error);
+    return TURKEY_DISTRICTS[cityCode] || [];
   }
 };
 
 /**
  * İlçe adına göre MNG ilçe kodunu bulur
+ * API çalışmazsa null döner (kargo hesaplama sabit ücretle yapılır)
  * @param cityCode - Şehir kodu
  * @param districtName - İlçe adı
  */
@@ -76,7 +85,7 @@ export const findMNGDistrictCode = async (cityCode: string, districtName: string
     console.log('İlçe bulunamadı:', data.availableDistricts);
     return null;
   } catch (error) {
-    console.error('İlçe kodu bulunamadı:', error);
+    console.warn('İlçe kodu bulunamadı (MNG API çalışmıyor):', error);
     return null;
   }
 };
@@ -111,6 +120,9 @@ export interface ShipmentCreationResult {
   carrier: string;
   estimatedDelivery?: string;
   shipmentId?: string;
+  // API fallback durumunda
+  isManual?: boolean;
+  apiError?: string;
 }
 
 // Status code mapping - MNG API durumlarını Türkçe'ye çevir
@@ -190,6 +202,7 @@ export const getShipmentStatus = async (referenceId: string): Promise<{ status: 
 
 /**
  * Kargo Ücreti Hesaplama
+ * API çalışmazsa sabit ücret döner
  */
 export const calculateShipping = async (params: {
   cityCode: string;
@@ -198,24 +211,47 @@ export const calculateShipping = async (params: {
   weight?: number;
   desi?: number;
 }): Promise<ShippingCost | null> => {
+  // İlçe kodu yoksa veya geçersizse ('0', '', null) API çağrısı yapma, sabit ücret kullan
+  if (!params.districtCode || params.districtCode === '0' || params.districtCode === '') {
+    console.log('İlçe kodu yok/geçersiz, sabit kargo ücreti kullanılıyor:', DEFAULT_SHIPPING_COST);
+    return {
+      total: DEFAULT_SHIPPING_COST,
+      currency: 'TRY',
+      desi: params.desi || 2,
+      weight: params.weight || 1
+    };
+  }
+
   try {
     const calculateFn = httpsCallable(functions, 'calculateShipping');
     const result = await calculateFn(params);
     const data = result.data as any;
 
     if (!data.success) {
-      return null;
+      // Fallback to default shipping cost
+      console.log('MNG API başarısız, sabit kargo ücreti kullanılıyor:', DEFAULT_SHIPPING_COST);
+      return {
+        total: DEFAULT_SHIPPING_COST,
+        currency: 'TRY',
+        desi: params.desi || 2,
+        weight: params.weight || 1
+      };
     }
 
     return {
-      total: data.data?.totalPrice || 0,
+      total: data.data?.totalPrice || DEFAULT_SHIPPING_COST,
       currency: 'TRY',
       desi: params.desi || 2,
       weight: params.weight || 1
     };
   } catch (error) {
-    console.error('Kargo ücreti hesaplama hatası:', error);
-    return null;
+    console.warn('Kargo ücreti hesaplama hatası, sabit ücret kullanılıyor:', error);
+    return {
+      total: DEFAULT_SHIPPING_COST,
+      currency: 'TRY',
+      desi: params.desi || 2,
+      weight: params.weight || 1
+    };
   }
 };
 

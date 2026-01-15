@@ -7,6 +7,7 @@ import { trackShipment, ShipmentStatus, ShipmentMovement } from '../../services/
 
 interface ShipmentTrackerProps {
   orderId: string;
+  trackingNumber?: string;  // MNG takip numarası (varsa)
   onClose?: () => void;
 }
 
@@ -44,7 +45,7 @@ const STATUS_CONFIG = {
   }
 };
 
-export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, onClose }) => {
+export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, trackingNumber, onClose }) => {
   const [shipmentData, setShipmentData] = useState<ShipmentStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,14 +55,19 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, onClo
     setError(null);
 
     try {
-      const data = await trackShipment(orderId);
+      // Önce MNG takip numarası varsa onu kullan, yoksa sipariş numarasını kullan
+      const referenceId = trackingNumber || orderId;
+      const data = await trackShipment(referenceId);
       if (data) {
         setShipmentData(data);
       } else {
-        setError('Kargo bilgisi bulunamadı');
+        // Takip bilgisi bulunamadıysa, henüz kargoya verilmemiş olabilir
+        setError(trackingNumber
+          ? 'Kargo bilgisi henüz MNG sisteminde görünmüyor. Biraz sonra tekrar deneyin.'
+          : 'Kargo henüz oluşturulmamış veya takip bilgisi bulunamadı.');
       }
     } catch (err) {
-      setError('Kargo takip bilgisi alınamadı');
+      setError('Kargo takip bilgisi alınamadı. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +75,7 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, onClo
 
   useEffect(() => {
     fetchTrackingData();
-  }, [orderId]);
+  }, [orderId, trackingNumber]);
 
   // Loading State
   if (loading) {

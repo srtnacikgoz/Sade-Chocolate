@@ -4,6 +4,7 @@ import { X, Truck, Package, AlertCircle, CheckCircle, Loader } from 'lucide-reac
 import { createShipment } from '../../services/shippingService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { sendShippingNotificationEmail } from '../../services/emailService';
 
 interface CreateShipmentModalProps {
   order: Order;
@@ -18,15 +19,51 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
   onSuccess,
   onError
 }) => {
+  // Ürünlerden otomatik hesapla
+  const calculateFromItems = () => {
+    let totalWeightGram = 0;
+    let totalDesi = 0;
+
+    (order.items || []).forEach((item: any) => {
+      const qty = item.quantity || 1;
+      // Ağırlık (gram cinsinden)
+      const itemWeight = item.weight || item.weightGram || 200; // varsayılan 200g
+      totalWeightGram += itemWeight * qty;
+
+      // Desi hesapla
+      if (item.dimensions?.length && item.dimensions?.width && item.dimensions?.height) {
+        const itemDesi = (item.dimensions.length * item.dimensions.width * item.dimensions.height) / 3000;
+        totalDesi += itemDesi * qty;
+      } else if (item.desi) {
+        totalDesi += item.desi * qty;
+      } else {
+        totalDesi += 1 * qty; // varsayılan 1 desi
+      }
+    });
+
+    return {
+      weightGram: Math.max(totalWeightGram, 100), // minimum 100g
+      desi: Math.max(Math.ceil(totalDesi), 1) // minimum 1 desi
+    };
+  };
+
+  const calculated = calculateFromItems();
+
   const [isCreating, setIsCreating] = useState(false);
-  const [weight, setWeight] = useState<number>(1);
-  const [desi, setDesi] = useState<number>(2);
+  const [weightGram, setWeightGram] = useState<number>(calculated.weightGram);
+  const [desi, setDesi] = useState<number>(calculated.desi);
   const [coldPackage, setColdPackage] = useState<boolean>(false);
   const [contentDescription, setContentDescription] = useState<string>('Çikolata Ürünleri');
 
   const handleCreateShipment = async () => {
-    if (!order.customer?.name || !order.customer?.phone || !order.customer?.address) {
-      onError?.('Müşteri bilgileri eksik');
+    // Adres bilgilerini shipping veya customer'dan al
+    const shippingAddress = order.shipping?.address || order.customer?.address;
+    const shippingCity = order.shipping?.city || order.customer?.city;
+    const shippingDistrict = order.shipping?.district || order.customer?.district;
+    const customerPhone = order.customer?.phone || order.shipping?.phone;
+
+    if (!order.customer?.name || !customerPhone || !shippingAddress) {
+      onError?.('Müşteri bilgileri eksik (isim, telefon veya adres)');
       return;
     }
 
@@ -34,14 +71,14 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
 
     try {
       const result = await createShipment({
-        orderId: order.id,
+        orderId: order.orderNumber || order.id,
         customerName: order.customer.name,
-        customerPhone: order.customer.phone,
+        customerPhone: customerPhone,
         customerEmail: order.customer.email,
-        shippingAddress: order.customer.address,
-        shippingCity: order.customer.city,
-        shippingDistrict: order.customer.district,
-        weight,
+        shippingAddress: shippingAddress,
+        shippingCity: shippingCity,
+        shippingDistrict: shippingDistrict,
+        weight: weightGram / 1000, // gram'dan kg'a çevir
         desi,
         contentDescription,
         coldPackage
@@ -49,18 +86,35 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
 
       if (result) {
         // Siparişi güncelle - Kargo bilgilerini ekle ve durumu "Shipped" yap
-        const orderRef = doc(db, 'orders', order.id);
+        // firestoreId varsa onu kullan, yoksa id'yi dene
+        const docId = order.firestoreId || order.id;
+        const orderRef = doc(db, 'orders', docId);
+
         await updateDoc(orderRef, {
           status: 'shipped',
+          'shipping.trackingNumber': result.trackingNumber,
+          'shipping.carrier': result.carrier || 'MNG Kargo',
           tracking: {
-            carrier: result.carrier,
+            carrier: result.carrier || 'MNG Kargo',
             trackingNumber: result.trackingNumber,
             barcode: result.barcode,
             estimatedDelivery: result.estimatedDelivery,
             shipmentId: result.shipmentId,
-            createdAt: new Date()
+            createdAt: new Date(),
+            referenceId: order.orderNumber || order.id
           }
         });
+
+        // Müşteriye kargo bildirimi emaili gönder
+        if (order.customer?.email) {
+          sendShippingNotificationEmail(order.customer.email, {
+            customerName: order.customer.name || 'Değerli Müşterimiz',
+            orderId: order.orderNumber || order.id,
+            trackingNumber: result.trackingNumber,
+            carrierName: result.carrier || 'MNG Kargo',
+            trackingUrl: `https://www.mngkargo.com.tr/gonderi-takip/?q=${result.trackingNumber}`
+          }).catch(err => console.log('Kargo email gönderilemedi:', err));
+        }
 
         onSuccess?.(result.trackingNumber);
         onClose();
@@ -77,9 +131,9 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[32px] max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-[32px] max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-brown-600 to-mocha-600 text-white p-6 rounded-t-[32px] flex items-center justify-between">
+        <div className="sticky top-0 bg-gradient-to-r from-mocha-900 to-mocha-400 text-white p-6 rounded-t-[32px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Truck size={28} />
             <div>
@@ -95,8 +149,8 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Content - Scrollable */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {/* Müşteri Bilgileri */}
           <div className="bg-cream-50 rounded-2xl p-5">
             <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
@@ -105,36 +159,36 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
             </h3>
             <div className="space-y-2 text-sm">
               <p><span className="font-medium">Ad Soyad:</span> {order.customer?.name}</p>
-              <p><span className="font-medium">Telefon:</span> {order.customer?.phone}</p>
+              <p><span className="font-medium">Telefon:</span> {order.customer?.phone || order.shipping?.phone || 'Belirtilmemiş'}</p>
               <p><span className="font-medium">E-posta:</span> {order.customer?.email || 'Belirtilmemiş'}</p>
-              <p><span className="font-medium">Adres:</span> {order.customer?.address}</p>
-              {order.customer?.city && (
-                <p><span className="font-medium">Şehir/İlçe:</span> {order.customer.city} / {order.customer?.district || '-'}</p>
-              )}
+              <p><span className="font-medium">Adres:</span> {order.shipping?.address || order.customer?.address || 'Belirtilmemiş'}</p>
+              <p><span className="font-medium">Şehir/İlçe:</span> {order.shipping?.city || order.customer?.city || '-'} / {order.shipping?.district || order.customer?.district || '-'}</p>
             </div>
           </div>
 
           {/* Paket Bilgileri */}
           <div className="bg-cream-50 rounded-2xl p-5">
-            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
               <Package size={20} className="text-brown-600" />
               Paket Bilgileri
             </h3>
+            <p className="text-xs text-gray-500 mb-4">Ürün bilgilerinden otomatik hesaplandı, gerekirse düzenleyebilirsiniz.</p>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ağırlık (kg)
+                    Ağırlık (gram)
                   </label>
                   <input
                     type="number"
-                    min="0.1"
-                    step="0.1"
-                    value={weight}
-                    onChange={(e) => setWeight(parseFloat(e.target.value))}
+                    min="100"
+                    step="50"
+                    value={weightGram}
+                    onChange={(e) => setWeightGram(parseInt(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
                   />
+                  <p className="text-xs text-gray-400 mt-1">{(weightGram / 1000).toFixed(2)} kg</p>
                 </div>
 
                 <div>
@@ -188,34 +242,34 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
               <p>Kargo oluşturulduktan sonra MNG Kargo sistemine otomatik olarak gönderilecek ve takip numarası oluşturulacaktır.</p>
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
-              disabled={isCreating}
-            >
-              İptal
-            </button>
-            <button
-              onClick={handleCreateShipment}
-              disabled={isCreating}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-brown-600 to-mocha-600 text-white rounded-2xl font-medium hover:from-brown-700 hover:to-mocha-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isCreating ? (
-                <>
-                  <Loader className="animate-spin" size={20} />
-                  Oluşturuluyor...
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={20} />
-                  Kargo Oluştur
-                </>
-              )}
-            </button>
-          </div>
+        {/* Actions - Sticky Footer */}
+        <div className="flex gap-3 p-6 pt-4 border-t border-gray-100 bg-white rounded-b-[32px] flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
+            disabled={isCreating}
+          >
+            İptal
+          </button>
+          <button
+            onClick={handleCreateShipment}
+            disabled={isCreating}
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-mocha-900 to-mocha-400 text-white rounded-2xl font-medium hover:from-mocha-900 hover:to-mocha-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isCreating ? (
+              <>
+                <Loader className="animate-spin" size={20} />
+                Oluşturuluyor...
+              </>
+            ) : (
+              <>
+                <CheckCircle size={20} />
+                Kargo Oluştur
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

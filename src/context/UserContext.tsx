@@ -69,6 +69,17 @@ export interface Order {
     city: string;
     district?: string;
     method?: string;
+    trackingNumber?: string;
+    carrier?: string;
+  };
+
+  // Kargo Takip Bilgileri
+  tracking?: {
+    carrier: string;
+    trackingNumber: string;
+    barcode?: string;
+    estimatedDelivery?: string;
+    referenceId?: string;
   };
 
   // Fatura Bilgileri
@@ -199,7 +210,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   address: data.shipping.address || '',
                   city: data.shipping.city || '',
                   district: data.shipping.district || '',
-                  method: data.shipping.method || 'standard'
+                  method: data.shipping.method || 'standard',
+                  trackingNumber: data.shipping.trackingNumber || data.tracking?.trackingNumber,
+                  carrier: data.shipping.carrier || data.tracking?.carrier
+                } : undefined,
+                // Kargo Takip Bilgileri
+                tracking: data.tracking ? {
+                  carrier: data.tracking.carrier || 'MNG Kargo',
+                  trackingNumber: data.tracking.trackingNumber || '',
+                  barcode: data.tracking.barcode,
+                  estimatedDelivery: data.tracking.estimatedDelivery,
+                  referenceId: data.tracking.referenceId
                 } : undefined,
                 // Fatura Bilgileri
                 invoice: data.invoice ? {
@@ -302,12 +323,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Convert checkout order to full Order format for loyalty system
         const customerAddress = user.addresses?.find((a: any) => a.isDefault) || user.addresses?.[0];
 
+        // Ödeme yöntemi kontrolü - paymentMethod field'ını kullan
+        const isEftPayment = (order as any).paymentMethod === 'eft' || order.status === 'Ödeme Bekleniyor';
+
+        // Telefon: Önce kullanıcı profilinden, yoksa adresten al
+        const customerPhone = user.phone || customerAddress?.phone || '';
+
         const fullOrderData: Omit<LoyaltyOrder, 'id'> = {
+            orderNumber: order.id, // SADE-XXXXXX formatı
             customer: {
                 name: `${user.firstName} ${user.lastName}`,
                 email: user.email,
-                phone: user.phone || '',
-                address: customerAddress?.address || ''
+                phone: customerPhone,
+                address: customerAddress?.address || customerAddress?.street || ''
             },
             items: order.items.map((item: any) => ({
                 productId: item.id || item.productId || '',
@@ -317,27 +345,29 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 image: item.image || ''
             })),
             payment: {
-                method: order.status === 'pending' ? 'eft' : 'card',
-                subtotal: order.total,
-                shipping: 0,
+                method: isEftPayment ? 'eft' : 'card',
+                subtotal: order.subtotal || order.total,
+                shipping: order.shippingCost || 0,
                 tax: 0,
                 total: order.total,
-                status: order.status === 'pending' ? 'pending' : 'paid'
+                status: isEftPayment ? 'pending' : 'paid'
             },
             shipping: {
-                address: customerAddress?.address || '',
+                address: customerAddress?.address || customerAddress?.street || '',
                 city: customerAddress?.city || '',
+                district: customerAddress?.district || '',
+                phone: customerPhone, // Telegram bildirimi için
                 method: 'standard',
                 estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
             },
-            status: order.status === 'pending' ? 'pending' : 'processing',
+            status: isEftPayment ? 'pending' : 'processing',
             createdAt: new Date().toLocaleString('tr-TR'),
             tags: [],
             timeline: [
                 {
-                    status: order.status === 'pending' ? 'pending' : 'processing',
+                    status: isEftPayment ? 'pending' : 'processing',
                     time: new Date().toLocaleString('tr-TR'),
-                    note: order.status === 'pending' ? 'Ödeme bekleniyor' : 'Sipariş alındı'
+                    note: isEftPayment ? 'Ödeme bekleniyor' : 'Sipariş alındı'
                 }
             ]
         };

@@ -14,7 +14,7 @@ import { doc, getDoc, setDoc, arrayUnion, updateDoc, onSnapshot, addDoc, collect
 import { db, auth, functions } from '../lib/firebase';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { CompanyInfo } from '../types';
-import { sendOrderConfirmationEmail } from '../services/emailService';
+import { sendOrderConfirmationEmail, sendEftOrderPendingEmail } from '../services/emailService';
 import { calculateShipping, findMNGDistrictCode } from '../services/shippingService';
 import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
@@ -625,12 +625,13 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
               ? `${guestData.firstName} ${guestData.lastName}`
               : `${selectedAddr?.firstName || ''} ${selectedAddr?.lastName || ''}`.trim() || 'Müşteri',
             email: isGuestMode ? guestData.email : (user?.email || ''),
-            phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || '')
+            phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || user?.phone || '')
           },
           shipping: {
             address: shippingAddress,
             city: shippingCity,
             district: shippingDistrict,
+            phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || user?.phone || ''),
             method: 'standard'
           },
           invoice: invoiceData,
@@ -736,8 +737,10 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       if (isGuestMode) {
         // Guest sipariş oluştur - Admin panelinin beklediği formatta
         const { addDoc, collection } = await import('firebase/firestore');
+        const orderNumber = `SADE-${orderId}`;
         const docRef = await addDoc(collection(db, 'orders'), {
-          id: `SADE-${orderId}`,
+          id: orderNumber,
+          orderNumber: orderNumber, // Telegram ve admin panel için
           // Müşteri bilgileri (nested object - admin panel bu formatı bekliyor)
           customer: {
             name: `${guestData.firstName} ${guestData.lastName}`,
@@ -749,6 +752,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
             address: guestData.address,
             city: guestData.city,
             district: guestData.district,
+            phone: guestData.phone,
             method: 'standard'
           },
           // Fatura bilgileri
@@ -845,7 +849,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         });
       }
 
-      // Sipariş Onay Emaili Gönder
+      // Sipariş Emaili Gönder
       const customerEmail = isGuestMode ? guestData.email : user?.email;
       const customerName = isGuestMode
         ? `${guestData.firstName} ${guestData.lastName}`
@@ -854,22 +858,60 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         ? `${guestData.address}, ${guestData.district}, ${guestData.city}`
         : `${selectedAddr?.address || selectedAddr?.street || ''}, ${selectedAddr?.district || ''}, ${selectedAddr?.city || ''}`;
 
-      if (customerEmail) {
-        sendOrderConfirmationEmail(customerEmail, {
-          orderId: `SADE-${orderId}`,
-          customerName: customerName || 'Değerli Müşterimiz',
-          items: items.map(item => ({
-            name: item.title,
-            quantity: item.quantity,
-            price: item.price * item.quantity
-          })),
-          subtotal: cartTotal,
-          shipping: shippingCost,
-          total: finalTotal,
-          address: customerAddress
-        }).catch(err => {
-          console.log('Sipariş onay emaili gönderilemedi:', err);
-        });
+      if (paymentMethod !== 'eft') {
+        // Kart ödemesi - Sipariş onay emaili
+        if (customerEmail) {
+          sendOrderConfirmationEmail(customerEmail, {
+            orderId: `SADE-${orderId}`,
+            customerName: customerName || 'Değerli Müşterimiz',
+            items: items.map(item => ({
+              name: item.title,
+              quantity: item.quantity,
+              price: item.price * item.quantity
+            })),
+            subtotal: cartTotal,
+            shipping: shippingCost,
+            total: finalTotal,
+            address: customerAddress
+          }).catch(err => {
+            console.log('Sipariş onay emaili gönderilemedi:', err);
+          });
+        }
+      } else {
+        // EFT ödemesi - Banka bilgileri ile ödeme bekliyor emaili
+        if (customerEmail && companyInfo?.bankAccounts?.length > 0) {
+          const activeBankAccounts = companyInfo.bankAccounts
+            .filter((acc: any) => acc.isActive && acc.iban)
+            .map((acc: any) => ({
+              bankName: acc.bankName || 'Banka',
+              accountHolder: acc.accountHolder || 'Sade Chocolate',
+              iban: acc.iban
+            }));
+
+          if (activeBankAccounts.length > 0) {
+            const paymentDeadlineHours = bankTransferSettings?.paymentDeadlineHours || 12;
+            const paymentDeadline = new Date(Date.now() + paymentDeadlineHours * 60 * 60 * 1000).toISOString();
+
+            sendEftOrderPendingEmail(customerEmail, {
+              orderId: `SADE-${orderId}`,
+              customerName: customerName || 'Değerli Müşterimiz',
+              items: items.map(item => ({
+                name: item.title,
+                quantity: item.quantity,
+                price: item.price * item.quantity
+              })),
+              subtotal: cartTotal,
+              shipping: shippingCost,
+              discount: bankTransferDiscount > 0 ? bankTransferDiscount : undefined,
+              total: finalTotal,
+              address: customerAddress,
+              paymentDeadline: paymentDeadline,
+              bankAccounts: activeBankAccounts
+            }).catch(err => {
+              console.log('EFT sipariş emaili gönderilemedi:', err);
+            });
+          }
+        }
       }
 
       // Sipariş verilerini kaydet (clearCart'tan önce!)

@@ -183,7 +183,7 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
             {/* Email Header */}
             <div className="bg-gradient-to-r from-brand-mustard to-brand-orange p-6 text-center">
               <h4 className="font-display text-2xl text-white italic mb-1">Sade Chocolate</h4>
-              <p className="text-xs text-white/80 uppercase tracking-widest">Bean to Bar Excellence</p>
+              <p className="text-xs text-white/80 uppercase tracking-widest">Handcrafted Excellence</p>
             </div>
 
             {/* Email Body */}
@@ -200,7 +200,7 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
               <div className="p-5 bg-gradient-to-br from-cream-100 to-brand-peach/10 dark:from-dark-900 dark:to-brand-peach/5 rounded-2xl border border-brand-peach/30">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-[10px] uppercase tracking-widest text-brand-mustard font-bold">Sipariş Detayları</p>
-                  <p className="text-xs font-mono font-bold text-brown-900 dark:text-white">#{order.id}</p>
+                  <p className="text-xs font-mono font-bold text-brown-900 dark:text-white">#{order.orderNumber || order.id}</p>
                 </div>
 
                 <div className="space-y-3 mb-4">
@@ -350,7 +350,7 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
 
             {/* Email Footer */}
             <div className="bg-gray-50 dark:bg-dark-900 p-4 text-center border-t border-gray-100 dark:border-gray-700">
-              <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Bean to Bar • Handcrafted Excellence</p>
+              <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Artisan • Handcrafted Excellence</p>
               <p className="text-[9px] text-gray-400">© 2025 Sade Chocolate • İstanbul, Türkiye</p>
             </div>
           </div>
@@ -1786,7 +1786,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
                 <h1>Sade Chocolate</h1>
-                <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '2px' }}>Bean to Bar Excellence</p>
+                <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '2px' }}>Handcrafted Excellence</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '11px', color: '#999', marginBottom: '4px' }}>Sipariş Belgesi</p>
@@ -1906,7 +1906,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
           {/* Footer */}
           <div className="footer">
-            <div style={{ marginBottom: '4px' }}>Sade Chocolate • Bean to Bar Excellence</div>
+            <div style={{ marginBottom: '4px' }}>Sade Chocolate • Handcrafted Excellence</div>
             <div>İstanbul, Türkiye • info@sadechocolate.com • +90 (212) 123 45 67</div>
           </div>
         </div>
@@ -1918,7 +1918,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="font-display text-3xl text-brown-900 italic mb-1">Sade Chocolate</h1>
-                <p className="text-xs text-gray-500 uppercase tracking-widest">Bean to Bar Excellence</p>
+                <p className="text-xs text-gray-500 uppercase tracking-widest">Handcrafted Excellence</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-500 mb-1">Sipariş Belgesi</p>
@@ -2072,7 +2072,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
           {/* Footer */}
           <div className="pt-6 border-t-2 border-gray-200 text-center">
-            <p className="text-xs text-gray-500 mb-1">Sade Chocolate • Bean to Bar Excellence</p>
+            <p className="text-xs text-gray-500 mb-1">Sade Chocolate • Handcrafted Excellence</p>
             <p className="text-xs text-gray-400">İstanbul, Türkiye • info@sadechocolate.com • +90 (212) 123 45 67</p>
           </div>
         </div>
@@ -3297,6 +3297,25 @@ const LogisticsRulesPanel: React.FC = () => {
   );
 };
 
+// --- SLA FORMAT HELPER ---
+const formatSLA = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes} dakika`;
+  } else if (minutes < 1440) {
+    // 60-1440 dakika arası (1-24 saat)
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}:${mins.toString().padStart(2, '0')} saat`;
+  } else {
+    // 24 saatten fazla
+    const days = Math.floor(minutes / 1440);
+    const remainingMinutes = minutes % 1440;
+    const hours = Math.floor(remainingMinutes / 60);
+    const mins = remainingMinutes % 60;
+    return `${days} gün ${hours}:${mins.toString().padStart(2, '0')} saat`;
+  }
+};
+
 // --- MAIN COMPONENT ---
 export const OrderManagementTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'logistics'>('orders');
@@ -3842,8 +3861,8 @@ export const OrderManagementTab: React.FC = () => {
                     <span className="text-sm font-bold text-brown-900 dark:text-white">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className={`text-xs font-medium ${(order.sla || 0) < 15 ? 'text-red-600' : 'text-gray-500'}`}>
-                      {order.sla || 0} dk
+                    <span className={`text-xs font-medium ${(order.sla || 0) < 15 ? 'text-red-600' : (order.sla || 0) > 1440 ? 'text-orange-500' : 'text-gray-500'}`}>
+                      {formatSLA(order.sla || 0)}
                     </span>
                   </td>
                 </tr>

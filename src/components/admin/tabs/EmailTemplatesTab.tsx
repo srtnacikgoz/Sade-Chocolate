@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { toast } from 'sonner';
-import { Mail, Save, Eye, RefreshCw } from 'lucide-react';
+import { Mail, Save, Eye, RefreshCw, X, ExternalLink } from 'lucide-react';
 import type { NewsletterTemplate, EmailFont } from '../../../types';
 import { DEFAULT_EMAIL_FONTS } from '../../../utils/seedEmailFonts';
+import { getEmailPreviewHtml } from '../../../services/emailPreviewService';
 
 // Hex renk -> SVG color overlay filter (daha iyi sonuç verir)
 function getLogoColorStyle(hex: string): string {
@@ -50,7 +51,7 @@ const DEFAULT_TEMPLATE: NewsletterTemplate = {
   // Content
   headerBadge: '✦ Hoş Geldin ✦',
   mainTitle: 'Artisan Çikolata\nDünyasına Adım Attın',
-  welcomeText: 'Bundan sonra yeni koleksiyonlar, özel teklifler ve bean-to-bar dünyasından hikayeler seninle.',
+  welcomeText: 'Bundan sonra yeni koleksiyonlar, özel teklifler ve artisan çikolata dünyasından hikayeler seninle.',
   discountEnabled: true,
   discountLabel: 'İlk Siparişine Özel',
   discountPercent: 10,
@@ -79,12 +80,105 @@ const DEFAULT_TEMPLATE: NewsletterTemplate = {
   }
 };
 
+// Tüm email şablonlarının listesi
+const ALL_EMAIL_TEMPLATES = [
+  {
+    id: 'order_confirmation',
+    name: 'Sipariş Onayı',
+    description: 'Sipariş başarıyla oluşturulduğunda gönderilir',
+    trigger: 'Otomatik - Kart ödemeli sipariş tamamlandığında',
+    icon: '🛒'
+  },
+  {
+    id: 'eft_order_pending',
+    name: 'EFT Ödeme Bekliyor',
+    description: 'EFT/Havale ile sipariş verildiğinde banka bilgileri ile gönderilir',
+    trigger: 'Otomatik - EFT seçildiğinde sipariş sonrası',
+    icon: '🏦'
+  },
+  {
+    id: 'payment_success',
+    name: 'Ödeme Başarılı',
+    description: 'Kredi kartı ile ödeme başarılı olduğunda gönderilir',
+    trigger: 'Otomatik - İyzico 3D Secure onayından sonra',
+    icon: '✅'
+  },
+  {
+    id: 'payment_failed',
+    name: 'Ödeme Başarısız',
+    description: 'Ödeme başarısız olduğunda yeniden deneme linki ile gönderilir',
+    trigger: 'Otomatik - İyzico ödeme hatası durumunda',
+    icon: '❌'
+  },
+  {
+    id: 'shipping_notification',
+    name: 'Kargo Bildirimi',
+    description: 'Sipariş kargoya verildiğinde takip numarası ile gönderilir',
+    trigger: 'Manuel - Admin panelden "Kargoya Ver" butonuyla',
+    icon: '📦'
+  },
+  {
+    id: 'delivery_confirmation',
+    name: 'Teslimat Onayı',
+    description: 'Sipariş teslim edildiğinde gönderilir',
+    trigger: 'Manuel - Admin panelden "Teslim Edildi" butonuyla',
+    icon: '🎉'
+  },
+  {
+    id: 'order_cancellation',
+    name: 'Sipariş İptali',
+    description: 'Sipariş iptal edildiğinde gönderilir',
+    trigger: 'Manuel - Admin panelden sipariş iptal edildiğinde',
+    icon: '😔'
+  },
+  {
+    id: 'newsletter_welcome',
+    name: 'Newsletter Hoş Geldin',
+    description: 'Newsletter\'a abone olunduğunda gönderilir',
+    trigger: 'Otomatik - Footer\'dan email kayıt formunda',
+    icon: '📬',
+    editable: true
+  },
+  {
+    id: 'welcome',
+    name: 'Hesap Hoş Geldin',
+    description: 'Yeni hesap oluşturulduğunda gönderilir',
+    trigger: 'Otomatik - Kayıt formunda',
+    icon: '👋'
+  },
+  {
+    id: 'campaign_code',
+    name: 'Kampanya Kodu',
+    description: 'Özel kampanya kodu ile bonus puan bildirimi',
+    trigger: 'Manuel - Admin panelden kampanya oluşturulduğunda',
+    icon: '🎁'
+  },
+  {
+    id: 'campaign_reminder',
+    name: 'Kampanya Hatırlatma',
+    description: 'Kampanya süresi dolmadan önce hatırlatma',
+    trigger: 'Manuel - Admin panelden',
+    icon: '⏰'
+  }
+];
+
+type TabType = 'all_templates' | 'newsletter_editor';
+
+// Preview modal için template tipi
+interface PreviewTemplate {
+  id: string;
+  name: string;
+  icon: string;
+}
+
 export const EmailTemplatesTab: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabType>('all_templates');
   const [template, setTemplate] = useState<NewsletterTemplate>(DEFAULT_TEMPLATE);
   const [availableFonts, setAvailableFonts] = useState<EmailFont[]>(DEFAULT_EMAIL_FONTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<PreviewTemplate | null>(null);
 
   // Firestore'dan template ve fontları yükle
   useEffect(() => {
@@ -161,36 +255,117 @@ export const EmailTemplatesTab: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white italic">
-              Newsletter Hoş Geldin Emaili
+              Email Şablonları
             </h2>
-            <p className="text-sm text-gray-500">Yeni abonelere gönderilen email şablonunu düzenleyin</p>
+            <p className="text-sm text-gray-500">Sistemdeki tüm email şablonlarını görüntüle ve düzenle</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-2"
-          >
-            <RefreshCw size={16} />
-            Sıfırla
-          </button>
-          <button
-            onClick={() => setShowPreview(!showPreview)}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors flex items-center gap-2"
-          >
-            <Eye size={16} />
-            {showPreview ? 'Düzenle' : 'Önizle'}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-2 text-sm bg-brown-900 hover:bg-brown-800 text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            <Save size={16} />
-            {saving ? 'Kaydediliyor...' : 'Kaydet'}
-          </button>
-        </div>
       </div>
+
+      {/* Tab Selector */}
+      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-dark-800 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('all_templates')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            activeTab === 'all_templates'
+              ? 'bg-white dark:bg-dark-700 text-brown-900 dark:text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Tüm Şablonlar
+        </button>
+        <button
+          onClick={() => setActiveTab('newsletter_editor')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+            activeTab === 'newsletter_editor'
+              ? 'bg-white dark:bg-dark-700 text-brown-900 dark:text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Newsletter Editörü
+        </button>
+      </div>
+
+      {/* All Templates Tab */}
+      {activeTab === 'all_templates' && (
+        <div className="grid gap-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>İpucu:</strong> Herhangi bir şablona tıklayarak önizlemesini görebilirsiniz. "Düzenlenebilir" etiketli şablonlar admin panelinden özelleştirilebilir.
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            {ALL_EMAIL_TEMPLATES.map((tmpl) => (
+              <div
+                key={tmpl.id}
+                className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 hover:border-gold/50 hover:shadow-md transition-all cursor-pointer group"
+                onClick={() => setPreviewTemplate({ id: tmpl.id, name: tmpl.name, icon: tmpl.icon })}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-3xl">{tmpl.icon}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-gray-900 dark:text-white">{tmpl.name}</h3>
+                      {tmpl.editable && (
+                        <span className="px-2 py-0.5 text-xs bg-gold/20 text-gold rounded-full">
+                          Düzenlenebilir
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{tmpl.description}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-1">
+                      <span className="material-icons-outlined text-sm">schedule</span>
+                      {tmpl.trigger}
+                    </p>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="px-3 py-1.5 bg-gold/10 text-gold rounded-lg text-xs font-medium flex items-center gap-1">
+                      <Eye size={14} />
+                      Önizle
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Newsletter Editor Tab */}
+      {activeTab === 'newsletter_editor' && (
+        <>
+          {/* Editor Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Newsletter Hoş Geldin Emaili</h3>
+              <p className="text-sm text-gray-500">Yeni abonelere gönderilen email şablonunu düzenleyin</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-2"
+              >
+                <RefreshCw size={16} />
+                Sıfırla
+              </button>
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors flex items-center gap-2"
+              >
+                <Eye size={16} />
+                {showPreview ? 'Düzenle' : 'Önizle'}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2 text-sm bg-brown-900 hover:bg-brown-800 text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <Save size={16} />
+                {saving ? 'Kaydediliyor...' : 'Kaydet'}
+              </button>
+            </div>
+          </div>
 
       {showPreview ? (
         /* Preview Mode */
@@ -702,6 +877,61 @@ export const EmailTemplatesTab: React.FC = () => {
                 ))}
               </div>
             </details>
+          </div>
+        </div>
+      )}
+        </>
+      )}
+
+      {/* Email Preview Modal */}
+      {previewTemplate && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setPreviewTemplate(null)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-white dark:bg-dark-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{previewTemplate.icon}</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white">{previewTemplate.name}</h3>
+                  <p className="text-xs text-gray-500">Email şablonu önizlemesi</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {ALL_EMAIL_TEMPLATES.find(t => t.id === previewTemplate.id)?.editable && (
+                  <button
+                    onClick={() => {
+                      setPreviewTemplate(null);
+                      setActiveTab('newsletter_editor');
+                    }}
+                    className="px-4 py-2 bg-gold/10 text-gold rounded-xl text-sm font-medium hover:bg-gold/20 transition-colors flex items-center gap-2"
+                  >
+                    <ExternalLink size={14} />
+                    Düzenle
+                  </button>
+                )}
+                <button
+                  onClick={() => setPreviewTemplate(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-xl transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Preview Content */}
+            <div className="overflow-auto max-h-[calc(90vh-80px)] bg-gray-100 dark:bg-dark-900">
+              <div
+                className="p-6"
+                dangerouslySetInnerHTML={{ __html: getEmailPreviewHtml(previewTemplate.id) }}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -16,6 +16,15 @@ Anlattıklarımın sende nasıl karşılık bulduğunu anlamam için, söyledikl
 
 ---
 
+## Aksiyon Kuralları
+
+### Soru-Cevap Önceliği
+Soru sorduğumda **önce sadece cevap ver**, hemen aksiyona geçme. Onay almadan komut çalıştırma, dosya düzenleme veya işlem başlatma. Örnek:
+- ❌ "X yapayım mı?" deyip hemen yapmaya başlama
+- ✅ Soruya cevap ver, onay bekle, sonra yap
+
+---
+
 ## Eleştirel Düşünce & Geri Bildirim
 
 ### Karşı Sorgulama

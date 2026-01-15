@@ -13,68 +13,64 @@ import { db } from '../lib/firebase';
 
 const MAIL_COLLECTION = 'mail';
 
-// Marka renkleri
+// Yeni Premium Marka Renkleri
 const COLORS = {
-  primary: '#4B3832',      // Koyu kahve
-  gold: '#C5A059',         // Altın
-  cream: '#FDFCF0',        // Krem arka plan
-  text: '#333333',         // Koyu gri metin
-  lightText: '#666666',    // Açık gri metin
-  border: '#E8E4DC',       // Sınır rengi
+  bg: '#F3F0EB',           // Dış arka plan (Sıcak gri/bej)
+  card: '#FFFEFA',         // Kart arka planı (Sıcak beyaz)
+  text: '#2C1810',         // Ana metin (Derin kahve)
+  gold: '#D4AF37',         // Altın vurgu
+  gray: '#8A817C',         // Açık gri metin
+  divider: '#EBE5D9',      // Ayırıcı çizgi
+  footerBg: '#2C1810',     // Footer arka planı (Koyu kahve)
+  footerText: '#EBE5D9',   // Footer metin
 };
 
-// Ortak email footer
-const getEmailFooter = (email: string) => `
-  <div style="background: ${COLORS.cream}; padding: 40px 20px; text-align: center; border-top: 1px solid ${COLORS.border};">
-    <!-- Sosyal Medya -->
-    <div style="margin-bottom: 24px;">
-      <a href="https://instagram.com/sadechocolate" style="display: inline-block; margin: 0 8px; color: ${COLORS.primary}; text-decoration: none;">
-        <img src="https://sadechocolate.com/icons/instagram.png" alt="Instagram" width="24" height="24" style="opacity: 0.7;">
-      </a>
-      <a href="https://facebook.com/sadechocolate" style="display: inline-block; margin: 0 8px; color: ${COLORS.primary}; text-decoration: none;">
-        <img src="https://sadechocolate.com/icons/facebook.png" alt="Facebook" width="24" height="24" style="opacity: 0.7;">
-      </a>
-    </div>
+// Ortak email header - Minimal & Elegant
+const getEmailHeader = () => `
+  <!-- Top Border Accent -->
+  <div style="height: 4px; background-color: ${COLORS.text}; width: 100%;"></div>
 
-    <!-- Adres -->
-    <p style="font-family: Georgia, serif; font-size: 12px; color: ${COLORS.lightText}; margin: 0 0 8px; line-height: 1.6;">
-      Sade Chocolate<br>
-      Yeşilbahçe Mah. Çınarlı Cd. 47/A<br>
-      Muratpaşa, Antalya 07160
-    </p>
+  <!-- Branding Header -->
+  <div style="padding: 50px 0 30px; text-align: center;">
+    <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 48px; color: ${COLORS.text}; margin: 0; font-style: italic; letter-spacing: -1px;">Sade</h1>
+    <p style="font-size: 9px; text-transform: uppercase; letter-spacing: 4px; color: ${COLORS.gold}; margin-top: 5px; font-weight: 600;">Artisan Chocolate</p>
+  </div>
 
-    <!-- İletişim -->
-    <p style="font-family: Georgia, serif; font-size: 12px; color: ${COLORS.lightText}; margin: 16px 0;">
-      Sorularınız için: <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none;">bilgi@sadechocolate.com</a>
-    </p>
+  <!-- Divider -->
+  <div style="width: 40px; height: 1px; background-color: ${COLORS.gold}; margin: 0 auto 40px;"></div>
+`;
 
-    <!-- Tercih Yönetimi -->
-    <p style="font-family: Georgia, serif; font-size: 11px; color: #999; margin: 16px 0 0;">
-      Bu email ${email} adresine gönderilmiştir.<br>
-      <a href="https://sadechocolate.com/#/account" style="color: ${COLORS.gold}; text-decoration: none;">Email tercihlerini yönet</a>
-    </p>
+// Atmospheric footer section - Koyu arka plan
+const getAtmosphericFooter = () => `
+  <div style="background-color: ${COLORS.footerBg}; color: #fff; padding: 50px; text-align: center; position: relative; overflow: hidden;">
+    <!-- Decorative Circle -->
+    <div style="position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 100px; height: 100px; background-color: ${COLORS.gold}; border-radius: 50%; opacity: 0.1;"></div>
 
-    <!-- Copyright -->
-    <p style="font-family: Georgia, serif; font-size: 11px; color: #999; margin: 16px 0 0;">
-      © 2026 Sade Chocolate. Tüm hakları saklıdır.
+    <h4 style="font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-style: italic; margin: 0 0 15px 0; color: ${COLORS.gold};">Sade Deneyimi</h4>
+    <p style="font-size: 13px; line-height: 1.7; color: ${COLORS.footerText}; max-width: 400px; margin: 0 auto; font-weight: 300;">
+      Ürünleriniz, Antalya'daki atölyemizden özel ısı yalıtımlı "Sade" kutularında, soğuk zincir bozulmadan tarafınıza ulaştırılacaktır.
     </p>
   </div>
 `;
 
-// Ortak email header
-const getEmailHeader = (badge?: string) => `
-  <div style="background: ${COLORS.primary}; padding: 48px 20px; text-align: center;">
-    <!-- Logo - Santana fontu ile görsel -->
-    <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
-    ${badge ? `
-    <div style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 10px 24px; border-radius: 30px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; text-transform: uppercase;">
-      ${badge}
+// Minimal footer links
+const getEmailFooter = () => `
+  ${getAtmosphericFooter()}
+
+  <div style="background-color: ${COLORS.bg}; padding: 30px; text-align: center;">
+    <p style="font-size: 10px; color: #A09890; margin: 0 0 15px 0; letter-spacing: 1px; text-transform: uppercase;">
+      Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
+    </p>
+    <div style="font-size: 11px;">
+      <a href="https://sadechocolate.com/#/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+      <a href="https://sadechocolate.com/#/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+      <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
     </div>
-    ` : ''}
+    <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
   </div>
 `;
 
-// Email wrapper
+// Email wrapper - Yeni stil
 const wrapEmail = (content: string) => `
   <!DOCTYPE html>
   <html>
@@ -82,9 +78,11 @@ const wrapEmail = (content: string) => `
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sade Chocolate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   </head>
-  <body style="margin: 0; padding: 0; background: ${COLORS.cream}; font-family: Georgia, serif;">
-    <div style="max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+  <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: ${COLORS.bg}; padding: 60px 0; color: ${COLORS.text}; min-height: 100vh;">
+    <!-- Main Card Container -->
+    <div style="max-width: 640px; margin: 0 auto; background-color: ${COLORS.card}; box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-radius: 0;">
       ${content}
     </div>
   </body>
@@ -131,56 +129,47 @@ export const sendWelcomeEmail = async (
   const content = `
     ${getEmailHeader()}
 
-    <!-- Hero Image -->
-    <div style="background: linear-gradient(135deg, ${COLORS.cream} 0%, #F5F0E6 100%); padding: 40px 20px; text-align: center;">
-      <img src="https://sadechocolate.com/images/welcome-hero.jpg" alt="Artisan Çikolata" style="max-width: 100%; height: auto; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);" onerror="this.style.display='none'">
+    <!-- Greeting & Message -->
+    <div style="padding: 0 50px; text-align: center;">
+      <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
+        Hoş Geldin, ${firstName}
+      </h2>
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
+        Sade Chocolate ailesine katıldığın için çok mutluyuz. Artık el yapımı artisan çikolata dünyasının kapıları sana açık.
+      </p>
     </div>
 
-    <!-- Content -->
-    <div style="padding: 48px 40px;">
-      <!-- Greeting -->
-      <h1 style="font-family: Georgia, serif; font-size: 32px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
-        Hoş Geldin, ${firstName}!
-      </h1>
-      <div style="width: 60px; height: 2px; background: ${COLORS.gold}; margin: 16px 0 24px;"></div>
-
-      <!-- Message -->
-      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 20px;">
-        Sade Chocolate ailesine katıldığın için çok mutluyuz.
-      </p>
-      <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 20px;">
-        Artık <strong style="color: ${COLORS.gold};">bean-to-bar</strong> çikolata dünyasının kapıları sana açık. Her bir tabletimiz, özenle seçilmiş kakao çekirdeklerinden, geleneksel yöntemlerle üretiliyor.
-      </p>
-
-      <!-- Features -->
-      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin: 32px 0;">
-        <table style="width: 100%;" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="padding: 12px; text-align: center; width: 33%;">
-              <div style="font-size: 24px; margin-bottom: 8px;">🌱</div>
-              <div style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Tek Menşei</div>
-            </td>
-            <td style="padding: 12px; text-align: center; width: 33%;">
-              <div style="font-size: 24px; margin-bottom: 8px;">🍫</div>
-              <div style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">El Yapımı</div>
-            </td>
-            <td style="padding: 12px; text-align: center; width: 33%;">
-              <div style="font-size: 24px; margin-bottom: 8px;">✨</div>
-              <div style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">%100 Doğal</div>
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- CTA -->
-      <div style="text-align: center; margin: 40px 0 20px;">
-        <a href="https://sadechocolate.com/#/catalog" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
-          Koleksiyonu Keşfet
-        </a>
-      </div>
+    <!-- Features Section -->
+    <div style="padding: 50px; background: ${COLORS.bg};">
+      <table style="width: 100%;" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding: 15px; text-align: center; width: 33%;">
+            <div style="font-size: 28px; margin-bottom: 12px;">🌱</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 14px; color: ${COLORS.text}; font-weight: 600;">Tek Menşei</div>
+            <div style="font-size: 11px; color: ${COLORS.gray}; margin-top: 4px;">Özenle seçilmiş kakao</div>
+          </td>
+          <td style="padding: 15px; text-align: center; width: 33%;">
+            <div style="font-size: 28px; margin-bottom: 12px;">🍫</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 14px; color: ${COLORS.text}; font-weight: 600;">El Yapımı</div>
+            <div style="font-size: 11px; color: ${COLORS.gray}; margin-top: 4px;">Geleneksel yöntemler</div>
+          </td>
+          <td style="padding: 15px; text-align: center; width: 33%;">
+            <div style="font-size: 28px; margin-bottom: 12px;">✨</div>
+            <div style="font-family: 'Playfair Display', Georgia, serif; font-size: 14px; color: ${COLORS.text}; font-weight: 600;">%100 Doğal</div>
+            <div style="font-size: 11px; color: ${COLORS.gray}; margin-top: 4px;">Katkısız lezzet</div>
+          </td>
+        </tr>
+      </table>
     </div>
 
-    ${getEmailFooter(email)}
+    <!-- CTA Section -->
+    <div style="padding: 50px; text-align: center;">
+      <a href="https://sadechocolate.com/#/catalog" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+        Koleksiyonu Keşfet
+      </a>
+    </div>
+
+    ${getEmailFooter()}
   `;
 
   return sendEmail({
@@ -192,112 +181,92 @@ export const sendWelcomeEmail = async (
 };
 
 /**
- * Sipariş Onay Emaili - Premium Template
+ * Sipariş Onay Emaili - Premium Template (Yeni Tasarım)
  */
 export const sendOrderConfirmationEmail = async (
   email: string,
   orderData: {
     orderId: string;
     customerName: string;
-    items: Array<{ name: string; quantity: number; price: number }>;
+    items: Array<{ name: string; quantity: number; price: number; image?: string; category?: string }>;
     subtotal: number;
     shipping: number;
     total: number;
     address: string;
   }
 ) => {
+  // Ürün listesi HTML - görsel dahil
   const itemsHtml = orderData.items.map(item => `
     <tr>
-      <td style="padding: 16px 12px; border-bottom: 1px solid ${COLORS.border}; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text};">
-        ${item.name}
+      <td style="padding: 15px 0; width: 80px; vertical-align: top;">
+        ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid ${COLORS.divider};" />` : ''}
       </td>
-      <td style="padding: 16px 12px; border-bottom: 1px solid ${COLORS.border}; text-align: center; font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.lightText};">
-        ${item.quantity}
+      <td style="padding: 15px 20px; vertical-align: middle;">
+        <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: ${COLORS.text}; font-family: 'Playfair Display', Georgia, serif;">${item.name}</p>
+        <p style="margin: 0; font-size: 12px; color: ${COLORS.gray}; letter-spacing: 0.5px;">${item.quantity} ADET${item.category ? ' / ' + item.category : ''}</p>
       </td>
-      <td style="padding: 16px 12px; border-bottom: 1px solid ${COLORS.border}; text-align: right; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; font-weight: bold;">
-        ₺${item.price.toFixed(2)}
+      <td style="padding: 15px 0; text-align: right; vertical-align: middle;">
+        <p style="margin: 0; font-size: 15px; font-weight: 500; color: ${COLORS.text};">₺${(item.price * item.quantity).toFixed(2)}</p>
       </td>
     </tr>
   `).join('');
 
   const content = `
-    ${getEmailHeader('Sipariş Onaylandı')}
+    ${getEmailHeader()}
 
-    <!-- Content -->
-    <div style="padding: 48px 40px;">
-      <!-- Greeting -->
-      <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
-        Teşekkürler, ${orderData.customerName}!
-      </h1>
-      <p style="font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.gold}; margin: 0 0 24px; letter-spacing: 1px;">
-        Sipariş No: #${orderData.orderId}
+    <!-- Greeting & Message -->
+    <div style="padding: 0 50px; text-align: center;">
+      <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
+        Teşekkürler, ${orderData.customerName}
+      </h2>
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
+        Siparişiniz atölyemize ulaştı. Usta şeflerimiz, seçiminizi en taze malzemelerle hazırlamak için işe koyuldu. Bu lezzet yolculuğunda bizi tercih ettiğiniz için onur duyuyoruz.
       </p>
 
-      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; line-height: 1.7; margin: 0 0 32px;">
-        Siparişiniz başarıyla alındı. En kısa sürede özenle hazırlanıp kargoya verilecektir.
-      </p>
-
-      <!-- Order Items -->
-      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">
-          Sipariş Detayı
-        </h3>
-        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
-          <thead>
-            <tr>
-              <th style="text-align: left; padding: 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Ürün</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Adet</th>
-              <th style="text-align: right; padding: 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Fiyat</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Totals -->
-      <div style="background: ${COLORS.primary}; border-radius: 16px; padding: 24px; color: white;">
-        <table style="width: 100%;" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="font-family: Georgia, serif; font-size: 14px; padding: 8px 0;">Ara Toplam</td>
-            <td style="font-family: Georgia, serif; font-size: 14px; padding: 8px 0; text-align: right;">₺${orderData.subtotal.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td style="font-family: Georgia, serif; font-size: 14px; padding: 8px 0;">Kargo</td>
-            <td style="font-family: Georgia, serif; font-size: 14px; padding: 8px 0; text-align: right;">${orderData.shipping === 0 ? 'Ücretsiz' : '₺' + orderData.shipping.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td colspan="2" style="padding: 16px 0 8px;"><div style="border-top: 1px solid rgba(255,255,255,0.2);"></div></td>
-          </tr>
-          <tr>
-            <td style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: ${COLORS.gold};">Toplam</td>
-            <td style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; text-align: right; color: ${COLORS.gold};">₺${orderData.total.toFixed(2)}</td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- Delivery Address -->
-      ${orderData.address ? `
-      <div style="margin-top: 24px; padding: 24px; border: 1px solid ${COLORS.border}; border-radius: 16px;">
-        <h3 style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.lightText}; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 2px;">
-          Teslimat Adresi
-        </h3>
-        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; margin: 0; line-height: 1.6;">
-          ${orderData.address}
-        </p>
-      </div>
-      ` : ''}
-
-      <!-- Track Order CTA -->
-      <div style="text-align: center; margin: 40px 0 20px;">
-        <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
-          Siparişi Takip Et
-        </a>
+      <!-- Order Number Badge -->
+      <div style="border: 1px solid ${COLORS.gold}; display: inline-block; padding: 12px 30px; border-radius: 50px;">
+        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${COLORS.gold}; display: block; margin-bottom: 2px;">Sipariş Referansı</span>
+        <span style="font-size: 16px; font-weight: bold; color: ${COLORS.text}; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 1px;">#${orderData.orderId}</span>
       </div>
     </div>
 
-    ${getEmailFooter(email)}
+    <!-- Product List Section -->
+    <div style="padding: 50px;">
+      <h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 3px; color: ${COLORS.gray}; border-bottom: 1px solid ${COLORS.divider}; padding-bottom: 15px; margin-bottom: 25px; text-align: left;">
+        Sipariş Özeti
+      </h3>
+
+      <table style="width: 100%; border-collapse: collapse;">
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+
+      <!-- Financials -->
+      <div style="margin-top: 30px; border-top: 1px solid ${COLORS.divider}; padding-top: 25px;">
+        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size: 13px; color: ${COLORS.gray}; padding: 6px 0;">Ara Toplam</td>
+            <td style="font-size: 14px; font-weight: 500; color: ${COLORS.text}; text-align: right; padding: 6px 0;">₺${orderData.subtotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="font-size: 13px; color: ${COLORS.gray}; padding: 6px 0;">Kargo & Paketleme</td>
+            <td style="font-size: 14px; font-weight: 500; color: ${COLORS.text}; text-align: right; padding: 6px 0;">${orderData.shipping === 0 ? 'Ücretsiz' : '₺' + orderData.shipping.toFixed(2)}</td>
+          </tr>
+        </table>
+
+        <div style="width: 100%; height: 1px; background-color: ${COLORS.divider}; margin: 15px 0;"></div>
+
+        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size: 18px; font-family: 'Playfair Display', Georgia, serif; font-style: italic; color: ${COLORS.text};">Toplam Tutar</td>
+            <td style="font-size: 24px; font-weight: bold; color: ${COLORS.gold}; font-family: 'Playfair Display', Georgia, serif; text-align: right;">₺${orderData.total.toFixed(2)}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    ${getEmailFooter()}
   `;
 
   return sendEmail({
@@ -309,7 +278,7 @@ export const sendOrderConfirmationEmail = async (
 };
 
 /**
- * Kargo Bildirim Emaili - Premium Template
+ * Kargo Bildirim Emaili - Premium Template (Yeni Tasarım)
  */
 export const sendShippingNotificationEmail = async (
   email: string,
@@ -322,52 +291,42 @@ export const sendShippingNotificationEmail = async (
   }
 ) => {
   const content = `
-    ${getEmailHeader('Kargoya Verildi')}
+    ${getEmailHeader()}
 
-    <!-- Content -->
-    <div style="padding: 48px 40px; text-align: center;">
-      <!-- Icon -->
-      <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(34,197,94,0.3);">
-        <span style="font-size: 36px;">📦</span>
-      </div>
-
-      <!-- Title -->
-      <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 16px; font-weight: normal; font-style: italic;">
+    <!-- Greeting & Message -->
+    <div style="padding: 0 50px; text-align: center;">
+      <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
         Siparişin Yola Çıktı!
-      </h1>
-      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; line-height: 1.7; margin: 0 0 32px;">
-        Merhaba ${data.customerName}, <strong style="color: ${COLORS.gold};">#${data.orderId}</strong> numaralı siparişin kargoya verildi.
+      </h2>
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
+        Merhaba ${data.customerName}, <strong style="color: ${COLORS.gold};">#${data.orderId}</strong> numaralı siparişin özenle paketlendi ve kargoya verildi.
       </p>
 
-      <!-- Tracking Box -->
-      <div style="background: ${COLORS.cream}; border-radius: 20px; padding: 32px; margin: 0 0 32px;">
-        <p style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.lightText}; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 2px;">
-          Takip Numarası
-        </p>
-        <p style="font-family: 'Courier New', monospace; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: bold; letter-spacing: 4px;">
-          ${data.trackingNumber}
-        </p>
-        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 0;">
-          ${data.carrierName}
-        </p>
+      <!-- Tracking Number Badge -->
+      <div style="border: 1px solid ${COLORS.gold}; display: inline-block; padding: 20px 40px; border-radius: 8px; margin-bottom: 40px;">
+        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${COLORS.gold}; display: block; margin-bottom: 8px;">Takip Numarası</span>
+        <span style="font-size: 22px; font-weight: bold; color: ${COLORS.text}; font-family: 'Courier New', monospace; letter-spacing: 3px;">${data.trackingNumber}</span>
+        <span style="font-size: 12px; color: ${COLORS.gray}; display: block; margin-top: 8px;">${data.carrierName}</span>
       </div>
+    </div>
 
-      <!-- CTA Button -->
+    <!-- Track Button Section -->
+    <div style="padding: 0 50px 50px; text-align: center;">
       ${data.trackingUrl ? `
-      <a href="${data.trackingUrl}" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
+      <a href="${data.trackingUrl}" style="display: inline-block; background: ${COLORS.text}; color: white; padding: 16px 48px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
         Kargoyu Takip Et
       </a>
       ` : ''}
 
       <!-- Delivery Info -->
-      <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid ${COLORS.border};">
-        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; margin: 0;">
-          Tahmini teslimat süresi: <strong style="color: ${COLORS.primary};">1-3 iş günü</strong>
+      <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid ${COLORS.divider};">
+        <p style="font-size: 14px; color: ${COLORS.gray}; margin: 0;">
+          Tahmini teslimat süresi: <strong style="color: ${COLORS.text};">1-3 iş günü</strong>
         </p>
       </div>
     </div>
 
-    ${getEmailFooter(email)}
+    ${getEmailFooter()}
   `;
 
   return sendEmail({
@@ -401,7 +360,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
     // Content
     headerBadge: '✦ Hoş Geldin ✦',
     mainTitle: 'Artisan Çikolata\nDünyasına Adım Attın',
-    welcomeText: 'Bundan sonra yeni koleksiyonlar, özel teklifler ve bean-to-bar dünyasından hikayeler seninle.',
+    welcomeText: 'Bundan sonra yeni koleksiyonlar, özel teklifler ve artisan çikolata dünyasından hikayeler seninle.',
     discountEnabled: true,
     discountLabel: 'İlk Siparişine Özel',
     discountPercent: 10,
@@ -1365,5 +1324,216 @@ export const sendOrderCancellationEmail = async (
     subject: `Siparişiniz İptal Edildi - #${orderId}`,
     html: wrapEmail(content),
     text: `Merhaba ${customerName}! #${orderId} numaralı siparişiniz "${cancelReason}" nedeniyle iptal edilmiştir. Sorularınız için bilgi@sadechocolate.com adresine ulaşabilirsiniz.`
+  });
+};
+
+/**
+ * EFT/Havale Sipariş Onay Emaili
+ * Banka bilgileri, tutar ve ödeme süresi içerir
+ */
+export const sendEftOrderPendingEmail = async (
+  email: string,
+  orderData: {
+    orderId: string;
+    customerName: string;
+    items: Array<{ name: string; quantity: number; price: number }>;
+    subtotal: number;
+    shipping: number;
+    discount?: number;
+    total: number;
+    address: string;
+    paymentDeadline: string; // ISO date string
+    bankAccounts: Array<{
+      bankName: string;
+      accountHolder: string;
+      iban: string;
+    }>;
+  }
+) => {
+  const itemsHtml = orderData.items.map(item => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text};">
+        ${item.name}
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: center; font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.lightText};">
+        ${item.quantity}
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: right; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; font-weight: bold;">
+        ₺${item.price.toFixed(2)}
+      </td>
+    </tr>
+  `).join('');
+
+  // Ödeme son tarihi formatla
+  const deadlineDate = new Date(orderData.paymentDeadline);
+  const formattedDeadline = deadlineDate.toLocaleString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Kalan süreyi hesapla
+  const hoursLeft = Math.max(0, Math.floor((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60)));
+
+  // Banka hesapları HTML
+  const bankAccountsHtml = orderData.bankAccounts.map((account, index) => `
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: ${index < orderData.bankAccounts.length - 1 ? '12px' : '0'}; border: 1px solid ${COLORS.border};">
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 20px; margin-right: 8px;">🏦</span>
+        <span style="font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; color: ${COLORS.primary};">${account.bankName}</span>
+      </div>
+      <table style="width: 100%;" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.lightText}; padding: 4px 0; text-transform: uppercase; letter-spacing: 1px;">Hesap Sahibi</td>
+          <td style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; padding: 4px 0; text-align: right; font-weight: bold;">${account.accountHolder}</td>
+        </tr>
+        <tr>
+          <td style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.lightText}; padding: 4px 0; text-transform: uppercase; letter-spacing: 1px;">IBAN</td>
+          <td style="font-family: 'Courier New', monospace; font-size: 13px; color: ${COLORS.primary}; padding: 4px 0; text-align: right; letter-spacing: 1px;">${account.iban}</td>
+        </tr>
+      </table>
+    </div>
+  `).join('');
+
+  const content = `
+    ${getEmailHeader('ÖDEME BEKLENİYOR')}
+
+    <!-- Uyarı Banner -->
+    <div style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); padding: 24px 20px; text-align: center; border-bottom: 3px solid #F59E0B;">
+      <div style="display: inline-flex; align-items: center; gap: 12px;">
+        <span style="font-size: 28px;">⏰</span>
+        <div style="text-align: left;">
+          <p style="font-family: Arial, sans-serif; font-size: 12px; color: #92400E; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+            Ödeme Son Tarihi
+          </p>
+          <p style="font-family: Georgia, serif; font-size: 18px; color: #78350F; margin: 0; font-weight: bold;">
+            ${formattedDeadline}
+          </p>
+        </div>
+      </div>
+      <p style="font-family: Georgia, serif; font-size: 13px; color: #92400E; margin: 12px 0 0;">
+        ${hoursLeft > 0 ? `Kalan süre: <strong>${hoursLeft} saat</strong>` : 'Süre dolmak üzere!'}
+      </p>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px;">
+      <!-- Greeting -->
+      <h1 style="font-family: Georgia, serif; font-size: 26px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+        Siparişiniz Alındı, ${orderData.customerName}!
+      </h1>
+      <p style="font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.gold}; margin: 0 0 24px; letter-spacing: 1px;">
+        Sipariş No: #${orderData.orderId}
+      </p>
+
+      <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; line-height: 1.7; margin: 0 0 32px;">
+        Siparişiniz başarıyla oluşturuldu. Ödemenizi aşağıdaki banka hesaplarından birine <strong style="color: ${COLORS.primary};">belirtilen süre içinde</strong> yapmanız gerekmektedir. Ödeme onaylandıktan sonra siparişiniz hazırlanmaya başlayacaktır.
+      </p>
+
+      <!-- Ödenecek Tutar -->
+      <div style="background: linear-gradient(135deg, ${COLORS.primary} 0%, #5D4740 100%); border-radius: 16px; padding: 28px; margin-bottom: 24px; text-align: center; box-shadow: 0 4px 20px rgba(75,56,50,0.2);">
+        <p style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.gold}; margin: 0 0 8px; letter-spacing: 2px; text-transform: uppercase;">
+          Ödenecek Tutar
+        </p>
+        <p style="font-family: Georgia, serif; font-size: 42px; color: white; margin: 0; font-weight: bold;">
+          ₺${orderData.total.toFixed(2)}
+        </p>
+        ${orderData.discount ? `
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.gold}; margin: 8px 0 0;">
+          (₺${orderData.discount.toFixed(2)} EFT indirimi uygulandı)
+        </p>
+        ` : ''}
+      </div>
+
+      <!-- Banka Hesapları -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 12px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">
+          🏦 Banka Hesap Bilgileri
+        </h3>
+        ${bankAccountsHtml}
+      </div>
+
+      <!-- Önemli Notlar -->
+      <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h4 style="font-family: Arial, sans-serif; font-size: 12px; color: #92400E; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
+          ⚠️ Önemli Bilgiler
+        </h4>
+        <ul style="font-family: Georgia, serif; font-size: 14px; color: #78350F; margin: 0; padding-left: 20px; line-height: 1.8;">
+          <li>Açıklama kısmına mutlaka <strong>#${orderData.orderId}</strong> sipariş numaranızı yazın</li>
+          <li>Ödeme ${formattedDeadline} tarihine kadar yapılmalıdır</li>
+          <li>Süre içinde ödeme yapılmazsa sipariş otomatik iptal edilecektir</li>
+          <li>Ödeme sonrası dekontunuzu <a href="mailto:bilgi@sadechocolate.com" style="color: #D97706; text-decoration: none; font-weight: bold;">bilgi@sadechocolate.com</a> adresine gönderebilirsiniz</li>
+        </ul>
+      </div>
+
+      <!-- Sipariş Detayı -->
+      <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">
+          📦 Sipariş Detayı
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Ürün</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Adet</th>
+              <th style="text-align: right; padding: 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase; letter-spacing: 1px;">Fiyat</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid ${COLORS.border};">
+          <table style="width: 100%;" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="font-family: Georgia, serif; font-size: 13px; color: ${COLORS.lightText}; padding: 4px 0;">Ara Toplam</td>
+              <td style="font-family: Georgia, serif; font-size: 13px; color: ${COLORS.text}; padding: 4px 0; text-align: right;">₺${orderData.subtotal.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="font-family: Georgia, serif; font-size: 13px; color: ${COLORS.lightText}; padding: 4px 0;">Kargo</td>
+              <td style="font-family: Georgia, serif; font-size: 13px; color: ${COLORS.text}; padding: 4px 0; text-align: right;">${orderData.shipping === 0 ? 'Ücretsiz' : '₺' + orderData.shipping.toFixed(2)}</td>
+            </tr>
+            ${orderData.discount ? `
+            <tr>
+              <td style="font-family: Georgia, serif; font-size: 13px; color: #16A34A; padding: 4px 0;">EFT İndirimi</td>
+              <td style="font-family: Georgia, serif; font-size: 13px; color: #16A34A; padding: 4px 0; text-align: right;">-₺${orderData.discount.toFixed(2)}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.primary}; padding: 12px 0 0; font-weight: bold;">Toplam</td>
+              <td style="font-family: Georgia, serif; font-size: 18px; color: ${COLORS.primary}; padding: 12px 0 0; text-align: right; font-weight: bold;">₺${orderData.total.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Teslimat Adresi -->
+      <div style="padding: 20px; border: 1px solid ${COLORS.border}; border-radius: 12px;">
+        <h3 style="font-family: Arial, sans-serif; font-size: 11px; color: ${COLORS.lightText}; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;">
+          📍 Teslimat Adresi
+        </h3>
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; margin: 0; line-height: 1.6;">
+          ${orderData.address}
+        </p>
+      </div>
+
+      <!-- Destek -->
+      <div style="margin-top: 32px; text-align: center;">
+        <p style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.lightText}; margin: 0; line-height: 1.7;">
+          Sorularınız için: <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none;">bilgi@sadechocolate.com</a>
+        </p>
+      </div>
+    </div>
+
+    ${getEmailFooter(email)}
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `Ödeme Bekleniyor - Sipariş #${orderData.orderId}`,
+    html: wrapEmail(content),
+    text: `Merhaba ${orderData.customerName}! #${orderData.orderId} numaralı siparişiniz alındı. Toplam ₺${orderData.total.toFixed(2)} tutarındaki ödemenizi ${formattedDeadline} tarihine kadar banka hesabımıza yapmanız gerekmektedir. Açıklama kısmına sipariş numaranızı yazmayı unutmayın.`
   });
 };

@@ -76,7 +76,20 @@
       "Bash(firebase projects:list:*)",
       "Bash(export GOOGLE_APPLICATION_CREDENTIALS=\"\")",
       "Bash(FIREBASE_AUTH_EMULATOR_HOST=\"\" GCLOUD_PROJECT=sade-chocolate-prod node:*)",
-      "WebFetch(domain:sade-chocolate-prod.web.app)"
+      "WebFetch(domain:sade-chocolate-prod.web.app)",
+      "WebFetch(domain:world.openfoodfacts.org)",
+      "WebFetch(domain:shop.callebaut.com)",
+      "Bash(dir /s /b \"%USERPROFILE%\\\\.claude\\\\*.json\")",
+      "WebFetch(domain:skillsmp.com)",
+      "Bash(dir /b /s \"%USERPROFILE%\\\\.claude\\\\hooks\")",
+      "Bash(dir /b /s \"C:\\\\dev\\\\sade-chocolate\\\\.claude\\\\hooks\")",
+      "Bash(dir /b \"C:\\\\dev\\\\sade-chocolate\\\\.claude\\\\ralph-loop.local.md\")",
+      "Bash(powershell -NoProfile -Command \"if \\(Test-Path \"\"$env:USERPROFILE\\\\.claude\\\\settings.json\"\"\\) { Get-Content \"\"$env:USERPROFILE\\\\.claude\\\\settings.json\"\" | Select-String -Pattern ''hook|ralph|stop'' } else { ''Global settings dosyasi yok'' }\")",
+      "Bash(powershell -NoProfile -Command:*)",
+      "WebFetch(domain:www.dhlecommerce.com.tr)",
+      "WebFetch(domain:www.zamkinos.net)",
+      "Bash(claude plugin:*)",
+      "Bash(git reset:*)"
     ]
   },
   "hooks": {

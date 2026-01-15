@@ -16,6 +16,8 @@ export default {
           100: "#D7CCC8",
           200: "#BCAAA4",
           400: "#8D6E63",
+          600: "#6D4C41", // Orta-koyu kahve
+          700: "#5D4037", // Koyu kahve
           900: "#4B3832", // Derin çikolata (Ana metin rengi)
         },
         gold: {
@@ -23,6 +25,8 @@ export default {
           light: "#E5D1B0",
         },
         brown: {
+          600: "#5D4037", // Orta kahve
+          700: "#4E342E", // Koyu kahve
           900: "#1a0f0a",
         },
         dark: {

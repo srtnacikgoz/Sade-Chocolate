@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   ShoppingBag, Package, Truck, CheckCircle2,
@@ -107,14 +108,16 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
         );
       })}
 
-      {/* 🛡️ SADE ARTISAN SİPARİŞ DETAY MODALI */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-10 animate-fade-in">
-          <div className="absolute inset-0 bg-brown-900/60 backdrop-blur-md" onClick={() => { setSelectedOrder(null); setShowTracking(false); }}></div>
-          <div className="relative bg-white dark:bg-dark-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[40px] shadow-2xl animate-scale-in">
-            
+      {/* 🛡️ SADE ARTISAN SİPARİŞ DETAY MODALI - Portal ile body'ye render */}
+      {selectedOrder && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-10 animate-fade-in">
+          {/* Estetik blur backdrop - QuickView tarzı */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={() => { setSelectedOrder(null); setShowTracking(false); }}></div>
+          {/* Modal içeriği - solid background */}
+          <div className="relative z-[100000] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[40px] shadow-2xl animate-scale-in" style={{ backgroundColor: '#ffffff' }}>
+
             {/* Modal Header */}
-            <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl z-10">
+            <div className="p-8 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 z-10" style={{ backgroundColor: '#ffffff' }}>
               <div className="space-y-1">
                 <span className="text-[10px] font-black text-gold uppercase tracking-[0.3em]">Sipariş Detayı</span>
                 <h3 className="font-display text-2xl font-bold dark:text-white italic tracking-tight uppercase">#{selectedOrder.orderNumber || selectedOrder.id}</h3>
@@ -154,7 +157,10 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
 
             {/* İçerik Alanı */}
             {showTracking ? (
-              <ShipmentTracker orderId={selectedOrder.id} />
+              <ShipmentTracker
+                orderId={selectedOrder.orderNumber || selectedOrder.id}
+                trackingNumber={selectedOrder.tracking?.trackingNumber || selectedOrder.shipping?.trackingNumber}
+              />
             ) : (
             <div className="p-8 space-y-8">
               {/* Zaman Çizelgesi Özeti */}
@@ -283,7 +289,8 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
             </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

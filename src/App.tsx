@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, ComponentType } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -20,28 +20,56 @@ import { FloatingFeedback } from './components/FloatingFeedback';
 import { useLoyaltyStore } from './stores/loyaltyStore';
 import { TypographySettings } from './types';
 
-// Lazy load pages - Route bazlı code splitting
-const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
-const Catalog = lazy(() => import('./pages/Catalog').then(m => ({ default: m.Catalog })));
-const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
-const Story = lazy(() => import('./pages/Story').then(m => ({ default: m.Story })));
-const Favorites = lazy(() => import('./pages/Favorites').then(m => ({ default: m.Favorites })));
-const Account = lazy(() => import('./pages/Account').then(m => ({ default: m.Account })));
-const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
-const AdminSetup = lazy(() => import('./pages/AdminSetup').then(m => ({ default: m.AdminSetup })));
-const Legal = lazy(() => import('./pages/Legal').then(m => ({ default: m.Legal })));
-const Checkout = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
-const ProductDetail = lazy(() => import('./pages/ProductDetail').then(m => ({ default: m.ProductDetail })));
-const SeedData = lazy(() => import('./pages/SeedData').then(m => ({ default: m.SeedData })));
-const Cart = lazy(() => import('./pages/Cart').then(m => ({ default: m.Cart })));
-const LoginGateway = lazy(() => import('./pages/LoginGateway').then(m => ({ default: m.LoginGateway })));
-const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.Register })));
-const TastingQuiz = lazy(() => import('./pages/TastingQuiz').then(m => ({ default: m.TastingQuiz })));
-const Campaigns = lazy(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
-const Maintenance = lazy(() => import('./pages/Maintenance').then(m => ({ default: m.Maintenance })));
-const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'));
-const Bonbonlar = lazy(() => import('./pages/Bonbonlar'));
-const BonbonDetay = lazy(() => import('./pages/BonbonDetay'));
+// Chunk yükleme hatası yakalayan lazy loader
+// Deploy sonrası eski chunk'lar geçersiz olduğunda sayfayı yeniler
+const lazyWithRetry = <T extends ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> => {
+  return lazy(() =>
+    importFn().catch((error) => {
+      // ChunkLoadError veya benzeri hatalar için sayfayı yenile
+      const isChunkError = error.name === 'ChunkLoadError' ||
+        error.message?.includes('Failed to fetch dynamically imported module') ||
+        error.message?.includes('Loading chunk') ||
+        error.message?.includes('Loading CSS chunk');
+
+      if (isChunkError) {
+        console.warn('Chunk yükleme hatası, sayfa yenileniyor...', error);
+        // Sonsuz döngüyü önle
+        const lastReload = sessionStorage.getItem('chunk_reload_time');
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload) > 10000) {
+          sessionStorage.setItem('chunk_reload_time', now.toString());
+          window.location.reload();
+        }
+      }
+      throw error;
+    })
+  );
+};
+
+// Lazy load pages - Route bazlı code splitting (lazyWithRetry ile chunk hatalarını yakalar)
+const Home = lazyWithRetry(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Catalog = lazyWithRetry(() => import('./pages/Catalog').then(m => ({ default: m.Catalog })));
+const About = lazyWithRetry(() => import('./pages/About').then(m => ({ default: m.About })));
+const Story = lazyWithRetry(() => import('./pages/Story').then(m => ({ default: m.Story })));
+const Favorites = lazyWithRetry(() => import('./pages/Favorites').then(m => ({ default: m.Favorites })));
+const Account = lazyWithRetry(() => import('./pages/Account').then(m => ({ default: m.Account })));
+const Admin = lazyWithRetry(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
+const AdminSetup = lazyWithRetry(() => import('./pages/AdminSetup').then(m => ({ default: m.AdminSetup })));
+const Legal = lazyWithRetry(() => import('./pages/Legal').then(m => ({ default: m.Legal })));
+const Checkout = lazyWithRetry(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
+const ProductDetail = lazyWithRetry(() => import('./pages/ProductDetail').then(m => ({ default: m.ProductDetail })));
+const SeedData = lazyWithRetry(() => import('./pages/SeedData').then(m => ({ default: m.SeedData })));
+const Cart = lazyWithRetry(() => import('./pages/Cart').then(m => ({ default: m.Cart })));
+const LoginGateway = lazyWithRetry(() => import('./pages/LoginGateway').then(m => ({ default: m.LoginGateway })));
+const Register = lazyWithRetry(() => import('./pages/Register').then(m => ({ default: m.Register })));
+const TastingQuiz = lazyWithRetry(() => import('./pages/TastingQuiz').then(m => ({ default: m.TastingQuiz })));
+const Campaigns = lazyWithRetry(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
+const Maintenance = lazyWithRetry(() => import('./pages/Maintenance').then(m => ({ default: m.Maintenance })));
+const OrderConfirmation = lazyWithRetry(() => import('./pages/OrderConfirmation'));
+const Bonbonlar = lazyWithRetry(() => import('./pages/Bonbonlar'));
+const BonbonDetay = lazyWithRetry(() => import('./pages/BonbonDetay'));
 
 // Minimal loading component - no spinner
 const PageLoader = () => (

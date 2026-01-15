@@ -5,6 +5,7 @@ import {
   updateOrder,
   enableOfflinePersistence
 } from '../services/orderService';
+import { sendOrderConfirmationEmail } from '../services/emailService';
 
 // --- INITIAL MOCK DATA ---
 const INITIAL_ORDERS: Order[] = [
@@ -580,20 +581,46 @@ export const useOrderStore = create<OrderStore>()((set, get) => ({
       throw new Error(`Order ${orderId} not found`);
     }
 
+    // Email adresi kontrolü
+    const customerEmail = order.customer?.email;
+    if (!customerEmail) {
+      throw new Error('Müşteri email adresi bulunamadı');
+    }
+
     try {
+      // Gerçek email gönder
+      await sendOrderConfirmationEmail(customerEmail, {
+        orderId: order.orderNumber || order.id,
+        customerName: order.customer?.name || 'Değerli Müşterimiz',
+        items: (order.items || []).map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price * item.quantity
+        })),
+        subtotal: order.payment?.subtotal || order.payment?.total || 0,
+        shipping: order.payment?.shipping || 0,
+        total: order.payment?.total || 0,
+        address: order.shipping?.address
+          ? `${order.shipping.address}, ${order.shipping.city || ''}`
+          : 'Adres belirtilmemiş'
+      });
+
+      // Timeline güncelle
       const updatedOrder: Partial<Order> = {
         timeline: [
           ...(order.timeline || []),
           {
             action: 'Sipariş onay e-postası gönderildi',
             time: new Date().toLocaleString('tr-TR'),
-            note: order.customer?.email || 'Email yok'
+            note: customerEmail
           }
         ]
       };
 
       const docId = order.firestoreId || orderId;
       await updateOrder(docId, updatedOrder);
+
+      console.log('✅ Sipariş onay emaili gönderildi:', customerEmail);
     } catch (error: any) {
       console.error('❌ Error sending email:', error);
       set({ error: error.message });

@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { setGlobalOptions } from 'firebase-functions/v2';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import axios from 'axios';
 import * as iyzicoService from './services/iyzicoService';
 
@@ -12,14 +13,16 @@ admin.initializeApp();
 
 // MNG Kargo API Base URLs
 const MNG_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/standardqueryapi';
+const MNG_COMMAND_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/standardcmdapi';
+const MNG_TOKEN_API = 'https://api.mngkargo.com.tr/mngapi/api/token';
 const MNG_CBS_API_BASE = 'https://api.mngkargo.com.tr/mngapi/api/cbsinfoapi';
 
-// MNG credentials - loaded from .env file in functions directory
+// MNG Standard Query API credentials (kargo hesaplama, takip)
 const getMNGConfig = () => {
   const clientId = process.env.MNG_CLIENT_ID || '';
   const clientSecret = process.env.MNG_CLIENT_SECRET || '';
 
-  functions.logger.info('MNG Config check:', {
+  functions.logger.info('MNG Query Config check:', {
     hasClientId: !!clientId,
     hasClientSecret: !!clientSecret,
     clientIdLength: clientId.length
@@ -28,14 +31,122 @@ const getMNGConfig = () => {
   if (!clientId || !clientSecret) {
     throw new functions.https.HttpsError(
       'failed-precondition',
-      'MNG API credentials not configured in .env file'
+      'MNG Query API credentials not configured in .env file'
     );
   }
 
   return { clientId, clientSecret };
 };
 
-// Helper function to make authenticated requests
+// MNG Standard Command API credentials (kargo oluşturma)
+const getMNGCommandConfig = () => {
+  const clientId = process.env.MNG_COMMAND_CLIENT_ID || '';
+  const clientSecret = process.env.MNG_COMMAND_CLIENT_SECRET || '';
+  const customerNumber = process.env.MNG_CUSTOMER_NUMBER || '';
+  const password = process.env.MNG_PASSWORD || '';
+
+  functions.logger.info('MNG Command Config check:', {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    hasCustomerNumber: !!customerNumber,
+    hasPassword: !!password
+  });
+
+  if (!clientId || !customerNumber || !password) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'MNG Command API credentials not configured. Need: MNG_COMMAND_CLIENT_ID, MNG_CUSTOMER_NUMBER, MNG_PASSWORD'
+    );
+  }
+
+  return { clientId, clientSecret, customerNumber, password };
+};
+
+// JWT Token cache
+let cachedJwtToken: string | null = null;
+let tokenExpireTime: number = 0;
+
+// MNG JWT Token almak için
+const getMNGJwtToken = async (): Promise<string> => {
+  // Token cache'te ve geçerliyse kullan
+  if (cachedJwtToken && Date.now() < tokenExpireTime - 60000) {
+    return cachedJwtToken;
+  }
+
+  const config = getMNGCommandConfig();
+
+  const headers: Record<string, string> = {
+    'X-IBM-Client-Id': config.clientId,
+    'Content-Type': 'application/json'
+  };
+
+  if (config.clientSecret) {
+    headers['X-IBM-Client-Secret'] = config.clientSecret;
+  }
+
+  functions.logger.info('Getting MNG JWT Token...');
+
+  try {
+    const response = await axios({
+      method: 'POST',
+      url: MNG_TOKEN_API,
+      headers,
+      data: {
+        customerNumber: config.customerNumber,
+        password: config.password,
+        identityType: 1
+      }
+    });
+
+    const tokenData = response.data;
+    cachedJwtToken = tokenData.jwt;
+
+    // Token expire time'ı parse et (ISO string olarak gelebilir)
+    if (tokenData.jwtExpireDate) {
+      tokenExpireTime = new Date(tokenData.jwtExpireDate).getTime();
+    } else {
+      // Default: 1 saat
+      tokenExpireTime = Date.now() + 3600000;
+    }
+
+    functions.logger.info('MNG JWT Token alındı, expire:', new Date(tokenExpireTime).toISOString());
+
+    return cachedJwtToken!;
+  } catch (error: any) {
+    functions.logger.error('MNG Token hatası:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw new functions.https.HttpsError(
+      'internal',
+      'MNG Kargo token alınamadı: ' + (error.response?.data?.message || error.message)
+    );
+  }
+};
+
+// MNG CBS Info API credentials (şehir/ilçe bilgileri)
+const getCBSConfig = () => {
+  const clientId = process.env.MNG_CBS_CLIENT_ID || '';
+  const clientSecret = process.env.MNG_CBS_CLIENT_SECRET || '';
+
+  functions.logger.info('CBS Config check:', {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    clientIdLength: clientId.length
+  });
+
+  if (!clientId || !clientSecret) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'MNG CBS API credentials not configured in .env file'
+    );
+  }
+
+  return { clientId, clientSecret };
+};
+
+// Helper function to make authenticated requests to Query API
 const mngRequest = async (endpoint: string, method: 'GET' | 'POST' = 'GET', data?: any) => {
   const config = getMNGConfig();
 
@@ -59,6 +170,61 @@ const mngRequest = async (endpoint: string, method: 'GET' | 'POST' = 'GET', data
     throw new functions.https.HttpsError(
       'internal',
       error.response?.data?.detail || 'MNG Kargo API hatası',
+      error.response?.data
+    );
+  }
+};
+
+// Helper function to make authenticated requests to Command API (for creating orders)
+const mngCommandRequest = async (endpoint: string, data: any) => {
+  const config = getMNGCommandConfig();
+
+  // Önce JWT token al
+  const jwtToken = await getMNGJwtToken();
+
+  const headers: Record<string, string> = {
+    'X-IBM-Client-Id': config.clientId,
+    'Authorization': `Bearer ${jwtToken}`,
+    'Content-Type': 'application/json'
+  };
+
+  // Secret varsa ekle
+  if (config.clientSecret) {
+    headers['X-IBM-Client-Secret'] = config.clientSecret;
+  }
+
+  functions.logger.info('MNG Command API Request:', {
+    url: `${MNG_COMMAND_API_BASE}${endpoint}`,
+    hasSecret: !!config.clientSecret,
+    hasToken: !!jwtToken,
+    dataKeys: Object.keys(data)
+  });
+
+  try {
+    const response = await axios({
+      method: 'POST',
+      url: `${MNG_COMMAND_API_BASE}${endpoint}`,
+      headers,
+      data
+    });
+
+    functions.logger.info('MNG Command API Response:', {
+      status: response.status,
+      data: response.data
+    });
+
+    return response.data;
+  } catch (error: any) {
+    functions.logger.error('MNG Command API Error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      url: `${MNG_COMMAND_API_BASE}${endpoint}`
+    });
+    throw new functions.https.HttpsError(
+      'internal',
+      error.response?.data?.detail || error.response?.data?.message || error.response?.data?.moreInformation || 'MNG Kargo sipariş oluşturma hatası',
       error.response?.data
     );
   }
@@ -204,97 +370,203 @@ export const createShipment = functions.https.onCall(async (request) => {
     );
   }
 
-  // Gönderi oluşturma request body
+  // Alıcı şehir/ilçe kodlarını hesapla
+  const receiverCityCode = getCityCode(shippingCity || '');
+  const receiverDistrictCode = getDistrictCode(shippingDistrict || '', receiverCityCode);
+
+  // Barkod oluştur - benzersiz olmalı, BÜYÜK HARF
+  const barcode = `SADE${Date.now().toString(36).toUpperCase()}`;
+  const referenceId = orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  // MNG Standard Command API için request body
+  // Format: https://apizone.mngkargo.com.tr/en/api/1745
   const requestBody = {
-    referenceId: orderId, // Sipariş ID'yi referans olarak kullan
-    shipmentServiceType: 1, // STANDART_TESLİMAT
-    packagingType: 3, // PAKET
-    paymentType: 1, // GONDERICI_ODER (Sade Chocolate öder)
-    pickUpType: 2, // SUBEDEN_ALIM (Şubeden kargo)
-    deliveryType: 1, // ADRESE_TESLIM
-
-    // Gönderen Bilgileri (Sade Chocolate)
-    sender: {
-      name: 'Sade Chocolate',
-      phone: '02121234567', // Gerçek telefon numaranız
-      email: 'info@sadechocolate.com',
-      address: 'Yeşilbahçe Mah. Sanayi Cad. No:123',
-      cityCode: 34, // İstanbul
-      districtCode: 1809 // Güngören (örnek)
-    },
-
-    // Alıcı Bilgileri
-    receiver: {
-      name: customerName,
-      phone: customerPhone.replace(/\D/g, ''), // Sadece rakamlar
-      email: customerEmail || '',
-      address: shippingAddress,
-      cityCode: getCityCode(shippingCity || ''),
-      districtCode: getDistrictCode(shippingDistrict || '')
+    // Sipariş bilgileri
+    order: {
+      referenceId: referenceId,
+      shipmentServiceType: 1, // 1: Standart Teslimat
+      packagingType: 3, // 3: Paket
+      paymentType: 1, // 1: Gönderici Öder
+      deliveryType: 1, // 1: Adrese Teslim
+      description: coldPackage ? 'SOĞUK PAKET - ISI HASSAS ÜRÜN' : 'Çikolata ürünleri',
+      content: contentDescription,
+      smsPreference1: 1, // Varış SMS (Alıcıya)
+      smsPreference2: 1, // Hazırlandı SMS (Alıcıya)
+      smsPreference3: 0  // Gönderici SMS (Kapalı)
     },
 
     // Paket Bilgileri
     orderPieceList: [
       {
-        barcode: `SADE-${orderId}-${Date.now()}`,
+        barcode: barcode,
         desi: desi,
         kg: weight,
         content: contentDescription
       }
     ],
 
-    // SMS Bildirimleri
-    smsPreference1: 1, // Varış SMS (Alıcıya)
-    smsPreference2: 1, // Hazırlandı SMS (Alıcıya)
-    smsPreference3: 0, // Gönderici SMS (Kapalı)
-
-    // Özel Notlar
-    description: coldPackage ? 'SOĞUK PAKET - ISI HASSAS ÜRÜN' : 'Normal teslimat'
+    // Alıcı Bilgileri
+    recipient: {
+      fullName: customerName,
+      cityCode: receiverCityCode,
+      districtCode: receiverDistrictCode,
+      address: shippingAddress,
+      mobilePhone: customerPhone.replace(/\D/g, ''), // Sadece rakamlar
+      email: customerEmail || ''
+    }
   };
 
-  functions.logger.info('Creating shipment:', { orderId, requestBody });
+  functions.logger.info('Creating shipment:', {
+    orderId,
+    receiverCity: shippingCity,
+    receiverCityCode,
+    receiverDistrict: shippingDistrict,
+    receiverDistrictCode,
+    barcode
+  });
 
   try {
-    const shipmentData = await mngRequest('/createshipment', 'POST', requestBody);
+    // Standard Command API ile sipariş oluştur
+    const shipmentData = await mngCommandRequest('/createOrder', requestBody);
+
+    functions.logger.info('MNG Shipment created successfully:', shipmentData);
+
+    // API yanıtından tracking bilgilerini al
+    const trackingNumber = shipmentData.orderNo || shipmentData.trackingNumber || referenceId;
 
     return {
       success: true,
       data: {
-        trackingNumber: shipmentData.trackingNumber || shipmentData.referenceId,
-        barcode: requestBody.orderPieceList[0].barcode,
+        trackingNumber: trackingNumber,
+        barcode: barcode,
         carrier: 'MNG Kargo',
-        estimatedDelivery: shipmentData.estimatedDeliveryDate,
-        shipmentId: shipmentData.shipmentId
+        estimatedDelivery: shipmentData.estimatedDeliveryDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        shipmentId: shipmentData.orderId || shipmentData.id
       },
       timestamp: new Date().toISOString()
     };
   } catch (error: any) {
-    functions.logger.error('Shipment creation failed:', error);
-    throw error;
+    functions.logger.error('MNG Shipment creation failed:', error);
+
+    // Hata detaylarını çıkar
+    const errorDetail = error.details?.message || error.details?.detail || error.details?.moreInformation || error.message || 'Bilinmeyen hata';
+
+    // Manuel mod yok - hata fırlat
+    throw new functions.https.HttpsError(
+      'internal',
+      `MNG Kargo hatası: ${errorDetail}`,
+      error.details
+    );
   }
 });
 
 /**
- * Helper: Şehir kodunu döndürür
+ * Türkiye 81 il listesi - MNG şehir kodları (plaka kodları ile aynı)
+ */
+const CITY_CODE_MAP: Record<string, number> = {
+  'Adana': 1, 'Adıyaman': 2, 'Afyonkarahisar': 3, 'Ağrı': 4, 'Amasya': 5,
+  'Ankara': 6, 'Antalya': 7, 'Artvin': 8, 'Aydın': 9, 'Balıkesir': 10,
+  'Bilecik': 11, 'Bingöl': 12, 'Bitlis': 13, 'Bolu': 14, 'Burdur': 15,
+  'Bursa': 16, 'Çanakkale': 17, 'Çankırı': 18, 'Çorum': 19, 'Denizli': 20,
+  'Diyarbakır': 21, 'Edirne': 22, 'Elazığ': 23, 'Erzincan': 24, 'Erzurum': 25,
+  'Eskişehir': 26, 'Gaziantep': 27, 'Giresun': 28, 'Gümüşhane': 29, 'Hakkari': 30,
+  'Hatay': 31, 'Isparta': 32, 'Mersin': 33, 'İstanbul': 34, 'İzmir': 35,
+  'Kars': 36, 'Kastamonu': 37, 'Kayseri': 38, 'Kırklareli': 39, 'Kırşehir': 40,
+  'Kocaeli': 41, 'Konya': 42, 'Kütahya': 43, 'Malatya': 44, 'Manisa': 45,
+  'Kahramanmaraş': 46, 'Mardin': 47, 'Muğla': 48, 'Muş': 49, 'Nevşehir': 50,
+  'Niğde': 51, 'Ordu': 52, 'Rize': 53, 'Sakarya': 54, 'Samsun': 55,
+  'Siirt': 56, 'Sinop': 57, 'Sivas': 58, 'Tekirdağ': 59, 'Tokat': 60,
+  'Trabzon': 61, 'Tunceli': 62, 'Şanlıurfa': 63, 'Uşak': 64, 'Van': 65,
+  'Yozgat': 66, 'Zonguldak': 67, 'Aksaray': 68, 'Bayburt': 69, 'Karaman': 70,
+  'Kırıkkale': 71, 'Batman': 72, 'Şırnak': 73, 'Bartın': 74, 'Ardahan': 75,
+  'Iğdır': 76, 'Yalova': 77, 'Karabük': 78, 'Kilis': 79, 'Osmaniye': 80, 'Düzce': 81
+};
+
+/**
+ * Antalya ilçe kodları - MNG Kargo sistemi için
+ * Not: Bu kodlar CBS Info API'den alınmalı, şimdilik tahmin edilen değerler
+ */
+const ANTALYA_DISTRICT_CODES: Record<string, number> = {
+  'Akseki': 701, 'Aksu': 702, 'Alanya': 703, 'Demre': 704, 'Döşemealtı': 705,
+  'Elmalı': 706, 'Finike': 707, 'Gazipaşa': 708, 'Gündoğmuş': 709, 'İbradı': 710,
+  'Kaş': 711, 'Kemer': 712, 'Kepez': 713, 'Konyaaltı': 714, 'Korkuteli': 715,
+  'Kumluca': 716, 'Manavgat': 717, 'Muratpaşa': 718, 'Serik': 719
+};
+
+/**
+ * Helper: Şehir kodunu döndürür - Türkçe karakter normalizasyonu ile
  */
 function getCityCode(cityName: string): number {
-  const cityMap: Record<string, number> = {
-    'İstanbul': 34,
-    'Ankara': 6,
-    'İzmir': 35,
-    'Bursa': 16,
-    'Antalya': 7,
-    // ... Diğer şehirler eklenebilir
+  if (!cityName) return 7; // Default: Antalya
+
+  // Direkt eşleşme dene
+  if (CITY_CODE_MAP[cityName]) {
+    return CITY_CODE_MAP[cityName];
+  }
+
+  // Normalize et ve tekrar dene
+  const normalized = cityName.trim()
+    .replace(/i/g, 'İ').replace(/ı/g, 'I')
+    .replace(/İ/g, 'İ').replace(/I/g, 'ı')
+    .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+  // Yaygın varyasyonları kontrol et
+  const variations: Record<string, string> = {
+    'Istanbul': 'İstanbul',
+    'Izmir': 'İzmir',
+    'Afyon': 'Afyonkarahisar',
+    'Antep': 'Gaziantep',
+    'Urfa': 'Şanlıurfa',
+    'Maras': 'Kahramanmaraş',
+    'Içel': 'Mersin',
+    'Icel': 'Mersin'
   };
-  return cityMap[cityName] || 34; // Default: İstanbul
+
+  const mappedName = variations[cityName] || variations[normalized] || normalized;
+
+  for (const [name, code] of Object.entries(CITY_CODE_MAP)) {
+    if (name.toLowerCase() === mappedName.toLowerCase()) {
+      return code;
+    }
+  }
+
+  return 7; // Default: Antalya
 }
 
 /**
  * Helper: İlçe kodunu döndürür
+ * CBS Info API'den alınan kodlar kullanılmalı
  */
-function getDistrictCode(districtName: string): number {
-  // Gerçek bir uygulamada tam liste olmalı
-  return 1809; // Örnek: Güngören
+function getDistrictCode(districtName: string, cityCode?: number): number {
+  if (!districtName) return 718; // Default: Muratpaşa
+
+  // Antalya ilçeleri için özel eşleşme
+  if (cityCode === 7 || !cityCode) {
+    const normalized = districtName.trim().toLowerCase()
+      .replace(/ı/g, 'i')
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c');
+
+    for (const [name, code] of Object.entries(ANTALYA_DISTRICT_CODES)) {
+      const normalizedName = name.toLowerCase()
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c');
+
+      if (normalizedName === normalized || normalizedName.includes(normalized) || normalized.includes(normalizedName)) {
+        return code;
+      }
+    }
+  }
+
+  // Genel fallback: Şehir kodu + 100 (tahmini)
+  return (cityCode || 7) * 100 + 18; // Örn: Antalya için 718 (Muratpaşa)
 }
 
 /**
@@ -320,9 +592,9 @@ export const healthCheck = functions.https.onRequest(async (req, res) => {
 // CBS INFO API - Şehir/İlçe Bilgileri
 // ==========================================
 
-// CBS API için helper
+// CBS API için helper (şehir/ilçe bilgileri - ayrı credentials kullanır)
 const cbsRequest = async (endpoint: string) => {
-  const config = getMNGConfig();
+  const config = getCBSConfig();
 
   try {
     const response = await axios({
@@ -475,14 +747,16 @@ export const findDistrictCode = functions.https.onCall(async (request) => {
 // SENDGRID EMAIL FUNCTIONS
 // ==========================================
 
-// Email template renkleri
+// Email template renkleri - Yeni Premium Tasarım
 const EMAIL_COLORS = {
-  primary: '#4B3832',
-  gold: '#C5A059',
-  cream: '#FDFCF0',
-  text: '#333333',
-  lightText: '#666666',
-  border: '#E8E4DC',
+  bg: '#F3F0EB',           // Dış arka plan (Sıcak gri/bej)
+  card: '#FFFEFA',         // Kart arka planı (Sıcak beyaz)
+  text: '#2C1810',         // Ana metin (Derin kahve)
+  gold: '#D4AF37',         // Altın vurgu
+  gray: '#8A817C',         // Açık gri metin
+  divider: '#EBE5D9',      // Ayırıcı çizgi
+  footerBg: '#2C1810',     // Footer arka planı (Koyu kahve)
+  footerText: '#EBE5D9',   // Footer metin
 };
 
 /**
@@ -509,7 +783,7 @@ export const sendCustomPasswordResetEmail = functions.https.onCall(async (reques
 
     const resetLink = await admin.auth().generatePasswordResetLink(email, actionCodeSettings);
 
-    // Email HTML template
+    // Email HTML template - Yeni Premium Tasarım
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -517,61 +791,74 @@ export const sendCustomPasswordResetEmail = functions.https.onCall(async (reques
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Şifre Sıfırlama</title>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
       </head>
-      <body style="margin: 0; padding: 0; background: ${EMAIL_COLORS.cream}; font-family: Georgia, serif;">
-        <div style="max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+      <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: ${EMAIL_COLORS.bg}; padding: 60px 0; color: ${EMAIL_COLORS.text}; min-height: 100vh;">
+        <!-- Main Card Container -->
+        <div style="max-width: 640px; margin: 0 auto; background-color: ${EMAIL_COLORS.card}; box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-radius: 0;">
 
-          <!-- Header -->
-          <div style="background: ${EMAIL_COLORS.primary}; padding: 48px 20px; text-align: center;">
-            <span style="font-family: 'Santana', Georgia, serif; font-size: 42px; color: white; font-weight: bold; letter-spacing: 3px;">SADE</span>
-            <p style="font-family: 'Santana', Georgia, serif; font-size: 14px; color: ${EMAIL_COLORS.gold}; margin: 8px 0 0; letter-spacing: 2px;">Chocolate</p>
+          <!-- Top Border Accent -->
+          <div style="height: 4px; background-color: ${EMAIL_COLORS.text}; width: 100%;"></div>
+
+          <!-- Branding Header -->
+          <div style="padding: 50px 0 30px; text-align: center;">
+            <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 48px; color: ${EMAIL_COLORS.text}; margin: 0; font-style: italic; letter-spacing: -1px;">Sade</h1>
+            <p style="font-size: 9px; text-transform: uppercase; letter-spacing: 4px; color: ${EMAIL_COLORS.gold}; margin-top: 5px; font-weight: 600;">Artisan Chocolate</p>
           </div>
 
+          <!-- Divider -->
+          <div style="width: 40px; height: 1px; background-color: ${EMAIL_COLORS.gold}; margin: 0 auto 40px;"></div>
+
           <!-- Content -->
-          <div style="padding: 48px 40px; text-align: center;">
-            <!-- Icon -->
-            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, ${EMAIL_COLORS.gold} 0%, #D4AF61 100%); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;">
-              <span style="font-size: 36px;">🔐</span>
-            </div>
-
-            <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${EMAIL_COLORS.primary}; margin: 0 0 16px; font-weight: normal; font-style: italic;">
+          <div style="padding: 0 50px 50px; text-align: center;">
+            <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${EMAIL_COLORS.text}; font-style: italic;">
               Şifre Sıfırlama
-            </h1>
+            </h2>
 
-            <p style="font-family: Georgia, serif; font-size: 15px; color: ${EMAIL_COLORS.lightText}; line-height: 1.7; margin: 0 0 32px;">
+            <p style="font-size: 15px; line-height: 1.8; color: ${EMAIL_COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
               Hesabınız için bir şifre sıfırlama talebi aldık. Aşağıdaki butona tıklayarak yeni şifrenizi belirleyebilirsiniz.
             </p>
 
             <!-- CTA Button -->
-            <a href="${resetLink}" style="display: inline-block; background: ${EMAIL_COLORS.primary}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
+            <a href="${resetLink}" style="display: inline-block; background: ${EMAIL_COLORS.text}; color: white; padding: 16px 48px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
               Şifremi Sıfırla
             </a>
 
-            <p style="font-family: Georgia, serif; font-size: 13px; color: ${EMAIL_COLORS.lightText}; margin: 32px 0 0; line-height: 1.6;">
-              Bu link <strong>1 saat</strong> içinde geçerliliğini yitirecektir.<br>
+            <p style="font-size: 13px; color: ${EMAIL_COLORS.gray}; margin: 32px 0 0; line-height: 1.6;">
+              Bu link <strong style="color: ${EMAIL_COLORS.text};">1 saat</strong> içinde geçerliliğini yitirecektir.<br>
               Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
             </p>
 
             <!-- Link fallback -->
-            <div style="margin-top: 32px; padding: 20px; background: ${EMAIL_COLORS.cream}; border-radius: 12px;">
-              <p style="font-family: Arial, sans-serif; font-size: 11px; color: ${EMAIL_COLORS.lightText}; margin: 0 0 8px;">
+            <div style="margin-top: 32px; padding: 20px; background: ${EMAIL_COLORS.bg}; border-radius: 8px;">
+              <p style="font-size: 11px; color: ${EMAIL_COLORS.gray}; margin: 0 0 8px;">
                 Buton çalışmıyorsa aşağıdaki linki tarayıcınıza kopyalayın:
               </p>
-              <p style="font-family: 'Courier New', monospace; font-size: 10px; color: ${EMAIL_COLORS.primary}; margin: 0; word-break: break-all;">
+              <p style="font-family: 'Courier New', monospace; font-size: 10px; color: ${EMAIL_COLORS.text}; margin: 0; word-break: break-all;">
                 ${resetLink}
               </p>
             </div>
           </div>
 
-          <!-- Footer -->
-          <div style="background: ${EMAIL_COLORS.cream}; padding: 32px 20px; text-align: center; border-top: 1px solid ${EMAIL_COLORS.border};">
-            <p style="font-family: Georgia, serif; font-size: 12px; color: ${EMAIL_COLORS.lightText}; margin: 0 0 8px;">
-              Sade Chocolate<br>
-              Yeşilbahçe Mah. Çınarlı Cd. 47/A, Muratpaşa, Antalya
+          <!-- Atmospheric Footer -->
+          <div style="background-color: ${EMAIL_COLORS.footerBg}; color: #fff; padding: 50px; text-align: center;">
+            <h4 style="font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-style: italic; margin: 0 0 15px 0; color: ${EMAIL_COLORS.gold};">Sade Deneyimi</h4>
+            <p style="font-size: 13px; line-height: 1.7; color: ${EMAIL_COLORS.footerText}; max-width: 400px; margin: 0 auto; font-weight: 300;">
+              El yapımı artisan çikolatalarımızla eşsiz bir lezzet yolculuğuna hazır olun.
             </p>
-            <p style="font-family: Georgia, serif; font-size: 11px; color: #999; margin: 16px 0 0;">
-              © 2026 Sade Chocolate. Tüm hakları saklıdır.
+          </div>
+
+          <!-- Minimal Footer Links -->
+          <div style="background-color: ${EMAIL_COLORS.bg}; padding: 30px; text-align: center;">
+            <p style="font-size: 10px; color: #A09890; margin: 0 0 15px 0; letter-spacing: 1px; text-transform: uppercase;">
+              Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
             </p>
+            <div style="font-size: 11px;">
+              <a href="https://sadechocolate.com/#/account" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+              <a href="https://sadechocolate.com/#/catalog" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+              <a href="mailto:bilgi@sadechocolate.com" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
+            </div>
+            <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -836,44 +1123,55 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
             return;
           }
 
-          // Marka renkleri
+          // Yeni Premium Marka Renkleri
           const COLORS = {
-            primary: '#4B3832',
-            gold: '#C5A059',
-            cream: '#FDFCF0',
-            text: '#333333',
-            lightText: '#666666',
-            border: '#E8E4DC'
+            bg: '#F3F0EB',
+            card: '#FFFEFA',
+            text: '#2C1810',
+            gold: '#D4AF37',
+            gray: '#8A817C',
+            divider: '#EBE5D9',
+            footerBg: '#2C1810',
+            footerText: '#EBE5D9'
           };
 
-          // Email header
-          const emailHeader = (badge: string) => `
-            <div style="background: ${COLORS.primary}; padding: 48px 20px; text-align: center;">
-              <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
-              <div style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 10px 24px; border-radius: 30px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin-top: 20px; text-transform: uppercase;">
-                ${badge}
-              </div>
+          // Email header - Yeni Premium Tasarım
+          const emailHeader = () => `
+            <!-- Top Border Accent -->
+            <div style="height: 4px; background-color: ${COLORS.text}; width: 100%;"></div>
+            <!-- Branding Header -->
+            <div style="padding: 50px 0 30px; text-align: center;">
+              <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 48px; color: ${COLORS.text}; margin: 0; font-style: italic; letter-spacing: -1px;">Sade</h1>
+              <p style="font-size: 9px; text-transform: uppercase; letter-spacing: 4px; color: ${COLORS.gold}; margin-top: 5px; font-weight: 600;">Artisan Chocolate</p>
             </div>
+            <!-- Divider -->
+            <div style="width: 40px; height: 1px; background-color: ${COLORS.gold}; margin: 0 auto 40px;"></div>
           `;
 
-          // Email footer
+          // Email footer - Yeni Premium Tasarım
           const emailFooter = `
-            <div style="background: ${COLORS.cream}; padding: 40px 20px; text-align: center; border-top: 1px solid ${COLORS.border};">
-              <p style="font-family: Georgia, serif; font-size: 12px; color: ${COLORS.lightText}; margin: 0 0 8px; line-height: 1.6;">
-                Sade Chocolate<br>
-                Yeşilbahçe Mah. Çınarlı Cd. 47/A<br>
-                Muratpaşa, Antalya 07160
+            <!-- Atmospheric Footer -->
+            <div style="background-color: ${COLORS.footerBg}; color: #fff; padding: 50px; text-align: center;">
+              <h4 style="font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-style: italic; margin: 0 0 15px 0; color: ${COLORS.gold};">Sade Deneyimi</h4>
+              <p style="font-size: 13px; line-height: 1.7; color: ${COLORS.footerText}; max-width: 400px; margin: 0 auto; font-weight: 300;">
+                Ürünleriniz, Antalya'daki atölyemizden özel ısı yalıtımlı "Sade" kutularında, soğuk zincir bozulmadan tarafınıza ulaştırılacaktır.
               </p>
-              <p style="font-family: Georgia, serif; font-size: 12px; color: ${COLORS.lightText}; margin: 16px 0;">
-                Sorularınız için: <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none;">bilgi@sadechocolate.com</a>
+            </div>
+            <!-- Minimal Footer Links -->
+            <div style="background-color: ${COLORS.bg}; padding: 30px; text-align: center;">
+              <p style="font-size: 10px; color: #A09890; margin: 0 0 15px 0; letter-spacing: 1px; text-transform: uppercase;">
+                Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
               </p>
-              <p style="font-family: Georgia, serif; font-size: 11px; color: #999; margin: 16px 0 0;">
-                © 2026 Sade Chocolate. Tüm hakları saklıdır.
-              </p>
+              <div style="font-size: 11px;">
+                <a href="https://sadechocolate.com/#/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+                <a href="https://sadechocolate.com/#/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+                <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
+              </div>
+              <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
             </div>
           `;
 
-          // Email wrapper
+          // Email wrapper - Yeni Premium Tasarım
           const wrapEmail = (content: string) => `
             <!DOCTYPE html>
             <html>
@@ -881,9 +1179,10 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <title>Sade Chocolate</title>
+              <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
             </head>
-            <body style="margin: 0; padding: 0; background: ${COLORS.cream}; font-family: Georgia, serif;">
-              <div style="max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+            <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: ${COLORS.bg}; padding: 60px 0; color: ${COLORS.text}; min-height: 100vh;">
+              <div style="max-width: 640px; margin: 0 auto; background-color: ${COLORS.card}; box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-radius: 0;">
                 ${content}
               </div>
             </body>
@@ -894,21 +1193,19 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
           let emailSubject: string;
 
           if (isSuccess) {
-            // Payment Success Email
+            // Payment Success Email - Yeni Premium Tasarım
             const cardDisplayText = paymentDetails.cardAssociation && paymentDetails.lastFourDigits
               ? `${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
               : 'Kredi Kartı';
 
             const itemsHtml = (orderData.items || []).map((item: any) => `
               <tr>
-                <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text};">
-                  ${item.name}
+                <td style="padding: 15px 20px 15px 0; vertical-align: middle;">
+                  <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: ${COLORS.text}; font-family: 'Playfair Display', Georgia, serif;">${item.name}</p>
+                  <p style="margin: 0; font-size: 12px; color: ${COLORS.gray}; letter-spacing: 0.5px;">${item.quantity} ADET</p>
                 </td>
-                <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: center; font-family: Arial, sans-serif; font-size: 13px; color: ${COLORS.lightText};">
-                  ${item.quantity}
-                </td>
-                <td style="padding: 12px; border-bottom: 1px solid ${COLORS.border}; text-align: right; font-family: Georgia, serif; font-size: 14px; color: ${COLORS.primary}; font-weight: bold;">
-                  ₺${(item.price || 0).toFixed(2)}
+                <td style="padding: 15px 0; text-align: right; vertical-align: middle;">
+                  <p style="margin: 0; font-size: 15px; font-weight: 500; color: ${COLORS.text};">₺${(item.price || 0).toFixed(2)}</p>
                 </td>
               </tr>
             `).join('');
@@ -919,58 +1216,55 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
 
             emailSubject = `Ödeme Onaylandı - Sipariş #${orderId}`;
             emailHtml = wrapEmail(`
-              ${emailHeader('Ödeme Onaylandı')}
-              <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); padding: 48px 20px; text-align: center;">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
-                  <span style="font-size: 40px; color: white;">✓</span>
-                </div>
-                <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+              ${emailHeader()}
+              <!-- Greeting & Message -->
+              <div style="padding: 0 50px; text-align: center;">
+                <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
                   Ödemeniz Başarılı!
-                </h1>
-                <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
+                </h2>
+                <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 20px 0; font-weight: 300;">
                   ${cardDisplayText} ile ödeme tamamlandı
                 </p>
-              </div>
-              <div style="padding: 48px 40px;">
-                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
-                  Merhaba ${customerName},
+                <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
+                  Merhaba ${customerName}, <strong style="color: ${COLORS.gold};">#${orderId}</strong> numaralı siparişinizin ödemesi başarıyla tamamlandı. Siparişiniz en kısa sürede hazırlanıp kargoya verilecektir.
                 </p>
-                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
-                  <strong style="color: ${COLORS.gold};">#${orderId}</strong> numaralı siparişinizin ödemesi başarıyla tamamlandı. Siparişiniz en kısa sürede hazırlanıp kargoya verilecektir.
-                </p>
-                <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-                  <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
-                    <thead>
-                      <tr>
-                        <th style="text-align: left; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase;">Ürün</th>
-                        <th style="text-align: center; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase;">Adet</th>
-                        <th style="text-align: right; padding: 10px 12px; border-bottom: 2px solid ${COLORS.primary}; font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.primary}; text-transform: uppercase;">Fiyat</th>
-                      </tr>
-                    </thead>
-                    <tbody>${itemsHtml}</tbody>
-                  </table>
+                <!-- Order Number Badge -->
+                <div style="border: 1px solid ${COLORS.gold}; display: inline-block; padding: 12px 30px; border-radius: 50px;">
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: ${COLORS.gold}; display: block; margin-bottom: 2px;">Sipariş Referansı</span>
+                  <span style="font-size: 16px; font-weight: bold; color: ${COLORS.text}; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 1px;">#${orderId}</span>
                 </div>
-                <div style="background: ${COLORS.primary}; border-radius: 16px; padding: 24px; color: white;">
+              </div>
+              <!-- Product List Section -->
+              <div style="padding: 50px;">
+                <h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 3px; color: ${COLORS.gray}; border-bottom: 1px solid ${COLORS.divider}; padding-bottom: 15px; margin-bottom: 25px; text-align: left;">
+                  Sipariş Özeti
+                </h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tbody>${itemsHtml}</tbody>
+                </table>
+                <!-- Financials -->
+                <div style="margin-top: 30px; border-top: 1px solid ${COLORS.divider}; padding-top: 25px;">
                   <table style="width: 100%;" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0;">Ara Toplam</td>
-                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right;">₺${subtotal.toFixed(2)}</td>
+                      <td style="font-size: 13px; color: ${COLORS.gray}; padding: 6px 0;">Ara Toplam</td>
+                      <td style="font-size: 14px; font-weight: 500; color: ${COLORS.text}; text-align: right; padding: 6px 0;">₺${subtotal.toFixed(2)}</td>
                     </tr>
                     <tr>
-                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0;">Kargo</td>
-                      <td style="font-family: Georgia, serif; font-size: 14px; padding: 6px 0; text-align: right;">${shipping === 0 ? 'Ücretsiz' : '₺' + shipping.toFixed(2)}</td>
+                      <td style="font-size: 13px; color: ${COLORS.gray}; padding: 6px 0;">Kargo & Paketleme</td>
+                      <td style="font-size: 14px; font-weight: 500; color: ${COLORS.text}; text-align: right; padding: 6px 0;">${shipping === 0 ? 'Ücretsiz' : '₺' + shipping.toFixed(2)}</td>
                     </tr>
+                  </table>
+                  <div style="width: 100%; height: 1px; background-color: ${COLORS.divider}; margin: 15px 0;"></div>
+                  <table style="width: 100%;" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td colspan="2" style="padding: 12px 0 6px;"><div style="border-top: 1px solid rgba(255,255,255,0.2);"></div></td>
-                    </tr>
-                    <tr>
-                      <td style="font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: ${COLORS.gold};">Ödenen Tutar</td>
-                      <td style="font-family: Georgia, serif; font-size: 22px; font-weight: bold; text-align: right; color: ${COLORS.gold};">₺${total.toFixed(2)}</td>
+                      <td style="font-size: 18px; font-family: 'Playfair Display', Georgia, serif; font-style: italic; color: ${COLORS.text};">Ödenen Tutar</td>
+                      <td style="font-size: 24px; font-weight: bold; color: ${COLORS.gold}; font-family: 'Playfair Display', Georgia, serif; text-align: right;">₺${total.toFixed(2)}</td>
                     </tr>
                   </table>
                 </div>
-                <div style="text-align: center; margin: 40px 0 20px;">
-                  <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 40px 0 0;">
+                  <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
                     Siparişi Takip Et
                   </a>
                 </div>
@@ -978,52 +1272,51 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
               ${emailFooter}
             `);
           } else {
-            // Payment Failed Email
+            // Payment Failed Email - Yeni Premium Tasarım
             const total = orderData.payment?.total || 0;
             const retryUrl = `https://sadechocolate.com/checkout?orderId=${orderId}&retry=true`;
             const errorMessage = paymentDetails.failureReason || 'Kart bilgilerinizi kontrol ediniz veya farklı bir kart deneyiniz.';
 
             emailSubject = `Ödeme Tamamlanamadı - Sipariş #${orderId}`;
             emailHtml = wrapEmail(`
-              ${emailHeader('Ödeme Başarısız')}
-              <div style="background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); padding: 48px 20px; text-align: center;">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #EF5350 0%, #E53935 100%); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
-                  <span style="font-size: 40px; color: white;">!</span>
-                </div>
-                <h1 style="font-family: Georgia, serif; font-size: 28px; color: ${COLORS.primary}; margin: 0 0 8px; font-weight: normal; font-style: italic;">
+              ${emailHeader()}
+              <!-- Greeting & Message -->
+              <div style="padding: 0 50px; text-align: center;">
+                <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
                   Ödeme Tamamlanamadı
-                </h1>
-                <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0;">
-                  Sipariş #${orderId}
+                </h2>
+                <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
+                  Merhaba ${customerName}, <strong style="color: ${COLORS.gold};">₺${total.toFixed(2)}</strong> tutarındaki ödemeniz tamamlanamadı. Siparişiniz beklemede olup, ödemeyi tekrar deneyebilirsiniz.
                 </p>
+                <!-- Order Number Badge -->
+                <div style="border: 1px solid #EF5350; display: inline-block; padding: 12px 30px; border-radius: 50px;">
+                  <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #EF5350; display: block; margin-bottom: 2px;">Sipariş Referansı</span>
+                  <span style="font-size: 16px; font-weight: bold; color: ${COLORS.text}; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 1px;">#${orderId}</span>
+                </div>
               </div>
-              <div style="padding: 48px 40px;">
-                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 16px;">
-                  Merhaba ${customerName},
-                </p>
-                <p style="font-family: Georgia, serif; font-size: 16px; color: ${COLORS.lightText}; line-height: 1.8; margin: 0 0 24px;">
-                  <strong style="color: ${COLORS.gold};">₺${total.toFixed(2)}</strong> tutarındaki ödemeniz tamamlanamadı. Siparişiniz beklemede olup, ödemeyi tekrar deneyebilirsiniz.
-                </p>
-                <div style="background: #FFEBEE; border-left: 4px solid #EF5350; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
-                  <h4 style="font-family: Arial, sans-serif; font-size: 12px; color: #C62828; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">
+              <!-- Error Section -->
+              <div style="padding: 50px;">
+                <div style="background: #FFF5F5; border-left: 4px solid #EF5350; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
+                  <h4 style="font-size: 12px; color: #C62828; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">
                     Hata Detayı
                   </h4>
-                  <p style="font-family: Georgia, serif; font-size: 14px; color: #B71C1C; margin: 0; line-height: 1.6;">
+                  <p style="font-size: 14px; color: #B71C1C; margin: 0; line-height: 1.6;">
                     ${errorMessage}
                   </p>
                 </div>
-                <div style="background: ${COLORS.cream}; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
-                  <h3 style="font-family: Arial, sans-serif; font-size: 12px; color: ${COLORS.primary}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">
-                    💡 Öneriler
+                <div style="background: ${COLORS.bg}; border-radius: 8px; padding: 24px; margin-bottom: 32px;">
+                  <h3 style="font-size: 12px; color: ${COLORS.text}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    Öneriler
                   </h3>
-                  <ul style="font-family: Georgia, serif; font-size: 14px; color: ${COLORS.text}; margin: 0; padding-left: 20px; line-height: 2;">
+                  <ul style="font-size: 14px; color: ${COLORS.gray}; margin: 0; padding-left: 20px; line-height: 2;">
                     <li>Kart bilgilerinizi kontrol edin</li>
                     <li>Kartınızda yeterli bakiye olduğundan emin olun</li>
                     <li>Farklı bir kart deneyebilirsiniz</li>
                   </ul>
                 </div>
-                <div style="text-align: center; margin: 40px 0 20px;">
-                  <a href="${retryUrl}" style="display: inline-block; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 20px 0 0;">
+                  <a href="${retryUrl}" style="display: inline-block; background: ${COLORS.text}; color: white; padding: 16px 48px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
                     Ödemeyi Tekrar Dene
                   </a>
                 </div>
@@ -1414,4 +1707,136 @@ export const listAdmins = functions.https.onCall(async (request: any) => {
       'Admin listesi alınamadı'
     );
   }
+});
+
+// ==========================================
+// TELEGRAM BILDIRIM
+// ==========================================
+
+const getTelegramConfig = () => {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
+  const chatId = process.env.TELEGRAM_CHAT_ID || '';
+
+  if (!botToken || !chatId) {
+    throw new Error('Telegram credentials not configured');
+  }
+
+  return { botToken, chatId };
+};
+
+// Telegram mesaj gonderme helper
+const sendTelegramMessage = async (message: string) => {
+  const config = getTelegramConfig();
+
+  try {
+    await axios.post(
+      `https://api.telegram.org/bot${config.botToken}/sendMessage`,
+      {
+        chat_id: config.chatId,
+        text: message,
+        parse_mode: 'HTML'
+      }
+    );
+    functions.logger.info('Telegram bildirimi gonderildi');
+  } catch (error: any) {
+    functions.logger.error('Telegram bildirim hatasi:', error.message);
+  }
+};
+
+// Yeni siparis bildirimi - Firestore trigger (v2)
+export const onNewOrder = onDocumentCreated('orders/{orderId}', async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) {
+    functions.logger.error('No data in snapshot');
+    return;
+  }
+
+  const order = snapshot.data();
+  const orderId = event.params.orderId;
+
+  functions.logger.info('Yeni siparis:', orderId);
+
+  if (!order) {
+    functions.logger.error('Order data is undefined');
+    return;
+  }
+
+  // Siparis bilgilerini formatla
+  const customerName = order.customer?.name || order.shipping?.fullName || 'Belirtilmemis';
+  const customerEmail = order.customer?.email || '';
+  const customerPhone = order.customer?.phone || order.shipping?.phone || 'Belirtilmemis';
+  const totalAmount = order.payment?.total || order.totalAmount || 0;
+  const subtotal = order.payment?.subtotal || 0;
+  const shippingCost = order.payment?.shipping || 0;
+  const itemCount = order.items?.length || 0;
+
+  // Adres bilgileri
+  const address = order.shipping?.address || '';
+  const city = order.shipping?.city || '';
+  const district = order.shipping?.district || '';
+  const fullAddress = `${address}\n${district} / ${city}`.trim();
+
+  // Odeme yontemi
+  const paymentMethodMap: Record<string, string> = {
+    'card': 'Kredi Karti',
+    'transfer': 'Havale/EFT',
+    'eft': 'Havale/EFT',
+    'cash': 'Kapida Odeme'
+  };
+  const paymentMethod = paymentMethodMap[order.payment?.method] || order.payment?.method || 'Belirtilmemis';
+
+  // Urun listesi - tum urunler
+  const itemsList = (order.items || [])
+    .map((item: any) => {
+      const name = item.name || item.productName || item.title || 'Urun';
+      const qty = item.quantity || 1;
+      const price = item.price || 0;
+      return `  • ${name} x${qty} (${price} TL)`;
+    })
+    .join('\n');
+
+  // Ekstra bilgiler
+  const extras: string[] = [];
+  if (order.hasGiftBag) extras.push('Hediye Paketi');
+  if (order.isGift) extras.push('Hediye Siparis');
+  if (order.giftMessage) extras.push(`Not: "${order.giftMessage}"`);
+  if (order.orderNote) extras.push(`Siparis Notu: "${order.orderNote}"`);
+
+  const extrasText = extras.length > 0 ? `\n<b>Ekstralar:</b>\n${extras.map(e => `  • ${e}`).join('\n')}` : '';
+
+  const message = `
+📦 <b>YENI SIPARIS!</b>
+
+<b>Siparis No:</b> ${order.orderNumber || order.id || orderId}
+<b>Odeme:</b> ${paymentMethod}
+
+━━━━━━━━━━━━━━━━━━
+👤 <b>MUSTERI BILGILERI</b>
+━━━━━━━━━━━━━━━━━━
+<b>Ad Soyad:</b> ${customerName}
+<b>Telefon:</b> ${customerPhone}
+<b>E-posta:</b> ${customerEmail || 'Belirtilmemis'}
+
+━━━━━━━━━━━━━━━━━━
+📍 <b>TESLIMAT ADRESI</b>
+━━━━━━━━━━━━━━━━━━
+${fullAddress}
+
+━━━━━━━━━━━━━━━━━━
+🛒 <b>URUNLER (${itemCount} adet)</b>
+━━━━━━━━━━━━━━━━━━
+${itemsList}
+${extrasText}
+
+━━━━━━━━━━━━━━━━━━
+💰 <b>ODEME DETAYI</b>
+━━━━━━━━━━━━━━━━━━
+Ara Toplam: ${subtotal.toLocaleString('tr-TR')} TL
+Kargo: ${shippingCost.toLocaleString('tr-TR')} TL
+<b>TOPLAM: ${totalAmount.toLocaleString('tr-TR')} TL</b>
+
+🕐 ${new Date().toLocaleString('tr-TR')}
+  `.trim();
+
+  await sendTelegramMessage(message);
 });

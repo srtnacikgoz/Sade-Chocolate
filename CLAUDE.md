@@ -2,13 +2,24 @@
 
 ## Oturum Başlangıcı
 
-**Her oturum başında oku:**
+**Her oturum başında oku ve uygula:**
 1. `.claude/kişiselbağlam.md` - İletişim tercihleri
 2. `.claude/hedefler.md` - Aktif görevler
+3. `Zihinsel-Algoritma-inşası.md` - GitHub araştırma protokolü (REPO-FIRST, RFC-FIRST)
+4. `Risk-ve-Dayaniklilik-Plani.md` - Anti-fragile metodoloji (RISK-CHECK)
+
+**Proje spesifik referanslar:**
+- `.claude/sade-chocolate-github-patterns.md` - GitHub arama kalıpları
+- `.claude/sade-chocolate-risk-plani.md` - Risk matrisi ve fallback stratejileri
 
 ---
 
 ## Kritik Kurallar
+
+### Marka Bilgisi - ÖNEMLİ
+- **Sade Chocolate "bean-to-bar" ÜRETİCİSİ DEĞİLDİR!**
+- Bean-to-bar ifadesi kesinlikle kullanılmamalı
+- Doğru ifade: "El yapımı", "Artisan", "Butik çikolata"
 
 ### Onay Gerektiren İşlemler
 Aşağıdaki işlemlerden önce **mutlaka onay al:**

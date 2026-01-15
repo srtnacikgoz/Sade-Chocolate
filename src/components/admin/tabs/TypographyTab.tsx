@@ -900,7 +900,7 @@ const TypographyScalePreview: React.FC<{ settings: TypographySettings }> = ({ se
         letterSpacing: settings.elementLetterSpacing.h2,
         lineHeight: settings.elementLineHeight.h2
       }}>
-        H2: Bean-to-Bar Excellence
+        H2: Artisan Excellence
       </h2>
       <h3 style={{
         fontFamily: `${settings.h3Font.family}, ${settings.h3Font.fallback}`,
@@ -927,7 +927,7 @@ const TypographyScalePreview: React.FC<{ settings: TypographySettings }> = ({ se
         letterSpacing: settings.elementLetterSpacing.body,
         lineHeight: settings.elementLineHeight.body
       }}>
-        Body: Bean-to-bar çikolata yapımında kusursuzluğu hedefleyen, Türkiye'nin en ince zevkli çikolata markası.
+        Body: El yapımı artisan çikolata yapımında kusursuzluğu hedefleyen, Türkiye'nin en ince zevkli çikolata markası.
       </p>
       <p style={{ fontFamily: `${settings.captionFont.family}, ${settings.captionFont.fallback}`, fontSize: settings.fontSize.small.desktop }}>
         Small: Küçük açıklama metni
@@ -1049,7 +1049,7 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
           letterSpacing: settings.elementLetterSpacing.h1,
           lineHeight: settings.elementLineHeight.h1
         }} className="mb-2">
-          Bean-to-Bar Ustalığı
+          El Yapımı Ustalığı
         </h1>
         <p style={{
           fontFamily: `${settings.bodyFont.family}, ${settings.bodyFont.fallback}`,
