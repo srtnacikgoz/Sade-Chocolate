@@ -62,6 +62,23 @@ const getMNGCommandConfig = () => {
   return { clientId, clientSecret, customerNumber, password };
 };
 
+// MNG Identity API credentials (JWT token için)
+const getMNGIdentityConfig = () => {
+  const clientId = process.env.MNG_IDENTITY_CLIENT_ID || '';
+  const clientSecret = process.env.MNG_IDENTITY_CLIENT_SECRET || '';
+  const customerNumber = process.env.MNG_CUSTOMER_NUMBER || '';
+  const password = process.env.MNG_PASSWORD || '';
+
+  if (!clientId || !clientSecret || !customerNumber || !password) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'MNG Identity API credentials not configured'
+    );
+  }
+
+  return { clientId, clientSecret, customerNumber, password };
+};
+
 // JWT Token cache
 let cachedJwtToken: string | null = null;
 let tokenExpireTime: number = 0;
@@ -73,7 +90,7 @@ const getMNGJwtToken = async (): Promise<string> => {
     return cachedJwtToken;
   }
 
-  const config = getMNGCommandConfig();
+  const config = getMNGIdentityConfig();
 
   const headers: Record<string, string> = {
     'X-IBM-Client-Id': config.clientId,
@@ -101,9 +118,20 @@ const getMNGJwtToken = async (): Promise<string> => {
     const tokenData = response.data;
     cachedJwtToken = tokenData.jwt;
 
-    // Token expire time'ı parse et (ISO string olarak gelebilir)
+    // Token expire time'ı parse et (MNG formatı: "DD.MM.YYYY HH:mm:ss")
     if (tokenData.jwtExpireDate) {
-      tokenExpireTime = new Date(tokenData.jwtExpireDate).getTime();
+      // "16.01.2026 23:10:56" formatını parse et
+      const parts = tokenData.jwtExpireDate.match(/(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})/);
+      if (parts) {
+        const [, day, month, year, hour, minute, second] = parts;
+        tokenExpireTime = new Date(
+          parseInt(year), parseInt(month) - 1, parseInt(day),
+          parseInt(hour), parseInt(minute), parseInt(second)
+        ).getTime();
+      } else {
+        // Parse edilemezse default 1 saat
+        tokenExpireTime = Date.now() + 3600000;
+      }
     } else {
       // Default: 1 saat
       tokenExpireTime = Date.now() + 3600000;
