@@ -4,7 +4,6 @@ import { X, Truck, Package, AlertCircle, CheckCircle, Loader } from 'lucide-reac
 import { createShipment } from '../../services/shippingService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { sendShippingNotificationEmail } from '../../services/emailService';
 
 interface CreateShipmentModalProps {
   order: Order;
@@ -105,16 +104,8 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
           }
         });
 
-        // Müşteriye kargo bildirimi emaili gönder
-        if (order.customer?.email) {
-          sendShippingNotificationEmail(order.customer.email, {
-            customerName: order.customer.name || 'Değerli Müşterimiz',
-            orderId: order.orderNumber || order.id,
-            trackingNumber: result.trackingNumber,
-            carrierName: result.carrier || 'MNG Kargo',
-            trackingUrl: `https://www.mngkargo.com.tr/gonderi-takip/?q=${result.trackingNumber}`
-          }).catch(err => console.log('Kargo email gönderilemedi:', err));
-        }
+        // Email artık burada gönderilmiyor
+        // Scheduled function (checkShipmentStatus) kargo harekete geçince otomatik gönderecek
 
         onSuccess?.(result.trackingNumber);
         onClose();

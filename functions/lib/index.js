@@ -36,11 +36,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onNewOrder = exports.listAdmins = exports.checkAdminStatus = exports.removeAdminClaim = exports.setAdminClaim = exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
+exports.getGeliverDistricts = exports.getGeliverCities = exports.trackGeliverShipment = exports.acceptGeliverOffer = exports.getGeliverOffers = exports.createGeliverShipment = exports.checkShipmentStatus = exports.checkAllShipmentStatus = exports.checkSingleShipmentStatus = exports.onNewOrder = exports.listAdmins = exports.checkAdminStatus = exports.removeAdminClaim = exports.setAdminClaim = exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const v2_1 = require("firebase-functions/v2");
 const firestore_1 = require("firebase-functions/v2/firestore");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
 const axios_1 = __importDefault(require("axios"));
 const iyzicoService = __importStar(require("./services/iyzicoService"));
 // Set global region for all functions
@@ -173,11 +174,23 @@ const getCBSConfig = () => {
 const mngRequest = async (endpoint, method = 'GET', data) => {
     var _a, _b, _c, _d;
     const config = getMNGConfig();
+    // JWT token al (Query API de token gerektirebilir)
+    let jwtToken = '';
+    try {
+        jwtToken = await getMNGJwtToken();
+    }
+    catch (tokenErr) {
+        functions.logger.warn('JWT token alınamadı, token olmadan devam ediliyor:', tokenErr);
+    }
     const headers = {
         'X-IBM-Client-Id': config.clientId,
         'X-IBM-Client-Secret': config.clientSecret,
         'Content-Type': 'application/json'
     };
+    // JWT token varsa ekle
+    if (jwtToken) {
+        headers['Authorization'] = `Bearer ${jwtToken}`;
+    }
     try {
         const response = await (0, axios_1.default)({
             method,
@@ -328,13 +341,49 @@ exports.createShipment = functions.https.onCall(async (request) => {
     var _a, _b, _c;
     const { orderId, customerName, customerPhone, customerEmail, shippingAddress, shippingCity, shippingDistrict, weight = 1, // kg
     desi = 2, contentDescription = 'Çikolata Ürünleri', coldPackage = false } = request.data;
+    // DEBUG: Gelen verileri logla
+    functions.logger.info('DEBUG - Received request data:', {
+        orderId,
+        customerName,
+        customerPhone,
+        customerPhoneType: typeof customerPhone,
+        customerPhoneLength: customerPhone === null || customerPhone === void 0 ? void 0 : customerPhone.length,
+        hasCustomerPhone: !!customerPhone,
+        shippingCity,
+        shippingDistrict
+    });
     // Validation
     if (!orderId || !customerName || !customerPhone || !shippingAddress) {
         throw new functions.https.HttpsError('invalid-argument', 'orderId, customerName, customerPhone ve shippingAddress gerekli');
     }
     // Alıcı şehir/ilçe kodlarını hesapla
     const receiverCityCode = getCityCode(shippingCity || '');
-    const receiverDistrictCode = getDistrictCode(shippingDistrict || '', receiverCityCode);
+    // CBS API'den dinamik ilçe kodu al
+    let receiverDistrictCode;
+    try {
+        const districts = await cbsRequest(`/getdistricts/${receiverCityCode}`);
+        const normalizedSearch = (shippingDistrict || '').toLowerCase()
+            .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+            .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+        const found = districts.find((d) => {
+            const dName = d.name.toLowerCase()
+                .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
+                .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+            return dName === normalizedSearch || dName.includes(normalizedSearch) || normalizedSearch.includes(dName);
+        });
+        if (found) {
+            receiverDistrictCode = parseInt(found.code);
+            functions.logger.info('CBS API ilçe kodu bulundu:', { district: shippingDistrict, code: receiverDistrictCode });
+        }
+        else {
+            receiverDistrictCode = getDistrictCode(shippingDistrict || '', receiverCityCode);
+            functions.logger.warn('CBS API ilçe bulunamadı, fallback kullanıldı:', { district: shippingDistrict, code: receiverDistrictCode });
+        }
+    }
+    catch (cbsError) {
+        functions.logger.warn('CBS API hatası, fallback kullanılıyor:', cbsError.message);
+        receiverDistrictCode = getDistrictCode(shippingDistrict || '', receiverCityCode);
+    }
     // Barkod oluştur - benzersiz olmalı, BÜYÜK HARF
     const barcode = `SADE${Date.now().toString(36).toUpperCase()}`;
     const referenceId = orderId.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -352,7 +401,8 @@ exports.createShipment = functions.https.onCall(async (request) => {
             content: contentDescription,
             smsPreference1: 1, // Varış SMS (Alıcıya)
             smsPreference2: 1, // Hazırlandı SMS (Alıcıya)
-            smsPreference3: 0 // Gönderici SMS (Kapalı)
+            smsPreference3: 0, // Gönderici SMS (Kapalı)
+            marketPlaceShortCode: '' // Kendi site satışları için boş
         },
         // Paket Bilgileri
         orderPieceList: [
@@ -367,9 +417,11 @@ exports.createShipment = functions.https.onCall(async (request) => {
         recipient: {
             fullName: customerName,
             cityCode: receiverCityCode,
+            cityName: shippingCity,
             districtCode: receiverDistrictCode,
+            districtName: shippingDistrict,
             address: shippingAddress,
-            mobilePhone: customerPhone.replace(/\D/g, ''), // Sadece rakamlar
+            mobilePhoneNumber: customerPhone.replace(/\D/g, ''), // Sadece rakamlar
             email: customerEmail || ''
         }
     };
@@ -1538,5 +1590,421 @@ Kargo: ${shippingCost.toLocaleString('tr-TR')} TL
 🕐 ${new Date().toLocaleString('tr-TR')}
   `.trim();
     await sendTelegramMessage(message);
+});
+// ==========================================
+// SHIPMENT STATUS CHECK FUNCTIONS
+// ==========================================
+/**
+ * Tek Kargo Durum Kontrolü - Manuel tetikleme
+ * Admin panelinden tek bir siparişin durumunu kontrol eder
+ */
+exports.checkSingleShipmentStatus = functions.https.onCall(async (request) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    const { orderId } = request.data;
+    if (!orderId) {
+        throw new functions.https.HttpsError('invalid-argument', 'orderId gerekli');
+    }
+    functions.logger.info('Tek kargo kontrolü:', { orderId });
+    const db = admin.firestore();
+    const orderDoc = await db.collection('orders').doc(orderId).get();
+    if (!orderDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Sipariş bulunamadı');
+    }
+    const order = orderDoc.data();
+    // Debug: Tüm tracking bilgilerini logla
+    functions.logger.info('Order tracking data:', {
+        'tracking.referenceId': (_a = order.tracking) === null || _a === void 0 ? void 0 : _a.referenceId,
+        'tracking.shipmentId': (_b = order.tracking) === null || _b === void 0 ? void 0 : _b.shipmentId,
+        'tracking.trackingNumber': (_c = order.tracking) === null || _c === void 0 ? void 0 : _c.trackingNumber,
+        'tracking.barcode': (_d = order.tracking) === null || _d === void 0 ? void 0 : _d.barcode,
+        'orderNumber': order.orderNumber,
+        'shipping.trackingNumber': (_e = order.shipping) === null || _e === void 0 ? void 0 : _e.trackingNumber
+    });
+    // Tüm olası değerleri al
+    const shipmentId = (_f = order.tracking) === null || _f === void 0 ? void 0 : _f.shipmentId;
+    const referenceId = ((_g = order.tracking) === null || _g === void 0 ? void 0 : _g.referenceId) || order.orderNumber;
+    const barcode = (_h = order.tracking) === null || _h === void 0 ? void 0 : _h.barcode;
+    // referenceId'den tire kaldırılmış versiyonu da dene (SADE-158621 -> SADE158621)
+    const referenceIdNoHyphen = referenceId === null || referenceId === void 0 ? void 0 : referenceId.replace(/-/g, '');
+    if (!shipmentId && !referenceId && !barcode) {
+        return { success: false, message: 'Takip numarası bulunamadı' };
+    }
+    try {
+        let trackingData;
+        let usedEndpoint = '';
+        // 1. Önce shipmentId ile dene (en güvenilir)
+        if (shipmentId) {
+            try {
+                usedEndpoint = `/trackshipmentByShipmentId/${shipmentId}`;
+                functions.logger.info('Trying shipmentId:', { shipmentId, endpoint: usedEndpoint });
+                trackingData = await mngRequest(usedEndpoint);
+            }
+            catch (err) {
+                functions.logger.warn('shipmentId başarısız:', err.message);
+            }
+        }
+        // 2. referenceId ile dene (tire ile)
+        if (!trackingData && referenceId) {
+            try {
+                usedEndpoint = `/trackshipment/${referenceId}`;
+                functions.logger.info('Trying referenceId:', { referenceId, endpoint: usedEndpoint });
+                trackingData = await mngRequest(usedEndpoint);
+            }
+            catch (err) {
+                functions.logger.warn('referenceId başarısız:', err.message);
+            }
+        }
+        // 3. referenceId tiresiz dene
+        if (!trackingData && referenceIdNoHyphen && referenceIdNoHyphen !== referenceId) {
+            try {
+                usedEndpoint = `/trackshipment/${referenceIdNoHyphen}`;
+                functions.logger.info('Trying referenceId (no hyphen):', { referenceIdNoHyphen, endpoint: usedEndpoint });
+                trackingData = await mngRequest(usedEndpoint);
+            }
+            catch (err) {
+                functions.logger.warn('referenceId (no hyphen) başarısız:', err.message);
+            }
+        }
+        // 4. Barcode ile dene
+        if (!trackingData && barcode) {
+            try {
+                usedEndpoint = `/trackshipment/${barcode}`;
+                functions.logger.info('Trying barcode:', { barcode, endpoint: usedEndpoint });
+                trackingData = await mngRequest(usedEndpoint);
+            }
+            catch (err) {
+                functions.logger.warn('barcode başarısız:', err.message);
+            }
+        }
+        // Hiçbiri çalışmadıysa
+        if (!trackingData) {
+            return {
+                success: false,
+                message: 'MNG API ile bağlantı kurulamadı. Gönderi henüz sisteme kaydedilmemiş olabilir.',
+                triedValues: { shipmentId, referenceId, referenceIdNoHyphen, barcode }
+            };
+        }
+        const hasMovement = trackingData && Array.isArray(trackingData) && trackingData.length > 0;
+        const displayTrackingNumber = referenceId || shipmentId;
+        if (hasMovement && order.status === 'shipped') {
+            // Durumu güncelle
+            await orderDoc.ref.update({
+                status: 'in_transit',
+                'tracking.firstMovementAt': new Date(),
+                'tracking.lastCheckedAt': new Date()
+            });
+            // Email gönder
+            if ((_j = order.customer) === null || _j === void 0 ? void 0 : _j.email) {
+                await db.collection('mail').add({
+                    to: order.customer.email,
+                    template: {
+                        name: 'shipping_notification',
+                        data: {
+                            customerName: order.customer.name || 'Değerli Müşterimiz',
+                            orderId: order.orderNumber || orderId,
+                            trackingNumber: displayTrackingNumber,
+                            carrierName: 'MNG Kargo',
+                            trackingUrl: `https://www.mngkargo.com.tr/gonderi-takip/?q=${displayTrackingNumber}`
+                        }
+                    }
+                });
+            }
+            return {
+                success: true,
+                status: 'in_transit',
+                message: 'Kargo harekete geçti, müşteriye bildirim gönderildi',
+                trackingData
+            };
+        }
+        await orderDoc.ref.update({ 'tracking.lastCheckedAt': new Date() });
+        return {
+            success: true,
+            status: order.status,
+            message: hasMovement ? 'Kargo zaten hareket halinde' : 'Henüz hareket yok',
+            trackingData
+        };
+    }
+    catch (error) {
+        functions.logger.error('Tracking hatası:', error);
+        return { success: false, message: error.message || 'Takip bilgisi alınamadı' };
+    }
+});
+/**
+ * Toplu Kargo Durum Kontrolü - Manuel tetikleme
+ * Tüm "shipped" durumundaki siparişleri kontrol eder
+ */
+exports.checkAllShipmentStatus = functions.https.onCall(async () => {
+    var _a, _b, _c, _d;
+    functions.logger.info('Toplu kargo kontrolü başladı');
+    const db = admin.firestore();
+    const results = { checked: 0, updated: 0, errors: 0 };
+    try {
+        const shippedOrders = await db.collection('orders')
+            .where('status', '==', 'shipped')
+            .get();
+        if (shippedOrders.empty) {
+            return { success: true, message: 'Kontrol edilecek kargo yok', results };
+        }
+        for (const orderDoc of shippedOrders.docs) {
+            const order = orderDoc.data();
+            // MNG API referenceId bekliyor (bizim sipariş numaramız), barcode değil
+            const trackingNumber = ((_a = order.tracking) === null || _a === void 0 ? void 0 : _a.referenceId) || order.orderNumber || ((_b = order.tracking) === null || _b === void 0 ? void 0 : _b.trackingNumber) || ((_c = order.shipping) === null || _c === void 0 ? void 0 : _c.trackingNumber);
+            results.checked++;
+            if (!trackingNumber)
+                continue;
+            try {
+                const trackingData = await mngRequest(`/trackshipment/${trackingNumber}`);
+                const hasMovement = trackingData && Array.isArray(trackingData) && trackingData.length > 0;
+                if (hasMovement) {
+                    await orderDoc.ref.update({
+                        status: 'in_transit',
+                        'tracking.firstMovementAt': new Date(),
+                        'tracking.lastCheckedAt': new Date()
+                    });
+                    if ((_d = order.customer) === null || _d === void 0 ? void 0 : _d.email) {
+                        await db.collection('mail').add({
+                            to: order.customer.email,
+                            template: {
+                                name: 'shipping_notification',
+                                data: {
+                                    customerName: order.customer.name || 'Değerli Müşterimiz',
+                                    orderId: order.orderNumber || orderDoc.id,
+                                    trackingNumber,
+                                    carrierName: 'MNG Kargo',
+                                    trackingUrl: `https://www.mngkargo.com.tr/gonderi-takip/?q=${trackingNumber}`
+                                }
+                            }
+                        });
+                    }
+                    results.updated++;
+                }
+                else {
+                    await orderDoc.ref.update({ 'tracking.lastCheckedAt': new Date() });
+                }
+            }
+            catch (err) {
+                results.errors++;
+            }
+        }
+        return {
+            success: true,
+            message: `${results.checked} kargo kontrol edildi, ${results.updated} güncellendi`,
+            results
+        };
+    }
+    catch (error) {
+        functions.logger.error('Toplu kontrol hatası:', error);
+        throw new functions.https.HttpsError('internal', error.message);
+    }
+});
+/**
+ * Kargo Durum Kontrolü - 30 dakikada bir çalışır (Otomatik)
+ * "shipped" durumundaki siparişleri kontrol eder
+ * Kargo harekete geçtiyse email gönderir ve durumu günceller
+ */
+exports.checkShipmentStatus = (0, scheduler_1.onSchedule)({
+    schedule: 'every 30 minutes',
+    region: 'europe-west3',
+    timeoutSeconds: 300,
+}, async () => {
+    var _a, _b, _c, _d;
+    functions.logger.info('Kargo durum kontrolü başladı');
+    const db = admin.firestore();
+    try {
+        // "shipped" durumundaki siparişleri al
+        const shippedOrders = await db.collection('orders')
+            .where('status', '==', 'shipped')
+            .get();
+        if (shippedOrders.empty) {
+            functions.logger.info('Kontrol edilecek kargo yok');
+            return;
+        }
+        functions.logger.info(`${shippedOrders.size} adet kargo kontrol edilecek`);
+        for (const orderDoc of shippedOrders.docs) {
+            const order = orderDoc.data();
+            const orderId = order.orderNumber || orderDoc.id;
+            // MNG API referenceId bekliyor (bizim sipariş numaramız), barcode değil
+            const trackingNumber = ((_a = order.tracking) === null || _a === void 0 ? void 0 : _a.referenceId) || order.orderNumber || ((_b = order.tracking) === null || _b === void 0 ? void 0 : _b.trackingNumber) || ((_c = order.shipping) === null || _c === void 0 ? void 0 : _c.trackingNumber);
+            if (!trackingNumber) {
+                functions.logger.warn(`Sipariş ${orderId} için takip numarası yok`);
+                continue;
+            }
+            try {
+                // MNG Tracking API ile durumu kontrol et
+                const trackingData = await mngRequest(`/trackshipment/${trackingNumber}`);
+                // Hareket var mı kontrol et (en az bir hareket kaydı varsa)
+                const hasMovement = trackingData &&
+                    Array.isArray(trackingData) &&
+                    trackingData.length > 0;
+                if (hasMovement) {
+                    functions.logger.info(`Kargo harekete geçti: ${orderId}`, { trackingNumber });
+                    // Durumu "in_transit" olarak güncelle
+                    await orderDoc.ref.update({
+                        status: 'in_transit',
+                        'tracking.firstMovementAt': new Date(),
+                        'tracking.lastCheckedAt': new Date()
+                    });
+                    // Email gönder
+                    if ((_d = order.customer) === null || _d === void 0 ? void 0 : _d.email) {
+                        const customerName = order.customer.name || 'Değerli Müşterimiz';
+                        const trackingUrl = `https://www.mngkargo.com.tr/gonderi-takip/?q=${trackingNumber}`;
+                        // SendGrid ile email gönder
+                        await db.collection('mail').add({
+                            to: order.customer.email,
+                            template: {
+                                name: 'shipping_notification',
+                                data: {
+                                    customerName,
+                                    orderId,
+                                    trackingNumber,
+                                    carrierName: 'MNG Kargo',
+                                    trackingUrl
+                                }
+                            }
+                        });
+                        functions.logger.info(`Kargo emaili kuyruğa eklendi: ${order.customer.email}`);
+                    }
+                }
+                else {
+                    // Henüz hareket yok, sadece son kontrol zamanını güncelle
+                    await orderDoc.ref.update({
+                        'tracking.lastCheckedAt': new Date()
+                    });
+                }
+            }
+            catch (trackingError) {
+                functions.logger.warn(`Takip hatası (${orderId}):`, trackingError.message);
+                // Hata olsa bile diğer siparişlere devam et
+            }
+        }
+        functions.logger.info('Kargo durum kontrolü tamamlandı');
+    }
+    catch (error) {
+        functions.logger.error('Kargo durum kontrolü hatası:', error);
+    }
+});
+// ==========================================
+// GELIVER KARGO API FUNCTIONS
+// ==========================================
+const geliverService = __importStar(require("./services/geliverService"));
+/**
+ * Geliver ile Kargo Oluştur
+ * MNG yerine Geliver API kullanır - 10+ kargo firması desteği
+ */
+exports.createGeliverShipment = functions.https.onCall(async (request) => {
+    const { orderId, customerName, customerPhone, customerEmail, shippingAddress, shippingCity, shippingDistrict, weight = 1, desi = 2, contentDescription = 'Çikolata Ürünleri', autoAccept = true // Otomatik en ucuz teklifi kabul et
+     } = request.data;
+    // Validation
+    if (!orderId || !customerName || !customerPhone || !shippingAddress) {
+        throw new functions.https.HttpsError('invalid-argument', 'orderId, customerName, customerPhone ve shippingAddress gerekli');
+    }
+    functions.logger.info('Creating Geliver shipment:', {
+        orderId,
+        customerName,
+        city: shippingCity,
+        district: shippingDistrict,
+        autoAccept
+    });
+    try {
+        // 1. Gönderi oluştur
+        const shipment = await geliverService.createGeliverShipment({
+            orderId,
+            customerName,
+            customerPhone,
+            customerEmail,
+            shippingAddress,
+            shippingCity: shippingCity || 'İstanbul',
+            shippingDistrict: shippingDistrict || '',
+            weight,
+            desi,
+            contentDescription
+        });
+        let result = {
+            success: true,
+            shipmentId: shipment.id,
+            status: shipment.status
+        };
+        // 2. Otomatik kabul aktifse en iyi teklifi kabul et
+        if (autoAccept) {
+            try {
+                const accepted = await geliverService.autoAcceptBestOffer(shipment.id);
+                result = Object.assign(Object.assign({}, result), { trackingNumber: accepted.trackingNumber, labelUrl: accepted.labelUrl, carrier: accepted.carrier, price: accepted.price });
+            }
+            catch (offerError) {
+                functions.logger.warn('Auto-accept failed, returning shipment for manual selection:', offerError.message);
+                // Teklifler henüz hazır değilse shipment'ı döndür
+                result.offers = shipment.offers;
+                result.message = 'Gönderi oluşturuldu. Teklifler hazır olunca manuel seçim yapabilirsiniz.';
+            }
+        }
+        return Object.assign(Object.assign({}, result), { timestamp: new Date().toISOString() });
+    }
+    catch (error) {
+        functions.logger.error('Geliver shipment creation failed:', error);
+        throw new functions.https.HttpsError('internal', error.message || 'Kargo oluşturulamadı', error.details);
+    }
+});
+/**
+ * Geliver Tekliflerini Getir
+ */
+exports.getGeliverOffers = functions.https.onCall(async (request) => {
+    const { shipmentId } = request.data;
+    if (!shipmentId) {
+        throw new functions.https.HttpsError('invalid-argument', 'shipmentId gerekli');
+    }
+    const offers = await geliverService.getShipmentOffers(shipmentId);
+    return {
+        success: true,
+        offers,
+        timestamp: new Date().toISOString()
+    };
+});
+/**
+ * Geliver Teklif Kabul Et
+ */
+exports.acceptGeliverOffer = functions.https.onCall(async (request) => {
+    const { shipmentId, offerId } = request.data;
+    if (!shipmentId || !offerId) {
+        throw new functions.https.HttpsError('invalid-argument', 'shipmentId ve offerId gerekli');
+    }
+    const result = await geliverService.acceptOffer(shipmentId, offerId);
+    return Object.assign(Object.assign({ success: true }, result), { timestamp: new Date().toISOString() });
+});
+/**
+ * Geliver Kargo Takip
+ */
+exports.trackGeliverShipment = functions.https.onCall(async (request) => {
+    const { shipmentId } = request.data;
+    if (!shipmentId) {
+        throw new functions.https.HttpsError('invalid-argument', 'shipmentId gerekli');
+    }
+    const tracking = await geliverService.trackGeliverShipment(shipmentId);
+    return Object.assign(Object.assign({ success: true }, tracking), { timestamp: new Date().toISOString() });
+});
+/**
+ * Geliver Şehir Listesi
+ */
+exports.getGeliverCities = functions.https.onCall(async () => {
+    const cities = await geliverService.getGeliverCities();
+    return {
+        success: true,
+        data: cities,
+        timestamp: new Date().toISOString()
+    };
+});
+/**
+ * Geliver İlçe Listesi
+ */
+exports.getGeliverDistricts = functions.https.onCall(async (request) => {
+    const { cityCode } = request.data;
+    if (!cityCode) {
+        throw new functions.https.HttpsError('invalid-argument', 'cityCode gerekli');
+    }
+    const districts = await geliverService.getGeliverDistricts(cityCode);
+    return {
+        success: true,
+        data: districts,
+        timestamp: new Date().toISOString()
+    };
 });
 //# sourceMappingURL=index.js.map

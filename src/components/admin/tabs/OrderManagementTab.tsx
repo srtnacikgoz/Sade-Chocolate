@@ -38,6 +38,7 @@ import { TierBadge } from '../../ui/TierBadge';
 import type { LoyaltyTier } from '../../../types/loyalty';
 import { CreateShipmentModal } from '../CreateShipmentModal';
 import { sendDeliveryConfirmationEmail, sendShippingNotificationEmail } from '../../../services/emailService';
+import { checkSingleShipmentStatus, checkAllShipmentStatus } from '../../../services/shippingService';
 
 // --- EFT COUNTDOWN TIMER ---
 const EftCountdown = ({ deadline, compact = false }: { deadline: string; compact?: boolean }) => {
@@ -2112,6 +2113,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
   const [isStatusChangeModalOpen, setIsStatusChangeModalOpen] = useState(false);
   const [isCreateShipmentModalOpen, setIsCreateShipmentModalOpen] = useState(false);
   const [isCalculatingMNG, setIsCalculatingMNG] = useState(false);
+  const [isCheckingShipment, setIsCheckingShipment] = useState(false);
 
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -2219,6 +2221,30 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
     }
   };
 
+  // Tek sipariş kargo durumu kontrolü
+  const handleCheckSingleShipment = async () => {
+    const docId = order.firestoreId || order.id;
+    setIsCheckingShipment(true);
+    info('Kargo durumu kontrol ediliyor...');
+
+    try {
+      const result = await checkSingleShipmentStatus(docId);
+      if (result.success) {
+        if (result.status === 'in_transit') {
+          success('✅ Kargo harekete geçti! Müşteriye bildirim gönderildi.');
+        } else {
+          info(result.message || 'Kargo durumu güncellendi.');
+        }
+      } else {
+        error(`❌ ${result.message}`);
+      }
+    } catch (err: any) {
+      error(`❌ Kontrol hatası: ${err.message}`);
+    } finally {
+      setIsCheckingShipment(false);
+    }
+  };
+
   const handleAction = (action: string) => {
     if (action === 'E-posta Gönder') {
       setIsEmailModalOpen(true);
@@ -2242,6 +2268,11 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
     }
     if (action === 'Kargo Oluştur') {
       setIsCreateShipmentModalOpen(true);
+      setIsDropdownOpen(false);
+      return;
+    }
+    if (action === 'Kargo Kontrol') {
+      handleCheckSingleShipment();
       setIsDropdownOpen(false);
       return;
     }
@@ -2785,6 +2816,18 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                     <Package size={16} className="text-green-600" />
                     <span className="text-sm text-brown-900 dark:text-white">Kargo Oluştur (MNG)</span>
                   </button>
+                  {(order.status === 'shipped' || order.status === 'in_transit') && (
+                    <button
+                      onClick={() => handleAction('Kargo Kontrol')}
+                      disabled={isCheckingShipment}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left disabled:opacity-50"
+                    >
+                      <RefreshCw size={16} className={`text-blue-600 ${isCheckingShipment ? 'animate-spin' : ''}`} />
+                      <span className="text-sm text-brown-900 dark:text-white">
+                        {isCheckingShipment ? 'Kontrol Ediliyor...' : 'Kargo Durumunu Kontrol Et'}
+                      </span>
+                    </button>
+                  )}
                   <button
                     onClick={() => handleAction('Etiket Ekle')}
                     className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
@@ -3324,6 +3367,7 @@ export const OrderManagementTab: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [isSeedingOrders, setIsSeedingOrders] = useState(false);
+  const [isCheckingShipments, setIsCheckingShipments] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Toast system
@@ -3382,6 +3426,28 @@ export const OrderManagementTab: React.FC = () => {
       toastError(`❌ Sipariş eklenemedi: ${err.message}`);
     } finally {
       setIsSeedingOrders(false);
+    }
+  };
+
+  // 📦 Tüm kargoları kontrol et
+  const handleCheckAllShipments = async () => {
+    setIsCheckingShipments(true);
+    info('Kargo durumları kontrol ediliyor...');
+
+    try {
+      const result = await checkAllShipmentStatus();
+      if (result.success) {
+        success(`✅ ${result.message}`);
+        if (result.results && result.results.updated > 0) {
+          info(`${result.results.updated} kargo harekete geçti, müşterilere bildirim gönderildi.`);
+        }
+      } else {
+        toastError(`❌ Kontrol başarısız: ${result.message}`);
+      }
+    } catch (err: any) {
+      toastError(`❌ Kontrol hatası: ${err.message}`);
+    } finally {
+      setIsCheckingShipments(false);
     }
   };
 
@@ -3721,6 +3787,15 @@ export const OrderManagementTab: React.FC = () => {
           >
             <XCircle size={14} />
             {isCleaningUp ? 'Temizleniyor...' : 'Boş Siparişleri Temizle'}
+          </button>
+          <button
+            onClick={handleCheckAllShipments}
+            disabled={isCheckingShipments}
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-[10px] uppercase tracking-widest font-bold rounded-2xl transition-colors flex items-center gap-2"
+            title="Tüm shipped siparişlerin kargo durumunu kontrol et"
+          >
+            <RefreshCw size={14} className={isCheckingShipments ? 'animate-spin' : ''} />
+            {isCheckingShipments ? 'Kontrol Ediliyor...' : 'Kargoları Kontrol Et'}
           </button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />

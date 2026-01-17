@@ -289,3 +289,41 @@ export const createShipment = async (params: {
     return null;
   }
 };
+
+/**
+ * Tek Kargo Durum Kontrolü - Manuel tetikleme
+ * @param orderId - Firestore document ID
+ */
+export const checkSingleShipmentStatus = async (orderId: string): Promise<{
+  success: boolean;
+  status?: string;
+  message: string;
+  trackingData?: any;
+}> => {
+  try {
+    const checkFn = httpsCallable(functions, 'checkSingleShipmentStatus');
+    const result = await checkFn({ orderId });
+    return result.data as any;
+  } catch (error: any) {
+    console.error('Tek kargo kontrol hatası:', error);
+    return { success: false, message: error.message || 'Kontrol başarısız' };
+  }
+};
+
+/**
+ * Toplu Kargo Durum Kontrolü - Tüm shipped siparişleri kontrol eder
+ */
+export const checkAllShipmentStatus = async (): Promise<{
+  success: boolean;
+  message: string;
+  results?: { checked: number; updated: number; errors: number };
+}> => {
+  try {
+    const checkFn = httpsCallable(functions, 'checkAllShipmentStatus');
+    const result = await checkFn();
+    return result.data as any;
+  } catch (error: any) {
+    console.error('Toplu kargo kontrol hatası:', error);
+    return { success: false, message: error.message || 'Kontrol başarısız' };
+  }
+};
