@@ -20,12 +20,27 @@ export interface OrderItem {
 
 interface OrdersViewProps {
   orders: Order[];
+  trackOrderId?: string | null; // Email linkinden gelen kargo takip parametresi
 }
 
-export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
+export const OrdersView: React.FC<OrdersViewProps> = ({ orders, trackOrderId }) => {
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showTracking, setShowTracking] = useState(false);
+
+  // URL'den gelen track parametresiyle otomatik kargo takip modalı aç
+  React.useEffect(() => {
+    if (trackOrderId && orders.length > 0) {
+      // Sipariş ID'sine göre bul (orderNumber veya id)
+      const orderToTrack = orders.find(
+        o => o.orderNumber === trackOrderId || o.id === trackOrderId
+      );
+      if (orderToTrack) {
+        setSelectedOrder(orderToTrack);
+        setShowTracking(true);
+      }
+    }
+  }, [trackOrderId, orders]);
 
   // Sipariş Durum Renkleri ve İkonları
   const getStatusDetails = (status: string) => {
@@ -160,6 +175,8 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders }) => {
               <ShipmentTracker
                 orderId={selectedOrder.orderNumber || selectedOrder.id}
                 trackingNumber={selectedOrder.tracking?.trackingNumber || selectedOrder.shipping?.trackingNumber}
+                shipmentId={selectedOrder.tracking?.shipmentId}
+                provider={selectedOrder.tracking?.provider}
               />
             ) : (
             <div className="p-8 space-y-8">

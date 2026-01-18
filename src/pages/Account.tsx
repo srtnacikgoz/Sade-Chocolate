@@ -23,10 +23,15 @@ export const Account: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect');
-  const viewParam = searchParams.get('view');
+  const viewParam = searchParams.get('view') || searchParams.get('tab'); // tab parametresi de destekleniyor
+  const trackOrderId = searchParams.get('track'); // Kargo takip için sipariş ID
 
   // URL'deki view parametresine göre başlangıç view'ını belirle
   const getInitialView = (): AccountView => {
+    // track parametresi varsa otomatik olarak orders görünümüne git
+    if (trackOrderId) {
+      return 'orders';
+    }
     if (viewParam && ['overview', 'orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
       return viewParam as AccountView;
     }
@@ -52,12 +57,17 @@ export const Account: React.FC = () => {
     }
   }, [loading, isLoggedIn, redirectTo, navigate]);
 
-  // URL'de view parametresi varsa ilgili görünüme git
+  // URL'de view/tab parametresi veya track parametresi varsa ilgili görünüme git
   useEffect(() => {
-    if (isLoggedIn && viewParam && ['overview', 'orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
-      setCurrentView(viewParam as AccountView);
+    if (isLoggedIn) {
+      // track parametresi varsa otomatik olarak orders görünümüne git
+      if (trackOrderId) {
+        setCurrentView('orders');
+      } else if (viewParam && ['overview', 'orders', 'addresses', 'invoice', 'settings', 'help', 'loyalty'].includes(viewParam)) {
+        setCurrentView(viewParam as AccountView);
+      }
     }
-  }, [isLoggedIn, viewParam]);
+  }, [isLoggedIn, viewParam, trackOrderId]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
@@ -381,7 +391,7 @@ export const Account: React.FC = () => {
                 onNavigate={handleViewChange}
               />
             )}
-            {currentView === 'orders' && <OrdersView orders={orders} />}
+            {currentView === 'orders' && <OrdersView orders={orders} trackOrderId={trackOrderId} />}
             {currentView === 'addresses' && <AddressesView />}
             {currentView === 'invoice' && <InvoiceInfoView />}
             {currentView === 'loyalty' && <LoyaltyPanel />}

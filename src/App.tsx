@@ -379,6 +379,7 @@ const App: React.FC = () => {
                     <Route path="/product" element={<Navigate to="/catalog" replace />} />
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/account" element={<Account />} />
+                    <Route path="/hesabim" element={<Account />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/hikaye" element={<Story />} />
                     <Route path="/admin" element={<Admin />} />

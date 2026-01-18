@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Order } from '../../types/order';
 import { X, Truck, Package, AlertCircle, CheckCircle, Loader, ExternalLink } from 'lucide-react';
 import { createGeliverShipment } from '../../services/shippingService';
+import { sendShippingNotificationEmail } from '../../services/emailService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -110,6 +111,23 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
             provider: 'geliver'
           }
         });
+
+        // Müşteriye kargo bildirimi gönder
+        if (order.customer?.email) {
+          const trackingUrl = `https://sadechocolate.com/hesabim?view=orders&track=${order.orderNumber || order.id}`;
+          try {
+            await sendShippingNotificationEmail(order.customer.email, {
+              customerName: order.customer.name || 'Değerli Müşterimiz',
+              orderId: order.orderNumber || order.id,
+              trackingNumber: result.trackingNumber,
+              carrierName: result.carrier || 'Kargo',
+              trackingUrl
+            });
+          } catch (emailError) {
+            console.error('Kargo bildirimi email hatası:', emailError);
+            // Email hatası kargo işlemini engellemez
+          }
+        }
 
         onSuccess?.(result.trackingNumber);
         onClose();

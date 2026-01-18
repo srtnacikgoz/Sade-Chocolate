@@ -5,11 +5,16 @@ export type OrderStatus =
   | 'Pending Payment'    // EFT/Havale ödemesi bekleniyor
   | 'pending'            // Lowercase alternatif (Checkout uyumu)
   | 'processing'         // Hazırlanıyor (Checkout uyumu)
+  | 'preparing'          // Hazırlanıyor
   | 'Awaiting Prep'
   | 'In Production'
   | 'Ready for Packing'
   | 'Heat Hold'
   | 'Shipped'
+  | 'shipped'            // Lowercase alternatif
+  | 'in_transit'         // Yolda
+  | 'delivered'          // Teslim edildi
+  | 'Delivered'          // Teslim edildi (büyük harfli)
   | 'Cancelled'
   | 'Refunded';
 
@@ -60,7 +65,12 @@ export interface TrackingInfo {
   barcode?: string;
   estimatedDelivery?: string;
   shipmentId?: string;
-  createdAt?: Date;
+  createdAt?: Date | string;
+  // Geliver entegrasyonu
+  labelUrl?: string;          // Kargo etiketi PDF URL
+  price?: number;             // Gerçek kargo maliyeti
+  provider?: 'geliver' | 'mng' | string;  // Kargo sağlayıcı
+  referenceId?: string;       // Sipariş referans numarası
 }
 
 export interface OrderTag {
@@ -99,6 +109,7 @@ export interface EditRecord {
 
 export interface Order {
   id: string;           // User-friendly order number (SADE-XXXXXX)
+  orderNumber?: string; // Alternative order number field
   firestoreId?: string; // Firestore document ID (for database operations)
   customer: {
     name: string;
@@ -113,14 +124,27 @@ export interface Order {
   priority: 'High' | 'Normal';
   tempAlert: boolean;
   gift: boolean;
+  isGift?: boolean;          // Alternatif gift alanı
+  hasGiftBag?: boolean;      // Hediye paketi var mı
   giftNote: string | null;
+  giftMessage?: string;      // Alternatif giftNote alanı
+  giftDetails?: {            // Hediye kart detayları
+    recipientName?: string;
+    note?: string;
+    fontFamily?: string;
+  };
   sla: number;
   createdAt: string;
   shipping: {
     method: string;
     address: string;
     city: string;
+    district?: string;
     estimatedDate: string;
+    trackingNumber?: string;
+    carrier?: string;
+    labelUrl?: string;
+    phone?: string;
   };
   billing?: {
     address: string;

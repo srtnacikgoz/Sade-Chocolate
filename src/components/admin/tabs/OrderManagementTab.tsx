@@ -6,6 +6,7 @@ import {
   Gift,
   Thermometer,
   CheckCircle2,
+  CheckCircle,
   Package,
   ChevronRight,
   Search,
@@ -25,7 +26,8 @@ import {
   RefreshCw,
   XCircle,
   Landmark,
-  Trash2
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
 import { useOrderStore } from '../../../stores/orderStore';
 import type { Order } from '../../../types/order';
@@ -1273,226 +1275,228 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
 
 // --- SHIPPING LABEL MODAL ---
 const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => void }) => {
-  const handlePrint = () => {
-    const labelContent = document.getElementById('shipping-label-content')?.innerHTML;
+  const [activeTab, setActiveTab] = useState<'geliver' | 'packing'>('geliver');
+
+  const hasGeliverLabel = order.tracking?.labelUrl;
+  const trackingUrl = `https://sadechocolate.com/hesabim?view=orders&track=${order.orderNumber || order.id}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(trackingUrl)}`;
+
+  const handleOpenGeliverLabel = () => {
+    if (order.tracking?.labelUrl) {
+      window.open(order.tracking.labelUrl, '_blank');
+    }
+  };
+
+  const handlePrintPackingSlip = () => {
+    const content = document.getElementById('packing-slip-content')?.innerHTML;
     const printWindow = window.open('', '_blank', 'width=800,height=600');
 
-    if (printWindow && labelContent) {
+    if (printWindow && content) {
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
-            <title>Kargo Etiketi - ${order.id}</title>
+            <title>Paketleme Fişi - ${order.orderNumber || order.id}</title>
             <style>
-              * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                padding: 20px;
-                background: white;
-              }
-              .label {
-                width: 100mm;
-                height: 150mm;
-                border: 2px solid #000;
-                padding: 10mm;
-                margin: 0 auto;
-              }
-              .section {
-                margin-bottom: 5mm;
-                padding-bottom: 5mm;
-                border-bottom: 1px dashed #999;
-              }
-              .section:last-child {
-                border-bottom: none;
-              }
-              .label-header {
-                text-align: center;
-                font-weight: bold;
-                font-size: 18px;
-                margin-bottom: 3mm;
-              }
-              .from-to {
-                font-size: 9px;
-                text-transform: uppercase;
-                font-weight: bold;
-                color: #666;
-                margin-bottom: 2mm;
-              }
-              .address {
-                font-size: 11px;
-                line-height: 1.4;
-              }
-              .barcode-area {
-                text-align: center;
-                padding: 5mm 0;
-              }
-              .barcode-placeholder {
-                background: #000;
-                height: 15mm;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-family: monospace;
-                font-size: 12px;
-                letter-spacing: 2px;
-              }
-              .order-number {
-                text-align: center;
-                font-size: 16px;
-                font-weight: bold;
-                margin-top: 2mm;
-              }
-              .special-notes {
-                background: #fff3cd;
-                border: 2px solid #ffc107;
-                padding: 3mm;
-                margin-top: 3mm;
-                font-size: 10px;
-                font-weight: bold;
-              }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Segoe UI', sans-serif; padding: 15mm; background: white; }
+              .slip { max-width: 100mm; margin: 0 auto; }
+              .logo { text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 3px; margin-bottom: 5mm; color: #4a3728; }
+              .divider { border-top: 1px dashed #ccc; margin: 4mm 0; }
+              .section-title { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 2mm; }
+              .order-info { text-align: center; margin-bottom: 4mm; }
+              .order-number { font-size: 14px; font-weight: bold; }
+              .order-date { font-size: 10px; color: #666; }
+              .customer-name { font-size: 12px; font-weight: 600; margin-bottom: 2mm; }
+              .items { margin: 4mm 0; }
+              .item { display: flex; justify-content: space-between; font-size: 10px; padding: 1mm 0; }
+              .item-name { flex: 1; }
+              .item-qty { width: 20mm; text-align: right; }
+              .thank-you { text-align: center; margin-top: 6mm; padding: 4mm; background: #f9f5f0; border-radius: 3mm; }
+              .thank-you-text { font-size: 11px; font-style: italic; color: #4a3728; }
+              .thank-you-sub { font-size: 9px; color: #888; margin-top: 2mm; }
+              .qr-section { text-align: center; margin-top: 5mm; }
+              .qr-section img { width: 20mm; height: 20mm; }
+              .qr-text { font-size: 8px; color: #888; margin-top: 1mm; }
+              .tracking { text-align: center; margin-top: 3mm; }
+              .tracking-label { font-size: 8px; color: #888; }
+              .tracking-number { font-size: 11px; font-weight: bold; font-family: monospace; letter-spacing: 1px; }
               @media print {
-                @page {
-                  size: 100mm 150mm;
-                  margin: 0;
-                }
-                body {
-                  padding: 0;
-                }
+                @page { size: 100mm auto; margin: 5mm; }
+                body { padding: 0; }
               }
             </style>
           </head>
-          <body>
-            ${labelContent}
-            <script>
-              window.onload = function() {
-                window.print();
-                window.onafterprint = function() {
-                  window.close();
-                };
-              };
-            </script>
-          </body>
+          <body>${content}</body>
         </html>
       `);
       printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+        printWindow.onafterprint = () => printWindow.close();
+      };
     }
   };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-xl rounded-[32px] shadow-2xl">
+      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl rounded-[32px] shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Kargo Etiketi Oluştur</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Paketleme & Etiket</h3>
             <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
               <X size={20} className="text-gray-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">100mm x 150mm standart kargo etiketi</p>
-        </div>
 
-        {/* Hidden Label Content for Print */}
-        <div id="shipping-label-content" style={{ display: 'none' }}>
-          <div className="label">
-            {/* Header */}
-            <div className="label-header">SADE CHOCOLATE</div>
-
-            {/* From */}
-            <div className="section">
-              <div className="from-to">Gönderici</div>
-              <div className="address">
-                <strong>Sade Chocolate</strong><br/>
-                İstanbul Merkez Depo<br/>
-                Beşiktaş, İstanbul<br/>
-                Tel: +90 (212) 123 45 67
-              </div>
-            </div>
-
-            {/* To */}
-            <div className="section">
-              <div className="from-to">Alıcı</div>
-              <div className="address">
-                <strong>{order.customer?.name || 'İsimsiz Müşteri'}</strong><br/>
-                {order.shipping?.address || 'Adres Yok'}<br/>
-                {order.shipping?.city || ''}<br/>
-                Tel: {order.customer?.phone || 'Telefon Yok'}
-              </div>
-            </div>
-
-            {/* Barcode */}
-            <div className="barcode-area">
-              <div className="barcode-placeholder">||||| {order.id} |||||</div>
-              <div className="order-number">#{order.id}</div>
-            </div>
-
-            {/* Special Instructions */}
-            {(order.logistics?.coldPackage || order.tempAlert) && (
-              <div className="special-notes">
-                ⚠️ ÖZEL TALİMAT: {order.logistics?.coldPackage ? 'SOĞUK PAKET' : 'ISI HASSAS'}
-                <br/>
-                Kargo Penceresi: {order.logistics?.shippingWindow || 'N/A'}
-              </div>
-            )}
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('geliver')}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'geliver'
+                  ? 'bg-brown-900 text-white'
+                  : 'bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+              }`}
+            >
+              <Truck size={14} className="inline mr-2" />
+              Kargo Etiketi
+            </button>
+            <button
+              onClick={() => setActiveTab('packing')}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'packing'
+                  ? 'bg-brown-900 text-white'
+                  : 'bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+              }`}
+            >
+              <Package size={14} className="inline mr-2" />
+              Paketleme Fişi
+            </button>
           </div>
         </div>
 
-        {/* Visual Preview */}
-        <div className="p-6 bg-gray-50 dark:bg-dark-900 flex justify-center">
-          <div className="w-[100mm] h-[150mm] border-2 border-black bg-white p-4 relative scale-75 origin-top">
-            {/* Header */}
-            <div className="text-center font-bold text-lg mb-3">SADE CHOCOLATE</div>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-dark-900">
+          {activeTab === 'geliver' ? (
+            <div className="space-y-4">
+              {/* Geliver Label Info */}
+              {hasGeliverLabel ? (
+                <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 text-center space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <CheckCircle size={32} className="text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">Kargo Etiketi Hazır</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {order.tracking?.carrier || 'Geliver'} tarafından oluşturuldu
+                    </p>
+                  </div>
 
-            {/* From */}
-            <div className="mb-3 pb-3 border-b border-dashed border-gray-400">
-              <div className="text-[8px] uppercase font-bold text-gray-600 mb-1">Gönderici</div>
-              <div className="text-[10px] leading-tight">
-                <strong>Sade Chocolate</strong><br/>
-                İstanbul Merkez Depo<br/>
-                Beşiktaş, İstanbul<br/>
-                Tel: +90 (212) 123 45 67
-              </div>
-            </div>
+                  {/* Tracking Info */}
+                  <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Barkod:</span>
+                      <span className="font-mono font-bold">{order.tracking?.trackingNumber}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Kargo Firması:</span>
+                      <span className="font-bold">{order.tracking?.carrier}</span>
+                    </div>
+                    {order.tracking?.price && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Ücret:</span>
+                        <span className="font-bold">{order.tracking.price.toFixed(2)}₺</span>
+                      </div>
+                    )}
+                  </div>
 
-            {/* To */}
-            <div className="mb-3 pb-3 border-b border-dashed border-gray-400">
-              <div className="text-[8px] uppercase font-bold text-gray-600 mb-1">Alıcı</div>
-             <div className="text-[10px] leading-tight">
-  <strong>{order.customer?.name || 'İsimsiz Müşteri'}</strong><br/>
-  {order.shipping?.address || 'Adres Yok'}<br/>
-  {order.shipping?.city || ''}<br/>
-  Tel: {order.customer?.phone || '-'}
-</div>
-            </div>
-
-            {/* Barcode */}
-            <div className="text-center py-2">
-              <div className="bg-black text-white h-12 flex items-center justify-center font-mono text-[10px] tracking-wider">
-                ||||| {order.id} |||||
-              </div>
-              <div className="text-sm font-bold mt-1">#{order.id}</div>
-            </div>
-
-            {/* Special Notes */}
-            {(order.logistics?.coldPackage || order.tempAlert) && (
-              <div className="bg-yellow-100 border-2 border-yellow-500 p-2 mt-2">
-                <div className="text-[9px] font-bold">
-                  ⚠️ {order.logistics?.coldPackage ? 'SOĞUK PAKET' : 'ISI HASSAS'}
+                  <button
+                    onClick={handleOpenGeliverLabel}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-brown-900 to-brown-700 text-white font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                  >
+                    <ExternalLink size={18} />
+                    Kargo Etiketini Aç (PDF)
+                  </button>
+                  <p className="text-xs text-gray-400">Yeni sekmede açılır, yazdırabilirsiniz</p>
                 </div>
-                <div className="text-[8px]">{order.logistics?.shippingWindow || 'N/A'}</div>
+              ) : (
+                <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 text-center space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                    <AlertTriangle size={32} className="text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">Kargo Henüz Oluşturulmadı</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      Önce "Kargo Oluştur" ile Geliver üzerinden kargo oluşturun
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Packing Slip Preview */}
+              <div className="bg-white rounded-2xl p-4 mx-auto" style={{ maxWidth: '300px' }}>
+                <div id="packing-slip-content">
+                  <div className="slip">
+                    <div className="logo">SADE CHOCOLATE</div>
+                    <div className="divider"></div>
+
+                    <div className="order-info">
+                      <div className="order-number">#{order.orderNumber || order.id}</div>
+                      <div className="order-date">
+                        {new Date((order.createdAt as any)?.toDate?.() || order.createdAt).toLocaleDateString('tr-TR', {
+                          day: 'numeric', month: 'long', year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="divider"></div>
+
+                    <div className="section-title">Alıcı</div>
+                    <div className="customer-name">{order.customer?.name || 'Değerli Müşterimiz'}</div>
+
+                    <div className="divider"></div>
+
+                    <div className="section-title">Ürünler</div>
+                    <div className="items">
+                      {order.items?.map((item: any, idx: number) => (
+                        <div key={idx} className="item">
+                          <span className="item-name">{item.name}</span>
+                          <span className="item-qty">x{item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="divider"></div>
+
+                    <div className="thank-you">
+                      <div className="thank-you-text">Bizi tercih ettiğiniz için teşekkür ederiz!</div>
+                      <div className="thank-you-sub">El yapımı çikolatalarımızı severek yemeniz dileğiyle...</div>
+                    </div>
+
+                    {order.tracking?.trackingNumber && (
+                      <>
+                        <div className="tracking">
+                          <div className="tracking-label">Kargo Takip</div>
+                          <div className="tracking-number">{order.tracking.trackingNumber}</div>
+                        </div>
+                        <div className="qr-section">
+                          <img src={qrCodeUrl} alt="QR Code" />
+                          <div className="qr-text">Kargo takibi için tarayın</div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -1501,15 +1505,17 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
             onClick={onClose}
             className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
           >
-            İptal
+            Kapat
           </button>
-          <button
-            onClick={handlePrint}
-            className="px-6 py-3 rounded-2xl bg-brand-mustard hover:bg-brand-orange text-white text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <Printer size={16} />
-            Etiketi Yazdır
-          </button>
+          {activeTab === 'packing' && (
+            <button
+              onClick={handlePrintPackingSlip}
+              className="px-6 py-3 rounded-2xl bg-brand-mustard hover:bg-brand-orange text-white text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              <Printer size={16} />
+              Paketleme Fişini Yazdır
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -2100,7 +2106,11 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 };
 
 // --- ORDER DETAIL MODAL (Portal ile body'ye render edilir) ---
-const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => void }) => {
+const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onClose: () => void }) => {
+  // Store'dan güncel order'ı al - Firestore real-time güncellemeleri yansıtsın
+  const orders = useOrderStore((state) => state.orders);
+  const order = orders.find(o => o.id === initialOrder.id || o.firestoreId === initialOrder.firestoreId) || initialOrder;
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
@@ -2648,65 +2658,53 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
             </div>
           </div>
 
-          {/* Kargo Maliyet Analizi - Sadece Admin Görür */}
-          {(order.costAnalysis || order.payment?.shipping !== undefined) && (
+          {/* Kargo Maliyet Analizi - Geliver Entegrasyonu */}
+          {(order.tracking?.price || order.payment?.shipping !== undefined) && (
             <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
               <h3 className="text-[10px] uppercase tracking-widest text-blue-700 dark:text-blue-300 font-bold mb-4 flex items-center gap-2">
                 <Truck size={14} />
                 Kargo Maliyet Analizi
+                {order.tracking?.carrier && (
+                  <span className="text-[9px] font-normal text-blue-500">({order.tracking.carrier})</span>
+                )}
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
                   <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Müşteri Ödedi</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    ₺{(order.costAnalysis?.customerPaid ?? order.payment?.shipping ?? 0).toLocaleString('tr-TR')}
+                    ₺{(order.payment?.shipping ?? 0).toLocaleString('tr-TR')}
                   </p>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
-                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">MNG Tahmini</p>
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Gerçek Maliyet</p>
                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    {order.costAnalysis?.mngEstimate !== null && order.costAnalysis?.mngEstimate !== undefined
-                      ? `₺${order.costAnalysis.mngEstimate.toLocaleString('tr-TR')}`
-                      : <span className="text-xs text-gray-400">Bekleniyor</span>
+                    {order.tracking?.price
+                      ? `₺${order.tracking.price.toFixed(2)}`
+                      : <span className="text-xs text-gray-400">Kargo oluşturulmadı</span>
                     }
                   </p>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
                   <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Kâr/Zarar</p>
-                  <p className={`text-lg font-bold ${
-                    order.costAnalysis?.profit === null || order.costAnalysis?.profit === undefined
-                      ? 'text-gray-400'
-                      : order.costAnalysis.profit >= 0
-                        ? 'text-emerald-600'
-                        : 'text-red-600'
-                  }`}>
-                    {order.costAnalysis?.profit !== null && order.costAnalysis?.profit !== undefined
-                      ? `${order.costAnalysis.profit >= 0 ? '+' : ''}₺${order.costAnalysis.profit.toFixed(0)}`
-                      : '-'
-                    }
-                  </p>
+                  {(() => {
+                    const customerPaid = order.payment?.shipping ?? 0;
+                    const actualCost = order.tracking?.price;
+                    if (!actualCost) return <p className="text-lg font-bold text-gray-400">-</p>;
+                    const profit = customerPaid - actualCost;
+                    return (
+                      <p className={`text-lg font-bold ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {profit >= 0 ? '+' : ''}₺{profit.toFixed(0)}
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
-              {!order.costAnalysis?.mngEstimate && (
-                <div className="mt-3 text-center">
-                  <button
-                    onClick={() => handleCalculateMNGCost(order)}
-                    disabled={isCalculatingMNG}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs font-bold rounded-xl transition-colors"
-                  >
-                    {isCalculatingMNG ? (
-                      <>
-                        <RefreshCw size={12} className="animate-spin" />
-                        Hesaplanıyor...
-                      </>
-                    ) : (
-                      <>
-                        <Truck size={12} />
-                        MNG Maliyetini Hesapla
-                      </>
-                    )}
-                  </button>
-                </div>
+              {order.tracking?.createdAt && (
+                <p className="text-[9px] text-gray-400 mt-3 text-right">
+                  Kargo: {typeof order.tracking.createdAt === 'string'
+                    ? order.tracking.createdAt
+                    : new Date(order.tracking.createdAt).toLocaleString('tr-TR')}
+                </p>
               )}
             </div>
           )}
@@ -2814,7 +2812,7 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
                     className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
                   >
                     <Package size={16} className="text-green-600" />
-                    <span className="text-sm text-brown-900 dark:text-white">Kargo Oluştur (MNG)</span>
+                    <span className="text-sm text-brown-900 dark:text-white">Kargo Oluştur</span>
                   </button>
                   {(order.status === 'shipped' || order.status === 'in_transit') && (
                     <button
@@ -3087,10 +3085,24 @@ const OrderDetailModal = ({ order, onClose }: { order: Order; onClose: () => voi
             </div>
           )}
 
-          {/* Logistics Info - Dandelion Model */}
+          {/* Logistics Info - Geliver Entegrasyonu */}
           <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
             <h4 className="text-[10px] uppercase tracking-widest text-brand-mustard font-bold mb-3">Lojistik Bilgileri</h4>
             <div className="space-y-3 text-xs">
+              {/* Kargo Takip Bilgileri - Geliver */}
+              {order.tracking?.trackingNumber && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Kargo Firması:</span>
+                    <span className="font-bold text-blue-600">{order.tracking.carrier || 'Geliver'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Takip No:</span>
+                    <span className="font-mono font-bold text-brown-900 dark:text-white">{order.tracking.trackingNumber}</span>
+                  </div>
+                  <div className="border-t border-gray-100 dark:border-gray-700 pt-3"></div>
+                </>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Lot Numarası:</span>
                 <span className="font-mono font-bold text-brown-900 dark:text-white">{order.logistics?.lotNumber || 'N/A'}</span>
