@@ -327,3 +327,152 @@ export const checkAllShipmentStatus = async (): Promise<{
     return { success: false, message: error.message || 'Kontrol başarısız' };
   }
 };
+
+// ==========================================
+// GELIVER API - Çoklu Kargo Firması Desteği
+// ==========================================
+
+export interface GeliverOffer {
+  id: string;
+  providerName: string;
+  providerLogo?: string;
+  serviceName: string;
+  totalPrice: number;
+  currency: string;
+  estimatedDeliveryDays?: number;
+}
+
+export interface GeliverShipmentResult {
+  trackingNumber: string;
+  labelUrl: string;
+  carrier: string;
+  shipmentId: string;
+  price?: number;
+}
+
+/**
+ * Geliver ile Kargo Oluştur
+ * 10+ kargo firmasından en uygun teklifi otomatik seçer
+ */
+export const createGeliverShipment = async (params: {
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingDistrict: string;
+  weight?: number;
+  desi?: number;
+  contentDescription?: string;
+  autoAccept?: boolean;
+}): Promise<GeliverShipmentResult | null> => {
+  try {
+    const createFn = httpsCallable(functions, 'createGeliverShipment');
+    const result = await createFn({
+      ...params,
+      autoAccept: params.autoAccept ?? true // Varsayılan: en ucuz teklifi otomatik kabul et
+    });
+    const data = result.data as any;
+
+    if (!data.success) {
+      console.error('Geliver gönderi hatası:', data.error);
+      return null;
+    }
+
+    return data.data;
+  } catch (error: any) {
+    console.error('Geliver gönderi oluşturma hatası:', error);
+    throw new Error(error.message || 'Kargo oluşturulamadı');
+  }
+};
+
+/**
+ * Geliver Tekliflerini Getir
+ * Önce shipment oluşturup sonra teklifleri almak için
+ */
+export const getGeliverOffers = async (shipmentId: string): Promise<GeliverOffer[]> => {
+  try {
+    const getOffersFn = httpsCallable(functions, 'getGeliverOffers');
+    const result = await getOffersFn({ shipmentId });
+    const data = result.data as any;
+
+    return data.offers || [];
+  } catch (error) {
+    console.error('Geliver teklif hatası:', error);
+    return [];
+  }
+};
+
+/**
+ * Geliver Teklif Kabul Et
+ */
+export const acceptGeliverOffer = async (
+  shipmentId: string,
+  offerId: string
+): Promise<GeliverShipmentResult | null> => {
+  try {
+    const acceptFn = httpsCallable(functions, 'acceptGeliverOffer');
+    const result = await acceptFn({ shipmentId, offerId });
+    const data = result.data as any;
+
+    return data;
+  } catch (error) {
+    console.error('Geliver teklif kabul hatası:', error);
+    return null;
+  }
+};
+
+/**
+ * Geliver Kargo Takip
+ */
+export const trackGeliverShipment = async (shipmentId: string): Promise<{
+  status: string;
+  trackingNumber?: string;
+  carrier?: string;
+  events: Array<{
+    date: string;
+    status: string;
+    location?: string;
+    description?: string;
+  }>;
+} | null> => {
+  try {
+    const trackFn = httpsCallable(functions, 'trackGeliverShipment');
+    const result = await trackFn({ shipmentId });
+    return result.data as any;
+  } catch (error) {
+    console.error('Geliver takip hatası:', error);
+    return null;
+  }
+};
+
+/**
+ * Geliver Şehir Listesi
+ */
+export const getGeliverCities = async (): Promise<Array<{code: string; name: string}>> => {
+  try {
+    const getCitiesFn = httpsCallable(functions, 'getGeliverCities');
+    const result = await getCitiesFn();
+    const data = result.data as any;
+    return data.cities || [];
+  } catch (error) {
+    console.warn('Geliver şehir listesi alınamadı:', error);
+    return TURKEY_CITIES;
+  }
+};
+
+/**
+ * Geliver İlçe Listesi
+ */
+export const getGeliverDistricts = async (cityCode: string): Promise<Array<{code: string; name: string}>> => {
+  try {
+    const getDistrictsFn = httpsCallable(functions, 'getGeliverDistricts');
+    const result = await getDistrictsFn({ cityCode });
+    const data = result.data as any;
+    return data.districts || [];
+  } catch (error) {
+    console.warn('Geliver ilçe listesi alınamadı:', error);
+    return TURKEY_DISTRICTS[cityCode] || [];
+  }
+};

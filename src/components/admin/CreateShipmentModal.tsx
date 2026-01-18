@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Order } from '../../types/order';
-import { X, Truck, Package, AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import { createShipment } from '../../services/shippingService';
+import { X, Truck, Package, AlertCircle, CheckCircle, Loader, ExternalLink } from 'lucide-react';
+import { createGeliverShipment } from '../../services/shippingService';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
@@ -66,10 +66,16 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
       return;
     }
 
+    if (!shippingCity || !shippingDistrict) {
+      onError?.('Şehir ve ilçe bilgisi gerekli');
+      return;
+    }
+
     setIsCreating(true);
 
     try {
-      const result = await createShipment({
+      // Geliver API ile kargo oluştur
+      const result = await createGeliverShipment({
         orderId: order.orderNumber || order.id,
         customerName: order.customer.name,
         customerPhone: customerPhone,
@@ -80,32 +86,30 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
         weight: weightGram / 1000, // gram'dan kg'a çevir
         desi,
         contentDescription,
-        coldPackage
+        autoAccept: true // En ucuz teklifi otomatik kabul et
       });
 
       if (result) {
         // Siparişi güncelle - Kargo bilgilerini ekle ve durumu "Shipped" yap
-        // firestoreId varsa onu kullan, yoksa id'yi dene
         const docId = order.firestoreId || order.id;
         const orderRef = doc(db, 'orders', docId);
 
         await updateDoc(orderRef, {
           status: 'shipped',
           'shipping.trackingNumber': result.trackingNumber,
-          'shipping.carrier': result.carrier || 'MNG Kargo',
+          'shipping.carrier': result.carrier,
+          'shipping.labelUrl': result.labelUrl,
           tracking: {
-            carrier: result.carrier || 'MNG Kargo',
+            carrier: result.carrier,
             trackingNumber: result.trackingNumber,
-            barcode: result.barcode,
-            estimatedDelivery: result.estimatedDelivery,
+            labelUrl: result.labelUrl,
             shipmentId: result.shipmentId,
+            price: result.price,
             createdAt: new Date(),
-            referenceId: order.orderNumber || order.id
+            referenceId: order.orderNumber || order.id,
+            provider: 'geliver'
           }
         });
-
-        // Email artık burada gönderilmiyor
-        // Scheduled function (checkShipmentStatus) kargo harekete geçince otomatik gönderecek
 
         onSuccess?.(result.trackingNumber);
         onClose();
@@ -225,12 +229,12 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
             </div>
           </div>
 
-          {/* Uyarı */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3">
-            <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
-            <div className="text-sm text-amber-800">
-              <p className="font-semibold mb-1">Dikkat</p>
-              <p>Kargo oluşturulduktan sonra MNG Kargo sistemine otomatik olarak gönderilecek ve takip numarası oluşturulacaktır.</p>
+          {/* Bilgi */}
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex gap-3">
+            <Truck className="text-blue-600 flex-shrink-0" size={20} />
+            <div className="text-sm text-blue-800">
+              <p className="font-semibold mb-1">Geliver ile Kargo</p>
+              <p>10+ kargo firmasından (Aras, Yurtiçi, PTT, Sürat, HepsiJet, MNG...) en uygun fiyatlı teklif otomatik seçilecek ve kargo etiketi oluşturulacaktır.</p>
             </div>
           </div>
         </div>
