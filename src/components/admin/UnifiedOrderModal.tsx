@@ -534,17 +534,9 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-500 mb-2">Kargo Firması</p>
-                    <select
-                      defaultValue={order.logistics?.carrier || ''}
-                      className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-brown-900/20 outline-none"
-                    >
-                      <option value="">Seçiniz</option>
-                      <option value="aras">Aras Kargo</option>
-                      <option value="mng">MNG Kargo</option>
-                      <option value="yurtici">Yurtiçi Kargo</option>
-                      <option value="ptt">PTT Kargo</option>
-                      <option value="ups">UPS</option>
-                    </select>
+                    <p className="text-sm text-gray-800 p-3 bg-gray-50 rounded-xl">
+                      {order.tracking?.carrier || order.shipping?.carrier || 'Henüz atanmadı'}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-500 mb-2">Ödeme Yöntemi</p>
@@ -552,47 +544,49 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                   </div>
 
                   {/* Kargo Maliyet Analizi - Sadece Admin Görür */}
-                  {(order.costAnalysis || order.payment?.shipping !== undefined) && (
+                  {(order.tracking?.price || order.payment?.shipping !== undefined) && (
                     <div className="col-span-2 mt-4 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
                       <p className="text-xs font-black text-blue-800 mb-3 flex items-center gap-2">
                         <TrendingUp size={14} />
                         KARGO MALİYET ANALİZİ
+                        {order.tracking?.carrier && (
+                          <span className="text-[10px] font-normal text-blue-600">({order.tracking.carrier})</span>
+                        )}
                       </p>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
                           <p className="text-[10px] text-gray-500 mb-1">Müşteriden Alınan</p>
                           <p className="text-lg font-black text-gray-900">
-                            {order.costAnalysis?.customerPaid ?? order.payment?.shipping ?? 0}₺
+                            {order.payment?.shipping ?? 0}₺
                           </p>
                         </div>
                         <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
-                          <p className="text-[10px] text-gray-500 mb-1">MNG Tahmini</p>
+                          <p className="text-[10px] text-gray-500 mb-1">Gerçek Maliyet</p>
                           <p className="text-lg font-black text-gray-900">
-                            {order.costAnalysis?.mngEstimate !== null && order.costAnalysis?.mngEstimate !== undefined
-                              ? `${order.costAnalysis.mngEstimate}₺`
-                              : <span className="text-xs text-gray-400">Hesaplanıyor...</span>
+                            {order.tracking?.price
+                              ? `${order.tracking.price.toFixed(2)}₺`
+                              : <span className="text-xs text-gray-400">Kargo oluşturulmadı</span>
                             }
                           </p>
                         </div>
                         <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
                           <p className="text-[10px] text-gray-500 mb-1">Kar/Zarar</p>
-                          <p className={`text-lg font-black ${
-                            order.costAnalysis?.profit === null || order.costAnalysis?.profit === undefined
-                              ? 'text-gray-400'
-                              : order.costAnalysis.profit >= 0
-                                ? 'text-emerald-600'
-                                : 'text-red-600'
-                          }`}>
-                            {order.costAnalysis?.profit !== null && order.costAnalysis?.profit !== undefined
-                              ? `${order.costAnalysis.profit >= 0 ? '+' : ''}${order.costAnalysis.profit.toFixed(0)}₺`
-                              : '-'
-                            }
-                          </p>
+                          {(() => {
+                            const customerPaid = order.payment?.shipping ?? 0;
+                            const actualCost = order.tracking?.price;
+                            if (!actualCost) return <p className="text-lg font-black text-gray-400">-</p>;
+                            const profit = customerPaid - actualCost;
+                            return (
+                              <p className={`text-lg font-black ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                {profit >= 0 ? '+' : ''}{profit.toFixed(0)}₺
+                              </p>
+                            );
+                          })()}
                         </div>
                       </div>
-                      {order.costAnalysis?.calculatedAt && (
+                      {order.tracking?.createdAt && (
                         <p className="text-[10px] text-gray-400 mt-2 text-right">
-                          Hesaplama: {new Date(order.costAnalysis.calculatedAt).toLocaleString('tr-TR')}
+                          Kargo: {new Date(order.tracking.createdAt).toLocaleString('tr-TR')}
                         </p>
                       )}
                     </div>

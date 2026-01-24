@@ -296,10 +296,10 @@ export const sendShippingNotificationEmail = async (
     <!-- Greeting & Message -->
     <div style="padding: 0 50px; text-align: center;">
       <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
-        Siparişin Yola Çıktı!
+        Kargonuz Teslim Edildi!
       </h2>
       <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 40px 0; font-weight: 300;">
-        Merhaba ${data.customerName}, <strong style="color: ${COLORS.gold};">#${data.orderId}</strong> numaralı siparişin özenle paketlendi ve kargoya verildi.
+        Merhaba ${data.customerName}, <strong style="color: ${COLORS.gold};">#${data.orderId}</strong> numaralı siparişiniz özenle paketlendi ve kargo firmasına teslim edildi.
       </p>
 
       <!-- Tracking Number Badge -->
@@ -331,9 +331,9 @@ export const sendShippingNotificationEmail = async (
 
   return sendEmail({
     to: email,
-    subject: `Siparişiniz Kargoya Verildi!`,
+    subject: `Kargonuz Teslim Edildi - #${data.orderId}`,
     html: wrapEmail(content),
-    text: `Siparişiniz kargoya verildi! Takip No: ${data.trackingNumber} (${data.carrierName})`
+    text: `Kargonuz kargo firmasına teslim edildi! Takip No: ${data.trackingNumber} (${data.carrierName})`
   });
 };
 

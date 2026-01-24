@@ -89,7 +89,23 @@
       "WebFetch(domain:www.dhlecommerce.com.tr)",
       "WebFetch(domain:www.zamkinos.net)",
       "Bash(claude plugin:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:geliver.io)",
+      "WebFetch(domain:docs.geliver.io)",
+      "WebFetch(domain:laravel.gen.tr)",
+      "WebFetch(domain:www.trackingmore.com)",
+      "WebFetch(domain:basitkargo.com)",
+      "WebFetch(domain:www.shopphp.net)",
+      "WebFetch(domain:packagist.org)",
+      "WebFetch(domain:eksisozluk.com)",
+      "WebFetch(domain:www.sikayetvar.com)",
+      "WebFetch(domain:tr.linkedin.com)",
+      "WebFetch(domain:www.crunchbase.com)",
+      "WebFetch(domain:api.geliver.io)",
+      "Skill(superpowers:brainstorming)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(dir:*)"
     ]
   },
   "hooks": {
@@ -111,6 +127,17 @@
             "type": "command",
             "command": "powershell -NoProfile -Command \"'Hook triggered at ' + (Get-Date) | Out-File -Append -FilePath '.claude/hook-log.txt'; [console]::beep(1000,500)\"",
             "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"Write-Host ''; Write-Host '=== Sade Chocolate ===' -ForegroundColor Yellow; Write-Host 'Rules: .claude/rules/ | Skills: .claude/skills/ | Agent: .claude/agents/code-reviewer.md' -ForegroundColor Cyan; Write-Host ''\"",
+            "timeout": 2
           }
         ]
       }

@@ -1,13 +1,15 @@
 // src/components/account/ShipmentTracker.tsx
-// Kargo Takip Komponenti - MNG Kargo entegrasyonu
+// Kargo Takip Komponenti - Geliver & MNG Kargo entegrasyonu
 
 import React, { useState, useEffect } from 'react';
 import { Package, Truck, MapPin, CheckCircle2, Clock, RefreshCw, AlertCircle } from 'lucide-react';
-import { trackShipment, ShipmentStatus, ShipmentMovement } from '../../services/shippingService';
+import { trackShipment, trackGeliverShipment, ShipmentStatus, ShipmentMovement } from '../../services/shippingService';
 
 interface ShipmentTrackerProps {
   orderId: string;
-  trackingNumber?: string;  // MNG takip numarası (varsa)
+  trackingNumber?: string;  // Kargo takip numarası
+  shipmentId?: string;      // Geliver shipment ID (varsa)
+  provider?: 'geliver' | 'mng' | string;  // Kargo sağlayıcı
   onClose?: () => void;
 }
 
@@ -45,7 +47,7 @@ const STATUS_CONFIG = {
   }
 };
 
-export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, trackingNumber, onClose }) => {
+export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, trackingNumber, shipmentId, provider, onClose }) => {
   const [shipmentData, setShipmentData] = useState<ShipmentStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,15 +57,57 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, track
     setError(null);
 
     try {
-      // Önce MNG takip numarası varsa onu kullan, yoksa sipariş numarasını kullan
+      // Geliver ile takip (shipmentId varsa)
+      if (provider === 'geliver' && shipmentId) {
+        const geliverData = await trackGeliverShipment(shipmentId);
+        if (geliverData) {
+          // Geliver response'unu ShipmentStatus formatına dönüştür
+          const statusMap: Record<string, ShipmentStatus['status']> = {
+            'CREATED': 'pending',
+            'GOT_OFFERS': 'pending',
+            'TRACKING_CODE_CREATED': 'pending',
+            'PICKED_UP': 'in_transit',
+            'IN_TRANSIT': 'in_transit',
+            'OUT_FOR_DELIVERY': 'out_for_delivery',
+            'DELIVERED': 'delivered',
+            'RETURNED': 'returned'
+          };
+
+          const statusTextMap: Record<string, string> = {
+            'CREATED': 'Kargo oluşturuldu',
+            'GOT_OFFERS': 'Teklif alındı',
+            'TRACKING_CODE_CREATED': 'Kargo firmasına teslim edildi',
+            'PICKED_UP': 'Kargo alındı',
+            'IN_TRANSIT': 'Yolda',
+            'OUT_FOR_DELIVERY': 'Dağıtıma çıktı',
+            'DELIVERED': 'Teslim edildi',
+            'RETURNED': 'İade edildi'
+          };
+
+          setShipmentData({
+            referenceId: orderId,
+            status: statusMap[geliverData.status] || 'pending',
+            statusText: statusTextMap[geliverData.status] || geliverData.status,
+            movements: (geliverData.events || []).map(e => ({
+              date: e.date?.split('T')[0] || '',
+              time: e.date?.split('T')[1]?.substring(0, 5) || '',
+              status: e.status,
+              location: e.location || '',
+              description: e.description || e.status
+            }))
+          });
+          return;
+        }
+      }
+
+      // MNG ile takip (fallback)
       const referenceId = trackingNumber || orderId;
       const data = await trackShipment(referenceId);
       if (data) {
         setShipmentData(data);
       } else {
-        // Takip bilgisi bulunamadıysa, henüz kargoya verilmemiş olabilir
         setError(trackingNumber
-          ? 'Kargo bilgisi henüz MNG sisteminde görünmüyor. Biraz sonra tekrar deneyin.'
+          ? 'Kargo bilgisi henüz sistemde görünmüyor. Biraz sonra tekrar deneyin.'
           : 'Kargo henüz oluşturulmamış veya takip bilgisi bulunamadı.');
       }
     } catch (err) {
@@ -75,7 +119,7 @@ export const ShipmentTracker: React.FC<ShipmentTrackerProps> = ({ orderId, track
 
   useEffect(() => {
     fetchTrackingData();
-  }, [orderId, trackingNumber]);
+  }, [orderId, trackingNumber, shipmentId, provider]);
 
   // Loading State
   if (loading) {

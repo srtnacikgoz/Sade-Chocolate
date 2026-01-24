@@ -1,28 +1,56 @@
-# Sade Chocolate - Claude Code Kılavuzu
+# Sade Chocolate - Claude Code Project
 
-## Oturum Başlangıcı
+## Proje Hakkında
 
-**Her oturum başında oku ve uygula:**
-1. `.claude/kişiselbağlam.md` - İletişim tercihleri
-2. `.claude/hedefler.md` - Aktif görevler
-3. `Zihinsel-Algoritma-inşası.md` - GitHub araştırma protokolü (REPO-FIRST, RFC-FIRST)
-4. `Risk-ve-Dayaniklilik-Plani.md` - Anti-fragile metodoloji (RISK-CHECK)
+Sade Chocolate, premium el yapımı çikolata satan e-ticaret platformudur.
 
-**Proje spesifik referanslar:**
-- `.claude/sade-chocolate-github-patterns.md` - GitHub arama kalıpları
-- `.claude/sade-chocolate-risk-plani.md` - Risk matrisi ve fallback stratejileri
+**ÖNEMLİ:** Sade Chocolate "bean-to-bar" ÜRETİCİSİ DEĞİLDİR!
+- ❌ Bean-to-bar ifadesi kesinlikle kullanılmamalı
+- ✅ Doğru ifade: "El yapımı", "Artisan", "Butik çikolata"
+
+---
+
+## Tech Stack
+
+### Frontend
+- React 18 + TypeScript
+- Vite (build tool)
+- Tailwind CSS (özel renk paleti ile)
+- React Router v6
+
+### Backend
+- Firebase Firestore (database)
+- Firebase Auth (authentication)
+- Firebase Functions (serverless)
+- Firebase Hosting
+
+### Integrations
+- **Ödeme:** İyzico (3D Secure) + Havale/EFT
+- **Email:** SendGrid (Firebase Extension)
+- **Kargo:** Geliver (primary), MNG Kargo (fallback)
+- **CDN:** Cloudflare
+
+---
+
+## Nasıl Çalıştırılır
+
+```bash
+# Development
+npm run dev
+
+# Build
+npm run build
+
+# Deploy (onay gerektirir!)
+firebase deploy
+```
 
 ---
 
 ## Kritik Kurallar
 
-### Marka Bilgisi - ÖNEMLİ
-- **Sade Chocolate "bean-to-bar" ÜRETİCİSİ DEĞİLDİR!**
-- Bean-to-bar ifadesi kesinlikle kullanılmamalı
-- Doğru ifade: "El yapımı", "Artisan", "Butik çikolata"
-
 ### Onay Gerektiren İşlemler
-Aşağıdaki işlemlerden önce **mutlaka onay al:**
+Bu işlemlerden önce **mutlaka kullanıcıdan onay al:**
 - `npm run build`
 - `firebase deploy`
 - `git push`
@@ -30,77 +58,78 @@ Aşağıdaki işlemlerden önce **mutlaka onay al:**
 - Destructive database işlemleri
 
 ### Kod Standartları
+- **Dil:** Türkçe UI + Türkçe yorumlar
 - **Dosya limiti:** Max 500 satır (ideal: 300-450)
-- **Z-Index:** Sticky: 100 | Overlay: 500 | Modal: 1000 | Popover: 1500 | Toast: 2000
-- **Köşeler:** Ana elementler: `rounded-[32px]` | Kartlar: `rounded-2xl`
-- Türkçe UI, Türkçe yorumlar
+- **TypeScript:** `any` kullanma, `type` kullan (interface değil)
 
 ---
 
-## Tech Stack
+## Claude Code Yapısı
 
-| Katman | Teknoloji |
-|--------|-----------|
-| Frontend | React 18 + TypeScript + Vite |
-| Styling | Tailwind CSS (özel palet) |
-| Backend | Firebase (Firestore + Auth + Functions) |
-| Ödeme | İyzico (3D Secure) + Havale/EFT |
-| Email | SendGrid (Firebase Extensions) |
-| Kargo | MNG Kargo API |
-| CDN | Cloudflare |
+Bu proje Universal Claude Code Setup kullanır:
 
----
+```
+.claude/
+├── CLAUDE.md              # Bu dosya - proje genel bakış
+├── rules/                 # Her zaman aktif kurallar
+│   ├── conventions.md     # Kod standartları
+│   ├── styling.md         # Tailwind kuralları
+│   ├── firebase.md        # Firestore best practices
+│   └── security.md        # Güvenlik kuralları
+├── skills/                # İş akışları (ihtiyaç anında)
+│   ├── order-workflow.md  # Sipariş işleme
+│   ├── email-workflow.md  # Email gönderme
+│   └── shipping-workflow.md # Kargo entegrasyonu
+├── agents/                # Özel ajanlar
+│   └── code-reviewer.md   # Kod inceleme ajanı
+├── context/               # Proje context dosyaları
+│   ├── hedefler.md        # Aktif hedefler
+│   ├── kişiselbağlam.md   # İletişim tercihleri
+│   └── ...
+└── settings.local.json    # Hooks ve permissions
+```
 
-## Tailwind Renk Paleti
+### Kullanım
 
-**Kullanılabilir:**
-- `cream-*`, `mocha-*`, `gold-*`, `brown-*`, `dark-*`, `brand-*`
-
-**Brand Renkleri:**
-| İsim | Hex |
-|------|-----|
-| Brand Blue | #a4d1e8 |
-| Brand Yellow | #e7c57d |
-| Brand Mustard | #d4a945 |
-| Brand Green | #a4d4bc |
-| Brand Peach | #f3d1c8 |
-| Brand Orange | #e59a77 |
-
-**UYARI:** `chocolate-*` renkleri tanımlı DEĞİL!
-
----
-
-## Firebase Collections
-
-| Koleksiyon | Açıklama |
-|------------|----------|
-| `products` | Ürünler |
-| `orders` | Siparişler |
-| `customers` | Müşteriler |
-| `site_settings/*` | Site ayarları |
-| `settings/*` | Uygulama ayarları |
-| `mail` | Email queue |
+- **Kod yazarken:** `.claude/rules/` otomatik yüklenir
+- **İş akışı için:** `.claude/skills/` ihtiyaç anında kullanılır
+- **Kod inceleme:** `@code-reviewer` ile ajan çağır
+- **Hooks:** `settings.local.json` ile kritik işlemler kontrollü
 
 ---
 
-## Cloud Functions
+## Hızlı Referans
 
-| Fonksiyon | Açıklama |
-|-----------|----------|
-| `createIyzicoPayment` | Ödeme formu |
-| `iyzicoCallback` | 3D Secure callback |
-| `createShipment` | MNG Kargo gönderi |
-| `trackShipment` | Kargo takip |
+### Tailwind Renk Paleti
+- ✅ `cream-*`, `mocha-*`, `gold-*`, `brown-*`, `brand-*`
+- ❌ `chocolate-*` (tanımlı DEĞİL!)
+
+### Z-Index Hiyerarşisi
+- Sticky: `z-[100]`
+- Overlay: `z-[500]`
+- Modal: `z-[1000]`
+- Popover: `z-[1500]`
+- Toast: `z-[2000]`
+
+### Border Radius
+- Ana elementler: `rounded-[32px]`
+- Kartlar: `rounded-2xl`
+- Butonlar: `rounded-xl`
+
+### Firebase Collections
+- `products`, `orders`, `customers`, `mail`
+- `site_settings/*`, `settings/*`
 
 ---
 
-## Best Practices
+## Detaylı Kurallar
 
-1. **Silme işlemlerinde** Firestore + local state birlikte güncelle
-2. **Tehlikeli işlemlerde** AlertDialog ile onay al
-3. **Email hataları** console'a logla, kullanıcıya gösterme
-4. **Boş state** için anlamlı mesaj göster
-5. **BrandIcon** kullan (Sparkles yerine)
+Tüm detaylar `.claude/rules/`, `.claude/skills/`, `.claude/agents/` klasörlerinde.
+
+**İlk kez kullanıyorsan:**
+1. `.claude/rules/conventions.md` - Kod standartları
+2. `.claude/rules/styling.md` - Tailwind kuralları
+3. `.claude/skills/order-workflow.md` - Sipariş nasıl işlenir
 
 ---
 

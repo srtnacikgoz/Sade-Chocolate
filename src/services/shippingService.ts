@@ -376,11 +376,18 @@ export const createGeliverShipment = async (params: {
     const data = result.data as any;
 
     if (!data.success) {
-      console.error('Geliver gönderi hatası:', data.error);
+      console.error('Geliver gönderi hatası:', data.error || data.message);
       return null;
     }
 
-    return data.data;
+    // Backend direkt data içinde dönüyor (nested data.data değil)
+    return {
+      trackingNumber: data.trackingNumber || '',
+      labelUrl: data.labelUrl || '',
+      carrier: data.carrier || 'Geliver',
+      shipmentId: data.shipmentId || '',
+      price: data.price
+    };
   } catch (error: any) {
     console.error('Geliver gönderi oluşturma hatası:', error);
     throw new Error(error.message || 'Kargo oluşturulamadı');
