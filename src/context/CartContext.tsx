@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { Product } from '../types';
+import { trackCartUpdate } from '../services/visitorTrackingService';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -51,6 +52,25 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('sade_is_gift', String(isGift));
     localStorage.setItem('sade_gift_message', giftMessage);
   }, [items, isGift, giftMessage]);
+
+  // Visitor Tracking - Sepet degisikliklerini takip et
+  useEffect(() => {
+    // Bos sepet veya ilk yukleme ise takip etme
+    if (items.length === 0) return;
+
+    const cartValue = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
+    const cartItemsSummary = items.map(item => ({
+      productId: item.id,
+      productName: item.name,
+      quantity: item.quantity,
+      price: item.price
+    }));
+
+    trackCartUpdate(cartValue, cartItemCount, cartItemsSummary).catch((err) => {
+      console.warn('Cart tracking failed:', err);
+    });
+  }, [items]);
 
   const addToCart = (product: Product, quantity = 1) => {
     setItems(prev => {

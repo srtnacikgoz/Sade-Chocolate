@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { setGlobalOptions } from 'firebase-functions/v2';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import axios from 'axios';
 import * as iyzicoService from './services/iyzicoService';
@@ -2429,5 +2429,518 @@ export const getGeliverDistricts = functions.https.onCall(async (request) => {
     success: true,
     data: districts,
     timestamp: new Date().toISOString()
+  };
+});
+
+// ==========================================
+// VISITOR JOURNEY TRACKING
+// ==========================================
+
+// Tracking config'i Firestore'dan al veya default kullan
+// Tracking config tipi
+type TrackingConfig = {
+  abandonedCartTimeoutMinutes: number;
+  telegramMinCartValue: number;
+  checkoutAlertMinCartValue: number;
+  vipCustomerAlertEnabled: boolean;
+};
+
+const DEFAULT_TRACKING_CONFIG: TrackingConfig = {
+  abandonedCartTimeoutMinutes: 30,
+  telegramMinCartValue: 200,
+  checkoutAlertMinCartValue: 300,
+  vipCustomerAlertEnabled: true
+};
+
+const getTrackingConfig = async (): Promise<TrackingConfig> => {
+  const db = admin.firestore();
+  try {
+    const configDoc = await db.collection('settings').doc('tracking').get();
+    if (configDoc.exists) {
+      const data = configDoc.data();
+      return {
+        abandonedCartTimeoutMinutes: data?.abandonedCartTimeoutMinutes ?? DEFAULT_TRACKING_CONFIG.abandonedCartTimeoutMinutes,
+        telegramMinCartValue: data?.telegramMinCartValue ?? DEFAULT_TRACKING_CONFIG.telegramMinCartValue,
+        checkoutAlertMinCartValue: data?.checkoutAlertMinCartValue ?? DEFAULT_TRACKING_CONFIG.checkoutAlertMinCartValue,
+        vipCustomerAlertEnabled: data?.vipCustomerAlertEnabled ?? DEFAULT_TRACKING_CONFIG.vipCustomerAlertEnabled
+      };
+    }
+  } catch (error) {
+    functions.logger.warn('Tracking config alinamadi, default kullaniliyor');
+  }
+
+  return DEFAULT_TRACKING_CONFIG;
+};
+
+/**
+ * Terk Edilmis Sepet Algilama - Her 5 dakikada calisir
+ * Belirli sure hareketsiz cart/checkout session'lari tespit eder
+ */
+export const detectAbandonedCarts = onSchedule({
+  schedule: 'every 5 minutes',
+  region: 'europe-west3',
+  timeoutSeconds: 120,
+}, async () => {
+  const db = admin.firestore();
+  const config = await getTrackingConfig();
+  const timeoutMs = (config.abandonedCartTimeoutMinutes || 30) * 60 * 1000;
+  const cutoffTime = new Date(Date.now() - timeoutMs);
+
+  try {
+    // Aktif cart/checkout session'lari bul
+    const sessionsSnap = await db.collection('sessions')
+      .where('isActive', '==', true)
+      .where('currentStage', 'in', ['cart', 'checkout'])
+      .where('lastActivityAt', '<', admin.firestore.Timestamp.fromDate(cutoffTime))
+      .get();
+
+    if (sessionsSnap.empty) {
+      functions.logger.info('Terk edilmis sepet bulunamadi');
+      return;
+    }
+
+    const batch = db.batch();
+    const abandonedCarts: any[] = [];
+    const minCartValue = config.telegramMinCartValue || 200;
+
+    for (const sessionDoc of sessionsSnap.docs) {
+      const session = sessionDoc.data();
+
+      // Session'i abandoned olarak isaretle
+      batch.update(sessionDoc.ref, {
+        currentStage: 'abandoned',
+        isActive: false,
+        abandonedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Abandoned cart kaydi olustur
+      const abandonedCartRef = db.collection('abandoned_carts').doc();
+      batch.set(abandonedCartRef, {
+        sessionId: sessionDoc.id,
+        visitorId: session.visitorId,
+        customerEmail: session.customerEmail || null,
+        customerName: session.customerName || null,
+        cartValue: session.cartValue || 0,
+        cartItems: session.cartItemsDetail || [],
+        abandonedAt: admin.firestore.FieldValue.serverTimestamp(),
+        stage: session.currentStage,
+        notificationSent: false,
+        recoveryEmailSent: false,
+        geo: session.geo || null
+      });
+
+      // Telegram bildirimi icin listeye ekle (min deger ustu)
+      if ((session.cartValue || 0) >= minCartValue) {
+        const geoStr = session.geo?.city
+          ? `${session.geo.city}, ${session.geo.country}`
+          : 'Bilinmiyor';
+
+        abandonedCarts.push({
+          name: session.customerName || 'Anonim',
+          email: session.customerEmail || '-',
+          value: session.cartValue || 0,
+          items: session.cartItems || 0,
+          stage: session.currentStage === 'checkout' ? 'Odeme' : 'Sepet',
+          location: geoStr,
+          device: session.device || '-'
+        });
+      }
+    }
+
+    await batch.commit();
+
+    // Telegram bildirimi gonder (toplu)
+    if (abandonedCarts.length > 0) {
+      const cartList = abandonedCarts
+        .map(c => `  • ${c.name}: ${c.value} TL (${c.items} urun)\n    ${c.location} | ${c.device} | ${c.stage}`)
+        .join('\n\n');
+
+      const message = `
+🛒 <b>TERK EDILEN SEPETLER</b>
+
+${abandonedCarts.length} adet yuksek degerli sepet terk edildi:
+
+${cartList}
+
+🕐 ${new Date().toLocaleString('tr-TR')}
+      `.trim();
+
+      await sendTelegramMessage(message);
+    }
+
+    functions.logger.info(`${sessionsSnap.size} terk edilmis sepet algilandi`);
+  } catch (error: any) {
+    functions.logger.error('Abandoned cart detection error:', error.message);
+  }
+});
+
+/**
+ * VIP Musteri Bildirimi - Geri donen musteri sitede
+ * Session olusturulunca tetiklenir
+ */
+export const onVisitorSessionCreated = onDocumentCreated('sessions/{sessionId}', async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const session = snapshot.data();
+  const config = await getTrackingConfig();
+
+  // VIP bildirim kapali ise cik
+  if (!config.vipCustomerAlertEnabled) return;
+
+  // Sadece geri donen musteriler icin bildirim
+  if (!session.isReturningCustomer) return;
+
+  const geoStr = session.geo?.city
+    ? `${session.geo.city}, ${session.geo.country}`
+    : 'Bilinmiyor';
+
+  const message = `
+👋 <b>VIP MUSTERI SITEDE!</b>
+
+<b>Musteri:</b> ${session.customerName || 'Bilinmiyor'}
+<b>Email:</b> ${session.customerEmail || '-'}
+<b>Cihaz:</b> ${session.device} (${session.browser || '-'})
+<b>Konum:</b> ${geoStr}
+<b>Kaynak:</b> ${session.referrer || 'Direkt'}
+
+🕐 ${new Date().toLocaleString('tr-TR')}
+  `.trim();
+
+  await sendTelegramMessage(message);
+});
+
+/**
+ * Checkout Takip - Yuksek degerli sepet checkout'a gectiginde bildir
+ */
+export const onSessionStageChange = onDocumentUpdated('sessions/{sessionId}', async (event) => {
+  const before = event.data?.before?.data();
+  const after = event.data?.after?.data();
+
+  if (!before || !after) return;
+
+  // Checkout'a gecis kontrolu
+  if (before.currentStage !== 'checkout' && after.currentStage === 'checkout') {
+    const config = await getTrackingConfig();
+    const minValue = config.checkoutAlertMinCartValue || 300;
+
+    // Minimum deger kontrolu
+    if ((after.cartValue || 0) < minValue) return;
+
+    const geoStr = after.geo?.city
+      ? `${after.geo.city}, ${after.geo.country}`
+      : 'Bilinmiyor';
+
+    const message = `
+💳 <b>CHECKOUT BASLADI!</b>
+
+<b>Musteri:</b> ${after.customerName || 'Anonim'}
+<b>Sepet:</b> ${after.cartValue || 0} TL (${after.cartItems || 0} urun)
+<b>Cihaz:</b> ${after.device} (${after.browser || '-'})
+<b>Konum:</b> ${geoStr}
+
+⏰ Siparis bekleniyor...
+
+🕐 ${new Date().toLocaleString('tr-TR')}
+    `.trim();
+
+    await sendTelegramMessage(message);
+  }
+});
+
+/**
+ * Gunluk Istatistik Hesaplama ve Rapor - Her gun 00:05'te calisir
+ */
+export const calculateDailyStats = onSchedule({
+  schedule: '5 0 * * *',
+  region: 'europe-west3',
+  timeoutSeconds: 300,
+  timeZone: 'Europe/Istanbul',
+}, async () => {
+  const db = admin.firestore();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const dateStr = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD
+
+  const startOfDay = new Date(dateStr + 'T00:00:00');
+  const endOfDay = new Date(dateStr + 'T23:59:59');
+
+  try {
+    // Session'lari al
+    const sessionsSnap = await db.collection('sessions')
+      .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(startOfDay))
+      .where('startedAt', '<=', admin.firestore.Timestamp.fromDate(endOfDay))
+      .get();
+
+    const sessions = sessionsSnap.docs.map(d => d.data());
+
+    // Unique visitor sayisi
+    const uniqueVisitors = new Set(sessions.map(s => s.visitorId)).size;
+
+    // Stage sayilari
+    const cartAdditions = sessions.filter(s =>
+      ['cart', 'checkout', 'completed', 'abandoned'].includes(s.currentStage)
+    ).length;
+
+    const checkoutStarts = sessions.filter(s =>
+      ['checkout', 'completed'].includes(s.currentStage)
+    ).length;
+
+    const completedOrders = sessions.filter(s => s.currentStage === 'completed').length;
+    const abandonedCarts = sessions.filter(s => s.currentStage === 'abandoned').length;
+
+    // Ortalama sepet degeri
+    const cartsWithValue = sessions.filter(s => (s.cartValue || 0) > 0);
+    const avgCartValue = cartsWithValue.length > 0
+      ? cartsWithValue.reduce((sum, s) => sum + (s.cartValue || 0), 0) / cartsWithValue.length
+      : 0;
+
+    // Donusum orani
+    const conversionRate = sessions.length > 0
+      ? (completedOrders / sessions.length) * 100
+      : 0;
+
+    // Ulke dagilimi
+    const countryStats: Record<string, number> = {};
+    sessions.forEach(s => {
+      const country = s.geo?.country || 'Bilinmiyor';
+      countryStats[country] = (countryStats[country] || 0) + 1;
+    });
+
+    // En cok ziyaretci gelen 3 ulke
+    const topCountries = Object.entries(countryStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([country, count]) => `${country}: ${count}`)
+      .join(', ');
+
+    // Kaydet
+    await db.collection('daily_stats').doc(dateStr).set({
+      date: dateStr,
+      totalVisitors: sessions.length,
+      uniqueVisitors,
+      cartAdditions,
+      checkoutStarts,
+      completedOrders,
+      abandonedCarts,
+      conversionRate: Math.round(conversionRate * 100) / 100,
+      avgCartValue: Math.round(avgCartValue),
+      countryStats,
+      calculatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Telegram ozet raporu
+    const message = `
+📊 <b>GUNLUK RAPOR - ${dateStr}</b>
+
+<b>Ziyaretci:</b> ${sessions.length} (${uniqueVisitors} tekil)
+<b>Sepete Ekleme:</b> ${cartAdditions}
+<b>Checkout:</b> ${checkoutStarts}
+<b>Siparis:</b> ${completedOrders}
+<b>Terk:</b> ${abandonedCarts}
+
+<b>Donusum:</b> %${conversionRate.toFixed(1)}
+<b>Ort. Sepet:</b> ${Math.round(avgCartValue)} TL
+
+<b>Ulkeler:</b> ${topCountries || 'Veri yok'}
+    `.trim();
+
+    await sendTelegramMessage(message);
+
+    functions.logger.info('Daily stats calculated:', dateStr);
+  } catch (error: any) {
+    functions.logger.error('Daily stats error:', error.message);
+  }
+});
+
+/**
+ * Tracking Config Guncelle - Admin panelden ayar degisikligi
+ */
+export const updateTrackingConfig = functions.https.onCall(async (request: any) => {
+  // Admin kontrolu
+  if (!request.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Giris yapmaniz gerekiyor');
+  }
+
+  const { config } = request.data;
+
+  if (!config) {
+    throw new functions.https.HttpsError('invalid-argument', 'Config gerekli');
+  }
+
+  const db = admin.firestore();
+
+  await db.collection('settings').doc('tracking').set({
+    ...config,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: request.auth.uid
+  }, { merge: true });
+
+  return { success: true };
+});
+
+// ==========================================
+// SERVER-SIDE GEO DETECTION
+// ==========================================
+
+type GeoLocation = {
+  country: string | null;
+  countryCode: string | null;
+  city: string | null;
+  region: string | null;
+};
+
+/**
+ * Server-side IP Geolocation - Birden fazla API fallback
+ * Client-side'da ad blocker/VPN engelleyebilir, server-side her zaman calisir
+ */
+const fetchGeoFromIP = async (ip: string): Promise<GeoLocation | null> => {
+  // Localhost/private IP kontrolu
+  if (!ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+    functions.logger.info('Private/localhost IP, geo atilanıyor:', ip);
+    return null;
+  }
+
+  // API 1: ip-api.com (Server-side icin HTTP, guvenli - gunluk 45 istek/dakika)
+  try {
+    const response = await axios.get(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,regionName,city`, {
+      timeout: 5000
+    });
+
+    if (response.data && response.data.status === 'success') {
+      functions.logger.info('Geo alindi (ip-api.com):', response.data.city, response.data.regionName, response.data.country);
+      return {
+        country: response.data.country || null,
+        countryCode: response.data.countryCode || null,
+        city: response.data.city || null,
+        region: response.data.regionName || null
+      };
+    }
+  } catch (e: any) {
+    functions.logger.warn('ip-api.com failed:', e.message);
+  }
+
+  // API 2: ipwho.is fallback (HTTPS)
+  try {
+    const response = await axios.get(`https://ipwho.is/${ip}`, {
+      timeout: 5000
+    });
+
+    if (response.data && response.data.success !== false) {
+      functions.logger.info('Geo alindi (ipwho.is):', response.data.city, response.data.region, response.data.country);
+      return {
+        country: response.data.country || null,
+        countryCode: response.data.country_code || null,
+        city: response.data.city || null,
+        region: response.data.region || null
+      };
+    }
+  } catch (e: any) {
+    functions.logger.warn('ipwho.is failed:', e.message);
+  }
+
+  // API 3: ipapi.co fallback (HTTPS - gunluk 1000 istek)
+  try {
+    const response = await axios.get(`https://ipapi.co/${ip}/json/`, {
+      timeout: 5000
+    });
+
+    if (response.data && !response.data.error) {
+      functions.logger.info('Geo alindi (ipapi.co):', response.data.city, response.data.region, response.data.country_name);
+      return {
+        country: response.data.country_name || null,
+        countryCode: response.data.country_code || null,
+        city: response.data.city || null,
+        region: response.data.region || null
+      };
+    }
+  } catch (e: any) {
+    functions.logger.warn('ipapi.co failed:', e.message);
+  }
+
+  functions.logger.warn('Tum geo API\'ler basarisiz, IP:', ip);
+  return null;
+};
+
+/**
+ * Session Baslat - Server-side geo detection ile
+ * Client IP'den lokasyon bilgisi alinir (Wix gibi her zaman calisir)
+ */
+export const initVisitorSession = functions.https.onCall(async (request: any) => {
+  const { sessionId, visitorId, sessionData } = request.data;
+
+  if (!sessionId || !visitorId || !sessionData) {
+    throw new functions.https.HttpsError('invalid-argument', 'sessionId, visitorId ve sessionData gerekli');
+  }
+
+  const db = admin.firestore();
+
+  // Client IP'yi al - Firebase Functions rawRequest'ten
+  let clientIP: string | null = null;
+
+  if (request.rawRequest) {
+    // x-forwarded-for header (load balancer/proxy arkasinda)
+    const forwarded = request.rawRequest.headers['x-forwarded-for'];
+    if (forwarded) {
+      clientIP = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim();
+    }
+    // Direkt IP
+    if (!clientIP && request.rawRequest.ip) {
+      clientIP = request.rawRequest.ip;
+    }
+    // Connection remote address
+    if (!clientIP && request.rawRequest.connection?.remoteAddress) {
+      clientIP = request.rawRequest.connection.remoteAddress;
+    }
+  }
+
+  functions.logger.info('Client IP:', clientIP);
+
+  // Server-side geo lookup
+  let geo: GeoLocation | null = null;
+  if (clientIP) {
+    geo = await fetchGeoFromIP(clientIP);
+  }
+
+  // Session data'yi geo ile birlestir
+  const finalSessionData = {
+    ...sessionData,
+    geo: geo || sessionData.geo || null, // Server geo > client geo > null
+    clientIP: clientIP || null, // IP'yi de kaydet (debug icin)
+    startedAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastActivityAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+
+  // Session olustur veya guncelle
+  const sessionRef = db.collection('sessions').doc(sessionId);
+  const existingSession = await sessionRef.get();
+
+  if (!existingSession.exists()) {
+    await sessionRef.set(finalSessionData);
+    functions.logger.info('Yeni session olusturuldu:', sessionId, 'IP:', clientIP, 'Geo:', geo?.city);
+  } else {
+    // Mevcut session varsa sadece bazi alanlari guncelle
+    const updates: Record<string, any> = {
+      lastActivityAt: admin.firestore.FieldValue.serverTimestamp(),
+      isActive: true
+    };
+
+    // Geo yoksa ekle
+    if (!existingSession.data()?.geo && geo) {
+      updates.geo = geo;
+      updates.clientIP = clientIP;
+    }
+
+    // Customer bilgileri varsa guncelle
+    if (sessionData.customerEmail) updates.customerEmail = sessionData.customerEmail;
+    if (sessionData.customerName) updates.customerName = sessionData.customerName;
+
+    await sessionRef.update(updates);
+  }
+
+  return {
+    success: true,
+    sessionId,
+    geo: geo || null
   };
 });

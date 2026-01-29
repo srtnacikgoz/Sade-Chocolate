@@ -20,6 +20,7 @@ import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import { IyzicoCheckoutModal } from '../components/IyzicoCheckoutModal';
+import { trackCheckoutStart, updateCustomerInfo, trackOrderCompleted } from '../services/visitorTrackingService';
 
 export const Checkout: React.FC = () => {
   const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart, hasGiftBag } = useCart();
@@ -97,6 +98,27 @@ const [faturaDistrict, setFaturaDistrict] = useState(''); // Fatura ilçe
 
     return digits.substring(0, 15);
   };
+
+  // Visitor Tracking - Checkout sayfasi acildiginda
+  useEffect(() => {
+    trackCheckoutStart().catch((err) => {
+      console.warn('Checkout tracking failed:', err);
+    });
+  }, []);
+
+  // Visitor Tracking - Musteri bilgileri degistiginde guncelle
+  useEffect(() => {
+    const email = isGuestMode ? guestData.email : user?.email;
+    const name = isGuestMode
+      ? `${guestData.firstName} ${guestData.lastName}`.trim()
+      : user?.displayName || '';
+
+    if (email && name) {
+      updateCustomerInfo(email, name).catch((err) => {
+        console.warn('Customer info tracking failed:', err);
+      });
+    }
+  }, [isGuestMode, guestData.email, guestData.firstName, guestData.lastName, user?.email, user?.displayName]);
 
   // LocalStorage helpers
   const saveDraftToLocalStorage = useCallback(() => {
@@ -922,6 +944,12 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         giftBag: giftBagPrice
       });
       setIsSuccess(true);
+
+      // Visitor Tracking - Siparis tamamlandi
+      trackOrderCompleted(`SADE-${orderId}`).catch((err) => {
+        console.warn('Order completion tracking failed:', err);
+      });
+
       clearCart();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {

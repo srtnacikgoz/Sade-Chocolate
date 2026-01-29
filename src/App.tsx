@@ -19,6 +19,7 @@ import { CookieConsent } from './components/CookieConsent';
 import { FloatingFeedback } from './components/FloatingFeedback';
 import { useLoyaltyStore } from './stores/loyaltyStore';
 import { TypographySettings } from './types';
+import { initSession, trackPageView } from './services/visitorTrackingService';
 
 // Chunk yükleme hatası yakalayan lazy loader
 // Deploy sonrası eski chunk'lar geçersiz olduğunda sayfayı yeniler
@@ -121,6 +122,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
     return () => unsubscribe();
   }, []);
+
+  // Visitor Tracking - Session baslat (sadece bir kez)
+  useEffect(() => {
+    // Admin sayfalarinda tracking yapma
+    if (isAdmin) return;
+
+    initSession().catch((err) => {
+      console.warn('Visitor tracking init failed:', err);
+    });
+  }, [isAdmin]);
+
+  // Visitor Tracking - Sayfa degisikliklerini takip et
+  useEffect(() => {
+    // Admin sayfalarinda tracking yapma
+    if (isAdmin) return;
+
+    trackPageView(location.pathname).catch((err) => {
+      console.warn('Page view tracking failed:', err);
+    });
+  }, [location.pathname, isAdmin]);
 
   // Bakım modunda admin hariç tüm sayfalar Maintenance gösterir
   if (isMaintenanceMode && !isAdmin) {
