@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '../lib/firebase'
-import type { JourneyStage, DeviceType, CartItemSummary, GeoLocation } from '../types/visitorTracking'
+import type { JourneyStage, DeviceType, CartItemSummary, GeoLocation, ViewedProduct } from '../types/visitorTracking'
 
 // Cloud Function referanslari
 const initVisitorSessionFn = httpsCallable<{
@@ -493,4 +493,59 @@ export const getCurrentSessionId = (): string => {
  */
 export const getCurrentVisitorId = (): string => {
   return getOrCreateVisitorId()
+}
+
+/**
+ * Urun goruntulemesi kaydet
+ * Katalog veya urun detay sayfasinda urun goruntulediginde cagrilmali
+ */
+export const trackProductView = async (
+  productId: string,
+  productName: string,
+  productPrice: number,
+  productImage: string | null,
+  viewType: 'hover' | 'quickview' | 'detail'
+): Promise<void> => {
+  const sessionId = getOrCreateSessionId()
+  const sessionRef = doc(db, 'sessions', sessionId)
+
+  try {
+    const sessionSnap = await getDoc(sessionRef)
+
+    if (!sessionSnap.exists()) {
+      await initSession()
+      return
+    }
+
+    const sessionData = sessionSnap.data()
+    const existingViewed = sessionData?.viewedProducts || []
+
+    // Son 10 saniye icinde ayni urun zaten goruntulenmisse, ekleme (spam onleme)
+    const tenSecsAgo = Date.now() - 10000
+    const recentSameView = existingViewed.find(
+      (v: ViewedProduct) =>
+        v.productId === productId &&
+        (v.viewedAt?.toDate?.()?.getTime() || 0) > tenSecsAgo
+    )
+    if (recentSameView) return
+
+    const newView: Omit<ViewedProduct, 'viewedAt'> & { viewedAt: ReturnType<typeof serverTimestamp> } = {
+      productId,
+      productName,
+      productPrice,
+      productImage,
+      viewType,
+      viewedAt: serverTimestamp()
+    }
+
+    // Son 50 urun goruntuleme kaydi tut
+    const updatedViewed = [...existingViewed, newView].slice(-50)
+
+    await updateDoc(sessionRef, {
+      lastActivityAt: serverTimestamp(),
+      viewedProducts: updatedViewed
+    })
+  } catch (error) {
+    console.error('Track product view error:', error)
+  }
 }

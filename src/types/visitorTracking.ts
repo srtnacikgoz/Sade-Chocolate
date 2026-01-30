@@ -19,6 +19,16 @@ export type GeoLocation = {
   region: string | null
 }
 
+// Goruntulenen urun bilgisi
+export type ViewedProduct = {
+  productId: string
+  productName: string
+  productPrice: number
+  productImage: string | null
+  viewedAt: Date
+  viewType: 'hover' | 'quickview' | 'detail'
+}
+
 export type VisitorSession = {
   id: string
   visitorId: string
@@ -38,6 +48,7 @@ export type VisitorSession = {
   cartValue: number
   cartItems: number
   pagesVisited: string[]
+  viewedProducts: ViewedProduct[]
   isActive: boolean
 }
 

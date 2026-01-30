@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Product, ViewMode, ProductBadge } from '../types';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { trackProductView } from '../services/visitorTrackingService';
 
 interface ProductCardProps {
   product: Product;
@@ -19,8 +20,45 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [badges, setBadges] = useState<ProductBadge[]>([]);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasTrackedHoverRef = useRef(false);
 
   const isFav = isFavorite(product.id);
+
+  // Hover takibi - 500ms+ hover edince kaydet
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    hasTrackedHoverRef.current = false;
+    hoverTimerRef.current = setTimeout(() => {
+      if (!hasTrackedHoverRef.current) {
+        trackProductView(
+          product.id,
+          product.title,
+          product.price,
+          product.image || null,
+          'hover'
+        );
+        hasTrackedHoverRef.current = true;
+      }
+    }, 500);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   // Fetch badges from Firebase
   useEffect(() => {
@@ -77,8 +115,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
     return (
       <div
         onClick={handleCardClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className="group bg-cream-50 dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-500 overflow-hidden flex flex-col h-full border border-gold/15 relative cursor-pointer"
       >
         <div className="relative aspect-[4/5] bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden">
@@ -194,8 +232,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
     return (
       <div
         onClick={handleCardClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className="group bg-white dark:bg-dark-800 rounded-xl shadow-luxurious hover:shadow-hover transition-all duration-300 overflow-hidden flex flex-col border border-gray-50 dark:border-gray-800 relative cursor-pointer"
       >
         <div className="relative aspect-[3/2] bg-[#F9F9F9] dark:bg-gray-800 overflow-hidden">
@@ -285,8 +323,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
     return (
       <div
         onClick={handleCardClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         className="group bg-white dark:bg-dark-800 rounded-xl shadow-soft hover:shadow-hover transition-all duration-300 overflow-hidden flex border border-gray-50 dark:border-gray-800 items-center p-3 relative cursor-pointer"
       >
         <div className="relative w-24 h-24 flex-shrink-0 bg-[#F9F9F9] dark:bg-gray-800 rounded-lg overflow-hidden mr-3">

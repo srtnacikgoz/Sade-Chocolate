@@ -9,6 +9,7 @@ import { NutritionalInfo } from '../components/NutritionalInfo';
 import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { ViewMode } from '../types';
+import { trackProductView } from '../services/visitorTrackingService';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis,
   ResponsiveContainer
@@ -141,6 +142,19 @@ export const ProductDetail: React.FC = () => {
   const fromBox = (location.state as any)?.fromBox as { id: string; title: string } | undefined;
 
   const product = useMemo(() => products.find(p => p.id === id), [id, products]);
+
+  // Urun detay sayfasi goruntuleme takibi
+  useEffect(() => {
+    if (product) {
+      trackProductView(
+        product.id,
+        product.title,
+        product.price,
+        product.image || null,
+        'detail'
+      );
+    }
+  }, [product?.id]);
 
   // Ana görsel + galeri görselleri birleştirilmiş liste
   const allImages = useMemo(() => {

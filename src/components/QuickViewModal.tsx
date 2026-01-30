@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
+import { trackProductView } from '../services/visitorTrackingService';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -14,6 +15,19 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen,
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const { t } = useLanguage();
+
+  // QuickView acildiginda urun goruntuleme takip et
+  useEffect(() => {
+    if (isOpen && product) {
+      trackProductView(
+        product.id,
+        product.title,
+        product.price,
+        product.image || null,
+        'quickview'
+      );
+    }
+  }, [isOpen, product?.id]);
 
   if (!isOpen || !product) return null;
 

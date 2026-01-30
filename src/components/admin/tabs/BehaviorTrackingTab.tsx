@@ -34,13 +34,16 @@ import {
   MapPin,
   ChevronDown,
   ChevronRight,
-  UserX
+  UserX,
+  Eye,
+  Package
 } from 'lucide-react'
 import type {
   VisitorSession,
   AbandonedCart,
   DailyStats,
-  FunnelData
+  FunnelData,
+  ViewedProduct
 } from '../../../types/visitorTracking'
 
 // Stage konfigurasyonu
@@ -435,6 +438,126 @@ export const BehaviorTrackingTab: React.FC = () => {
         </div>
       )}
 
+      {/* Katalogda Goruntulenenleri Hesapla ve Goster */}
+      {(() => {
+        // Tum session'lardan goruntulenenleri topla
+        const allViewedProducts: { productId: string; productName: string; productImage: string | null; count: number; viewTypes: Set<string> }[] = [];
+        const productViewMap = new Map<string, { productName: string; productImage: string | null; count: number; viewTypes: Set<string> }>();
+
+        activeSessions.forEach((session) => {
+          const sessionData = session as any;
+          const viewedProducts = sessionData.viewedProducts || [];
+          viewedProducts.forEach((vp: ViewedProduct) => {
+            const existing = productViewMap.get(vp.productId);
+            if (existing) {
+              existing.count++;
+              existing.viewTypes.add(vp.viewType);
+            } else {
+              productViewMap.set(vp.productId, {
+                productName: vp.productName,
+                productImage: vp.productImage,
+                count: 1,
+                viewTypes: new Set([vp.viewType])
+              });
+            }
+          });
+        });
+
+        // Map'i array'e cevir ve sirala
+        productViewMap.forEach((value, key) => {
+          allViewedProducts.push({ productId: key, ...value });
+        });
+        allViewedProducts.sort((a, b) => b.count - a.count);
+
+        const topProducts = allViewedProducts.slice(0, 10);
+        const totalViews = allViewedProducts.reduce((sum, p) => sum + p.count, 0);
+
+        if (topProducts.length === 0) return null;
+
+        return (
+          <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-cream-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                <Eye className="w-4 h-4 text-blue-500" />
+                Katalogda En Cok Goruntuleneler ({totalViews} goruntulenme)
+              </h3>
+              <span className="text-xs text-gray-400">
+                Aktif ziyaretciler tarafindan
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {topProducts.map((product, idx) => (
+                <div
+                  key={product.productId}
+                  className="relative bg-cream-50 dark:bg-dark-700 rounded-xl p-3 hover:shadow-md transition-all"
+                >
+                  {/* Siralama Badge */}
+                  <span className={`absolute -top-2 -left-2 w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded-full ${
+                    idx === 0 ? 'bg-yellow-400 text-yellow-900' :
+                    idx === 1 ? 'bg-gray-300 text-gray-700' :
+                    idx === 2 ? 'bg-orange-300 text-orange-800' :
+                    'bg-gray-200 text-gray-600'
+                  }`}>
+                    {idx + 1}
+                  </span>
+
+                  {/* Urun Gorseli */}
+                  <div className="aspect-square bg-white dark:bg-dark-600 rounded-lg overflow-hidden mb-2">
+                    {product.productImage ? (
+                      <img
+                        src={product.productImage}
+                        alt={product.productName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-8 h-8 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Urun Bilgileri */}
+                  <h4 className="text-xs font-medium text-brown-900 dark:text-white line-clamp-2 mb-1">
+                    {product.productName}
+                  </h4>
+
+                  {/* Goruntulenme Sayisi ve Tipi */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                      {product.count}x
+                    </span>
+                    <div className="flex gap-1">
+                      {product.viewTypes.has('hover') && (
+                        <span className="text-[9px] bg-gray-100 dark:bg-dark-600 px-1.5 py-0.5 rounded text-gray-500">
+                          hover
+                        </span>
+                      )}
+                      {product.viewTypes.has('quickview') && (
+                        <span className="text-[9px] bg-purple-100 dark:bg-purple-900/30 px-1.5 py-0.5 rounded text-purple-600 dark:text-purple-400">
+                          quick
+                        </span>
+                      )}
+                      {product.viewTypes.has('detail') && (
+                        <span className="text-[9px] bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 rounded text-green-600 dark:text-green-400">
+                          detay
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {allViewedProducts.length > 10 && (
+              <p className="text-center text-xs text-gray-400 mt-3">
+                +{allViewedProducts.length - 10} daha fazla urun goruntulendi
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Abandoned Carts */}
@@ -643,6 +766,49 @@ export const BehaviorTrackingTab: React.FC = () => {
                           {session.pagesVisited.length > 5 && (
                             <span className="text-[10px] text-gray-400">
                               +{session.pagesVisited.length - 5} daha
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Goruntulenen Urunler */}
+                    {sessionData.viewedProducts && sessionData.viewedProducts.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                        <p className="text-[10px] text-gray-400 mb-1 flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          Inceledigi Urunler ({sessionData.viewedProducts.length}):
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {sessionData.viewedProducts.slice(-6).map((vp: ViewedProduct, idx: number) => (
+                            <div
+                              key={`${vp.productId}-${idx}`}
+                              className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded"
+                            >
+                              {vp.productImage && (
+                                <img
+                                  src={vp.productImage}
+                                  alt=""
+                                  className="w-5 h-5 rounded object-cover"
+                                />
+                              )}
+                              <span className="text-[10px] text-blue-700 dark:text-blue-300 max-w-[80px] truncate">
+                                {vp.productName}
+                              </span>
+                              <span className={`text-[8px] px-1 rounded ${
+                                vp.viewType === 'quickview'
+                                  ? 'bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300'
+                                  : vp.viewType === 'detail'
+                                    ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                              }`}>
+                                {vp.viewType === 'quickview' ? 'Q' : vp.viewType === 'detail' ? 'D' : 'H'}
+                              </span>
+                            </div>
+                          ))}
+                          {sessionData.viewedProducts.length > 6 && (
+                            <span className="text-[10px] text-gray-400">
+                              +{sessionData.viewedProducts.length - 6} daha
                             </span>
                           )}
                         </div>
