@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getGeliverDistricts = exports.getGeliverCities = exports.trackGeliverShipment = exports.acceptGeliverOffer = exports.getGeliverOffers = exports.createGeliverShipment = exports.checkShipmentStatus = exports.checkAllShipmentStatus = exports.checkSingleShipmentStatus = exports.onNewOrder = exports.listAdmins = exports.checkAdminStatus = exports.removeAdminClaim = exports.setAdminClaim = exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
+exports.onOrderCreatedCapiPurchase = exports.sendMetaCapiEvent = exports.sitemap = exports.initVisitorSession = exports.updateTrackingConfig = exports.calculateDailyStats = exports.onSessionStageChange = exports.onVisitorSessionCreated = exports.sendAbandonedCartEmails = exports.detectAbandonedCarts = exports.cleanupAbandonedCardPayments = exports.getGeliverDistricts = exports.getGeliverCities = exports.trackGeliverShipment = exports.acceptGeliverOffer = exports.getGeliverOffers = exports.createGeliverShipment = exports.checkShipmentStatus = exports.checkAllShipmentStatus = exports.checkSingleShipmentStatus = exports.onNewOrder = exports.listAdmins = exports.checkAdminStatus = exports.removeAdminClaim = exports.setAdminClaim = exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const v2_1 = require("firebase-functions/v2");
@@ -721,7 +721,7 @@ exports.sendCustomPasswordResetEmail = functions.https.onCall(async (request) =>
         // Firebase Admin SDK ile şifre sıfırlama linki oluştur
         // Firebase Hosting domain'i kullan (authorized domains'de zaten var)
         const actionCodeSettings = {
-            url: 'https://sade-chocolate-prod.web.app/#/account',
+            url: 'https://sadechocolate.com/account',
             handleCodeInApp: false
         };
         const resetLink = await admin.auth().generatePasswordResetLink(email, actionCodeSettings);
@@ -796,8 +796,8 @@ exports.sendCustomPasswordResetEmail = functions.https.onCall(async (request) =>
               Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
             </p>
             <div style="font-size: 11px;">
-              <a href="https://sadechocolate.com/#/account" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
-              <a href="https://sadechocolate.com/#/catalog" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+              <a href="https://sadechocolate.com/account" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+              <a href="https://sadechocolate.com/catalog" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
               <a href="mailto:bilgi@sadechocolate.com" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
             </div>
             <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
@@ -994,6 +994,17 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
             status: isSuccess ? 'success' : 'failed',
             paymentId: paymentDetails.iyzicoPaymentId
         });
+        // Kart odemesi basarili ise Telegram bildirimi gonder
+        if (isSuccess) {
+            try {
+                // orderData'ya guncel bilgileri ekle
+                const enrichedOrder = Object.assign(Object.assign({}, orderData), { payment: Object.assign(Object.assign({}, orderData.payment), { status: 'paid', cardFamily: paymentDetails.cardFamily, lastFourDigits: paymentDetails.lastFourDigits }) });
+                await sendOrderTelegramNotification(enrichedOrder, orderId);
+            }
+            catch (telegramError) {
+                functions.logger.error('Telegram bildirim hatasi (iyzico callback):', telegramError.message);
+            }
+        }
         // Email gönder (arka planda, hata tolere edilir)
         const sendPaymentEmail = async () => {
             var _a, _b, _c, _d, _e, _f;
@@ -1042,8 +1053,8 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
                 Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
               </p>
               <div style="font-size: 11px;">
-                <a href="https://sadechocolate.com/#/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
-                <a href="https://sadechocolate.com/#/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+                <a href="https://sadechocolate.com/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+                <a href="https://sadechocolate.com/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
                 <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
               </div>
               <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
@@ -1137,7 +1148,7 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
                 </div>
                 <!-- CTA Button -->
                 <div style="text-align: center; margin: 40px 0 0;">
-                  <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                  <a href="https://sadechocolate.com/account?view=orders" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
                     Siparişi Takip Et
                   </a>
                 </div>
@@ -1500,21 +1511,9 @@ const sendTelegramMessage = async (message) => {
         functions.logger.error('Telegram bildirim hatasi:', error.message);
     }
 };
-// Yeni siparis bildirimi - Firestore trigger (v2)
-exports.onNewOrder = (0, firestore_1.onDocumentCreated)('orders/{orderId}', async (event) => {
+// Telegram siparis bildirimi helper - hem onCreate hem callback'den cagrilir
+const sendOrderTelegramNotification = async (order, orderId) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
-    const snapshot = event.data;
-    if (!snapshot) {
-        functions.logger.error('No data in snapshot');
-        return;
-    }
-    const order = snapshot.data();
-    const orderId = event.params.orderId;
-    functions.logger.info('Yeni siparis:', orderId);
-    if (!order) {
-        functions.logger.error('Order data is undefined');
-        return;
-    }
     // Siparis bilgilerini formatla
     const customerName = ((_a = order.customer) === null || _a === void 0 ? void 0 : _a.name) || ((_b = order.shipping) === null || _b === void 0 ? void 0 : _b.fullName) || 'Belirtilmemis';
     const customerEmail = ((_c = order.customer) === null || _c === void 0 ? void 0 : _c.email) || '';
@@ -1587,9 +1586,34 @@ Ara Toplam: ${subtotal.toLocaleString('tr-TR')} TL
 Kargo: ${shippingCost.toLocaleString('tr-TR')} TL
 <b>TOPLAM: ${totalAmount.toLocaleString('tr-TR')} TL</b>
 
-🕐 ${new Date().toLocaleString('tr-TR')}
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
   `.trim();
     await sendTelegramMessage(message);
+};
+// Yeni siparis bildirimi - Firestore trigger (v2)
+// Kart odemelerinde bildirim GONDERME - odeme onaylaninca callback'den gonderilir
+exports.onNewOrder = (0, firestore_1.onDocumentCreated)('orders/{orderId}', async (event) => {
+    var _a;
+    const snapshot = event.data;
+    if (!snapshot) {
+        functions.logger.error('No data in snapshot');
+        return;
+    }
+    const order = snapshot.data();
+    const orderId = event.params.orderId;
+    functions.logger.info('Yeni siparis:', orderId);
+    if (!order) {
+        functions.logger.error('Order data is undefined');
+        return;
+    }
+    // Kredi karti odemelerinde bildirim gonderme
+    // Odeme onaylaninca iyzicoCallback icinden gonderilecek
+    if (((_a = order.payment) === null || _a === void 0 ? void 0 : _a.method) === 'card') {
+        functions.logger.info('Kart odemesi - Telegram bildirimi odeme onayina kadar bekletiliyor', { orderId });
+        return;
+    }
+    // EFT/Havale siparisleri icin hemen bildirim gonder
+    await sendOrderTelegramNotification(order, orderId);
 });
 // ==========================================
 // SHIPMENT STATUS CHECK FUNCTIONS
@@ -2007,4 +2031,662 @@ exports.getGeliverDistricts = functions.https.onCall(async (request) => {
         timestamp: new Date().toISOString()
     };
 });
+const DEFAULT_TRACKING_CONFIG = {
+    abandonedCartTimeoutMinutes: 30,
+    telegramMinCartValue: 200,
+    checkoutAlertMinCartValue: 300,
+    vipCustomerAlertEnabled: true
+};
+const getTrackingConfig = async () => {
+    var _a, _b, _c, _d;
+    const db = admin.firestore();
+    try {
+        const configDoc = await db.collection('settings').doc('tracking').get();
+        if (configDoc.exists) {
+            const data = configDoc.data();
+            return {
+                abandonedCartTimeoutMinutes: (_a = data === null || data === void 0 ? void 0 : data.abandonedCartTimeoutMinutes) !== null && _a !== void 0 ? _a : DEFAULT_TRACKING_CONFIG.abandonedCartTimeoutMinutes,
+                telegramMinCartValue: (_b = data === null || data === void 0 ? void 0 : data.telegramMinCartValue) !== null && _b !== void 0 ? _b : DEFAULT_TRACKING_CONFIG.telegramMinCartValue,
+                checkoutAlertMinCartValue: (_c = data === null || data === void 0 ? void 0 : data.checkoutAlertMinCartValue) !== null && _c !== void 0 ? _c : DEFAULT_TRACKING_CONFIG.checkoutAlertMinCartValue,
+                vipCustomerAlertEnabled: (_d = data === null || data === void 0 ? void 0 : data.vipCustomerAlertEnabled) !== null && _d !== void 0 ? _d : DEFAULT_TRACKING_CONFIG.vipCustomerAlertEnabled
+            };
+        }
+    }
+    catch (error) {
+        functions.logger.warn('Tracking config alinamadi, default kullaniliyor');
+    }
+    return DEFAULT_TRACKING_CONFIG;
+};
+/**
+ * Tamamlanmamis Kart Odemesi Temizleme - Her 15 dakikada calisir
+ * 30 dakikadan eski pending kart odemelerini otomatik iptal eder
+ */
+exports.cleanupAbandonedCardPayments = (0, scheduler_1.onSchedule)({
+    schedule: 'every 15 minutes',
+    region: 'europe-west3',
+    timeoutSeconds: 120,
+}, async () => {
+    const db = admin.firestore();
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    try {
+        // Pending durumundaki kart odemelerini bul
+        const pendingOrders = await db.collection('orders')
+            .where('payment.method', '==', 'card')
+            .where('payment.status', '==', 'pending')
+            .where('status', '==', 'pending')
+            .get();
+        if (pendingOrders.empty) {
+            functions.logger.info('Temizlenecek tamamlanmamis kart odemesi yok');
+            return;
+        }
+        const batch = db.batch();
+        let cancelledCount = 0;
+        for (const orderDoc of pendingOrders.docs) {
+            const order = orderDoc.data();
+            const createdAt = order.createdAt;
+            // 30 dakikadan eski mi kontrol et
+            if (createdAt && createdAt < thirtyMinutesAgo) {
+                batch.update(orderDoc.ref, {
+                    status: 'cancelled',
+                    'payment.status': 'expired',
+                    'payment.failureReason': 'Odeme suresi doldu (30 dakika)',
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    timeline: admin.firestore.FieldValue.arrayUnion({
+                        status: 'cancelled',
+                        time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+                        note: 'Kart odemesi tamamlanmadi - otomatik iptal'
+                    })
+                });
+                cancelledCount++;
+            }
+        }
+        if (cancelledCount > 0) {
+            await batch.commit();
+            functions.logger.info(`${cancelledCount} tamamlanmamis kart odemesi iptal edildi`);
+        }
+    }
+    catch (error) {
+        functions.logger.error('Kart odemesi temizleme hatasi:', error.message);
+    }
+});
+/**
+ * Terk Edilmis Sepet Algilama - Her 5 dakikada calisir
+ * Belirli sure hareketsiz cart/checkout session'lari tespit eder
+ */
+exports.detectAbandonedCarts = (0, scheduler_1.onSchedule)({
+    schedule: 'every 5 minutes',
+    region: 'europe-west3',
+    timeoutSeconds: 120,
+}, async () => {
+    var _a;
+    const db = admin.firestore();
+    const config = await getTrackingConfig();
+    const timeoutMs = (config.abandonedCartTimeoutMinutes || 30) * 60 * 1000;
+    const cutoffTime = new Date(Date.now() - timeoutMs);
+    try {
+        // Aktif cart/checkout session'lari bul
+        const sessionsSnap = await db.collection('sessions')
+            .where('isActive', '==', true)
+            .where('currentStage', 'in', ['cart', 'checkout'])
+            .where('lastActivityAt', '<', admin.firestore.Timestamp.fromDate(cutoffTime))
+            .get();
+        if (sessionsSnap.empty) {
+            functions.logger.info('Terk edilmis sepet bulunamadi');
+            return;
+        }
+        const batch = db.batch();
+        const abandonedCarts = [];
+        const minCartValue = config.telegramMinCartValue || 200;
+        for (const sessionDoc of sessionsSnap.docs) {
+            const session = sessionDoc.data();
+            // Session'i abandoned olarak isaretle
+            batch.update(sessionDoc.ref, {
+                currentStage: 'abandoned',
+                isActive: false,
+                abandonedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            // Abandoned cart kaydi olustur
+            const abandonedCartRef = db.collection('abandoned_carts').doc();
+            batch.set(abandonedCartRef, {
+                sessionId: sessionDoc.id,
+                visitorId: session.visitorId,
+                customerEmail: session.customerEmail || null,
+                customerName: session.customerName || null,
+                cartValue: session.cartValue || 0,
+                cartItems: session.cartItemsDetail || [],
+                abandonedAt: admin.firestore.FieldValue.serverTimestamp(),
+                stage: session.currentStage,
+                notificationSent: false,
+                recoveryEmailSent: false,
+                geo: session.geo || null
+            });
+            // Telegram bildirimi icin listeye ekle (min deger ustu)
+            if ((session.cartValue || 0) >= minCartValue) {
+                const geoStr = ((_a = session.geo) === null || _a === void 0 ? void 0 : _a.city)
+                    ? `${session.geo.city}, ${session.geo.country}`
+                    : 'Bilinmiyor';
+                abandonedCarts.push({
+                    name: session.customerName || 'Anonim',
+                    email: session.customerEmail || '-',
+                    value: session.cartValue || 0,
+                    items: session.cartItems || 0,
+                    stage: session.currentStage === 'checkout' ? 'Odeme' : 'Sepet',
+                    location: geoStr,
+                    device: session.device || '-'
+                });
+            }
+        }
+        await batch.commit();
+        // Telegram bildirimi gonder (toplu)
+        if (abandonedCarts.length > 0) {
+            const cartList = abandonedCarts
+                .map(c => `  • ${c.name}: ${c.value} TL (${c.items} urun)\n    ${c.location} | ${c.device} | ${c.stage}`)
+                .join('\n\n');
+            const message = `
+🛒 <b>TERK EDILEN SEPETLER</b>
+
+${abandonedCarts.length} adet yuksek degerli sepet terk edildi:
+
+${cartList}
+
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
+      `.trim();
+            await sendTelegramMessage(message);
+        }
+        functions.logger.info(`${sessionsSnap.size} terk edilmis sepet algilandi`);
+    }
+    catch (error) {
+        functions.logger.error('Abandoned cart detection error:', error.message);
+    }
+});
+/**
+ * Terk Edilmis Sepet Kurtarma E-postasi - 1 saat sonra gonderir
+ * abandoned_carts collection'daki recoveryEmailSent: false olan kayitlari kontrol eder
+ */
+exports.sendAbandonedCartEmails = (0, scheduler_1.onSchedule)({
+    schedule: 'every 15 minutes',
+    region: 'europe-west3',
+    timeoutSeconds: 120,
+}, async () => {
+    const db = admin.firestore();
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    try {
+        // E-posta gonderilmemis ve en az 1 saat once terk edilmis sepetler
+        const snap = await db.collection('abandoned_carts')
+            .where('recoveryEmailSent', '==', false)
+            .where('abandonedAt', '<', admin.firestore.Timestamp.fromDate(oneHourAgo))
+            .limit(20)
+            .get();
+        if (snap.empty) {
+            functions.logger.info('Gonderilecek kurtarma emaili yok');
+            return;
+        }
+        let sentCount = 0;
+        for (const doc of snap.docs) {
+            const cart = doc.data();
+            // E-posta adresi yoksa atla
+            if (!cart.customerEmail) {
+                await doc.ref.update({ recoveryEmailSent: true, skipReason: 'no_email' });
+                continue;
+            }
+            const customerName = cart.customerName || 'Degerli Musterimiz';
+            const cartValue = cart.cartValue || 0;
+            const cartItems = cart.cartItems || [];
+            // Urun listesi HTML
+            const itemsHtml = Array.isArray(cartItems) && cartItems.length > 0
+                ? cartItems.map((item) => `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #f3f0eb;">
+              ${item.image ? `<img src="${item.image}" alt="${item.name || item.title || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 12px;" />` : ''}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #f3f0eb; font-family: Georgia, serif;">
+              ${item.name || item.title || 'Urun'}
+              ${item.quantity ? ` x ${item.quantity}` : ''}
+            </td>
+          </tr>
+        `).join('')
+                : '';
+            const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin: 0; padding: 0; background-color: #faf8f5; font-family: Georgia, 'Times New Roman', serif;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="font-size: 24px; color: #3d2b1f; margin: 0; font-style: italic;">Sade Chocolate</h1>
+          </div>
+          <div style="background: white; border-radius: 24px; padding: 40px; border: 1px solid #f3f0eb;">
+            <h2 style="font-size: 20px; color: #3d2b1f; margin: 0 0 16px; font-style: italic;">
+              Sepetiniz sizi bekliyor
+            </h2>
+            <p style="color: #6b5e54; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+              Merhaba ${customerName},<br/><br/>
+              Sectiginiz urunler hala sepetinizde. Siparişinizi tamamlamak icin asagidaki butona tiklayabilirsiniz.
+            </p>
+            ${itemsHtml ? `
+            <table style="width: 100%; margin-bottom: 24px;">
+              ${itemsHtml}
+            </table>
+            ` : ''}
+            ${cartValue > 0 ? `
+            <p style="font-size: 18px; color: #3d2b1f; font-weight: bold; text-align: center; margin: 24px 0;">
+              Sepet Toplami: ${cartValue.toFixed(2)} TL
+            </p>
+            ` : ''}
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="https://sadechocolate.com/cart" style="display: inline-block; background: #3d2b1f; color: white; text-decoration: none; padding: 16px 48px; border-radius: 16px; font-size: 14px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                SEPETE DON
+              </a>
+            </div>
+            <p style="color: #a09890; font-size: 12px; text-align: center; margin: 24px 0 0;">
+              Yardima mi ihtiyaciniz var? info@sadechocolate.com adresinden bize ulasabilirsiniz.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+            // SendGrid mail collection'a yaz
+            await db.collection('mail').add({
+                to: cart.customerEmail,
+                message: {
+                    subject: 'Sepetiniz sizi bekliyor - Sade Chocolate',
+                    html: emailHtml,
+                },
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                type: 'abandoned_cart_recovery',
+            });
+            // Kaydi guncelle
+            await doc.ref.update({
+                recoveryEmailSent: true,
+                recoveryEmailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            sentCount++;
+        }
+        if (sentCount > 0) {
+            functions.logger.info(`${sentCount} terk edilmis sepet kurtarma emaili gonderildi`);
+        }
+    }
+    catch (error) {
+        functions.logger.error('Abandoned cart email error:', error.message);
+    }
+});
+/**
+ * VIP Musteri Bildirimi - Geri donen musteri sitede
+ * Session olusturulunca tetiklenir
+ */
+exports.onVisitorSessionCreated = (0, firestore_1.onDocumentCreated)('sessions/{sessionId}', async (event) => {
+    var _a;
+    const snapshot = event.data;
+    if (!snapshot)
+        return;
+    const session = snapshot.data();
+    const config = await getTrackingConfig();
+    // VIP bildirim kapali ise cik
+    if (!config.vipCustomerAlertEnabled)
+        return;
+    // Sadece geri donen musteriler icin bildirim
+    if (!session.isReturningCustomer)
+        return;
+    const geoStr = ((_a = session.geo) === null || _a === void 0 ? void 0 : _a.city)
+        ? `${session.geo.city}, ${session.geo.country}`
+        : 'Bilinmiyor';
+    const message = `
+👋 <b>VIP MUSTERI SITEDE!</b>
+
+<b>Musteri:</b> ${session.customerName || 'Bilinmiyor'}
+<b>Email:</b> ${session.customerEmail || '-'}
+<b>Cihaz:</b> ${session.device} (${session.browser || '-'})
+<b>Konum:</b> ${geoStr}
+<b>Kaynak:</b> ${session.referrer || 'Direkt'}
+
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
+  `.trim();
+    await sendTelegramMessage(message);
+});
+/**
+ * Checkout Takip - Yuksek degerli sepet checkout'a gectiginde bildir
+ */
+exports.onSessionStageChange = (0, firestore_1.onDocumentUpdated)('sessions/{sessionId}', async (event) => {
+    var _a, _b, _c, _d, _e;
+    const before = (_b = (_a = event.data) === null || _a === void 0 ? void 0 : _a.before) === null || _b === void 0 ? void 0 : _b.data();
+    const after = (_d = (_c = event.data) === null || _c === void 0 ? void 0 : _c.after) === null || _d === void 0 ? void 0 : _d.data();
+    if (!before || !after)
+        return;
+    // Checkout'a gecis kontrolu
+    if (before.currentStage !== 'checkout' && after.currentStage === 'checkout') {
+        const config = await getTrackingConfig();
+        const minValue = config.checkoutAlertMinCartValue || 300;
+        // Minimum deger kontrolu
+        if ((after.cartValue || 0) < minValue)
+            return;
+        const geoStr = ((_e = after.geo) === null || _e === void 0 ? void 0 : _e.city)
+            ? `${after.geo.city}, ${after.geo.country}`
+            : 'Bilinmiyor';
+        const message = `
+💳 <b>CHECKOUT BASLADI!</b>
+
+<b>Musteri:</b> ${after.customerName || 'Anonim'}
+<b>Sepet:</b> ${after.cartValue || 0} TL (${after.cartItems || 0} urun)
+<b>Cihaz:</b> ${after.device} (${after.browser || '-'})
+<b>Konum:</b> ${geoStr}
+
+⏰ Siparis bekleniyor...
+
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
+    `.trim();
+        await sendTelegramMessage(message);
+    }
+});
+/**
+ * Gunluk Istatistik Hesaplama ve Rapor - Her gun 00:05'te calisir
+ */
+exports.calculateDailyStats = (0, scheduler_1.onSchedule)({
+    schedule: '5 0 * * *',
+    region: 'europe-west3',
+    timeoutSeconds: 300,
+    timeZone: 'Europe/Istanbul',
+}, async () => {
+    const db = admin.firestore();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dateStr = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD
+    const startOfDay = new Date(dateStr + 'T00:00:00');
+    const endOfDay = new Date(dateStr + 'T23:59:59');
+    try {
+        // Session'lari al
+        const sessionsSnap = await db.collection('sessions')
+            .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(startOfDay))
+            .where('startedAt', '<=', admin.firestore.Timestamp.fromDate(endOfDay))
+            .get();
+        const sessions = sessionsSnap.docs.map(d => d.data());
+        // Unique visitor sayisi
+        const uniqueVisitors = new Set(sessions.map(s => s.visitorId)).size;
+        // Stage sayilari
+        const cartAdditions = sessions.filter(s => ['cart', 'checkout', 'completed', 'abandoned'].includes(s.currentStage)).length;
+        const checkoutStarts = sessions.filter(s => ['checkout', 'completed'].includes(s.currentStage)).length;
+        const completedOrders = sessions.filter(s => s.currentStage === 'completed').length;
+        const abandonedCarts = sessions.filter(s => s.currentStage === 'abandoned').length;
+        // Ortalama sepet degeri
+        const cartsWithValue = sessions.filter(s => (s.cartValue || 0) > 0);
+        const avgCartValue = cartsWithValue.length > 0
+            ? cartsWithValue.reduce((sum, s) => sum + (s.cartValue || 0), 0) / cartsWithValue.length
+            : 0;
+        // Donusum orani
+        const conversionRate = sessions.length > 0
+            ? (completedOrders / sessions.length) * 100
+            : 0;
+        // Ulke dagilimi
+        const countryStats = {};
+        sessions.forEach(s => {
+            var _a;
+            const country = ((_a = s.geo) === null || _a === void 0 ? void 0 : _a.country) || 'Bilinmiyor';
+            countryStats[country] = (countryStats[country] || 0) + 1;
+        });
+        // En cok ziyaretci gelen 3 ulke
+        const topCountries = Object.entries(countryStats)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([country, count]) => `${country}: ${count}`)
+            .join(', ');
+        // Kaydet
+        await db.collection('daily_stats').doc(dateStr).set({
+            date: dateStr,
+            totalVisitors: sessions.length,
+            uniqueVisitors,
+            cartAdditions,
+            checkoutStarts,
+            completedOrders,
+            abandonedCarts,
+            conversionRate: Math.round(conversionRate * 100) / 100,
+            avgCartValue: Math.round(avgCartValue),
+            countryStats,
+            calculatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        // Telegram ozet raporu
+        const message = `
+📊 <b>GUNLUK RAPOR - ${dateStr}</b>
+
+<b>Ziyaretci:</b> ${sessions.length} (${uniqueVisitors} tekil)
+<b>Sepete Ekleme:</b> ${cartAdditions}
+<b>Checkout:</b> ${checkoutStarts}
+<b>Siparis:</b> ${completedOrders}
+<b>Terk:</b> ${abandonedCarts}
+
+<b>Donusum:</b> %${conversionRate.toFixed(1)}
+<b>Ort. Sepet:</b> ${Math.round(avgCartValue)} TL
+
+<b>Ulkeler:</b> ${topCountries || 'Veri yok'}
+    `.trim();
+        await sendTelegramMessage(message);
+        functions.logger.info('Daily stats calculated:', dateStr);
+    }
+    catch (error) {
+        functions.logger.error('Daily stats error:', error.message);
+    }
+});
+/**
+ * Tracking Config Guncelle - Admin panelden ayar degisikligi
+ */
+exports.updateTrackingConfig = functions.https.onCall(async (request) => {
+    // Admin kontrolu
+    if (!request.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Giris yapmaniz gerekiyor');
+    }
+    const { config } = request.data;
+    if (!config) {
+        throw new functions.https.HttpsError('invalid-argument', 'Config gerekli');
+    }
+    const db = admin.firestore();
+    await db.collection('settings').doc('tracking').set(Object.assign(Object.assign({}, config), { updatedAt: admin.firestore.FieldValue.serverTimestamp(), updatedBy: request.auth.uid }), { merge: true });
+    return { success: true };
+});
+/**
+ * Server-side IP Geolocation - Birden fazla API fallback
+ * Client-side'da ad blocker/VPN engelleyebilir, server-side her zaman calisir
+ */
+const fetchGeoFromIP = async (ip) => {
+    // Localhost/private IP kontrolu
+    if (!ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+        functions.logger.info('Private/localhost IP, geo atilanıyor:', ip);
+        return null;
+    }
+    // API 1: ip-api.com (Server-side icin HTTP, guvenli - gunluk 45 istek/dakika)
+    try {
+        const response = await axios_1.default.get(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,regionName,city`, {
+            timeout: 5000
+        });
+        if (response.data && response.data.status === 'success') {
+            functions.logger.info('Geo alindi (ip-api.com):', response.data.city, response.data.regionName, response.data.country);
+            return {
+                country: response.data.country || null,
+                countryCode: response.data.countryCode || null,
+                city: response.data.city || null,
+                region: response.data.regionName || null
+            };
+        }
+    }
+    catch (e) {
+        functions.logger.warn('ip-api.com failed:', e.message);
+    }
+    // API 2: ipwho.is fallback (HTTPS)
+    try {
+        const response = await axios_1.default.get(`https://ipwho.is/${ip}`, {
+            timeout: 5000
+        });
+        if (response.data && response.data.success !== false) {
+            functions.logger.info('Geo alindi (ipwho.is):', response.data.city, response.data.region, response.data.country);
+            return {
+                country: response.data.country || null,
+                countryCode: response.data.country_code || null,
+                city: response.data.city || null,
+                region: response.data.region || null
+            };
+        }
+    }
+    catch (e) {
+        functions.logger.warn('ipwho.is failed:', e.message);
+    }
+    // API 3: ipapi.co fallback (HTTPS - gunluk 1000 istek)
+    try {
+        const response = await axios_1.default.get(`https://ipapi.co/${ip}/json/`, {
+            timeout: 5000
+        });
+        if (response.data && !response.data.error) {
+            functions.logger.info('Geo alindi (ipapi.co):', response.data.city, response.data.region, response.data.country_name);
+            return {
+                country: response.data.country_name || null,
+                countryCode: response.data.country_code || null,
+                city: response.data.city || null,
+                region: response.data.region || null
+            };
+        }
+    }
+    catch (e) {
+        functions.logger.warn('ipapi.co failed:', e.message);
+    }
+    functions.logger.warn('Tum geo API\'ler basarisiz, IP:', ip);
+    return null;
+};
+/**
+ * Session Baslat - Server-side geo detection ile
+ * Client IP'den lokasyon bilgisi alinir (Wix gibi her zaman calisir)
+ */
+exports.initVisitorSession = functions.https.onCall(async (request) => {
+    var _a, _b;
+    const { sessionId, visitorId, sessionData } = request.data;
+    if (!sessionId || !visitorId || !sessionData) {
+        throw new functions.https.HttpsError('invalid-argument', 'sessionId, visitorId ve sessionData gerekli');
+    }
+    const db = admin.firestore();
+    // Client IP'yi al - Firebase Functions rawRequest'ten
+    let clientIP = null;
+    if (request.rawRequest) {
+        // x-forwarded-for header (load balancer/proxy arkasinda)
+        const forwarded = request.rawRequest.headers['x-forwarded-for'];
+        if (forwarded) {
+            clientIP = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim();
+        }
+        // Direkt IP
+        if (!clientIP && request.rawRequest.ip) {
+            clientIP = request.rawRequest.ip;
+        }
+        // Connection remote address
+        if (!clientIP && ((_a = request.rawRequest.connection) === null || _a === void 0 ? void 0 : _a.remoteAddress)) {
+            clientIP = request.rawRequest.connection.remoteAddress;
+        }
+    }
+    functions.logger.info('Client IP:', clientIP);
+    // Server-side geo lookup
+    let geo = null;
+    if (clientIP) {
+        geo = await fetchGeoFromIP(clientIP);
+    }
+    // Session data'yi geo ile birlestir
+    const finalSessionData = Object.assign(Object.assign({}, sessionData), { geo: geo || sessionData.geo || null, clientIP: clientIP || null, startedAt: admin.firestore.FieldValue.serverTimestamp(), lastActivityAt: admin.firestore.FieldValue.serverTimestamp() });
+    // Session olustur veya guncelle
+    const sessionRef = db.collection('sessions').doc(sessionId);
+    const existingSession = await sessionRef.get();
+    if (!existingSession.exists) {
+        await sessionRef.set(finalSessionData);
+        functions.logger.info('Yeni session olusturuldu:', sessionId, 'IP:', clientIP, 'Geo:', geo === null || geo === void 0 ? void 0 : geo.city);
+    }
+    else {
+        // Mevcut session varsa sadece bazi alanlari guncelle
+        const updates = {
+            lastActivityAt: admin.firestore.FieldValue.serverTimestamp(),
+            isActive: true
+        };
+        // Geo yoksa ekle
+        if (!((_b = existingSession.data()) === null || _b === void 0 ? void 0 : _b.geo) && geo) {
+            updates.geo = geo;
+            updates.clientIP = clientIP;
+        }
+        // Customer bilgileri varsa guncelle
+        if (sessionData.customerEmail)
+            updates.customerEmail = sessionData.customerEmail;
+        if (sessionData.customerName)
+            updates.customerName = sessionData.customerName;
+        await sessionRef.update(updates);
+    }
+    return {
+        success: true,
+        sessionId,
+        geo: geo || null
+    };
+});
+/**
+ * Dinamik Sitemap - Firestore'dan ürünleri çekerek XML sitemap oluşturur
+ * Google Search Console ve diğer arama motorları için
+ */
+exports.sitemap = functions.https.onRequest(async (req, res) => {
+    try {
+        const db = admin.firestore();
+        const BASE_URL = 'https://sadechocolate.com';
+        // Firestore'dan aktif ürünleri çek
+        const productsSnap = await db.collection('products').get();
+        const products = productsSnap.docs.map(doc => {
+            var _a, _b, _c, _d;
+            return ({
+                id: doc.id,
+                updatedAt: ((_b = (_a = doc.data().updatedAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) || ((_d = (_c = doc.data().createdAt) === null || _c === void 0 ? void 0 : _c.toDate) === null || _d === void 0 ? void 0 : _d.call(_c)) || new Date(),
+                name: doc.data().name || doc.data().title || ''
+            });
+        });
+        // Statik sayfalar
+        const staticPages = [
+            { loc: '/', changefreq: 'weekly', priority: '1.0' },
+            { loc: '/catalog', changefreq: 'daily', priority: '0.9' },
+            { loc: '/bonbonlar', changefreq: 'weekly', priority: '0.8' },
+            { loc: '/about', changefreq: 'monthly', priority: '0.7' },
+            { loc: '/hikaye', changefreq: 'monthly', priority: '0.6' },
+            { loc: '/tasting-quiz', changefreq: 'monthly', priority: '0.5' },
+            { loc: '/campaigns', changefreq: 'weekly', priority: '0.5' },
+            { loc: '/legal/terms', changefreq: 'yearly', priority: '0.3' },
+            { loc: '/legal/privacy', changefreq: 'yearly', priority: '0.3' },
+            { loc: '/legal/return', changefreq: 'yearly', priority: '0.3' },
+            { loc: '/legal/shipping', changefreq: 'yearly', priority: '0.3' },
+        ];
+        // XML oluştur
+        const today = new Date().toISOString().split('T')[0];
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        // Statik sayfalar
+        for (const page of staticPages) {
+            xml += '  <url>\n';
+            xml += `    <loc>${BASE_URL}${page.loc}</loc>\n`;
+            xml += `    <lastmod>${today}</lastmod>\n`;
+            xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+            xml += `    <priority>${page.priority}</priority>\n`;
+            xml += '  </url>\n';
+        }
+        // Dinamik ürün sayfaları
+        for (const product of products) {
+            const lastmod = product.updatedAt instanceof Date
+                ? product.updatedAt.toISOString().split('T')[0]
+                : today;
+            xml += '  <url>\n';
+            xml += `    <loc>${BASE_URL}/product/${product.id}</loc>\n`;
+            xml += `    <lastmod>${lastmod}</lastmod>\n`;
+            xml += '    <changefreq>weekly</changefreq>\n';
+            xml += '    <priority>0.8</priority>\n';
+            xml += '  </url>\n';
+        }
+        xml += '</urlset>';
+        // XML olarak gönder, 1 saat cache
+        res.set('Content-Type', 'application/xml');
+        res.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+        res.status(200).send(xml);
+    }
+    catch (error) {
+        functions.logger.error('Sitemap oluşturma hatası:', error);
+        res.status(500).send('Sitemap oluşturulamadı');
+    }
+});
+// ==========================================
+// META CONVERSIONS API (CAPI)
+// ==========================================
+var capiCallable_1 = require("./capiCallable");
+Object.defineProperty(exports, "sendMetaCapiEvent", { enumerable: true, get: function () { return capiCallable_1.sendMetaCapiEvent; } });
+var capiPurchaseTrigger_1 = require("./capiPurchaseTrigger");
+Object.defineProperty(exports, "onOrderCreatedCapiPurchase", { enumerable: true, get: function () { return capiPurchaseTrigger_1.onOrderCreatedCapiPurchase; } });
 //# sourceMappingURL=index.js.map

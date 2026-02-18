@@ -860,7 +860,7 @@ export const sendCustomPasswordResetEmail = functions.https.onCall(async (reques
     // Firebase Admin SDK ile şifre sıfırlama linki oluştur
     // Firebase Hosting domain'i kullan (authorized domains'de zaten var)
     const actionCodeSettings = {
-      url: 'https://sade-chocolate-prod.web.app/#/account',
+      url: 'https://sadechocolate.com/account',
       handleCodeInApp: false
     };
 
@@ -937,8 +937,8 @@ export const sendCustomPasswordResetEmail = functions.https.onCall(async (reques
               Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
             </p>
             <div style="font-size: 11px;">
-              <a href="https://sadechocolate.com/#/account" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
-              <a href="https://sadechocolate.com/#/catalog" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+              <a href="https://sadechocolate.com/account" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+              <a href="https://sadechocolate.com/catalog" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
               <a href="mailto:bilgi@sadechocolate.com" style="color: ${EMAIL_COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
             </div>
             <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
@@ -1195,6 +1195,25 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
         paymentId: paymentDetails.iyzicoPaymentId
       });
 
+      // Kart odemesi basarili ise Telegram bildirimi gonder
+      if (isSuccess) {
+        try {
+          // orderData'ya guncel bilgileri ekle
+          const enrichedOrder = {
+            ...orderData,
+            payment: {
+              ...orderData.payment,
+              status: 'paid',
+              cardFamily: paymentDetails.cardFamily,
+              lastFourDigits: paymentDetails.lastFourDigits
+            }
+          };
+          await sendOrderTelegramNotification(enrichedOrder, orderId);
+        } catch (telegramError: any) {
+          functions.logger.error('Telegram bildirim hatasi (iyzico callback):', telegramError.message);
+        }
+      }
+
       // Email gönder (arka planda, hata tolere edilir)
       const sendPaymentEmail = async () => {
         try {
@@ -1246,8 +1265,8 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
                 Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
               </p>
               <div style="font-size: 11px;">
-                <a href="https://sadechocolate.com/#/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
-                <a href="https://sadechocolate.com/#/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+                <a href="https://sadechocolate.com/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+                <a href="https://sadechocolate.com/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
                 <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
               </div>
               <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
@@ -1347,7 +1366,7 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
                 </div>
                 <!-- CTA Button -->
                 <div style="text-align: center; margin: 40px 0 0;">
-                  <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                  <a href="https://sadechocolate.com/account?view=orders" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
                     Siparişi Takip Et
                   </a>
                 </div>
@@ -1826,24 +1845,8 @@ const sendTelegramMessage = async (message: string) => {
   }
 };
 
-// Yeni siparis bildirimi - Firestore trigger (v2)
-export const onNewOrder = onDocumentCreated('orders/{orderId}', async (event) => {
-  const snapshot = event.data;
-  if (!snapshot) {
-    functions.logger.error('No data in snapshot');
-    return;
-  }
-
-  const order = snapshot.data();
-  const orderId = event.params.orderId;
-
-  functions.logger.info('Yeni siparis:', orderId);
-
-  if (!order) {
-    functions.logger.error('Order data is undefined');
-    return;
-  }
-
+// Telegram siparis bildirimi helper - hem onCreate hem callback'den cagrilir
+const sendOrderTelegramNotification = async (order: any, orderId: string) => {
   // Siparis bilgilerini formatla
   const customerName = order.customer?.name || order.shipping?.fullName || 'Belirtilmemis';
   const customerEmail = order.customer?.email || '';
@@ -1918,10 +1921,40 @@ Ara Toplam: ${subtotal.toLocaleString('tr-TR')} TL
 Kargo: ${shippingCost.toLocaleString('tr-TR')} TL
 <b>TOPLAM: ${totalAmount.toLocaleString('tr-TR')} TL</b>
 
-🕐 ${new Date().toLocaleString('tr-TR')}
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
   `.trim();
 
   await sendTelegramMessage(message);
+};
+
+// Yeni siparis bildirimi - Firestore trigger (v2)
+// Kart odemelerinde bildirim GONDERME - odeme onaylaninca callback'den gonderilir
+export const onNewOrder = onDocumentCreated('orders/{orderId}', async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) {
+    functions.logger.error('No data in snapshot');
+    return;
+  }
+
+  const order = snapshot.data();
+  const orderId = event.params.orderId;
+
+  functions.logger.info('Yeni siparis:', orderId);
+
+  if (!order) {
+    functions.logger.error('Order data is undefined');
+    return;
+  }
+
+  // Kredi karti odemelerinde bildirim gonderme
+  // Odeme onaylaninca iyzicoCallback icinden gonderilecek
+  if (order.payment?.method === 'card') {
+    functions.logger.info('Kart odemesi - Telegram bildirimi odeme onayina kadar bekletiliyor', { orderId });
+    return;
+  }
+
+  // EFT/Havale siparisleri icin hemen bildirim gonder
+  await sendOrderTelegramNotification(order, orderId);
 });
 
 // ==========================================
@@ -2473,6 +2506,64 @@ const getTrackingConfig = async (): Promise<TrackingConfig> => {
 };
 
 /**
+ * Tamamlanmamis Kart Odemesi Temizleme - Her 15 dakikada calisir
+ * 30 dakikadan eski pending kart odemelerini otomatik iptal eder
+ */
+export const cleanupAbandonedCardPayments = onSchedule({
+  schedule: 'every 15 minutes',
+  region: 'europe-west3',
+  timeoutSeconds: 120,
+}, async () => {
+  const db = admin.firestore();
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+  try {
+    // Pending durumundaki kart odemelerini bul
+    const pendingOrders = await db.collection('orders')
+      .where('payment.method', '==', 'card')
+      .where('payment.status', '==', 'pending')
+      .where('status', '==', 'pending')
+      .get();
+
+    if (pendingOrders.empty) {
+      functions.logger.info('Temizlenecek tamamlanmamis kart odemesi yok');
+      return;
+    }
+
+    const batch = db.batch();
+    let cancelledCount = 0;
+
+    for (const orderDoc of pendingOrders.docs) {
+      const order = orderDoc.data();
+      const createdAt = order.createdAt;
+
+      // 30 dakikadan eski mi kontrol et
+      if (createdAt && createdAt < thirtyMinutesAgo) {
+        batch.update(orderDoc.ref, {
+          status: 'cancelled',
+          'payment.status': 'expired',
+          'payment.failureReason': 'Odeme suresi doldu (30 dakika)',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          timeline: admin.firestore.FieldValue.arrayUnion({
+            status: 'cancelled',
+            time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+            note: 'Kart odemesi tamamlanmadi - otomatik iptal'
+          })
+        });
+        cancelledCount++;
+      }
+    }
+
+    if (cancelledCount > 0) {
+      await batch.commit();
+      functions.logger.info(`${cancelledCount} tamamlanmamis kart odemesi iptal edildi`);
+    }
+  } catch (error: any) {
+    functions.logger.error('Kart odemesi temizleme hatasi:', error.message);
+  }
+});
+
+/**
  * Terk Edilmis Sepet Algilama - Her 5 dakikada calisir
  * Belirli sure hareketsiz cart/checkout session'lari tespit eder
  */
@@ -2562,7 +2653,7 @@ ${abandonedCarts.length} adet yuksek degerli sepet terk edildi:
 
 ${cartList}
 
-🕐 ${new Date().toLocaleString('tr-TR')}
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
       `.trim();
 
       await sendTelegramMessage(message);
@@ -2571,6 +2662,129 @@ ${cartList}
     functions.logger.info(`${sessionsSnap.size} terk edilmis sepet algilandi`);
   } catch (error: any) {
     functions.logger.error('Abandoned cart detection error:', error.message);
+  }
+});
+
+/**
+ * Terk Edilmis Sepet Kurtarma E-postasi - 1 saat sonra gonderir
+ * abandoned_carts collection'daki recoveryEmailSent: false olan kayitlari kontrol eder
+ */
+export const sendAbandonedCartEmails = onSchedule({
+  schedule: 'every 15 minutes',
+  region: 'europe-west3',
+  timeoutSeconds: 120,
+}, async () => {
+  const db = admin.firestore();
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  try {
+    // E-posta gonderilmemis ve en az 1 saat once terk edilmis sepetler
+    const snap = await db.collection('abandoned_carts')
+      .where('recoveryEmailSent', '==', false)
+      .where('abandonedAt', '<', admin.firestore.Timestamp.fromDate(oneHourAgo))
+      .limit(20)
+      .get();
+
+    if (snap.empty) {
+      functions.logger.info('Gonderilecek kurtarma emaili yok');
+      return;
+    }
+
+    let sentCount = 0;
+
+    for (const doc of snap.docs) {
+      const cart = doc.data();
+
+      // E-posta adresi yoksa atla
+      if (!cart.customerEmail) {
+        await doc.ref.update({ recoveryEmailSent: true, skipReason: 'no_email' });
+        continue;
+      }
+
+      const customerName = cart.customerName || 'Degerli Musterimiz';
+      const cartValue = cart.cartValue || 0;
+      const cartItems = cart.cartItems || [];
+
+      // Urun listesi HTML
+      const itemsHtml = Array.isArray(cartItems) && cartItems.length > 0
+        ? cartItems.map((item: any) => `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #f3f0eb;">
+              ${item.image ? `<img src="${item.image}" alt="${item.name || item.title || ''}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 12px;" />` : ''}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #f3f0eb; font-family: Georgia, serif;">
+              ${item.name || item.title || 'Urun'}
+              ${item.quantity ? ` x ${item.quantity}` : ''}
+            </td>
+          </tr>
+        `).join('')
+        : '';
+
+      const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin: 0; padding: 0; background-color: #faf8f5; font-family: Georgia, 'Times New Roman', serif;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="font-size: 24px; color: #3d2b1f; margin: 0; font-style: italic;">Sade Chocolate</h1>
+          </div>
+          <div style="background: white; border-radius: 24px; padding: 40px; border: 1px solid #f3f0eb;">
+            <h2 style="font-size: 20px; color: #3d2b1f; margin: 0 0 16px; font-style: italic;">
+              Sepetiniz sizi bekliyor
+            </h2>
+            <p style="color: #6b5e54; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+              Merhaba ${customerName},<br/><br/>
+              Sectiginiz urunler hala sepetinizde. Siparişinizi tamamlamak icin asagidaki butona tiklayabilirsiniz.
+            </p>
+            ${itemsHtml ? `
+            <table style="width: 100%; margin-bottom: 24px;">
+              ${itemsHtml}
+            </table>
+            ` : ''}
+            ${cartValue > 0 ? `
+            <p style="font-size: 18px; color: #3d2b1f; font-weight: bold; text-align: center; margin: 24px 0;">
+              Sepet Toplami: ${cartValue.toFixed(2)} TL
+            </p>
+            ` : ''}
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="https://sadechocolate.com/cart" style="display: inline-block; background: #3d2b1f; color: white; text-decoration: none; padding: 16px 48px; border-radius: 16px; font-size: 14px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                SEPETE DON
+              </a>
+            </div>
+            <p style="color: #a09890; font-size: 12px; text-align: center; margin: 24px 0 0;">
+              Yardima mi ihtiyaciniz var? info@sadechocolate.com adresinden bize ulasabilirsiniz.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+
+      // SendGrid mail collection'a yaz
+      await db.collection('mail').add({
+        to: cart.customerEmail,
+        message: {
+          subject: 'Sepetiniz sizi bekliyor - Sade Chocolate',
+          html: emailHtml,
+        },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        type: 'abandoned_cart_recovery',
+      });
+
+      // Kaydi guncelle
+      await doc.ref.update({
+        recoveryEmailSent: true,
+        recoveryEmailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      sentCount++;
+    }
+
+    if (sentCount > 0) {
+      functions.logger.info(`${sentCount} terk edilmis sepet kurtarma emaili gonderildi`);
+    }
+  } catch (error: any) {
+    functions.logger.error('Abandoned cart email error:', error.message);
   }
 });
 
@@ -2604,7 +2818,7 @@ export const onVisitorSessionCreated = onDocumentCreated('sessions/{sessionId}',
 <b>Konum:</b> ${geoStr}
 <b>Kaynak:</b> ${session.referrer || 'Direkt'}
 
-🕐 ${new Date().toLocaleString('tr-TR')}
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
   `.trim();
 
   await sendTelegramMessage(message);
@@ -2641,7 +2855,7 @@ export const onSessionStageChange = onDocumentUpdated('sessions/{sessionId}', as
 
 ⏰ Siparis bekleniyor...
 
-🕐 ${new Date().toLocaleString('tr-TR')}
+🕐 ${new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })}
     `.trim();
 
     await sendTelegramMessage(message);
@@ -2915,7 +3129,7 @@ export const initVisitorSession = functions.https.onCall(async (request: any) =>
   const sessionRef = db.collection('sessions').doc(sessionId);
   const existingSession = await sessionRef.get();
 
-  if (!existingSession.exists()) {
+  if (!existingSession.exists) {
     await sessionRef.set(finalSessionData);
     functions.logger.info('Yeni session olusturuldu:', sessionId, 'IP:', clientIP, 'Geo:', geo?.city);
   } else {
@@ -2944,3 +3158,81 @@ export const initVisitorSession = functions.https.onCall(async (request: any) =>
     geo: geo || null
   };
 });
+
+/**
+ * Dinamik Sitemap - Firestore'dan ürünleri çekerek XML sitemap oluşturur
+ * Google Search Console ve diğer arama motorları için
+ */
+export const sitemap = functions.https.onRequest(async (req, res) => {
+  try {
+    const db = admin.firestore();
+    const BASE_URL = 'https://sadechocolate.com';
+
+    // Firestore'dan aktif ürünleri çek
+    const productsSnap = await db.collection('products').get();
+    const products = productsSnap.docs.map(doc => ({
+      id: doc.id,
+      updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().createdAt?.toDate?.() || new Date(),
+      name: doc.data().name || doc.data().title || ''
+    }));
+
+    // Statik sayfalar
+    const staticPages = [
+      { loc: '/', changefreq: 'weekly', priority: '1.0' },
+      { loc: '/catalog', changefreq: 'daily', priority: '0.9' },
+      { loc: '/bonbonlar', changefreq: 'weekly', priority: '0.8' },
+      { loc: '/about', changefreq: 'monthly', priority: '0.7' },
+      { loc: '/hikaye', changefreq: 'monthly', priority: '0.6' },
+      { loc: '/tasting-quiz', changefreq: 'monthly', priority: '0.5' },
+      { loc: '/campaigns', changefreq: 'weekly', priority: '0.5' },
+      { loc: '/legal/terms', changefreq: 'yearly', priority: '0.3' },
+      { loc: '/legal/privacy', changefreq: 'yearly', priority: '0.3' },
+      { loc: '/legal/return', changefreq: 'yearly', priority: '0.3' },
+      { loc: '/legal/shipping', changefreq: 'yearly', priority: '0.3' },
+    ];
+
+    // XML oluştur
+    const today = new Date().toISOString().split('T')[0];
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+    // Statik sayfalar
+    for (const page of staticPages) {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}${page.loc}</loc>\n`;
+      xml += `    <lastmod>${today}</lastmod>\n`;
+      xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+      xml += `    <priority>${page.priority}</priority>\n`;
+      xml += '  </url>\n';
+    }
+
+    // Dinamik ürün sayfaları
+    for (const product of products) {
+      const lastmod = product.updatedAt instanceof Date
+        ? product.updatedAt.toISOString().split('T')[0]
+        : today;
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/product/${product.id}</loc>\n`;
+      xml += `    <lastmod>${lastmod}</lastmod>\n`;
+      xml += '    <changefreq>weekly</changefreq>\n';
+      xml += '    <priority>0.8</priority>\n';
+      xml += '  </url>\n';
+    }
+
+    xml += '</urlset>';
+
+    // XML olarak gönder, 1 saat cache
+    res.set('Content-Type', 'application/xml');
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    res.status(200).send(xml);
+  } catch (error) {
+    functions.logger.error('Sitemap oluşturma hatası:', error);
+    res.status(500).send('Sitemap oluşturulamadı');
+  }
+});
+
+// ==========================================
+// META CONVERSIONS API (CAPI)
+// ==========================================
+export { sendMetaCapiEvent } from './capiCallable';
+export { onOrderCreatedCapiPurchase } from './capiPurchaseTrigger';
