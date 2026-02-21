@@ -99,9 +99,9 @@ export const initializeCheckoutForm = async (orderData: OrderData): Promise<any>
     surname: lastName,
     gsmNumber: phone || '+905000000000',
     email: customerEmail,
-    identityNumber: '11111111111', // TC Kimlik (İyzico test için varsayılan)
+    identityNumber: (orderData as any).invoice?.tckn || '11111111111',
     registrationAddress: orderData.shipping.address || 'Adres belirtilmedi',
-    ip: '127.0.0.1', // Frontend'den gelecek
+    ip: (orderData as any).clientIp || '127.0.0.1',
     city: orderData.shipping.city || 'Istanbul',
     country: 'Turkey',
     zipCode: '34000' // Varsayılan

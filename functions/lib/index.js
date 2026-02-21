@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onOrderCreatedCapiPurchase = exports.sendMetaCapiEvent = exports.sitemap = exports.initVisitorSession = exports.updateTrackingConfig = exports.calculateDailyStats = exports.onSessionStageChange = exports.onVisitorSessionCreated = exports.sendAbandonedCartEmails = exports.detectAbandonedCarts = exports.cleanupAbandonedCardPayments = exports.getGeliverDistricts = exports.getGeliverCities = exports.trackGeliverShipment = exports.acceptGeliverOffer = exports.getGeliverOffers = exports.createGeliverShipment = exports.checkShipmentStatus = exports.checkAllShipmentStatus = exports.checkSingleShipmentStatus = exports.onNewOrder = exports.listAdmins = exports.checkAdminStatus = exports.removeAdminClaim = exports.setAdminClaim = exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
+exports.sitemap = exports.initVisitorSession = exports.updateTrackingConfig = exports.calculateDailyStats = exports.onSessionStageChange = exports.onVisitorSessionCreated = exports.sendAbandonedCartEmails = exports.detectAbandonedCarts = exports.cleanupAbandonedCardPayments = exports.getGeliverDistricts = exports.getGeliverCities = exports.trackGeliverShipment = exports.acceptGeliverOffer = exports.getGeliverOffers = exports.createGeliverShipment = exports.checkShipmentStatus = exports.checkAllShipmentStatus = exports.checkSingleShipmentStatus = exports.onNewOrder = exports.listAdmins = exports.checkAdminStatus = exports.removeAdminClaim = exports.setAdminClaim = exports.retryPayment = exports.handleIyzicoCallback = exports.initializeIyzicoPayment = exports.sendCustomPasswordResetEmail = exports.findDistrictCode = exports.getNeighborhoods = exports.getDistricts = exports.getCities = exports.healthCheck = exports.createShipment = exports.calculateShipping = exports.getShipmentStatus = exports.trackShipment = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const v2_1 = require("firebase-functions/v2");
@@ -842,7 +842,7 @@ exports.sendCustomPasswordResetEmail = functions.https.onCall(async (request) =>
  * @returns {Object} {token, checkoutFormContent, tokenExpireTime}
  */
 exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
-    var _a, _b;
+    var _a, _b, _c, _d, _e, _f, _g;
     const { orderId } = request.data;
     // Validation
     if (!orderId) {
@@ -857,13 +857,18 @@ exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
             throw new functions.https.HttpsError('not-found', 'Sipariş bulunamadı');
         }
         const orderData = orderDoc.data();
-        // Order validation
-        if (((_a = orderData.payment) === null || _a === void 0 ? void 0 : _a.status) !== 'pending') {
-            throw new functions.https.HttpsError('failed-precondition', 'Sipariş zaten ödenmiş veya işlem sırasında');
+        // Order validation - pending veya failed (retry) kabul et, paid ise reddet
+        if (((_a = orderData.payment) === null || _a === void 0 ? void 0 : _a.status) === 'paid') {
+            throw new functions.https.HttpsError('failed-precondition', 'Sipariş zaten ödenmiş');
         }
         if (((_b = orderData.payment) === null || _b === void 0 ? void 0 : _b.method) !== 'card') {
             throw new functions.https.HttpsError('failed-precondition', 'Bu sipariş kart ödemesi için oluşturulmamış');
         }
+        // Client IP'yi al (request context'ten)
+        const clientIp = ((_c = request.rawRequest) === null || _c === void 0 ? void 0 : _c.ip)
+            || ((_g = (_f = (_e = (_d = request.rawRequest) === null || _d === void 0 ? void 0 : _d.headers) === null || _e === void 0 ? void 0 : _e['x-forwarded-for']) === null || _f === void 0 ? void 0 : _f.split(',')[0]) === null || _g === void 0 ? void 0 : _g.trim())
+            || '127.0.0.1';
+        orderData.clientIp = clientIp;
         // İyzico Checkout Form başlat
         const result = await iyzicoService.initializeCheckoutForm(orderData);
         // Order'a token bilgisini ekle (tracking için)
@@ -901,7 +906,7 @@ exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
  * @param {Response} res - HTTP response
  */
 exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
-    var _a;
+    var _a, _b, _c;
     // CORS headers
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
@@ -954,6 +959,17 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
             res.redirect(`https://sadechocolate.com/?payment=success&orderId=${firestoreOrderId}`);
             return;
         }
+        // Sipariş zaten ödenmiş veya işleme alınmışsa skip et
+        if (((_b = orderData.payment) === null || _b === void 0 ? void 0 : _b.status) === 'paid' || orderData.status === 'processing') {
+            functions.logger.warn('İyzico callback: sipariş zaten işlenmiş', {
+                orderId,
+                firestoreOrderId,
+                currentStatus: orderData.status,
+                paymentStatus: (_c = orderData.payment) === null || _c === void 0 ? void 0 : _c.status
+            });
+            res.redirect(`https://sadechocolate.com/?payment=success&orderId=${firestoreOrderId}`);
+            return;
+        }
         // Payment details extract et
         const paymentDetails = iyzicoService.extractPaymentDetails(paymentResult);
         // Payment başarılı mı?
@@ -984,9 +1000,15 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
             });
         }
         else {
-            // Failed payment
+            // Failed payment - sipariş durumunu da cancelled yap
+            updateData.status = 'cancelled';
             updateData['payment.retryCount'] = admin.firestore.FieldValue.increment(1);
             updateData['payment.lastRetryAt'] = admin.firestore.FieldValue.serverTimestamp();
+            updateData.timeline = admin.firestore.FieldValue.arrayUnion({
+                action: 'Ödeme başarısız',
+                time: new Date().toISOString(),
+                note: paymentDetails.failureReason || 'Ödeme reddedildi'
+            });
         }
         await orderDoc.ref.update(updateData);
         functions.logger.info('İyzico payment processed:', {
@@ -2685,8 +2707,7 @@ exports.sitemap = functions.https.onRequest(async (req, res) => {
 // ==========================================
 // META CONVERSIONS API (CAPI)
 // ==========================================
-var capiCallable_1 = require("./capiCallable");
-Object.defineProperty(exports, "sendMetaCapiEvent", { enumerable: true, get: function () { return capiCallable_1.sendMetaCapiEvent; } });
-var capiPurchaseTrigger_1 = require("./capiPurchaseTrigger");
-Object.defineProperty(exports, "onOrderCreatedCapiPurchase", { enumerable: true, get: function () { return capiPurchaseTrigger_1.onOrderCreatedCapiPurchase; } });
+// TODO: CAPI modülleri henüz oluşturulmadı
+// export { sendMetaCapiEvent } from './capiCallable';
+// export { onOrderCreatedCapiPurchase } from './capiPurchaseTrigger';
 //# sourceMappingURL=index.js.map

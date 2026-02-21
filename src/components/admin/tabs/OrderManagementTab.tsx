@@ -39,7 +39,8 @@ import { seedMockOrders } from '../../../services/seedOrders';
 import { TierBadge } from '../../ui/TierBadge';
 import type { LoyaltyTier } from '../../../types/loyalty';
 import { CreateShipmentModal } from '../CreateShipmentModal';
-import { sendDeliveryConfirmationEmail, sendShippingNotificationEmail } from '../../../services/emailService';
+import { sendDeliveryConfirmationEmail, sendShippingNotificationEmail, sendPaymentSupportEmail, generatePaymentSupportEmailHtml, checkEmailDeliveryStatus } from '../../../services/emailService';
+import type { PaymentSupportEmailData } from '../../../services/emailService';
 import { checkSingleShipmentStatus, checkAllShipmentStatus } from '../../../services/shippingService';
 
 // --- EFT COUNTDOWN TIMER ---
@@ -2124,6 +2125,11 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
   const [isCreateShipmentModalOpen, setIsCreateShipmentModalOpen] = useState(false);
   const [isCalculatingMNG, setIsCalculatingMNG] = useState(false);
   const [isCheckingShipment, setIsCheckingShipment] = useState(false);
+  const [isSendingPaymentEmail, setIsSendingPaymentEmail] = useState(false);
+  const [paymentEmailSent, setPaymentEmailSent] = useState(false);
+  const [showPaymentEmailPreview, setShowPaymentEmailPreview] = useState(false);
+  const [emailDeliveryStatus, setEmailDeliveryStatus] = useState<'idle' | 'queued' | 'checking' | 'delivered' | 'error'>('idle');
+  const [emailDeliveryError, setEmailDeliveryError] = useState<string | null>(null);
 
   // Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -3084,6 +3090,191 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
               </div>
             </div>
           )}
+
+          {/* Ödeme Sorunu Destek Maili */}
+          {(order.payment?.status === 'failed' || order.status === 'cancelled' || order.status === 'Cancelled' || (order.status === 'pending' && order.payment?.method === 'card')) && (
+            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={14} className="text-amber-600" />
+                <h4 className="text-[10px] uppercase tracking-widest text-amber-800 font-bold">Ödeme Sorunu Tespit Edildi</h4>
+              </div>
+              <p className="text-xs text-amber-600 mb-3">
+                {order.payment?.failureReason || 'Ödeme başarısız veya tamamlanmamış'}
+                {order.payment?.retryCount ? ` · ${order.payment.retryCount} deneme` : ''}
+              </p>
+              <button
+                onClick={() => setShowPaymentEmailPreview(true)}
+                disabled={paymentEmailSent}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${
+                  paymentEmailSent
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    : 'bg-amber-600 text-white hover:bg-amber-700 active:scale-95'
+                }`}
+              >
+                {paymentEmailSent ? (
+                  <><CheckCircle size={14} /> Mail Gönderildi</>
+                ) : (
+                  <><Mail size={14} /> Ödeme Destek Maili Önizle</>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Ödeme Destek Maili Önizleme Modalı - Gerçek Template */}
+          {showPaymentEmailPreview && (() => {
+            // İsim capitalize: "emre bey" → "Emre Bey"
+            const rawName = order.customer?.name || 'Değerli Müşterimiz';
+            const capitalizedName = rawName.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+            const emailData: PaymentSupportEmailData = {
+              customerName: capitalizedName,
+              orderId: order.id || '',
+              orderTotal: `₺${(order.payment?.total || 0).toLocaleString('tr-TR')}`,
+              attemptCount: order.payment?.retryCount || 1
+            };
+            const previewHtml = generatePaymentSupportEmailHtml(emailData);
+
+            return createPortal(
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] p-4" onClick={() => setShowPaymentEmailPreview(false)}>
+                <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                  {/* Header */}
+                  <div className="p-5 border-b border-gray-100 flex items-center justify-between shrink-0">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">Mail Önizleme</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">Müşteriye gidecek mailin birebir görünümü</p>
+                    </div>
+                    <button onClick={() => setShowPaymentEmailPreview(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
+                      <X size={16} className="text-gray-400" />
+                    </button>
+                  </div>
+
+                  {/* Mail Meta Bilgileri */}
+                  <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 space-y-1.5 shrink-0">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-400 w-16 shrink-0">Kime:</span>
+                      <span className="font-medium text-gray-800">{order.customer?.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-400 w-16 shrink-0">Konu:</span>
+                      <span className="font-medium text-gray-800">Sade Chocolate - Siparişiniz Hakkında Yardımcı Olmak İstiyoruz</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-gray-400 w-16 shrink-0">Gönderen:</span>
+                      <span className="font-medium text-gray-800">Sade Chocolate &lt;bilgi@sadechocolate.com&gt;</span>
+                    </div>
+                  </div>
+
+                  {/* Gerçek Mail HTML Önizleme - iframe */}
+                  <div className="flex-1 overflow-auto bg-gray-100 min-h-0">
+                    <iframe
+                      srcDoc={previewHtml}
+                      title="Email Önizleme"
+                      className="w-full border-0"
+                      style={{ minHeight: '600px', height: '100%', width: '100%' }}
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
+
+                  {/* Footer Aksiyonlar */}
+                  <div className="p-4 border-t border-gray-100 flex items-center gap-3 shrink-0">
+                    <button
+                      onClick={() => setShowPaymentEmailPreview(false)}
+                      className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                    >
+                      Vazgeç
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const email = order.customer?.email;
+                        if (!email) { error('Müşteri email adresi bulunamadı'); return; }
+                        setIsSendingPaymentEmail(true);
+                        setEmailDeliveryStatus('checking');
+                        setEmailDeliveryError(null);
+                        try {
+                          const mailDocId = await sendPaymentSupportEmail(email, emailData);
+                          if (!mailDocId) throw new Error('Mail kuyruğa eklenemedi');
+
+                          setEmailDeliveryStatus('queued');
+
+                          // Durumu takip et - 3 saniye aralıkla 5 kez kontrol
+                          let attempts = 0;
+                          const maxAttempts = 8;
+                          const checkInterval = setInterval(async () => {
+                            attempts++;
+                            const result = await checkEmailDeliveryStatus(mailDocId);
+
+                            if (result.status === 'delivered') {
+                              clearInterval(checkInterval);
+                              setEmailDeliveryStatus('delivered');
+                              setPaymentEmailSent(true);
+                              success('Mail teslim edildi!');
+                            } else if (result.status === 'error') {
+                              clearInterval(checkInterval);
+                              setEmailDeliveryStatus('error');
+                              setEmailDeliveryError(result.error || 'Bilinmeyen hata');
+                              error(`Mail gönderilemedi: ${result.error}`);
+                            } else if (attempts >= maxAttempts) {
+                              clearInterval(checkInterval);
+                              // Hala pending ise bile kuyruğa girmiş demektir
+                              setEmailDeliveryStatus('delivered');
+                              setPaymentEmailSent(true);
+                              success('Mail kuyruğa alındı, kısa sürede teslim edilecek');
+                            }
+                          }, 3000);
+                        } catch (err) {
+                          console.error('Email gönderilemedi:', err);
+                          setEmailDeliveryStatus('error');
+                          setEmailDeliveryError('Firestore yazma hatası');
+                          error('Email gönderilemedi');
+                        } finally {
+                          setIsSendingPaymentEmail(false);
+                        }
+                      }}
+                      disabled={isSendingPaymentEmail || emailDeliveryStatus === 'queued' || emailDeliveryStatus === 'checking'}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${
+                        isSendingPaymentEmail || emailDeliveryStatus === 'queued'
+                          ? 'bg-amber-100 text-amber-600'
+                          : emailDeliveryStatus === 'delivered'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : emailDeliveryStatus === 'error'
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-amber-600 text-white hover:bg-amber-700 active:scale-95'
+                      }`}
+                    >
+                      {isSendingPaymentEmail ? (
+                        <><RefreshCw size={14} className="animate-spin" /> Kuyruğa ekleniyor...</>
+                      ) : emailDeliveryStatus === 'queued' || emailDeliveryStatus === 'checking' ? (
+                        <><RefreshCw size={14} className="animate-spin" /> Teslim durumu kontrol ediliyor...</>
+                      ) : emailDeliveryStatus === 'delivered' ? (
+                        <><CheckCircle size={14} /> Teslim Edildi</>
+                      ) : emailDeliveryStatus === 'error' ? (
+                        <><AlertTriangle size={14} /> Hata: {emailDeliveryError}</>
+                      ) : (
+                        <><Send size={14} /> Onayla ve Gönder</>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Teslim Durumu Bilgi Notu */}
+                  {emailDeliveryStatus !== 'idle' && (
+                    <div className={`mx-4 mb-4 p-3 rounded-lg text-xs ${
+                      emailDeliveryStatus === 'delivered' ? 'bg-emerald-50 text-emerald-700' :
+                      emailDeliveryStatus === 'error' ? 'bg-red-50 text-red-600' :
+                      'bg-blue-50 text-blue-600'
+                    }`}>
+                      {emailDeliveryStatus === 'queued' || emailDeliveryStatus === 'checking' ? (
+                        <p>SendGrid ile teslim durumu kontrol ediliyor... Bu birkaç saniye sürebilir.</p>
+                      ) : emailDeliveryStatus === 'delivered' ? (
+                        <p>Mail SendGrid tarafından başarıyla işlendi ve müşteriye teslim edildi.</p>
+                      ) : emailDeliveryStatus === 'error' ? (
+                        <p>Mail gönderilemedi. Hata: {emailDeliveryError}. Lütfen tekrar deneyin veya Firebase Console'dan kontrol edin.</p>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>,
+              document.body
+            );
+          })()}
 
           {/* Logistics Info - Geliver Entegrasyonu */}
           <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">

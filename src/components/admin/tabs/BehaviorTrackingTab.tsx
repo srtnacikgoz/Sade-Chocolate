@@ -13,7 +13,8 @@ import {
   doc,
   updateDoc
 } from 'firebase/firestore'
-import { db } from '../../../lib/firebase'
+import { httpsCallable } from 'firebase/functions'
+import { db, functions } from '../../../lib/firebase'
 import { Button } from '../../ui/Button'
 import {
   Target,
@@ -236,18 +237,35 @@ export const BehaviorTrackingTab: React.FC = () => {
     return { label: 'Kayip', color: 'bg-red-500' }
   }
 
-  // Recovery email gonder
+  // Recovery email gonder - Cloud Function cagirir (TAM ZINCIR)
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null)
+
   const handleSendRecoveryEmail = async (cart: AbandonedCart) => {
-    if (!cart.customerEmail) return
+    if (!cart.customerEmail) {
+      alert('Musterinin email adresi yok!')
+      return
+    }
+
+    setSendingEmail(cart.id)
 
     try {
-      // TODO: Email gonderme fonksiyonu eklenecek
-      // Simdilik sadece flag'i guncelle
-      const cartRef = doc(db, 'abandoned_carts', cart.id)
-      await updateDoc(cartRef, { recoveryEmailSent: true })
-      alert('Email gonderildi: ' + cart.customerEmail)
-    } catch (error) {
+      // Cloud Function cagir - gercek email gonderimi
+      const sendManualRecoveryEmail = httpsCallable(functions, 'sendManualRecoveryEmail')
+      const result = await sendManualRecoveryEmail({ abandonedCartId: cart.id })
+      const data = result.data as { success: boolean; email: string; discountCode?: string }
+
+      if (data.success) {
+        // Basarili - indirim kodu varsa goster
+        const message = data.discountCode
+          ? `Email gonderildi: ${data.email}\nIndirim kodu: ${data.discountCode}`
+          : `Email gonderildi: ${data.email}`
+        alert(message)
+      }
+    } catch (error: any) {
       console.error('Email gonderilemedi:', error)
+      alert('Email gonderilemedi: ' + (error.message || 'Bilinmeyen hata'))
+    } finally {
+      setSendingEmail(null)
     }
   }
 
@@ -346,7 +364,7 @@ export const BehaviorTrackingTab: React.FC = () => {
         <div className="flex items-end justify-between gap-2">
           {STAGE_CONFIG.map((stage, idx) => {
             const count = funnelData[stage.id as keyof FunnelData] || 0
-            const maxCount = Math.max(...Object.values(funnelData), 1)
+            const maxCount = Math.max(...(Object.values(funnelData) as number[]), 1)
             const height = Math.max((count / maxCount) * 120, 20)
             const { Icon } = stage
 
@@ -610,9 +628,20 @@ export const BehaviorTrackingTab: React.FC = () => {
                         variant="outline"
                         className="gap-1"
                         onClick={() => handleSendRecoveryEmail(cart)}
+                        disabled={sendingEmail === cart.id}
                       >
-                        <Mail className="w-4 h-4" />
+                        {sendingEmail === cart.id ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Mail className="w-4 h-4" />
+                        )}
                       </Button>
+                    )}
+                    {cart.recoveryEmailSent && (
+                      <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Email gonderildi
+                      </span>
                     )}
                   </div>
                 </div>

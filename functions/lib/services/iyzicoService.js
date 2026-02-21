@@ -73,7 +73,7 @@ const getIyzicoClient = () => {
  * @returns {Promise<any>} - İyzico checkout form response
  */
 const initializeCheckoutForm = async (orderData) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const iyzico = getIyzicoClient();
     // Müşteri adını böl (Ad Soyad)
     const nameParts = orderData.customer.name.trim().split(' ');
@@ -91,9 +91,9 @@ const initializeCheckoutForm = async (orderData) => {
         surname: lastName,
         gsmNumber: phone || '+905000000000',
         email: customerEmail,
-        identityNumber: '11111111111', // TC Kimlik (İyzico test için varsayılan)
+        identityNumber: ((_b = orderData.invoice) === null || _b === void 0 ? void 0 : _b.tckn) || '11111111111',
         registrationAddress: orderData.shipping.address || 'Adres belirtilmedi',
-        ip: '127.0.0.1', // Frontend'den gelecek
+        ip: orderData.clientIp || '127.0.0.1',
         city: orderData.shipping.city || 'Istanbul',
         country: 'Turkey',
         zipCode: '34000' // Varsayılan
@@ -101,10 +101,10 @@ const initializeCheckoutForm = async (orderData) => {
     // Teslimat adresi - tüm alanlar zorunlu
     const shippingAddress = {
         contactName: orderData.customer.name || 'Müşteri',
-        city: ((_b = orderData.shipping) === null || _b === void 0 ? void 0 : _b.city) || 'Istanbul',
-        district: ((_c = orderData.shipping) === null || _c === void 0 ? void 0 : _c.district) || 'Kadıköy',
+        city: ((_c = orderData.shipping) === null || _c === void 0 ? void 0 : _c.city) || 'Istanbul',
+        district: ((_d = orderData.shipping) === null || _d === void 0 ? void 0 : _d.district) || 'Kadıköy',
         country: 'Turkey',
-        address: ((_d = orderData.shipping) === null || _d === void 0 ? void 0 : _d.address) || 'Adres belirtilmedi',
+        address: ((_e = orderData.shipping) === null || _e === void 0 ? void 0 : _e.address) || 'Adres belirtilmedi',
         zipCode: '34000'
     };
     // Fatura adresi (yoksa teslimat adresi ile aynı)

@@ -60,6 +60,12 @@ export interface Product {
   video?: string;
   origin?: string;
 
+  // 📊 STOK YÖNETİMİ (SaaS-Dostu)
+  stock?: number;                    // Mevcut stok adedi
+  minStock?: number;                 // Minimum stok eşiği (varsayılan: 5)
+  stockAlertEnabled?: boolean;       // Bu ürün için stok uyarısı aktif mi?
+  lastStockAlertAt?: string;         // Son stok uyarısı zamanı (ISO string)
+
   // Ürün tipi: tablet (Dandelion layout) vs filled/other (mevcut layout)
   productType?: ProductType;
   

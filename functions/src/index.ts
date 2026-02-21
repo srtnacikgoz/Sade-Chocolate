@@ -1022,11 +1022,11 @@ export const initializeIyzicoPayment = functions.https.onCall(async (request: an
 
       const orderData = orderDoc.data() as any;
 
-      // Order validation
-      if (orderData.payment?.status !== 'pending') {
+      // Order validation - pending veya failed (retry) kabul et, paid ise reddet
+      if (orderData.payment?.status === 'paid') {
         throw new functions.https.HttpsError(
           'failed-precondition',
-          'Sipariş zaten ödenmiş veya işlem sırasında'
+          'Sipariş zaten ödenmiş'
         );
       }
 
@@ -1036,6 +1036,12 @@ export const initializeIyzicoPayment = functions.https.onCall(async (request: an
           'Bu sipariş kart ödemesi için oluşturulmamış'
         );
       }
+
+      // Client IP'yi al (request context'ten)
+      const clientIp = (request as any).rawRequest?.ip
+        || (request as any).rawRequest?.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
+        || '127.0.0.1';
+      orderData.clientIp = clientIp;
 
       // İyzico Checkout Form başlat
       const result = await iyzicoService.initializeCheckoutForm(orderData);
@@ -1149,6 +1155,18 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
         return;
       }
 
+      // Sipariş zaten ödenmiş veya işleme alınmışsa skip et
+      if (orderData.payment?.status === 'paid' || orderData.status === 'processing') {
+        functions.logger.warn('İyzico callback: sipariş zaten işlenmiş', {
+          orderId,
+          firestoreOrderId,
+          currentStatus: orderData.status,
+          paymentStatus: orderData.payment?.status
+        });
+        res.redirect(`https://sadechocolate.com/?payment=success&orderId=${firestoreOrderId}`);
+        return;
+      }
+
       // Payment details extract et
       const paymentDetails = iyzicoService.extractPaymentDetails(paymentResult);
 
@@ -1182,9 +1200,15 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
           note: `${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
         });
       } else {
-        // Failed payment
+        // Failed payment - sipariş durumunu da cancelled yap
+        updateData.status = 'cancelled';
         updateData['payment.retryCount'] = admin.firestore.FieldValue.increment(1);
         updateData['payment.lastRetryAt'] = admin.firestore.FieldValue.serverTimestamp();
+        updateData.timeline = admin.firestore.FieldValue.arrayUnion({
+          action: 'Ödeme başarısız',
+          time: new Date().toISOString(),
+          note: paymentDetails.failureReason || 'Ödeme reddedildi'
+        });
       }
 
       await orderDoc.ref.update(updateData);
@@ -3234,5 +3258,6 @@ export const sitemap = functions.https.onRequest(async (req, res) => {
 // ==========================================
 // META CONVERSIONS API (CAPI)
 // ==========================================
-export { sendMetaCapiEvent } from './capiCallable';
-export { onOrderCreatedCapiPurchase } from './capiPurchaseTrigger';
+// TODO: CAPI modülleri henüz oluşturulmadı
+// export { sendMetaCapiEvent } from './capiCallable';
+// export { onOrderCreatedCapiPurchase } from './capiPurchaseTrigger';

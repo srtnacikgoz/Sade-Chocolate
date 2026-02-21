@@ -643,9 +643,10 @@ const addAttribute = () => {
             </div>
           </div>
 
-          {/* --- STOK DURUMU --- */}
+          {/* --- STOK YÖNETİMİ --- */}
           <div className={`p-6 rounded-[32px] border-2 transition-all ${formData.isOutOfStock ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
-            <div className="flex items-center justify-between">
+            {/* Stok Durumu Toggle */}
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${formData.isOutOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
                   <span className="material-icons-outlined">{formData.isOutOfStock ? 'remove_shopping_cart' : 'check_circle'}</span>
@@ -667,6 +668,69 @@ const addAttribute = () => {
                 <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-all ${formData.isOutOfStock ? 'left-7' : 'left-1'}`} />
               </button>
             </div>
+
+            {/* Stok Sayısı ve Minimum Eşik */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest block mb-2">
+                  Mevcut Stok
+                </label>
+                <input
+                  type="number"
+                  value={formData.stock ?? ''}
+                  onChange={e => {
+                    const val = e.target.value === '' ? undefined : parseInt(e.target.value)
+                    setFormData({
+                      ...formData,
+                      stock: val,
+                      isOutOfStock: val !== undefined && val <= 0
+                    })
+                  }}
+                  placeholder="Stok adedi"
+                  className="w-full p-3 bg-white border border-slate-200 rounded-xl text-center text-lg font-bold text-slate-700 focus:ring-2 focus:ring-gold/30 focus:border-gold"
+                  min="0"
+                />
+                <span className="text-[9px] text-slate-400 mt-1 block text-center">Boş = takipsiz</span>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest block mb-2">
+                  Min. Stok Eşiği
+                </label>
+                <input
+                  type="number"
+                  value={formData.minStock ?? 5}
+                  onChange={e => setFormData({ ...formData, minStock: parseInt(e.target.value) || 5 })}
+                  className="w-full p-3 bg-white border border-slate-200 rounded-xl text-center text-lg font-bold text-slate-700 focus:ring-2 focus:ring-gold/30 focus:border-gold"
+                  min="0"
+                />
+                <span className="text-[9px] text-slate-400 mt-1 block text-center">Uyarı eşiği</span>
+              </div>
+            </div>
+
+            {/* Stok Uyarı Toggle */}
+            <div className="flex items-center justify-between p-3 bg-white/50 rounded-xl">
+              <div className="flex items-center gap-2">
+                <span className="material-icons-outlined text-amber-500 text-lg">notifications_active</span>
+                <span className="text-xs text-slate-600">Düşük stok uyarısı gönder</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, stockAlertEnabled: !formData.stockAlertEnabled })}
+                className={`relative w-12 h-6 rounded-full transition-all ${formData.stockAlertEnabled !== false ? 'bg-amber-500' : 'bg-slate-300'}`}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${formData.stockAlertEnabled !== false ? 'left-6' : 'left-0.5'}`} />
+              </button>
+            </div>
+
+            {/* Düşük Stok Badge */}
+            {formData.stock !== undefined && formData.stock <= (formData.minStock ?? 5) && formData.stock > 0 && (
+              <div className="mt-4 p-3 bg-amber-100 border border-amber-300 rounded-xl flex items-center gap-2">
+                <span className="material-icons-outlined text-amber-600 text-lg">warning</span>
+                <span className="text-sm text-amber-700 font-medium">
+                  Düşük stok! ({formData.stock} adet kaldı)
+                </span>
+              </div>
+            )}
           </div>
 
           {/* --- SIRA NUMARASI --- */}

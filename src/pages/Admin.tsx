@@ -31,6 +31,11 @@ import { ShippingSettingsTab } from '../components/admin/tabs/ShippingSettingsTa
 import { CatalogSettingsTab } from '../components/admin/tabs/CatalogSettingsTab';
 import { BonbonSettingsTab } from '../components/admin/tabs/BonbonSettingsTab';
 import { AdminManagementTab } from '../components/admin/tabs/AdminManagementTab';
+import { CustomerSegmentsTab } from '../components/admin/tabs/CustomerSegmentsTab';
+import { CohortAnalysisTab } from '../components/admin/tabs/CohortAnalysisTab';
+import { DashboardTab } from '../components/admin/tabs/DashboardTab';
+import { ReportsTab } from '../components/admin/tabs/ReportsTab';
+import { EmailAutomationTab } from '../components/admin/tabs/EmailAutomationTab';
 import { Building2, Truck } from 'lucide-react';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 
@@ -42,7 +47,7 @@ export const Admin = () => {
   const [isAdminVerified, setIsAdminVerified] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'admin-management'>('operations');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'segments' | 'cohort' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'admin-management'>('dashboard');
   const [referrals, setReferrals] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [cmsPage, setCmsPage] = useState<'home' | 'about' | 'story' | 'legal'>('home');
@@ -2258,8 +2263,18 @@ Genel üslubun daima nazik, çözüm odaklı ve profesyonel olmalıdır.`
         <ScenariosTab />
       ) : activeTab === 'analytics' ? (
         <ConversationAnalyticsTab />
+      ) : activeTab === 'dashboard' ? (
+        <DashboardTab />
       ) : activeTab === 'journey' ? (
         <BehaviorTrackingTab />
+      ) : activeTab === 'segments' ? (
+        <CustomerSegmentsTab />
+      ) : activeTab === 'cohort' ? (
+        <CohortAnalysisTab />
+      ) : activeTab === 'reports' ? (
+        <ReportsTab />
+      ) : activeTab === 'email-automation' ? (
+        <EmailAutomationTab />
       ) : activeTab === 'referrals' ? (
         <ReferralCampaignsTab />
       ) : activeTab === 'loyalty-settings' ? (

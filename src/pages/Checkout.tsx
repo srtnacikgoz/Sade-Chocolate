@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
@@ -30,6 +30,11 @@ const addresses = user?.addresses || []; // Veriyi doğrudan kullanıcı profili
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Retry mode - başarısız ödeme sonrası yeniden deneme
+  const retryOrderId = searchParams.get('orderId');
+  const isRetryMode = searchParams.get('retry') === 'true' && !!retryOrderId;
+  const retryError = searchParams.get('error');
 
   // Guest mode state - URL'den ?guest=true ile gelindiyse direkt aktif
   const [isGuestMode, setIsGuestMode] = useState(() => searchParams.get('guest') === 'true');
@@ -247,7 +252,11 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   const [legalContent, setLegalContent] = useState<any>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successOrderData, setSuccessOrderData] = useState<{ total: number; subtotal: number; shipping: number; giftBag: number } | null>(null);
-  const [orderId] = useState(() => Math.floor(Math.random() * 900000) + 100000);
+  const [orderId] = useState(() => {
+    const timestamp = Date.now().toString(36).slice(-4);
+    const random = Math.floor(Math.random() * 9000) + 1000;
+    return `${timestamp}${random}`;
+  });
   const [showDraftRecovery, setShowDraftRecovery] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
   const [paymentCountdown, setPaymentCountdown] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
@@ -273,6 +282,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
 
+  // Retry mode - mevcut sipariş bilgileri
+  const [retryOrderData, setRetryOrderData] = useState<{ firestoreId: string; sadeId: string; orderData?: Record<string, unknown> } | null>(null);
+
   // İyzico Modal State
   const [iyzicoModal, setIyzicoModal] = useState<{
     isOpen: boolean;
@@ -282,6 +294,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   } | null>(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [copiedIban, setCopiedIban] = useState<string | null>(null);
+  const isOrderInProgress = useRef(false);
 
   // Bank transfer hesaplama
   const bankTransferSettings = companyInfo?.bankTransferSettings;
@@ -324,6 +337,51 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       setShowDraftRecovery(true);
     }
   }, [loadDraftFromLocalStorage, searchParams, clearDraft]);
+
+  // Retry mode - başarısız ödeme sonrası mevcut siparişi yükle
+  useEffect(() => {
+    if (!isRetryMode || !retryOrderId) return;
+
+    const loadRetryOrder = async () => {
+      try {
+        const orderDoc = await getDoc(doc(db, 'orders', retryOrderId));
+        if (orderDoc.exists()) {
+          const data = orderDoc.data();
+          setRetryOrderData({
+            firestoreId: retryOrderId,
+            sadeId: data.id || '',
+            orderData: data
+          });
+          // Guest ise form bilgilerini doldur
+          if (data.isGuest && data.customer) {
+            const [firstName, ...lastParts] = (data.customer.name || '').split(' ');
+            setGuestData(prev => ({
+              ...prev,
+              firstName: firstName || '',
+              lastName: lastParts.join(' ') || '',
+              email: data.customer.email || '',
+              phone: data.customer.phone || '',
+              city: data.shipping?.city || '',
+              district: data.shipping?.district || '',
+              address: data.shipping?.address || ''
+            }));
+            setIsGuestMode(true);
+          }
+          // Ödeme adımına direkt geç
+          setCurrentStep(2);
+          setPaymentMethod('card');
+          if (retryError) {
+            toast.error(decodeURIComponent(retryError));
+          }
+          toast.info('Siparişiniz için ödemeyi tekrar deneyebilirsiniz.');
+        }
+      } catch (error) {
+        console.error('Retry sipariş yüklenemedi:', error);
+      }
+    };
+
+    loadRetryOrder();
+  }, [isRetryMode, retryOrderId, retryError]);
 
   // Kullanıcı form'a dokunduğunda draft uyarısını gizle
   useEffect(() => {
@@ -529,6 +587,10 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   }, [finalTotal, cartTotal, shippingCost, giftBagPrice, clearCart]);
 
   const handleCompleteOrder = async () => {
+    // Çift tıklama / duplicate sipariş koruması
+    if (isOrderInProgress.current) return;
+    isOrderInProgress.current = true;
+
     const newErrors: Record<string, string> = {};
 
     // Guest mode validations
@@ -589,12 +651,29 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      isOrderInProgress.current = false;
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      // Stok kontrolü (retry modunda skip - sipariş zaten var)
+      if (!isRetryMode) {
+        for (const item of items) {
+          const productDoc = await getDoc(doc(db, 'products', item.id));
+          if (productDoc.exists()) {
+            const stock = productDoc.data().stock;
+            if (stock !== undefined && stock < item.quantity) {
+              toast.error(`"${item.title}" ürünü için yeterli stok yok (Stok: ${stock})`);
+              setIsSubmitting(false);
+              isOrderInProgress.current = false;
+              return;
+            }
+          }
+        }
+      }
+
       // Şehir kodunu bul (plaka kodu)
       const shippingCity = isGuestMode ? guestData.city : addresses.find(a => a.id === selectedAddressId)?.city || '';
       const shippingDistrict = isGuestMode ? guestData.district : addresses.find(a => a.id === selectedAddressId)?.district || '';
@@ -638,57 +717,75 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       if (paymentMethod === 'card') {
         setPaymentProcessing(true);
 
-        // Sipariş oluştur (status: pending, payment.method: card)
-        const cardOrderId = `SADE-${orderId}`;
-        const orderData = {
-          id: cardOrderId,
-          customer: {
-            name: isGuestMode
-              ? `${guestData.firstName} ${guestData.lastName}`
-              : `${selectedAddr?.firstName || ''} ${selectedAddr?.lastName || ''}`.trim() || 'Müşteri',
-            email: isGuestMode ? guestData.email : (user?.email || ''),
-            phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || user?.phone || '')
-          },
-          shipping: {
-            address: shippingAddress,
-            city: shippingCity,
-            district: shippingDistrict,
-            phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || user?.phone || ''),
-            method: 'standard'
-          },
-          invoice: invoiceData,
-          items: items.map(item => ({
-            id: item.id,
-            name: item.title,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.image
-          })),
-          payment: {
-            method: 'card' as const,
-            status: 'pending' as const,
-            subtotal: cartTotal,
-            shipping: shippingCost,
-            ...(giftBagPrice > 0 && { giftBag: giftBagPrice }),
-            total: finalTotal
-          },
-          hasGiftBag: hasGiftBag && settings?.giftBag?.enabled,
-          isGift: isGift,
-          ...(isGift && giftMessage && { giftMessage }),
-          status: 'pending',
-          isGuest: isGuestMode,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          timeline: [{
-            status: 'pending',
-            time: new Date().toLocaleString('tr-TR'),
-            note: 'Ödeme bekleniyor'
-          }]
-        };
+        let firestoreOrderId: string;
 
-        // Firestore'a siparişi kaydet
-        const docRef = await addDoc(collection(db, 'orders'), orderData);
-        const firestoreOrderId = docRef.id;
+        // Retry mode: mevcut siparişi kullan, yeni oluşturma
+        if (isRetryMode && retryOrderData) {
+          firestoreOrderId = retryOrderData.firestoreId;
+
+          // Mevcut siparişin durumunu tekrar pending yap
+          await updateDoc(doc(db, 'orders', firestoreOrderId), {
+            status: 'pending',
+            'payment.status': 'pending',
+            updatedAt: new Date().toISOString(),
+            timeline: arrayUnion({
+              status: 'pending',
+              time: new Date().toLocaleString('tr-TR'),
+              note: 'Ödeme tekrar deneniyor'
+            })
+          });
+        } else {
+          // Yeni sipariş oluştur
+          const cardOrderId = `SADE-${orderId}`;
+          const orderData = {
+            id: cardOrderId,
+            customer: {
+              name: isGuestMode
+                ? `${guestData.firstName} ${guestData.lastName}`
+                : `${selectedAddr?.firstName || ''} ${selectedAddr?.lastName || ''}`.trim() || 'Müşteri',
+              email: isGuestMode ? guestData.email : (user?.email || ''),
+              phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || user?.phone || '')
+            },
+            shipping: {
+              address: shippingAddress,
+              city: shippingCity,
+              district: shippingDistrict,
+              phone: isGuestMode ? guestData.phone : (selectedAddr?.phone || user?.phone || ''),
+              method: 'standard'
+            },
+            invoice: invoiceData,
+            items: items.map(item => ({
+              id: item.id,
+              name: item.title,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image
+            })),
+            payment: {
+              method: 'card' as const,
+              status: 'pending' as const,
+              subtotal: cartTotal,
+              shipping: shippingCost,
+              ...(giftBagPrice > 0 && { giftBag: giftBagPrice }),
+              total: finalTotal
+            },
+            hasGiftBag: hasGiftBag && settings?.giftBag?.enabled,
+            isGift: isGift,
+            ...(isGift && giftMessage && { giftMessage }),
+            status: 'pending',
+            isGuest: isGuestMode,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            timeline: [{
+              status: 'pending',
+              time: new Date().toLocaleString('tr-TR'),
+              note: 'Ödeme bekleniyor'
+            }]
+          };
+
+          const docRef = await addDoc(collection(db, 'orders'), orderData);
+          firestoreOrderId = docRef.id;
+        }
 
         // İyzico payment başlat (europe-west3 region - Frankfurt)
         const functionsInstance = getFunctions(undefined, 'europe-west3');
@@ -957,6 +1054,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       setErrors({ general: 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.' });
     } finally {
       setIsSubmitting(false);
+      isOrderInProgress.current = false;
     }
   };
 
@@ -979,9 +1077,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   }
 
 
-  if (items.length === 0 && !isSuccess) { 
-    navigate('/catalog'); 
-    return null; 
+  if (items.length === 0 && !isSuccess && !isRetryMode) {
+    navigate('/catalog');
+    return null;
   }
 
   if (isSuccess) {

@@ -3,12 +3,14 @@ import { Order } from '../../types/order';
 import {
   X, MapPin, Package, Droplets, Gift, Box,
   User, Calendar, ShoppingBag, TrendingUp, Award, Heart,
-  CheckCircle, AlertTriangle, Phone, Mail, Clock, Truck
+  CheckCircle, AlertTriangle, Phone, Mail, Clock, Truck, Send
 } from 'lucide-react';
 import { BrandIcon } from '../ui/BrandIcon';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { calculateEstimatedDeliveryDate, getDeliveryStatus } from '../../utils/estimatedDelivery';
+import { sendPaymentSupportEmail } from '../../services/emailService';
+import { toast } from 'sonner';
 
 interface UnifiedOrderModalProps {
   order: Order;
@@ -26,6 +28,49 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
   onUpdateStatus
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('order');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  // Ödeme sorunu destek maili gönder
+  const handleSendPaymentSupportEmail = async () => {
+    const email = order.customer?.email;
+    if (!email) {
+      toast.error('Müşteri email adresi bulunamadı');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      // Başarısız ödeme denemesi sayısını hesapla
+      const customerOrders = allOrders.filter(
+        o => o.customer?.email === email
+      );
+      const failedAttempts = customerOrders.filter(
+        o => o.payment?.status === 'failed' || o.status === 'cancelled' || o.status === 'Cancelled'
+      ).length;
+
+      await sendPaymentSupportEmail(email, {
+        customerName: order.customer?.name || 'Değerli Müşterimiz',
+        orderId: order.id || '',
+        orderTotal: `₺${(order.payment?.total || 0).toLocaleString('tr-TR')}`,
+        attemptCount: failedAttempts
+      });
+
+      setEmailSent(true);
+      toast.success('Ödeme destek maili gönderildi');
+    } catch (error) {
+      console.error('Email gönderilemedi:', error);
+      toast.error('Email gönderilemedi');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  // Ödeme sorunu var mı kontrol et
+  const hasPaymentIssue = order.payment?.status === 'failed'
+    || order.status === 'cancelled'
+    || order.status === 'Cancelled'
+    || (order.status === 'pending' && order.payment?.method === 'card');
 
   // Müşterinin tüm siparişlerini filtrele
   const customerOrders = useMemo(() =>
@@ -542,6 +587,52 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                     <p className="text-xs font-bold text-gray-500 mb-2">Ödeme Yöntemi</p>
                     <p className="text-sm text-gray-800">{order.paymentMethod || 'Kredi Kartı'}</p>
                   </div>
+
+                  {/* Ödeme Sorunu Destek Maili */}
+                  {hasPaymentIssue && (
+                    <div className="col-span-2 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-black text-amber-800 flex items-center gap-2 mb-1">
+                            <AlertTriangle size={14} />
+                            ÖDEME SORUNU TESPİT EDİLDİ
+                          </p>
+                          <p className="text-xs text-amber-600">
+                            {order.payment?.failureReason || 'Ödeme başarısız olmuş veya tamamlanmamış'}
+                            {order.payment?.retryCount ? ` (${order.payment.retryCount} deneme)` : ''}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleSendPaymentSupportEmail}
+                          disabled={isSendingEmail || emailSent}
+                          className={`flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl transition-all shadow-sm ${
+                            emailSent
+                              ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default'
+                              : isSendingEmail
+                                ? 'bg-amber-100 text-amber-600 cursor-wait'
+                                : 'bg-amber-600 text-white hover:bg-amber-700 active:scale-95'
+                          }`}
+                        >
+                          {emailSent ? (
+                            <>
+                              <CheckCircle size={14} />
+                              Mail Gönderildi
+                            </>
+                          ) : isSendingEmail ? (
+                            <>
+                              <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                              Gönderiliyor...
+                            </>
+                          ) : (
+                            <>
+                              <Send size={14} />
+                              Ödeme Destek Maili Gönder
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Kargo Maliyet Analizi - Sadece Admin Görür */}
                   {(order.tracking?.price || order.payment?.shipping !== undefined) && (

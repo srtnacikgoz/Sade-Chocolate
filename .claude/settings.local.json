@@ -105,7 +105,9 @@
       "WebFetch(domain:api.geliver.io)",
       "Skill(superpowers:brainstorming)",
       "WebFetch(domain:api.github.com)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "WebFetch(domain:sadechocolate.com)",
+      "Bash(kill:*)"
     ]
   },
   "hooks": {

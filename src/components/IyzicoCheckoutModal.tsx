@@ -7,7 +7,7 @@ interface IyzicoCheckoutModalProps {
   token: string;
   orderId: string;
   onClose: () => void;
-  onPaymentComplete?: (result: { status: 'success' | 'failed'; orderId: string }) => void;
+  onPaymentComplete?: (result: { status: 'success' | 'failed'; orderId: string }) => void; // Artık kullanılmıyor, callback redirect ile yönetiliyor
 }
 
 export const IyzicoCheckoutModal: React.FC<IyzicoCheckoutModalProps> = ({
@@ -93,11 +93,10 @@ export const IyzicoCheckoutModal: React.FC<IyzicoCheckoutModalProps> = ({
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
 
         // İyzico payment complete mesajı
+        // Sadece visual feedback göster - asıl işlem İyzico callback redirect ile yapılacak
         if (data.status === 'success' || data.status === 'failure') {
-          onPaymentComplete?.({
-            status: data.status === 'success' ? 'success' : 'failed',
-            orderId
-          });
+          setIsLoading(true); // "İşleniyor..." göster
+          // onPaymentComplete çağırma - callback redirect asıl akışı yönetecek
         }
       } catch (e) {
         // JSON parse hatası - ignore

@@ -25,13 +25,14 @@ import {
   Truck,
   LayoutGrid,
   Candy,
-  Shield
+  Shield,
+  FileSpreadsheet
 } from 'lucide-react';
 import { BrandIcon } from '../ui/BrandIcon';
 import { toast } from 'sonner';
 
 // Menu item type
-type TabId = 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management';
+type TabId = 'dashboard' | 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'segments' | 'cohort' | 'reports' | 'email-automation' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management';
 
 interface MenuItem {
   id: TabId;
@@ -51,6 +52,7 @@ interface AdminSidebarProps {
 }
 
 const menuItems: MenuItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, group: 'ana' },
   { id: 'inventory', label: 'Envanter', icon: Package, group: 'ana' },
   { id: 'operations', label: 'Sipariş Yönetimi', icon: ShoppingCart, group: 'ana' },
   { id: 'customers', label: 'Müşteriler', icon: Users, group: 'ana' },
@@ -63,6 +65,10 @@ const menuItems: MenuItem[] = [
   { id: 'scenarios', label: 'Senaryolar', icon: MessageSquare, group: 'ai' },
   { id: 'analytics', label: 'Konuşma Logları', icon: BarChart3, group: 'ai' },
   { id: 'journey', label: 'Yolculuk Takibi', icon: TrendingUp, group: 'analitik' },
+  { id: 'segments', label: 'Müşteri Segmentleri', icon: Users, group: 'analitik' },
+  { id: 'cohort', label: 'Cohort Analizi', icon: BarChart3, group: 'analitik' },
+  { id: 'reports', label: 'Raporlar', icon: FileSpreadsheet, group: 'analitik' },
+  { id: 'email-automation', label: 'Email Otomasyonu', icon: Mail, group: 'ai' },
   { id: 'taste-quiz', label: 'Damak Tadı', icon: Heart, group: 'analitik' },
   { id: 'loyalty-settings', label: 'Sadakat Sistemi', icon: Settings, group: 'ayarlar' },
   { id: 'company-info', label: 'Şirket Künyesi', icon: Building2, group: 'ayarlar' },

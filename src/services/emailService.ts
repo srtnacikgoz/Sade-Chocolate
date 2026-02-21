@@ -25,15 +25,14 @@ const COLORS = {
   footerText: '#EBE5D9',   // Footer metin
 };
 
-// Ortak email header - Minimal & Elegant
+// Ortak email header - Logo görseli ile
 const getEmailHeader = () => `
   <!-- Top Border Accent -->
   <div style="height: 4px; background-color: ${COLORS.text}; width: 100%;"></div>
 
-  <!-- Branding Header -->
-  <div style="padding: 50px 0 30px; text-align: center;">
-    <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 48px; color: ${COLORS.text}; margin: 0; font-style: italic; letter-spacing: -1px;">Sade</h1>
-    <p style="font-size: 9px; text-transform: uppercase; letter-spacing: 4px; color: ${COLORS.gold}; margin-top: 5px; font-weight: 600;">Artisan Chocolate</p>
+  <!-- Branding Header with Logo -->
+  <div style="padding: 40px 0 30px; text-align: center; background-color: ${COLORS.footerBg};">
+    <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="auto" style="display: block; margin: 0 auto; max-width: 80%; height: auto;" />
   </div>
 
   <!-- Divider -->
@@ -99,11 +98,10 @@ interface EmailData {
 /**
  * Genel email gönderme fonksiyonu
  */
-const sendEmail = async (emailData: EmailData) => {
+const sendEmail = async (emailData: EmailData): Promise<string | false> => {
   try {
-    await addDoc(collection(db, MAIL_COLLECTION), {
-      to: emailData.to,
-      from: 'Sade Chocolate <bilgi@sadechocolate.com>',
+    const docRef = await addDoc(collection(db, MAIL_COLLECTION), {
+      to: [emailData.to],
       message: {
         subject: emailData.subject,
         html: emailData.html,
@@ -111,11 +109,45 @@ const sendEmail = async (emailData: EmailData) => {
       },
       createdAt: serverTimestamp()
     });
-    console.log('📧 Email kuyruğa eklendi:', emailData.to);
-    return true;
+    console.log('📧 Email kuyruğa eklendi:', emailData.to, 'docId:', docRef.id);
+    return docRef.id;
   } catch (error) {
     console.error('❌ Email gönderilemedi:', error);
     return false;
+  }
+};
+
+/**
+ * Mail gönderim durumunu kontrol et
+ * Firebase Trigger Email extension delivery bilgisini günceller
+ */
+export const checkEmailDeliveryStatus = async (mailDocId: string): Promise<{
+  status: 'pending' | 'processing' | 'delivered' | 'error';
+  error?: string;
+  deliveredAt?: string;
+}> => {
+  try {
+    const { doc, getDoc } = await import('firebase/firestore');
+    const mailDoc = await getDoc(doc(db, MAIL_COLLECTION, mailDocId));
+    if (!mailDoc.exists()) return { status: 'error', error: 'Doküman bulunamadı' };
+
+    const data = mailDoc.data();
+    // Firebase Trigger Email extension 'delivery' alanını günceller
+    if (data.delivery) {
+      if (data.delivery.state === 'SUCCESS') {
+        return { status: 'delivered', deliveredAt: data.delivery.endTime?.toDate?.()?.toLocaleString('tr-TR') || '' };
+      }
+      if (data.delivery.state === 'ERROR') {
+        return { status: 'error', error: data.delivery.error || 'Bilinmeyen hata' };
+      }
+      if (data.delivery.state === 'PROCESSING') {
+        return { status: 'processing' };
+      }
+    }
+    return { status: 'pending' };
+  } catch (error) {
+    console.error('Email durumu kontrol edilemedi:', error);
+    return { status: 'error', error: 'Kontrol edilemedi' };
   }
 };
 
@@ -1537,3 +1569,271 @@ export const sendEftOrderPendingEmail = async (
     text: `Merhaba ${orderData.customerName}! #${orderData.orderId} numaralı siparişiniz alındı. Toplam ₺${orderData.total.toFixed(2)} tutarındaki ödemenizi ${formattedDeadline} tarihine kadar banka hesabımıza yapmanız gerekmektedir. Açıklama kısmına sipariş numaranızı yazmayı unutmayın.`
   });
 };
+
+// =====================================================
+// SEPET KURTARMA EMAİLLERİ
+// Terk edilen sepetler icin otomatik email sistemi
+// =====================================================
+
+type CartRecoveryEmailData = {
+  customerName: string | null
+  customerEmail: string
+  cartValue: number
+  cartItems: Array<{
+    productId: string
+    productName: string
+    quantity: number
+    price: number
+    image?: string
+  }>
+  emailNumber: 1 | 2 | 3
+  subject: string
+  discountCode?: string
+  discountPercent?: number
+  discountValidUntil?: Date
+}
+
+/**
+ * Sepet Kurtarma Emaili - Premium Template
+ * Terk edilen sepetler icin gonderilir
+ *
+ * TAM ZİNCİR:
+ * abandoned_carts (Firestore) → Cloud Function → Bu fonksiyon → SendGrid → Müşteri
+ */
+export const sendCartRecoveryEmail = async (data: CartRecoveryEmailData) => {
+  const displayName = data.customerName || 'Değerli Müşterimiz'
+
+  // Urun listesi HTML - gorseller ile
+  const itemsHtml = data.cartItems.map(item => `
+    <tr>
+      <td style="padding: 16px 0; border-bottom: 1px solid ${COLORS.divider};">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            ${item.image ? `
+            <td width="80" style="vertical-align: top;">
+              <img src="${item.image}" alt="${item.productName}" width="70" height="70" style="border-radius: 8px; object-fit: cover; border: 1px solid ${COLORS.divider};" />
+            </td>
+            ` : ''}
+            <td style="vertical-align: middle; padding-left: ${item.image ? '16px' : '0'};">
+              <p style="margin: 0 0 4px; font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; color: ${COLORS.text};">
+                ${item.productName}
+              </p>
+              <p style="margin: 0; font-size: 13px; color: ${COLORS.gray};">
+                ${item.quantity} adet × ₺${item.price.toFixed(2)}
+              </p>
+            </td>
+            <td width="100" style="text-align: right; vertical-align: middle;">
+              <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; color: ${COLORS.text};">
+                ₺${(item.quantity * item.price).toFixed(2)}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `).join('')
+
+  // Email numarasina gore icerik degisiklikleri
+  const emailVariants = {
+    1: {
+      emoji: '🛒',
+      headline: 'Sepetinizi Bekletmeye Aldık',
+      subheadline: 'Seçtiğiniz özel çikolatalar hâlâ sizi bekliyor',
+      message: `Merhaba ${displayName}, sepetinizde unuttuğunuz ürünler var. El yapımı artisan çikolatalarımız stokları sınırlı — favorilerinizi kaçırmayın!`
+    },
+    2: {
+      emoji: '🎁',
+      headline: 'Özel Bir Fırsat Var!',
+      subheadline: 'Sepetinize özel indirim kodu hazırladık',
+      message: `Merhaba ${displayName}, sepetinizi tamamlamanız için size özel bir indirim kodu hazırladık. Bu fırsat sınırlı süreliğidir!`
+    },
+    3: {
+      emoji: '⏰',
+      headline: 'Son Şans!',
+      subheadline: 'Çikolatalarınız başkalarını beklemeyecek',
+      message: `Merhaba ${displayName}, sepetinizdeki ürünlerin stoğu azalıyor. Bu sizin için son hatırlatmamız — lezzetin tadını çıkarma zamanı!`
+    }
+  }
+
+  const variant = emailVariants[data.emailNumber]
+
+  // İndirim kodu bolumu
+  const discountSection = data.discountCode ? `
+    <div style="background: linear-gradient(135deg, ${COLORS.text} 0%, #5D4740 100%); border-radius: 16px; padding: 28px; margin: 32px 0; text-align: center;">
+      <p style="font-family: Arial, sans-serif; font-size: 10px; color: ${COLORS.gold}; margin: 0 0 8px; letter-spacing: 2px; text-transform: uppercase;">
+        Özel İndirim Kodunuz
+      </p>
+      <div style="background: white; border-radius: 8px; padding: 16px 32px; display: inline-block; margin: 8px 0;">
+        <code style="font-family: 'Courier New', monospace; font-size: 24px; color: ${COLORS.text}; font-weight: bold; letter-spacing: 3px;">
+          ${data.discountCode}
+        </code>
+      </div>
+      <p style="font-family: Georgia, serif; font-size: 14px; color: #FFFEFA; margin: 12px 0 0;">
+        <span style="color: ${COLORS.gold}; font-weight: bold;">%${data.discountPercent}</span> indirim
+        ${data.discountValidUntil ? ` · Son geçerlilik: ${data.discountValidUntil.toLocaleDateString('tr-TR')}` : ''}
+      </p>
+    </div>
+  ` : ''
+
+  const content = `
+    ${getEmailHeader()}
+
+    <!-- Hero Section -->
+    <div style="padding: 0 50px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 16px;">${variant.emoji}</div>
+      <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 12px 0; color: ${COLORS.text}; font-style: italic;">
+        ${variant.headline}
+      </h2>
+      <p style="font-size: 14px; color: ${COLORS.gold}; margin: 0 0 24px 0; letter-spacing: 1px;">
+        ${variant.subheadline}
+      </p>
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 32px 0; font-weight: 300;">
+        ${variant.message}
+      </p>
+    </div>
+
+    <!-- İndirim Kodu (varsa) -->
+    <div style="padding: 0 50px;">
+      ${discountSection}
+    </div>
+
+    <!-- Sepet İçeriği -->
+    <div style="padding: 40px 50px; background: ${COLORS.bg};">
+      <h3 style="font-size: 11px; text-transform: uppercase; letter-spacing: 3px; color: ${COLORS.gray}; margin: 0 0 20px 0;">
+        Sepetinizde Bekleyenler
+      </h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+
+      <!-- Toplam -->
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 2px solid ${COLORS.text};">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-family: 'Playfair Display', Georgia, serif; font-size: 18px; color: ${COLORS.text};">
+              Sepet Toplamı
+            </td>
+            <td style="text-align: right; font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: bold; color: ${COLORS.gold};">
+              ₺${data.cartValue.toFixed(2)}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div style="padding: 50px; text-align: center;">
+      <a href="https://sadechocolate.com/#/cart" style="display: inline-block; background: ${COLORS.text}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+        Alışverişe Devam Et
+      </a>
+      <p style="font-size: 12px; color: ${COLORS.gray}; margin-top: 20px;">
+        veya <a href="https://sadechocolate.com/#/catalog" style="color: ${COLORS.gold}; text-decoration: none;">koleksiyonu keşfet</a>
+      </p>
+    </div>
+
+    <!-- Güvence Banner -->
+    <div style="background: ${COLORS.bg}; padding: 30px 50px;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="text-align: center; padding: 0 10px;">
+            <div style="font-size: 20px; margin-bottom: 8px;">❄️</div>
+            <p style="font-size: 11px; color: ${COLORS.gray}; margin: 0;">Soğuk Zincir<br>Teslimat</p>
+          </td>
+          <td style="text-align: center; padding: 0 10px;">
+            <div style="font-size: 20px; margin-bottom: 8px;">🎁</div>
+            <p style="font-size: 11px; color: ${COLORS.gray}; margin: 0;">Özel<br>Paketleme</p>
+          </td>
+          <td style="text-align: center; padding: 0 10px;">
+            <div style="font-size: 20px; margin-bottom: 8px;">✨</div>
+            <p style="font-size: 11px; color: ${COLORS.gray}; margin: 0;">El Yapımı<br>Artisan</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    ${getEmailFooter()}
+  `
+
+  return sendEmail({
+    to: data.customerEmail,
+    subject: data.subject,
+    html: wrapEmail(content),
+    text: `Merhaba ${displayName}! Sepetinizde ₺${data.cartValue.toFixed(2)} değerinde ürün bekliyor. Alışverişinizi tamamlamak için: https://sadechocolate.com/#/cart`
+  })
+}
+
+/**
+ * Ödeme Sorunu Destek Emaili - HTML üret
+ * Önizleme ve gönderim için ortak kullanılır
+ */
+export type PaymentSupportEmailData = {
+  customerName: string;
+  orderId: string;
+  orderTotal: string;
+  attemptCount: number;
+};
+
+export const generatePaymentSupportEmailHtml = (data: PaymentSupportEmailData): string => {
+  const content = `
+    ${getEmailHeader()}
+
+    <div style="padding: 0 50px; text-align: center;">
+      <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 28px; margin: 0 0 20px 0; color: ${COLORS.text}; font-style: italic;">
+        Merhaba ${data.customerName},
+      </h2>
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; margin: 0 0 30px 0; font-weight: 300;">
+        Siparişinizi tamamlamaya çalışırken bir sorun yaşadığınızı fark ettik. Size yardımcı olmak istiyoruz.
+      </p>
+    </div>
+
+    <div style="padding: 30px 50px;">
+      <div style="background: ${COLORS.bg}; border-radius: 12px; padding: 30px; text-align: center;">
+        <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: ${COLORS.gray}; margin: 0 0 8px 0;">Sipariş Referansı</p>
+        <p style="font-size: 18px; font-weight: bold; color: ${COLORS.text}; font-family: 'Playfair Display', Georgia, serif; margin: 0 0 16px 0;">#${data.orderId}</p>
+        <p style="font-size: 14px; color: ${COLORS.gray}; margin: 0;">Tutar: <strong style="color: ${COLORS.gold};">${data.orderTotal}</strong></p>
+      </div>
+    </div>
+
+    <div style="padding: 20px 50px 40px; text-align: center;">
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; font-weight: 300; margin: 0 0 20px 0;">
+        Ödeme sırasında yaşanan sorun birkaç nedenden kaynaklanıyor olabilir:
+      </p>
+      <div style="text-align: left; padding: 0 20px;">
+        <p style="font-size: 14px; color: ${COLORS.text}; margin: 8px 0;">• Kartınızın online alışveriş limiti yetersiz olabilir</p>
+        <p style="font-size: 14px; color: ${COLORS.text}; margin: 8px 0;">• 3D Secure doğrulaması zaman aşımına uğramış olabilir</p>
+        <p style="font-size: 14px; color: ${COLORS.text}; margin: 8px 0;">• Bankanız işlemi engellemiş olabilir</p>
+      </div>
+      <p style="font-size: 15px; line-height: 1.8; color: ${COLORS.gray}; font-weight: 300; margin: 20px 0 30px 0;">
+        Dilerseniz <strong>havale/EFT</strong> ile de siparişinizi tamamlayabilirsiniz. Size yardımcı olmaktan mutluluk duyarız!
+      </p>
+
+      <a href="https://sadechocolate.com/#/catalog" style="display: inline-block; background: ${COLORS.text}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px;">
+        Tekrar Deneyin
+      </a>
+      <p style="font-size: 13px; color: ${COLORS.gray}; margin-top: 12px;">
+        veya bize yazın: <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.gold}; text-decoration: none; font-weight: bold;">bilgi@sadechocolate.com</a>
+      </p>
+    </div>
+
+    ${getEmailFooter()}
+  `;
+
+  return wrapEmail(content);
+};
+
+/**
+ * Ödeme Sorunu Destek Emaili - Gönder
+ */
+export const sendPaymentSupportEmail = async (
+  email: string,
+  data: PaymentSupportEmailData
+): Promise<string | false> => {
+  return sendEmail({
+    to: email,
+    subject: `Sade Chocolate - Siparişiniz Hakkında Yardımcı Olmak İstiyoruz`,
+    html: generatePaymentSupportEmailHtml(data),
+    text: `Merhaba ${data.customerName}, ${data.orderId} numaralı siparişinizi tamamlarken bir sorun yaşadığınızı fark ettik. Size yardımcı olmak istiyoruz. Bize bilgi@sadechocolate.com adresinden ulaşabilirsiniz.`
+  });
+}
