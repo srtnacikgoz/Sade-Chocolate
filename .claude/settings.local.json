@@ -107,7 +107,22 @@
       "WebFetch(domain:api.github.com)",
       "Bash(dir:*)",
       "WebFetch(domain:sadechocolate.com)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(firebase:*)",
+      "Bash(Get-ChildItem -Path \"C:\\\\dev\\\\sade-chocolate\" -Recurse -Include *.png,*.jpg,*.jpeg,*.webp,*.svg,*.gif -File)",
+      "Bash(Measure-Object:*)",
+      "Bash(Select-Object -ExpandProperty Count)",
+      "Bash(npm ls:*)",
+      "Bash(cmd.exe /c \"cd /d C:\\\\dev\\\\sade-chocolate && firebase deploy --only hosting\")",
+      "Bash(cmd.exe /c \"cd /d C:\\\\dev\\\\sade-chocolate && firebase deploy --only firestore:rules,storage\")",
+      "Bash(cmd.exe /c \"cd /d C:\\\\dev\\\\sade-chocolate && firebase deploy --only hosting,functions\")",
+      "WebFetch(domain:dribbble.com)",
+      "Bash(perl -i -pe:*)",
+      "Bash(for file in src/components/admin/tabs/*.tsx)",
+      "Bash(do)",
+      "Bash(done)",
+      "WebFetch(domain:www.eticaret.gov.tr)",
+      "Bash(npx firebase deploy:*)"
     ]
   },
   "hooks": {
@@ -144,5 +159,9 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); cwd=$(echo \"$input\" | jq -r '.workspace.current_dir'); model=$(echo \"$input\" | jq -r '.model.display_name'); if [ -n \"$remaining\" ]; then printf \"\\033[2m%s | %s | Context: %.0f%% remaining\\033[0m\" \"$model\" \"$(basename \"$cwd\")\" \"$remaining\"; else printf \"\\033[2m%s | %s\\033[0m\" \"$model\" \"$(basename \"$cwd\")\"; fi"
   }
 }

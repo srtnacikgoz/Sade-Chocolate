@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { Product } from '../types';
 import { trackCartUpdate } from '../services/visitorTrackingService';
+import { trackAddToCart, trackRemoveFromCart } from '../services/analyticsService';
+import { trackPixelAddToCart, generateEventId } from '../services/metaPixelService';
+import { sendCapiFromBrowser } from '../services/capiClient';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -38,7 +44,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return saved ? JSON.parse(saved) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem('sade_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   // Gift State (Hafızadan Başlat)
   const [isGift, setIsGift] = useState(() => localStorage.getItem('sade_is_gift') === 'true');
@@ -62,7 +71,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
     const cartItemsSummary = items.map(item => ({
       productId: item.id,
-      productName: item.name,
+      productName: item.title || '',
       quantity: item.quantity,
       price: item.price
     }));
@@ -85,9 +94,47 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return [...prev, { ...product, quantity }];
     });
     setIsCartOpen(true);
+
+    // GA4 e-commerce event
+    trackAddToCart({
+      item_id: product.id,
+      item_name: product.name,
+      price: product.price,
+      quantity,
+      item_category: product.category
+    });
+
+    // Meta Pixel + CAPI (aynı eventId ile deduplication)
+    const eventId = generateEventId();
+    trackPixelAddToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity
+    }, eventId);
+    sendCapiFromBrowser({
+      eventName: 'AddToCart',
+      eventId,
+      customData: {
+        value: product.price * quantity,
+        currency: 'TRY',
+        contentIds: [product.id],
+        contentType: 'product',
+        contents: [{ id: product.id, quantity, item_price: product.price }],
+      },
+    });
   };
 
   const removeFromCart = (productId: string) => {
+    const item = items.find(i => i.id === productId);
+    if (item) {
+      trackRemoveFromCart({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      });
+    }
     setItems(prev => prev.filter(item => item.id !== productId));
   };
 
@@ -107,6 +154,40 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setGiftMessage('');
       setHideInvoice(true);
   };
+
+  // Favorileri localStorage'a kaydet
+  useEffect(() => {
+    localStorage.setItem('sade_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Login olunca Firestore'dan favorileri yükle
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const favDoc = await getDoc(doc(db, 'users', user.uid));
+          const cloudFavs = favDoc.data()?.favorites as string[] | undefined;
+          if (cloudFavs && cloudFavs.length > 0) {
+            // Local ve cloud favorileri birleştir
+            setFavorites(prev => [...new Set([...prev, ...cloudFavs])]);
+          }
+        } catch {
+          // Sessiz hata
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Favoriler değiştiğinde Firestore'a kaydet (login ise)
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user && favorites.length >= 0) {
+      setDoc(doc(db, 'users', user.uid), { favorites }, { merge: true }).catch(() => {
+        // Sessiz hata
+      });
+    }
+  }, [favorites]);
 
   // Favorites Logic
   const toggleFavorite = (productId: string) => {

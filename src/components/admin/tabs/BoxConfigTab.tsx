@@ -337,12 +337,12 @@ export const BoxConfigTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-gold to-brand-mustard rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 bg-brand-mustard rounded-2xl flex items-center justify-center shadow-sm">
             <Package className="text-white" size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Kutu Oluşturucu Ayarları</h2>
-            <p className="text-sm text-gray-500">Müşterilerin kendi kutularını oluşturma özelliğini yönetin</p>
+            <h2 className="text-2xl font-bold text-mocha-900">Kutu Oluşturucu Ayarları</h2>
+            <p className="text-sm text-mocha-500">Müşterilerin kendi kutularını oluşturma özelliğini yönetin</p>
           </div>
         </div>
         <button
@@ -356,18 +356,18 @@ export const BoxConfigTab: React.FC = () => {
       </div>
 
       {/* Genel Ayar - Aktif/Pasif */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+      <div className="bg-white rounded-2xl p-6 border border-cream-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-white">Özellik Durumu</h3>
-            <p className="text-sm text-gray-500">Kutu oluşturma özelliğini açın veya kapatın</p>
+            <h3 className="font-bold text-mocha-900">Özellik Durumu</h3>
+            <p className="text-sm text-mocha-500">Kutu oluşturma özelliğini açın veya kapatın</p>
           </div>
           <button
             onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${
               config.enabled
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-gray-100 text-gray-500 dark:bg-dark-700 dark:text-gray-400'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-cream-100 text-mocha-500'
             }`}
           >
             {config.enabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
@@ -377,8 +377,8 @@ export const BoxConfigTab: React.FC = () => {
       </div>
 
       {/* Kart Görünümü */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+      <div className="bg-white rounded-2xl p-6 border border-cream-200">
+        <h3 className="font-bold text-mocha-900 mb-6 flex items-center gap-2">
           <ImageIcon size={20} className="text-gold" />
           Kart Görünümü
         </h3>
@@ -387,57 +387,57 @@ export const BoxConfigTab: React.FC = () => {
           {/* Sol - Form */}
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                 Kart Başlığı
               </label>
               <input
                 type="text"
                 value={config.cardTitle}
                 onChange={(e) => setConfig(prev => ({ ...prev, cardTitle: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                 Alt Başlık
               </label>
               <input
                 type="text"
                 value={config.cardSubtitle}
                 onChange={(e) => setConfig(prev => ({ ...prev, cardSubtitle: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                 Açıklama
               </label>
               <textarea
                 value={config.cardDescription}
                 onChange={(e) => setConfig(prev => ({ ...prev, cardDescription: e.target.value }))}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900 resize-none"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+              <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                 Buton Metni
               </label>
               <input
                 type="text"
                 value={config.ctaText}
                 onChange={(e) => setConfig(prev => ({ ...prev, ctaText: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
               />
             </div>
           </div>
 
           {/* Sağ - Görsel */}
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
               Kart Görseli (Opsiyonel)
             </label>
-            <div className="relative aspect-square rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-dark-700">
+            <div className="relative aspect-square rounded-2xl border-2 border-dashed border-cream-300 overflow-hidden bg-cream-50">
               {config.cardImage ? (
                 <>
                   <img
@@ -453,14 +453,14 @@ export const BoxConfigTab: React.FC = () => {
                   </button>
                 </>
               ) : (
-                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-600 transition-colors">
+                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-cream-100 transition-colors">
                   {isUploading ? (
                     <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      <Upload size={32} className="text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Görsel Yükle</span>
-                      <span className="text-xs text-gray-400 mt-1">veya varsayılan ikon kullanılır</span>
+                      <Upload size={32} className="text-mocha-400 mb-2" />
+                      <span className="text-sm text-mocha-500">Görsel Yükle</span>
+                      <span className="text-xs text-mocha-400 mt-1">veya varsayılan ikon kullanılır</span>
                     </>
                   )}
                   <input
@@ -478,38 +478,38 @@ export const BoxConfigTab: React.FC = () => {
       </div>
 
       {/* Modal Ayarları */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-6">Modal Metinleri</h3>
+      <div className="bg-white rounded-2xl p-6 border border-cream-200">
+        <h3 className="font-bold text-mocha-900 mb-6">Modal Metinleri</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
               Modal Başlığı
             </label>
             <input
               type="text"
               value={config.modalTitle}
               onChange={(e) => setConfig(prev => ({ ...prev, modalTitle: e.target.value }))}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
               Modal Alt Başlığı
             </label>
             <input
               type="text"
               value={config.modalSubtitle}
               onChange={(e) => setConfig(prev => ({ ...prev, modalSubtitle: e.target.value }))}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
             />
           </div>
         </div>
       </div>
 
       {/* Kutu Boyutları */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+      <div className="bg-white rounded-2xl p-6 border border-cream-200">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-bold text-gray-900 dark:text-white">Kutu Boyutları</h3>
+          <h3 className="font-bold text-mocha-900">Kutu Boyutları</h3>
           <button
             onClick={addBoxSize}
             className="flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-xl font-bold hover:bg-gold/20 transition-all"
@@ -526,68 +526,68 @@ export const BoxConfigTab: React.FC = () => {
               className={`p-4 rounded-xl border-2 transition-all ${
                 box.enabled
                   ? 'border-gold/30 bg-gold/5'
-                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-700 opacity-60'
+                  : 'border-cream-200 bg-cream-50 opacity-60'
               }`}
             >
               <div className="flex items-start gap-4">
-                <div className="flex items-center gap-2 text-gray-400 cursor-move">
+                <div className="flex items-center gap-2 text-mocha-400 cursor-move">
                   <GripVertical size={20} />
                 </div>
 
                 <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-4">
                   {/* Boyut */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Adet</label>
+                    <label className="text-xs font-medium text-mocha-400 uppercase">Adet</label>
                     <input
                       type="number"
                       value={box.size}
                       onChange={(e) => updateBoxSize(box.id, { size: parseInt(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white text-sm"
+                      className="w-full px-3 py-2 rounded-lg border border-cream-200 bg-white text-mocha-900 text-sm"
                     />
                   </div>
 
                   {/* Etiket */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Etiket</label>
+                    <label className="text-xs font-medium text-mocha-400 uppercase">Etiket</label>
                     <input
                       type="text"
                       value={box.label}
                       onChange={(e) => updateBoxSize(box.id, { label: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white text-sm"
+                      className="w-full px-3 py-2 rounded-lg border border-cream-200 bg-white text-mocha-900 text-sm"
                     />
                   </div>
 
                   {/* Açıklama */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Açıklama</label>
+                    <label className="text-xs font-medium text-mocha-400 uppercase">Açıklama</label>
                     <input
                       type="text"
                       value={box.description}
                       onChange={(e) => updateBoxSize(box.id, { description: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white text-sm"
+                      className="w-full px-3 py-2 rounded-lg border border-cream-200 bg-white text-mocha-900 text-sm"
                     />
                   </div>
 
                   {/* Fiyat */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Kutu Ücreti (₺)</label>
+                    <label className="text-xs font-medium text-mocha-400 uppercase">Kutu Ücreti (₺)</label>
                     <input
                       type="number"
                       value={box.basePrice}
                       onChange={(e) => updateBoxSize(box.id, { basePrice: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white text-sm"
+                      className="w-full px-3 py-2 rounded-lg border border-cream-200 bg-white text-mocha-900 text-sm"
                     />
                   </div>
 
                   {/* Grid */}
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase">Grid (Sütun x Satır)</label>
+                    <label className="text-xs font-medium text-mocha-400 uppercase">Grid (Sütun x Satır)</label>
                     <div className="flex gap-1">
                       <input
                         type="number"
                         value={box.gridCols}
                         onChange={(e) => updateBoxSize(box.id, { gridCols: parseInt(e.target.value) || 1 })}
-                        className="w-1/2 px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white text-sm text-center"
+                        className="w-1/2 px-2 py-2 rounded-lg border border-cream-200 bg-white text-mocha-900 text-sm text-center"
                         min={1}
                         max={10}
                       />
@@ -595,7 +595,7 @@ export const BoxConfigTab: React.FC = () => {
                         type="number"
                         value={box.gridRows}
                         onChange={(e) => updateBoxSize(box.id, { gridRows: parseInt(e.target.value) || 1 })}
-                        className="w-1/2 px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white text-sm text-center"
+                        className="w-1/2 px-2 py-2 rounded-lg border border-cream-200 bg-white text-mocha-900 text-sm text-center"
                         min={1}
                         max={10}
                       />
@@ -608,15 +608,15 @@ export const BoxConfigTab: React.FC = () => {
                       onClick={() => updateBoxSize(box.id, { enabled: !box.enabled })}
                       className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                         box.enabled
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-cream-100 text-mocha-500'
                       }`}
                     >
                       {box.enabled ? 'Aktif' : 'Pasif'}
                     </button>
                     <button
                       onClick={() => removeBoxSize(box.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -627,7 +627,7 @@ export const BoxConfigTab: React.FC = () => {
           ))}
 
           {config.boxSizes.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-mocha-400">
               <Package size={48} className="mx-auto mb-4 opacity-30" />
               <p>Henüz kutu boyutu eklenmemiş</p>
             </div>
@@ -636,20 +636,20 @@ export const BoxConfigTab: React.FC = () => {
       </div>
 
       {/* Hazır Kutular */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+      <div className="bg-white rounded-2xl p-6 border border-cream-200">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
               <Gift className="text-white" size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-white">Hazır Kutular</h3>
-              <p className="text-xs text-gray-500">Önceden hazırlanmış bonbon kutuları</p>
+              <h3 className="font-bold text-mocha-900">Hazır Kutular</h3>
+              <p className="text-xs text-mocha-500">Önceden hazırlanmış bonbon kutuları</p>
             </div>
           </div>
           <button
             onClick={() => openPresetModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl font-bold hover:bg-purple-500/20 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 text-purple-600 rounded-xl font-bold hover:bg-purple-500/20 transition-all"
           >
             <Plus size={18} />
             Yeni Hazır Kutu
@@ -657,7 +657,7 @@ export const BoxConfigTab: React.FC = () => {
         </div>
 
         {presets.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-mocha-400">
             <Gift size={48} className="mx-auto mb-4 opacity-30" />
             <p>Henüz hazır kutu eklenmemiş</p>
             <button
@@ -674,29 +674,29 @@ export const BoxConfigTab: React.FC = () => {
                 key={preset.id}
                 className={`relative p-4 rounded-2xl border-2 transition-all ${
                   preset.enabled
-                    ? 'border-purple-500/30 bg-purple-50/50 dark:bg-purple-900/10'
-                    : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-dark-700 opacity-60'
+                    ? 'border-purple-500/30 bg-purple-50/50'
+                    : 'border-cream-200 bg-cream-50 opacity-60'
                 }`}
               >
                 {/* Görsel */}
                 {preset.image ? (
-                  <div className="aspect-video rounded-xl overflow-hidden mb-3 bg-gray-100 dark:bg-dark-600">
+                  <div className="aspect-video rounded-xl overflow-hidden mb-3 bg-cream-100">
                     <img src={preset.image} alt={preset.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="aspect-video rounded-xl mb-3 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 flex items-center justify-center">
+                  <div className="aspect-video rounded-xl mb-3 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
                     <Gift size={32} className="text-purple-400" />
                   </div>
                 )}
 
                 {/* Bilgiler */}
-                <h4 className="font-bold text-gray-900 dark:text-white mb-1">{preset.name}</h4>
-                <p className="text-xs text-gray-500 mb-2 line-clamp-2">{preset.description}</p>
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-                  <span className="bg-gray-100 dark:bg-dark-600 px-2 py-0.5 rounded-full">
+                <h4 className="font-bold text-mocha-900 mb-1">{preset.name}</h4>
+                <p className="text-xs text-mocha-500 mb-2 line-clamp-2">{preset.description}</p>
+                <div className="flex items-center gap-2 text-xs text-mocha-400 mb-3">
+                  <span className="bg-cream-100 px-2 py-0.5 rounded-full">
                     {preset.boxSize}'li kutu
                   </span>
-                  <span className="bg-gray-100 dark:bg-dark-600 px-2 py-0.5 rounded-full">
+                  <span className="bg-cream-100 px-2 py-0.5 rounded-full">
                     {preset.productIds.length} bonbon
                   </span>
                 </div>
@@ -707,21 +707,21 @@ export const BoxConfigTab: React.FC = () => {
                     onClick={() => togglePresetEnabled(preset)}
                     className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                       preset.enabled
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-cream-100 text-mocha-500'
                     }`}
                   >
                     {preset.enabled ? 'Aktif' : 'Pasif'}
                   </button>
                   <button
                     onClick={() => openPresetModal(preset)}
-                    className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-600 rounded-lg transition-colors"
+                    className="p-2 text-mocha-500 hover:bg-cream-100 rounded-lg transition-colors"
                   >
                     <Edit3 size={16} />
                   </button>
                   <button
                     onClick={() => deletePreset(preset.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -735,17 +735,17 @@ export const BoxConfigTab: React.FC = () => {
       {/* Preset Ekleme/Düzenleme Modal */}
       {isPresetModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl shadow-sm w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+            <div className="flex justify-between items-center p-6 border-b border-cream-200">
+              <h3 className="text-xl font-bold text-mocha-900">
                 {editingPreset ? 'Hazır Kutuyu Düzenle' : 'Yeni Hazır Kutu'}
               </h3>
               <button
                 onClick={() => setIsPresetModalOpen(false)}
-                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+                className="w-10 h-10 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors"
               >
-                <X size={20} className="text-gray-500" />
+                <X size={20} className="text-mocha-500" />
               </button>
             </div>
 
@@ -755,7 +755,7 @@ export const BoxConfigTab: React.FC = () => {
                 {/* Sol - Form */}
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                       Kutu Adı *
                     </label>
                     <input
@@ -763,11 +763,11 @@ export const BoxConfigTab: React.FC = () => {
                       value={presetForm.name}
                       onChange={(e) => setPresetForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Meyvemsi Seçki"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                       Açıklama
                     </label>
                     <textarea
@@ -775,17 +775,17 @@ export const BoxConfigTab: React.FC = () => {
                       onChange={(e) => setPresetForm(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Yaz meyvelerinin tatlı notaları..."
                       rows={2}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white resize-none"
+                      className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900 resize-none"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                       Kutu Boyutu
                     </label>
                     <select
                       value={presetForm.boxSize}
                       onChange={(e) => setPresetForm(prev => ({ ...prev, boxSize: parseInt(e.target.value), productIds: [] }))}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-dark-700 text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 rounded-xl border border-cream-200 bg-cream-50 text-mocha-900"
                     >
                       {config.boxSizes.filter(b => b.enabled).map(box => (
                         <option key={box.id} value={box.size}>
@@ -795,10 +795,10 @@ export const BoxConfigTab: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                       Görsel (Opsiyonel)
                     </label>
-                    <div className="relative aspect-video rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden bg-gray-50 dark:bg-dark-700">
+                    <div className="relative aspect-video rounded-xl border-2 border-dashed border-cream-300 overflow-hidden bg-cream-50">
                       {presetForm.image ? (
                         <>
                           <img src={presetForm.image} alt="Preset" className="w-full h-full object-cover" />
@@ -810,9 +810,9 @@ export const BoxConfigTab: React.FC = () => {
                           </button>
                         </>
                       ) : (
-                        <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-600 transition-colors">
-                          <Upload size={24} className="text-gray-400 mb-2" />
-                          <span className="text-xs text-gray-500">Görsel Yükle</span>
+                        <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-cream-100 transition-colors">
+                          <Upload size={24} className="text-mocha-400 mb-2" />
+                          <span className="text-xs text-mocha-500">Görsel Yükle</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -827,12 +827,12 @@ export const BoxConfigTab: React.FC = () => {
 
                 {/* Sağ - Bonbon Seçimi */}
                 <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                  <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
                     Bonbon Seç ({presetForm.productIds.length}/{presetForm.boxSize}) *
                   </label>
-                  <div className="border border-gray-200 dark:border-gray-600 rounded-xl p-3 max-h-80 overflow-y-auto bg-gray-50 dark:bg-dark-700">
+                  <div className="border border-cream-200 rounded-xl p-3 max-h-80 overflow-y-auto bg-cream-50">
                     {bonbonProducts.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
+                      <div className="text-center py-8 text-mocha-400">
                         <Package size={32} className="mx-auto mb-2 opacity-30" />
                         <p className="text-xs">Seçilebilir bonbon yok</p>
                       </div>
@@ -846,18 +846,18 @@ export const BoxConfigTab: React.FC = () => {
                               onClick={() => toggleBonbonSelection(product.id)}
                               className={`relative p-2 rounded-xl border-2 transition-all ${
                                 isSelected
-                                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                  : 'border-gray-200 dark:border-gray-600 hover:border-purple-300'
+                                  ? 'border-purple-500 bg-purple-50'
+                                  : 'border-cream-200 hover:border-purple-300'
                               }`}
                             >
-                              <div className="aspect-square rounded-lg overflow-hidden mb-1 bg-white dark:bg-dark-600">
+                              <div className="aspect-square rounded-lg overflow-hidden mb-1 bg-white">
                                 <img
                                   src={product.image}
                                   alt={product.title}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <p className="text-[10px] font-medium text-gray-700 dark:text-gray-300 line-clamp-1">
+                              <p className="text-xs font-medium text-gray-700 line-clamp-1">
                                 {product.title}
                               </p>
                               {isSelected && (
@@ -876,10 +876,10 @@ export const BoxConfigTab: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-dark-700/50 flex justify-end gap-3">
+            <div className="p-6 border-t border-cream-200 bg-cream-50 flex justify-end gap-3">
               <button
                 onClick={() => setIsPresetModalOpen(false)}
-                className="px-6 py-3 text-gray-600 dark:text-gray-400 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+                className="px-6 py-3 text-mocha-600 font-bold rounded-xl hover:bg-cream-200 transition-colors"
               >
                 İptal
               </button>

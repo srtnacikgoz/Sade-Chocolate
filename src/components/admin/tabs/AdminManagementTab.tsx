@@ -123,10 +123,10 @@ export const AdminManagementTab: React.FC = () => {
             <Shield size={24} className="text-gold" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-bold text-mocha-900">
               Admin Yönetimi
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-mocha-500">
               Admin kullanıcılarını yönetin
             </p>
           </div>
@@ -134,8 +134,8 @@ export const AdminManagementTab: React.FC = () => {
       </div>
 
       {/* Yeni Admin Ekle */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700">
-        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-cream-200">
+        <h3 className="text-sm font-bold text-mocha-600 uppercase tracking-wider mb-4 flex items-center gap-2">
           <UserPlus size={16} />
           Yeni Admin Ekle
         </h3>
@@ -147,10 +147,10 @@ export const AdminManagementTab: React.FC = () => {
               value={newAdminEmail}
               onChange={(e) => setNewAdminEmail(e.target.value)}
               placeholder="kullanici@email.com"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-dark-600 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 outline-none focus:border-gold transition-all"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-mocha-900 placeholder:text-mocha-400 outline-none focus:border-gold transition-all"
               disabled={isAdding}
             />
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-mocha-400 mt-2">
               Kullanıcının önce siteye kayıt olması gerekir
             </p>
           </div>
@@ -175,8 +175,8 @@ export const AdminManagementTab: React.FC = () => {
       </div>
 
       {/* Admin Listesi */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-700">
-        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-cream-200">
+        <h3 className="text-sm font-bold text-mocha-600 uppercase tracking-wider mb-4 flex items-center gap-2">
           <Crown size={16} />
           Mevcut Adminler ({admins.length})
         </h3>
@@ -186,7 +186,7 @@ export const AdminManagementTab: React.FC = () => {
             <Loader2 size={32} className="text-gold animate-spin" />
           </div>
         ) : admins.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-mocha-500">
             Henüz admin bulunmuyor
           </div>
         ) : (
@@ -194,7 +194,7 @@ export const AdminManagementTab: React.FC = () => {
             {admins.map((admin) => (
               <div
                 key={admin.uid}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-700 rounded-xl"
+                className="flex items-center justify-between p-4 bg-cream-50 rounded-xl"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center">
@@ -202,15 +202,15 @@ export const AdminManagementTab: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <Mail size={14} className="text-gray-400" />
-                      <span className="font-medium text-gray-900 dark:text-white">
+                      <Mail size={14} className="text-mocha-400" />
+                      <span className="font-medium text-mocha-900">
                         {admin.email}
                       </span>
                     </div>
                     {admin.createdAt && (
                       <div className="flex items-center gap-2 mt-1">
-                        <Calendar size={12} className="text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <Calendar size={12} className="text-mocha-400" />
+                        <span className="text-xs text-mocha-500">
                           {formatDate(admin.createdAt)}
                         </span>
                       </div>
@@ -223,7 +223,7 @@ export const AdminManagementTab: React.FC = () => {
                     <button
                       onClick={() => setAdminToRemove(admin)}
                       disabled={removingAdmin === admin.uid}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all disabled:opacity-50"
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
                       title="Admin yetkisini kaldır"
                     >
                       {removingAdmin === admin.uid ? (
@@ -236,28 +236,28 @@ export const AdminManagementTab: React.FC = () => {
 
                   <AlertDialog.Portal>
                     <AlertDialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-                    <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-800 rounded-2xl p-6 w-full max-w-md z-50 shadow-xl">
+                    <AlertDialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-full max-w-md z-50 shadow-sm">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                           <AlertTriangle size={24} className="text-red-600" />
                         </div>
                         <div>
-                          <AlertDialog.Title className="text-lg font-bold text-gray-900 dark:text-white">
+                          <AlertDialog.Title className="text-lg font-bold text-mocha-900">
                             Admin Yetkisini Kaldır
                           </AlertDialog.Title>
-                          <AlertDialog.Description className="text-sm text-gray-500">
+                          <AlertDialog.Description className="text-sm text-mocha-500">
                             Bu işlem geri alınabilir
                           </AlertDialog.Description>
                         </div>
                       </div>
 
-                      <p className="text-gray-600 dark:text-gray-300 mb-6">
+                      <p className="text-mocha-600 mb-6">
                         <span className="font-bold text-gold">{admin.email}</span> kullanıcısının admin yetkisini kaldırmak istediğinize emin misiniz?
                       </p>
 
                       <div className="flex gap-3 justify-end">
                         <AlertDialog.Cancel asChild>
-                          <button className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-all">
+                          <button className="px-4 py-2 text-mocha-600 hover:bg-cream-100 rounded-lg transition-all">
                             İptal
                           </button>
                         </AlertDialog.Cancel>
@@ -280,14 +280,14 @@ export const AdminManagementTab: React.FC = () => {
       </div>
 
       {/* Bilgi Notu */}
-      <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
         <div className="flex items-start gap-3">
           <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
           <div>
-            <h4 className="font-bold text-amber-800 dark:text-amber-200 text-sm">
+            <h4 className="font-bold text-amber-800 text-sm">
               Önemli Notlar
             </h4>
-            <ul className="text-sm text-amber-700 dark:text-amber-300 mt-1 space-y-1">
+            <ul className="text-sm text-amber-700 mt-1 space-y-1">
               <li>• Admin eklemek için kullanıcının önce siteye kayıt olması gerekir</li>
               <li>• Kendi admin yetkinizi kaldıramazsınız</li>
               <li>• Admin yetkisi verilen kullanıcı tüm panele erişebilir</li>

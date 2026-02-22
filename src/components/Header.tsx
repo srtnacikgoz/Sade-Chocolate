@@ -26,12 +26,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, onSearchClick }) =>
         <button
           onClick={onMenuClick}
           className="lg:hidden p-2 -ml-2 text-gray-900 dark:text-white hover:text-brown-900 transition-colors"
+          aria-label="Menüyü aç"
         >
           <span className="material-icons-outlined text-2xl">menu</span>
         </button>
 
         {/* Desktop Navigation (Center) - Logo as First Item */}
-        <nav className="hidden lg:flex items-center space-x-10 absolute left-1/2 transform -translate-x-1/2">
+        <nav aria-label="Ana navigasyon" className="hidden lg:flex items-center space-x-10 absolute left-1/2 transform -translate-x-1/2">
           <Link to="/home" className="flex items-center gap-3 group">
             <img
               src="/kakaologo.png"

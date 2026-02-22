@@ -37,12 +37,12 @@ const DEFAULT_COMPANY_INFO: CompanyInfo = {
   slogan: 'Hile Yok, Kalite Var.',
   foundedYear: 2016,
   founderName: 'Sertan Açıkgöz',
-  generalEmail: 'bilgi@sadepatisserie.com',
-  supportEmail: 'destek@sadepatisserie.com',
+  generalEmail: 'bilgi@sadechocolate.com',
+  supportEmail: 'destek@sadechocolate.com',
   generalPhone: '0552 896 30 26',
   whatsappBusiness: '905528963026',
   socialMedia: {
-    instagram: 'sadepatisserie',
+    instagram: 'sade.chocolate',
     facebook: '',
     twitter: '',
     youtube: '',
@@ -58,7 +58,7 @@ const DEFAULT_COMPANY_INFO: CompanyInfo = {
       city: 'Antalya',
       phone: '0552 896 30 26',
       whatsapp: '905528963026',
-      email: 'yesilbahce@sadepatisserie.com',
+      email: 'yesilbahce@sadechocolate.com',
       mapLink: 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Yeşilbahçe',
       workingHours: {
         weekdays: '09:00 - 21:00',
@@ -76,7 +76,7 @@ const DEFAULT_COMPANY_INFO: CompanyInfo = {
       city: 'Antalya',
       phone: '0552 896 30 26',
       whatsapp: '905528963026',
-      email: 'caglayan@sadepatisserie.com',
+      email: 'caglayan@sadechocolate.com',
       mapLink: 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Çağlayan',
       workingHours: {
         weekdays: '09:00 - 21:00',
@@ -112,12 +112,12 @@ const DEFAULT_COMPANY_INFO: CompanyInfo = {
 
 const SectionHeader: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string }> = ({ icon, title, subtitle }) => (
   <div className="flex items-center gap-3 mb-6">
-    <div className="w-10 h-10 bg-brown-900 text-white rounded-xl flex items-center justify-center">
+    <div className="w-10 h-10 bg-mocha-900 text-white rounded-xl flex items-center justify-center">
       {icon}
     </div>
     <div>
-      <h3 className="font-display text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
-      {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+      <h3 className="text-lg font-semibold text-mocha-900">{title}</h3>
+      {subtitle && <p className="text-xs text-mocha-400">{subtitle}</p>}
     </div>
   </div>
 );
@@ -132,16 +132,16 @@ const InputField: React.FC<{
   prefix?: string;
 }> = ({ label, value, onChange, placeholder, type = 'text', icon, prefix }) => (
   <div>
-    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{label}</label>
+    <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">{label}</label>
     <div className="relative">
-      {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{icon}</div>}
-      {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{prefix}</span>}
+      {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-400">{icon}</div>}
+      {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-400 text-sm">{prefix}</span>}
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full ${icon ? 'pl-12' : prefix ? 'pl-16' : 'px-4'} pr-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white transition-all`}
+        className={`w-full ${icon ? 'pl-12' : prefix ? 'pl-16' : 'px-4'} pr-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 transition-all`}
       />
     </div>
   </div>
@@ -157,23 +157,23 @@ interface BranchCardProps {
 }
 
 const BranchCard: React.FC<BranchCardProps> = ({ branch, index, onUpdate, onDelete, isExpanded, onToggle }) => (
-  <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+  <div className="bg-white rounded-2xl border border-cream-200 overflow-hidden">
     {/* Header */}
     <div
-      className="p-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+      className="p-5 flex items-center justify-between cursor-pointer hover:bg-cream-50 transition-colors"
       onClick={onToggle}
     >
       <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${branch.isPrimary ? 'bg-gold text-white' : 'bg-gray-100 dark:bg-dark-900 text-gray-500'}`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${branch.isPrimary ? 'bg-gold text-white' : 'bg-cream-100 text-mocha-500'}`}>
           <MapPin size={20} />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h4 className="font-bold text-gray-900 dark:text-white">{branch.name || 'Yeni Şube'}</h4>
-            {branch.isPrimary && <span className="text-[9px] bg-gold/20 text-gold px-2 py-0.5 rounded-full font-bold">ANA ŞUBE</span>}
-            {!branch.isActive && <span className="text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">PASİF</span>}
+            <h4 className="font-bold text-mocha-900">{branch.name || 'Yeni Şube'}</h4>
+            {branch.isPrimary && <span className="text-xs bg-gold/20 text-gold px-2 py-0.5 rounded-full font-bold">ANA ŞUBE</span>}
+            {!branch.isActive && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">PASİF</span>}
           </div>
-          <p className="text-xs text-gray-400">{branch.address || 'Adres girilmedi'}</p>
+          <p className="text-xs text-mocha-400">{branch.address || 'Adres girilmedi'}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -183,13 +183,13 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, index, onUpdate, onDele
         >
           <Trash2 size={16} />
         </button>
-        {isExpanded ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+        {isExpanded ? <ChevronUp size={20} className="text-mocha-400" /> : <ChevronDown size={20} className="text-mocha-400" />}
       </div>
     </div>
 
     {/* Expanded Content */}
     {isExpanded && (
-      <div className="p-5 pt-0 border-t border-gray-100 dark:border-gray-700 space-y-5">
+      <div className="p-5 pt-0 border-t border-cream-200 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-5">
           <InputField
             label="Şube Adı"
@@ -199,25 +199,25 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, index, onUpdate, onDele
           />
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Durum</label>
+              <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">Durum</label>
               <select
                 value={branch.isActive ? 'active' : 'inactive'}
                 onChange={(e) => onUpdate(index, { isActive: e.target.value === 'active' })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white"
+                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20"
               >
                 <option value="active">Aktif</option>
                 <option value="inactive">Pasif</option>
               </select>
             </div>
             <div className="flex items-end">
-              <label className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+              <label className="flex items-center gap-2 px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl cursor-pointer hover:bg-cream-100 transition-colors">
                 <input
                   type="checkbox"
                   checked={branch.isPrimary || false}
                   onChange={(e) => onUpdate(index, { isPrimary: e.target.checked })}
                   className="w-4 h-4 accent-gold"
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-300">Ana Şube</span>
+                <span className="text-sm text-mocha-600">Ana Şube</span>
               </label>
             </div>
           </div>
@@ -265,7 +265,7 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, index, onUpdate, onDele
           label="E-posta"
           value={branch.email || ''}
           onChange={(v) => onUpdate(index, { email: v })}
-          placeholder="yesilbahce@sadepatisserie.com"
+          placeholder="yesilbahce@sadechocolate.com"
           icon={<Mail size={16} />}
         />
 
@@ -279,39 +279,39 @@ const BranchCard: React.FC<BranchCardProps> = ({ branch, index, onUpdate, onDele
 
         {/* Working Hours */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+          <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-3">
             <Clock size={14} className="inline mr-2" />
             Çalışma Saatleri
           </label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <span className="text-xs text-gray-400 mb-1 block">Hafta İçi</span>
+              <span className="text-xs text-mocha-400 mb-1 block">Hafta İçi</span>
               <input
                 type="text"
                 value={branch.workingHours?.weekdays || ''}
                 onChange={(e) => onUpdate(index, { workingHours: { ...branch.workingHours, weekdays: e.target.value } })}
                 placeholder="09:00 - 21:00"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white"
+                className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brown-900/20"
               />
             </div>
             <div>
-              <span className="text-xs text-gray-400 mb-1 block">Cumartesi</span>
+              <span className="text-xs text-mocha-400 mb-1 block">Cumartesi</span>
               <input
                 type="text"
                 value={branch.workingHours?.saturday || ''}
                 onChange={(e) => onUpdate(index, { workingHours: { ...branch.workingHours, saturday: e.target.value } })}
                 placeholder="09:00 - 21:00"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white"
+                className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brown-900/20"
               />
             </div>
             <div>
-              <span className="text-xs text-gray-400 mb-1 block">Pazar</span>
+              <span className="text-xs text-mocha-400 mb-1 block">Pazar</span>
               <input
                 type="text"
                 value={branch.workingHours?.sunday || ''}
                 onChange={(e) => onUpdate(index, { workingHours: { ...branch.workingHours, sunday: e.target.value } })}
                 placeholder="10:00 - 20:00"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white"
+                className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-brown-900/20"
               />
             </div>
           </div>
@@ -348,14 +348,14 @@ const BankAccountCard: React.FC<BankAccountCardProps> = ({ account, index, onUpd
   };
 
   return (
-    <div className={`bg-white dark:bg-dark-800 rounded-2xl border ${account.isActive ? 'border-gray-200 dark:border-gray-700' : 'border-red-200 dark:border-red-800'} p-5`}>
+    <div className={`bg-white rounded-2xl border ${account.isActive ? 'border-cream-200' : 'border-red-200'} p-5`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${account.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
             <Landmark size={18} />
           </div>
           <div>
-            <h4 className="font-bold text-gray-900 dark:text-white">{account.bankName || 'Banka Adı'}</h4>
+            <h4 className="font-bold text-mocha-900">{account.bankName || 'Banka Adı'}</h4>
             <span className={`text-xs ${account.isActive ? 'text-emerald-600' : 'text-red-500'}`}>
               {account.isActive ? 'Aktif' : 'Pasif'}
             </span>
@@ -387,21 +387,21 @@ const BankAccountCard: React.FC<BankAccountCardProps> = ({ account, index, onUpd
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">IBAN</label>
+          <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">IBAN</label>
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <CreditCard size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <CreditCard size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-400" />
               <input
                 type="text"
                 value={account.iban}
                 onChange={(e) => onUpdate(index, { iban: e.target.value.toUpperCase() })}
                 placeholder="TR00 0000 0000 0000 0000 0000 00"
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white font-mono tracking-wider"
+                className="w-full pl-12 pr-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 font-mono tracking-wider"
               />
             </div>
             <button
               onClick={copyIban}
-              className={`px-4 py-3 rounded-xl transition-colors ${copied ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 dark:bg-dark-900 text-gray-500 hover:bg-gray-200'}`}
+              className={`px-4 py-3 rounded-xl transition-colors ${copied ? 'bg-emerald-100 text-emerald-600' : 'bg-cream-100 text-mocha-500 hover:bg-cream-200'}`}
             >
               {copied ? <Check size={18} /> : <Copy size={18} />}
             </button>
@@ -410,11 +410,11 @@ const BankAccountCard: React.FC<BankAccountCardProps> = ({ account, index, onUpd
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Para Birimi</label>
+            <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">Para Birimi</label>
             <select
               value={account.currency}
               onChange={(e) => onUpdate(index, { currency: e.target.value as 'TRY' | 'USD' | 'EUR' })}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20"
             >
               <option value="TRY">{currencyLabels.TRY}</option>
               <option value="USD">{currencyLabels.USD}</option>
@@ -422,11 +422,11 @@ const BankAccountCard: React.FC<BankAccountCardProps> = ({ account, index, onUpd
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Durum</label>
+            <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">Durum</label>
             <select
               value={account.isActive ? 'active' : 'inactive'}
               onChange={(e) => onUpdate(index, { isActive: e.target.value === 'active' })}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20 dark:text-white"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brown-900/20"
             >
               <option value="active">Aktif - Görünür</option>
               <option value="inactive">Pasif - Gizli</option>
@@ -568,13 +568,13 @@ export const CompanyInfoTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display text-3xl font-bold text-gray-900 dark:text-white italic">Şirket Künyesi</h2>
-          <p className="text-sm text-gray-400 mt-1">Tüm şube ve iletişim bilgilerini buradan yönetin</p>
+          <h2 className="text-2xl font-semibold text-mocha-900 italic">Şirket Künyesi</h2>
+          <p className="text-sm text-mocha-400 mt-1">Tüm şube ve iletişim bilgilerini buradan yönetin</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-6 py-3 bg-brown-900 text-white rounded-xl hover:bg-gold transition-colors disabled:opacity-50 font-bold text-sm"
+          className="flex items-center gap-2 px-6 py-3 bg-mocha-900 text-white rounded-xl hover:bg-gold transition-colors disabled:opacity-50 font-bold text-sm"
         >
           <Save size={18} />
           {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -582,7 +582,7 @@ export const CompanyInfoTab: React.FC = () => {
       </div>
 
       {/* General Info */}
-      <div className="bg-white dark:bg-dark-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 border border-cream-200">
         <SectionHeader
           icon={<Building2 size={20} />}
           title="Genel Bilgiler"
@@ -625,7 +625,7 @@ export const CompanyInfoTab: React.FC = () => {
       </div>
 
       {/* Contact Info */}
-      <div className="bg-white dark:bg-dark-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 border border-cream-200">
         <SectionHeader
           icon={<Phone size={20} />}
           title="İletişim Bilgileri"
@@ -636,14 +636,14 @@ export const CompanyInfoTab: React.FC = () => {
             label="Genel E-posta"
             value={companyInfo.generalEmail}
             onChange={(v) => setCompanyInfo({ ...companyInfo, generalEmail: v })}
-            placeholder="bilgi@sadepatisserie.com"
+            placeholder="bilgi@sadechocolate.com"
             icon={<Mail size={16} />}
           />
           <InputField
             label="Destek E-posta"
             value={companyInfo.supportEmail || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, supportEmail: v })}
-            placeholder="destek@sadepatisserie.com"
+            placeholder="destek@sadechocolate.com"
             icon={<Mail size={16} />}
           />
           <InputField
@@ -663,7 +663,7 @@ export const CompanyInfoTab: React.FC = () => {
       </div>
 
       {/* Social Media */}
-      <div className="bg-white dark:bg-dark-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 border border-cream-200">
         <SectionHeader
           icon={<Globe size={20} />}
           title="Sosyal Medya"
@@ -674,46 +674,46 @@ export const CompanyInfoTab: React.FC = () => {
             label="Instagram"
             value={companyInfo.socialMedia?.instagram || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, socialMedia: { ...companyInfo.socialMedia, instagram: v } })}
-            placeholder="sadepatisserie"
+            placeholder="sade.chocolate"
             icon={<Instagram size={16} />}
           />
           <InputField
             label="Facebook"
             value={companyInfo.socialMedia?.facebook || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, socialMedia: { ...companyInfo.socialMedia, facebook: v } })}
-            placeholder="sadepatisserie"
+            placeholder="sade.chocolate"
             icon={<Facebook size={16} />}
           />
           <InputField
             label="YouTube"
             value={companyInfo.socialMedia?.youtube || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, socialMedia: { ...companyInfo.socialMedia, youtube: v } })}
-            placeholder="@sadepatisserie"
+            placeholder="@sade.chocolate"
             icon={<Youtube size={16} />}
           />
           <InputField
             label="TikTok"
             value={companyInfo.socialMedia?.tiktok || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, socialMedia: { ...companyInfo.socialMedia, tiktok: v } })}
-            placeholder="@sadepatisserie"
+            placeholder="@sade.chocolate"
           />
           <InputField
             label="Twitter / X"
             value={companyInfo.socialMedia?.twitter || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, socialMedia: { ...companyInfo.socialMedia, twitter: v } })}
-            placeholder="sadepatisserie"
+            placeholder="sade.chocolate"
           />
           <InputField
             label="LinkedIn"
             value={companyInfo.socialMedia?.linkedin || ''}
             onChange={(v) => setCompanyInfo({ ...companyInfo, socialMedia: { ...companyInfo.socialMedia, linkedin: v } })}
-            placeholder="sade-patisserie"
+            placeholder="sade-chocolate"
           />
         </div>
       </div>
 
       {/* Branches */}
-      <div className="bg-white dark:bg-dark-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 border border-cream-200">
         <div className="flex items-center justify-between mb-6">
           <SectionHeader
             icon={<MapPin size={20} />}
@@ -722,7 +722,7 @@ export const CompanyInfoTab: React.FC = () => {
           />
           <button
             onClick={addBranch}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-dark-900 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors text-sm font-bold"
+            className="flex items-center gap-2 px-4 py-2 bg-cream-100 text-mocha-600 rounded-xl hover:bg-cream-200 transition-colors text-sm font-bold"
           >
             <Plus size={16} />
             Yeni Şube
@@ -744,7 +744,7 @@ export const CompanyInfoTab: React.FC = () => {
       </div>
 
       {/* Bank Accounts */}
-      <div className="bg-white dark:bg-dark-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 border border-cream-200">
         <div className="flex items-center justify-between mb-6">
           <SectionHeader
             icon={<Landmark size={20} />}
@@ -753,7 +753,7 @@ export const CompanyInfoTab: React.FC = () => {
           />
           <button
             onClick={addBankAccount}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-dark-900 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors text-sm font-bold"
+            className="flex items-center gap-2 px-4 py-2 bg-cream-100 text-mocha-600 rounded-xl hover:bg-cream-200 transition-colors text-sm font-bold"
           >
             <Plus size={16} />
             Yeni Hesap
@@ -761,12 +761,12 @@ export const CompanyInfoTab: React.FC = () => {
         </div>
 
         {(!companyInfo.bankAccounts || companyInfo.bankAccounts.length === 0) ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-mocha-400">
             <Landmark size={48} className="mx-auto mb-4 opacity-30" />
             <p className="text-sm">Henüz banka hesabı eklenmemiş</p>
             <button
               onClick={addBankAccount}
-              className="mt-4 text-sm text-brown-900 dark:text-gold font-bold hover:underline"
+              className="mt-4 text-sm text-mocha-900 font-bold hover:underline"
             >
               + İlk hesabı ekle
             </button>
@@ -787,7 +787,7 @@ export const CompanyInfoTab: React.FC = () => {
       </div>
 
       {/* Bank Transfer Settings */}
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-3xl p-8 border border-emerald-200 dark:border-emerald-800">
+      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
         <div className="flex items-center justify-between mb-6">
           <SectionHeader
             icon={<Percent size={20} />}
@@ -805,7 +805,7 @@ export const CompanyInfoTab: React.FC = () => {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
               companyInfo.bankTransferSettings?.isEnabled
                 ? 'bg-emerald-500 text-white'
-                : 'bg-gray-200 text-gray-500'
+                : 'bg-cream-200 text-mocha-500'
             }`}
           >
             {companyInfo.bankTransferSettings?.isEnabled ? (
@@ -819,7 +819,7 @@ export const CompanyInfoTab: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Discount Percent */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">
               İndirim Oranı
             </label>
             <div className="relative">
@@ -836,20 +836,20 @@ export const CompanyInfoTab: React.FC = () => {
                 min={0}
                 max={20}
                 step={0.5}
-                className="w-full px-4 py-3 pr-10 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white font-bold text-lg"
+                className="w-full px-4 py-3 pr-10 bg-white border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-lg"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-600 font-bold">%</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">Müşteriye uygulanan indirim</p>
+            <p className="text-xs text-mocha-400 mt-1">Müşteriye uygulanan indirim</p>
           </div>
 
           {/* Payment Deadline */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">
               Ödeme Süresi
             </label>
             <div className="relative">
-              <Timer size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Timer size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-400" />
               <input
                 type="number"
                 value={companyInfo.bankTransferSettings?.paymentDeadlineHours || 12}
@@ -862,20 +862,20 @@ export const CompanyInfoTab: React.FC = () => {
                 })}
                 min={1}
                 max={72}
-                className="w-full pl-12 pr-16 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white font-bold text-lg"
+                className="w-full pl-12 pr-16 py-3 bg-white border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-lg"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">saat</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-mocha-400 text-sm">saat</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">Bu süre sonunda sipariş iptal edilir</p>
+            <p className="text-xs text-mocha-400 mt-1">Bu süre sonunda sipariş iptal edilir</p>
           </div>
 
           {/* Min Order Amount */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">
               Min. Sipariş Tutarı
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₺</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-400 font-bold">₺</span>
               <input
                 type="number"
                 value={companyInfo.bankTransferSettings?.minOrderAmount || 0}
@@ -888,15 +888,15 @@ export const CompanyInfoTab: React.FC = () => {
                 })}
                 min={0}
                 step={50}
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 dark:text-white font-bold text-lg"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold text-lg"
               />
             </div>
-            <p className="text-xs text-gray-400 mt-1">0 = Limit yok</p>
+            <p className="text-xs text-mocha-400 mt-1">0 = Limit yok</p>
           </div>
 
           {/* Auto Cancel */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">
               Otomatik İptal
             </label>
             <button
@@ -910,7 +910,7 @@ export const CompanyInfoTab: React.FC = () => {
               className={`w-full px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                 companyInfo.bankTransferSettings?.autoCancel
                   ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300'
-                  : 'bg-gray-100 text-gray-500 border-2 border-gray-200'
+                  : 'bg-cream-100 text-mocha-500 border-2 border-cream-200'
               }`}
             >
               {companyInfo.bankTransferSettings?.autoCancel ? (
@@ -919,13 +919,13 @@ export const CompanyInfoTab: React.FC = () => {
                 <>Kapalı</>
               )}
             </button>
-            <p className="text-xs text-gray-400 mt-1">Süre dolunca siparişi iptal et</p>
+            <p className="text-xs text-mocha-400 mt-1">Süre dolunca siparişi iptal et</p>
           </div>
         </div>
 
         {/* Info Box */}
-        <div className="mt-6 p-4 bg-white/50 dark:bg-dark-800/50 rounded-xl border border-emerald-200/50">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="mt-6 p-4 bg-white/50/50 rounded-xl border border-emerald-200/50">
+          <p className="text-sm text-mocha-600">
             <strong className="text-emerald-600">Örnek:</strong> ₺1.000 sipariş için müşteri{' '}
             <strong className="text-emerald-600">
               ₺{(1000 * (1 - (companyInfo.bankTransferSettings?.discountPercent || 2) / 100)).toFixed(0)}
@@ -938,7 +938,7 @@ export const CompanyInfoTab: React.FC = () => {
       </div>
 
       {/* Legal Info */}
-      <div className="bg-white dark:bg-dark-800 rounded-3xl p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white rounded-xl p-6 border border-cream-200">
         <SectionHeader
           icon={<FileText size={20} />}
           title="Yasal Bilgiler"
@@ -977,7 +977,7 @@ export const CompanyInfoTab: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-8 py-4 bg-brown-900 text-white rounded-2xl hover:bg-gold transition-all shadow-2xl disabled:opacity-50 font-bold"
+          className="flex items-center gap-2 px-8 py-4 bg-mocha-900 text-white rounded-2xl hover:bg-gold transition-all shadow-sm disabled:opacity-50 font-bold"
         >
           <Save size={20} />
           {saving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}

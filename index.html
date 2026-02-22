@@ -1,13 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sade Chocolate</title>
+    <title>Sade Chocolate | El Yapımı Premium Çikolata - Antalya</title>
+    <meta name="description" content="Sade Chocolate - Antalya'dan el yapımı premium artisan çikolata. Bonbon, tablet çikolata ve özel hediye kutuları. Türkiye'nin her yerine güvenli kargo." />
+    <meta name="keywords" content="el yapımı çikolata, premium çikolata, artisan çikolata, bonbon, tablet çikolata, hediye çikolata, Antalya çikolata, Sade Chocolate" />
+    <meta name="author" content="Sade Chocolate" />
+    <link rel="canonical" href="https://sadechocolate.com/" />
 
-    <!-- Favicon -->
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sadechocolate.com/" />
+    <meta property="og:title" content="Sade Chocolate | El Yapımı Premium Çikolata" />
+    <meta property="og:description" content="Antalya'dan el yapımı premium artisan çikolata. Bonbon, tablet çikolata ve özel hediye kutuları." />
+    <meta property="og:image" content="https://sadechocolate.com/kakaologo.png" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:site_name" content="Sade Chocolate" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sade Chocolate | El Yapımı Premium Çikolata" />
+    <meta name="twitter:description" content="Antalya'dan el yapımı premium artisan çikolata. Bonbon, tablet çikolata ve özel hediye kutuları." />
+    <meta name="twitter:image" content="https://sadechocolate.com/kakaologo.png" />
+
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Sade Chocolate",
+      "legalName": "Sade Unlu Mamülleri San ve Tic Ltd Şti",
+      "url": "https://sadechocolate.com",
+      "logo": "https://sadechocolate.com/kakaologo.png",
+      "description": "El yapımı premium artisan çikolata",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Yeşilbahçe mah. Çınarlı cd 47/A",
+        "addressLocality": "Muratpaşa",
+        "addressRegion": "Antalya",
+        "addressCountry": "TR"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "email": "bilgi@sadechocolate.com"
+      },
+      "sameAs": [
+        "https://www.instagram.com/sade.chocolate"
+      ]
+    }
+    </script>
+
+    <!-- Structured Data - WebSite (arama motoru arama kutusu) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Sade Chocolate",
+      "url": "https://sadechocolate.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://sadechocolate.com/catalog?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/kakaologo.png" />
+    <link rel="apple-touch-icon" href="/kakaologo.png" />
     <link rel="alternate icon" href="/kakaologo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#4B3832" />
 
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
@@ -67,8 +132,36 @@
   }
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Sade Chocolate",
+  "legalName": "Sade Unlu Mamülleri San ve Tic Ltd Şti",
+  "url": "https://sadechocolate.com",
+  "logo": "https://sadechocolate.com/kakaologo.png",
+  "description": "Antalya'dan el yapımı premium artisan çikolata. Bonbon, tablet çikolata ve özel hediye kutuları.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Yeşilbahçe mah. Çınarlı cd 47/A",
+    "addressLocality": "Muratpaşa",
+    "addressRegion": "Antalya",
+    "addressCountry": "TR"
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "email": "info@sadechocolate.com",
+    "contactType": "customer service",
+    "availableLanguage": "Turkish"
+  },
+  "sameAs": [
+    "https://www.instagram.com/sadechocolate"
+  ]
+}
+</script>
 </head>
   <body>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-brown-900 focus:text-white focus:px-6 focus:py-3 focus:rounded-xl focus:text-sm focus:font-bold focus:shadow-lg">Ana içeriğe geç</a>
     <div id="root"></div>
   <script type="module" src="/src/index.tsx"></script>
 </body>

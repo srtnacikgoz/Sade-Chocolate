@@ -14,3 +14,21 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// Core Web Vitals — GA4'e raporla
+import('web-vitals').then(({ onCLS, onINP, onLCP }) => {
+  const sendToGA4 = (metric: { name: string; value: number; id: string }) => {
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', metric.name, {
+        value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+        event_label: metric.id,
+        non_interaction: true,
+      });
+    }
+  };
+  onCLS(sendToGA4);
+  onINP(sendToGA4);
+  onLCP(sendToGA4);
+}).catch(() => {
+  // web-vitals yüklenemezse sessizce devam et
+});

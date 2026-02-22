@@ -83,3 +83,11 @@ export const clearCookieConsent = (): void => {
 export const hasGivenConsent = (): boolean => {
   return getCookieConsent() !== null;
 };
+
+/**
+ * Benzersiz event ID üret (Pixel + CAPI deduplication için)
+ * Aynı event_id ile gelen browser ve server event'ler Meta tarafından tekilleştirilir.
+ */
+export const generateEventId = (): string => {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+};

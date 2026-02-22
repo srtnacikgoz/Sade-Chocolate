@@ -244,7 +244,7 @@ export const TypographyTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-gold to-brand-mustard rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-brand-mustard rounded-2xl flex items-center justify-center">
             <Type className="text-white" size={24} />
           </div>
           <div>
@@ -398,7 +398,7 @@ export const TypographyTab: React.FC = () => {
       </div>
 
       {/* Preview */}
-      <div className="mt-8 p-8 bg-gradient-to-br from-cream-50 to-cream-100 dark:from-dark-800 dark:to-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700">
+      <div className="mt-8 p-6 bg-gradient-to-br from-cream-50 to-cream-100 dark:from-dark-800 dark:to-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2 mb-6">
           <Eye size={20} className="text-gold" />
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Canlı Önizleme</h3>

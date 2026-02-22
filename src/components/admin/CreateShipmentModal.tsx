@@ -144,7 +144,7 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-[32px] max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl max-w-2xl w-full shadow-sm max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-mocha-900 to-mocha-400 text-white p-6 rounded-t-[32px] flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -185,12 +185,12 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
               <Package size={20} className="text-brown-600" />
               Paket Bilgileri
             </h3>
-            <p className="text-xs text-gray-500 mb-4">Ürün bilgilerinden otomatik hesaplandı, gerekirse düzenleyebilirsiniz.</p>
+            <p className="text-xs text-mocha-500 mb-4">Ürün bilgilerinden otomatik hesaplandı, gerekirse düzenleyebilirsiniz.</p>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-mocha-600 mb-2">
                     Ağırlık (gram)
                   </label>
                   <input
@@ -199,13 +199,13 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
                     step="50"
                     value={weightGram}
                     onChange={(e) => setWeightGram(parseInt(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
+                    className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
                   />
-                  <p className="text-xs text-gray-400 mt-1">{(weightGram / 1000).toFixed(2)} kg</p>
+                  <p className="text-xs text-mocha-400 mt-1">{(weightGram / 1000).toFixed(2)} kg</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-mocha-600 mb-2">
                     Desi
                   </label>
                   <input
@@ -214,20 +214,20 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
                     step="1"
                     value={desi}
                     onChange={(e) => setDesi(parseInt(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
+                    className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-mocha-600 mb-2">
                   İçerik Açıklaması
                 </label>
                 <input
                   type="text"
                   value={contentDescription}
                   onChange={(e) => setContentDescription(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
+                  className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:ring-2 focus:ring-brown-500 focus:border-brown-500"
                   placeholder="Çikolata Ürünleri"
                 />
               </div>
@@ -238,9 +238,9 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
                   id="coldPackage"
                   checked={coldPackage}
                   onChange={(e) => setColdPackage(e.target.checked)}
-                  className="w-5 h-5 text-brown-600 border-gray-300 rounded focus:ring-brown-500"
+                  className="w-5 h-5 text-brown-600 border-cream-200 rounded focus:ring-brown-500"
                 />
-                <label htmlFor="coldPackage" className="text-sm font-medium text-gray-700 cursor-pointer">
+                <label htmlFor="coldPackage" className="text-sm font-medium text-mocha-600 cursor-pointer">
                   Soğuk Paket (Isı Hassas Ürün)
                 </label>
               </div>
@@ -258,10 +258,10 @@ export const CreateShipmentModal: React.FC<CreateShipmentModalProps> = ({
         </div>
 
         {/* Actions - Sticky Footer */}
-        <div className="flex gap-3 p-6 pt-4 border-t border-gray-100 bg-white rounded-b-[32px] flex-shrink-0">
+        <div className="flex gap-3 p-6 pt-4 border-t border-cream-200 bg-white rounded-b-[32px] flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 px-6 py-3 border border-cream-200 text-mocha-600 rounded-2xl font-medium hover:bg-cream-50 transition-colors"
             disabled={isCreating}
           >
             İptal

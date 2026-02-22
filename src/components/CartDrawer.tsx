@@ -91,7 +91,7 @@ export const CartDrawer: React.FC = () => {
                       onClick={() => setIsCartOpen(false)}
                       className="flex-shrink-0 w-24 h-24 bg-gray-50 dark:bg-dark-800 rounded-3xl overflow-hidden shadow-sm group-hover:shadow-md transition-all border border-gray-100 dark:border-gray-800"
                     >
-                      <img src={product.image} alt={product.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000" />
+                      <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000" />
                     </Link>
                     <div className="ml-5 flex-1 flex flex-col justify-between py-1">
                       <div>

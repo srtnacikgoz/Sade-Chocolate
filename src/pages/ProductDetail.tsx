@@ -16,6 +16,10 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight, Milk, Bean, Square, Nut, Cherry, Coffee, Cookie, Flame, IceCream } from 'lucide-react';
 import { BrandIcon } from '../components/ui/BrandIcon';
+import { SEOHead } from '../components/SEOHead';
+import { ProductReviews } from '../components/ProductReviews';
+import { trackViewItem } from '../services/analyticsService';
+import { trackPixelViewContent } from '../services/metaPixelService';
 
 // İkon Eşleştirme Yardımcısı
 const AttributeIcon = ({ iconId }: { iconId: string }) => {
@@ -412,8 +416,47 @@ export const ProductDetail: React.FC = () => {
   const isFav = isFavorite(product.id);
   const isOut = product.isOutOfStock;
 
+  // GA4 ürün görüntüleme event'i
+  useEffect(() => {
+    trackViewItem({
+      item_id: product.id,
+      item_name: product.name,
+      price: product.price,
+      item_category: product.category
+    });
+    trackPixelViewContent({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.category
+    });
+  }, [product.id]);
+
   return (
-    <main className="w-full max-w-screen-xl mx-auto pt-40 pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen">
+    <>
+    <SEOHead
+      title={product.name}
+      description={product.description || `${product.name} - Sade Chocolate premium el yapımı çikolata`}
+      path={`/product/${product.id}`}
+      image={product.imageUrl}
+      type="product"
+      product={{
+        name: product.name,
+        price: product.price,
+        currency: 'TRY',
+        availability: isOut ? 'OutOfStock' : 'InStock',
+        image: product.imageUrl,
+        description: product.description,
+        ratingValue: product.averageRating,
+        reviewCount: product.reviewCount
+      }}
+      breadcrumbs={[
+        { name: 'Ana Sayfa', url: '/' },
+        { name: 'Katalog', url: '/catalog' },
+        { name: product.name, url: `/product/${product.id}` }
+      ]}
+    />
+    <main className="w-full max-w-screen-xl mx-auto pt-40 pb-28 md:pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen">
       <div className="animate-fade-in">
 
         {/* 🔙 Geri Dön Butonu */}
@@ -674,7 +717,7 @@ export const ProductDetail: React.FC = () => {
               {relatedProducts.slice(0, 4).map(p => (
                 <div key={p.id} className="group cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                   <div className="aspect-square rounded-[40px] overflow-hidden bg-gray-50 dark:bg-dark-800 mb-6 border border-gray-100 dark:border-gray-800 transition-transform duration-700 group-hover:scale-95 shadow-sm">
-                    <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                    <img src={p.image} alt={p.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </div>
                   <h4 className="font-display text-xl italic text-center text-brown-900 dark:text-white group-hover:text-gold transition-colors">{p.title}</h4>
                   <p className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">₺{p.price.toFixed(2)}</p>
@@ -691,7 +734,29 @@ export const ProductDetail: React.FC = () => {
         )}
       </div>
 
+      {/* Müşteri Yorumları */}
+      <ProductReviews productId={product.id} />
+
       <Footer />
+
+      {/* Mobil Sticky CTA - Sadece mobilde görünür */}
+      {!isOut && (
+        <div className="fixed bottom-0 inset-x-0 z-[100] md:hidden bg-white/95 dark:bg-dark-900/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 px-4 py-3 safe-area-bottom">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-display text-xl font-bold text-brown-900 dark:text-gold italic">₺{product.price.toFixed(2)}</span>
+            </div>
+            <Button
+              onClick={() => addToCart(product, quantity)}
+              size="lg"
+              className="flex-1 h-14 text-xs tracking-[0.3em] rounded-2xl shadow-lg"
+            >
+              {t('add_to_cart')}
+            </Button>
+          </div>
+        </div>
+      )}
     </main>
+    </>
   );
 };

@@ -72,9 +72,11 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen,
                             poster={product.image}
                         />
                     ) : (
-                        <img 
-                            src={product.image} 
-                            alt={product.title} 
+                        <img
+                            src={product.image}
+                            alt={product.title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
                         />
                     )}

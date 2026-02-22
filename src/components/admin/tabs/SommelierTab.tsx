@@ -106,67 +106,67 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
       case 'persona':
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
-            <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200/60 p-10 shadow-sm space-y-8">
+            <div className="bg-white rounded-xl border border-cream-200/60 p-6 shadow-sm space-y-8">
               <div className="flex items-center gap-4 mb-2">
                 <div className="p-3.5 bg-purple-50 text-purple-600 rounded-2xl"><Type size={26} /></div>
-                <span className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-white">AI Kişiliği (Persona)</span>
+                <span className="text-sm font-black uppercase tracking-wider text-mocha-900">AI Kişiliği (Persona)</span>
               </div>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Selamlama Mesajı</label>
+                  <label className="block text-xs font-medium text-mocha-400 uppercase tracking-wider mb-3">Selamlama Mesajı</label>
                   <textarea 
                     value={aiConfig.persona?.greeting || ''} 
                     onChange={(e) => setAiConfig({...aiConfig, persona: {...aiConfig.persona, greeting: e.target.value}})}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-2xl p-5 text-sm italic focus:ring-2 focus:ring-purple-500/20 outline-none text-gray-900 dark:text-white" 
+                    className="w-full bg-cream-50 border-none rounded-2xl p-5 text-sm italic focus:ring-2 focus:ring-purple-500/20 outline-none text-mocha-900" 
                     rows={3} 
                     placeholder="Merhaba! Ben Sade'nin çikolata sommelieriyim..."
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Uzmanlık & Davranış Talimatı</label>
+                  <label className="block text-xs font-medium text-mocha-400 uppercase tracking-wider mb-3">Uzmanlık & Davranış Talimatı</label>
                   <textarea 
                     value={aiConfig.persona?.expertise || ''} 
                     onChange={(e) => setAiConfig({...aiConfig, persona: {...aiConfig.persona, expertise: e.target.value}})}
-                    className="w-full bg-slate-50 dark:bg-dark-900 border-none rounded-2xl p-5 text-sm leading-relaxed focus:ring-2 focus:ring-purple-500/20 outline-none text-gray-900 dark:text-white" 
+                    className="w-full bg-cream-50 border-none rounded-2xl p-5 text-sm leading-relaxed focus:ring-2 focus:ring-purple-500/20 outline-none text-mocha-900" 
                     rows={20} 
                     placeholder="Sen dünyanın en iyi artisan çikolata uzmanısın..."
                   />
                 </div>
               </div>
             </div>
-            <div className="bg-slate-900 rounded-[48px] p-10 text-white shadow-2xl relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute top-0 right-0 p-8 opacity-5 scale-150 rotate-12"><Package size={120} /></div>
+            <div className="bg-mocha-900 rounded-xl p-6 text-white shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-6 opacity-5 scale-150 rotate-12"><Package size={120} /></div>
               <div>
-                <h3 className="text-2xl font-display font-bold italic mb-8">AI Sommelier Önizlemesi</h3>
+                <h3 className="text-2xl font-semibold mb-8">AI Sommelier Önizlemesi</h3>
                 <div className="space-y-6">
                   <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl rounded-tl-none border border-white/10">
-                    <p className="text-[9px] font-black text-purple-300 uppercase tracking-widest mb-2">Asistan Karşılaması:</p>
+                    <p className="text-xs font-medium text-purple-300 uppercase tracking-wider mb-2">Asistan Karşılaması:</p>
                     <p className="text-sm italic opacity-90">"{aiConfig.persona?.greeting || '...'}"</p>
                   </div>
                   <div className="bg-white/5 p-5 rounded-2xl border border-white/5 max-h-[400px] overflow-y-auto">
-                    <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-3">Aktif Zeka Modeli</p>
-                    <p className="text-xs text-slate-300 leading-relaxed font-mono opacity-80 whitespace-pre-wrap">{aiConfig.persona?.expertise || '...'}</p>
+                    <p className="text-xs text-mocha-400 uppercase font-black tracking-wider mb-3">Aktif Zeka Modeli</p>
+                    <p className="text-xs text-mocha-300 leading-relaxed font-mono opacity-80 whitespace-pre-wrap">{aiConfig.persona?.expertise || '...'}</p>
                   </div>
                 </div>
               </div>
               <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">İpucu: Bu bilgiler AI'ya "System Instruction" olarak gönderilir.</p>
+                <p className="text-xs text-mocha-500 font-bold uppercase tracking-tight">İpucu: Bu bilgiler AI'ya "System Instruction" olarak gönderilir.</p>
               </div>
             </div>
           </div>
         );
       case 'knowledgeBase':
         return (
-          <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200/60 p-10 shadow-sm animate-in fade-in duration-500">
+          <div className="bg-white rounded-xl border border-cream-200/60 p-6 shadow-sm animate-in fade-in duration-500">
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-3"><BookOpen className="text-purple-500" /> Bilgi Bankası</h3>
-            <div className="mb-8 p-6 bg-slate-50 dark:bg-dark-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+            <div className="mb-8 p-6 bg-cream-50 rounded-2xl border border-cream-200">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Kural Tipi</label>
+                  <label className="block text-xs font-medium text-mocha-400 uppercase tracking-wider mb-2">Kural Tipi</label>
                   <select
                     value={newRule.type}
                     onChange={(e) => setNewRule({...newRule, type: e.target.value})}
-                    className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                    className="w-full px-4 py-3 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                   >
                     <option>Soru-Cevap</option>
                     <option>Eşleştirme</option>
@@ -175,7 +175,7 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  <label className="block text-xs font-medium text-mocha-400 uppercase tracking-wider mb-2">
                     {newRule.type === 'Soru-Cevap' ? 'Soru' : 'Anahtar'}
                   </label>
                   <input
@@ -183,11 +183,11 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
                     placeholder={newRule.type === 'Soru-Cevap' ? 'Örn: Sevgilime ne alsam?' : 'Örn: %85 Ecuador'}
                     value={newRule.key}
                     onChange={(e) => setNewRule({...newRule, key: e.target.value})}
-                    className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                    className="w-full px-4 py-3 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                  <label className="block text-xs font-medium text-mocha-400 uppercase tracking-wider mb-2">
                     {newRule.type === 'Soru-Cevap' ? 'Cevap' : 'Değer'}
                   </label>
                   <input
@@ -195,7 +195,7 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
                     placeholder={newRule.type === 'Soru-Cevap' ? 'Örn: Sevgiliniz için özel kutularımızı öneriyorum...' : 'Örn: Cabernet Sauvignon'}
                     value={newRule.value}
                     onChange={(e) => setNewRule({...newRule, value: e.target.value})}
-                    className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                    className="w-full px-4 py-3 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                   />
                 </div>
               </div>
@@ -208,16 +208,16 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
             </div>
             <div className="space-y-3">
               {knowledgeBaseItems.map(item => (
-                <div key={item.id} className="p-4 bg-gray-50 dark:bg-dark-900/50 rounded-xl flex items-center justify-between group">
+                <div key={item.id} className="p-4 bg-cream-50 rounded-xl flex items-center justify-between group">
                   <div>
-                    <span className="text-xs font-bold text-purple-500 bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded-md">{item.type}</span>
-                    <p className="mt-2 text-sm font-mono text-gray-800 dark:text-gray-200">
-                      <strong className="text-black dark:text-white">{item.key}:</strong> {item.value}
+                    <span className="text-xs font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded-md">{item.type}</span>
+                    <p className="mt-2 text-sm font-mono text-gray-800">
+                      <strong className="text-black">{item.key}:</strong> {item.value}
                     </p>
                   </div>
                   <button 
                     onClick={() => handleDeleteRule(item.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"
+                    className="p-2 text-mocha-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -228,17 +228,17 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
         );
       case 'questions':
         return (
-          <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200/60 p-10 shadow-sm animate-in fade-in duration-500">
+          <div className="bg-white rounded-xl border border-cream-200/60 p-6 shadow-sm animate-in fade-in duration-500">
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-3"><MessageSquare className="text-purple-500" /> Yönlendirici Sorular</h3>
-            <div className="mb-8 p-6 bg-slate-50 dark:bg-dark-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Yeni Soru Ekle</label>
+            <div className="mb-8 p-6 bg-cream-50 rounded-2xl border border-cream-200">
+              <label className="block text-xs font-medium text-mocha-400 uppercase tracking-wider mb-2">Yeni Soru Ekle</label>
               <div className="flex gap-4">
                 <input 
                   type="text"
                   placeholder="AI'nın soracağı soruyu buraya girin..."
                   value={newQuestion}
                   onChange={(e) => setNewQuestion(e.target.value)}
-                  className="flex-1 w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                  className="flex-1 w-full px-4 py-3 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                 />
                 <button 
                   onClick={handleAddQuestion}
@@ -250,13 +250,13 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
             </div>
             <div className="space-y-3">
               {guidingQuestions.map(item => (
-                <div key={item.id} className="p-4 bg-gray-50 dark:bg-dark-900/50 rounded-xl flex items-center justify-between group">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <div key={item.id} className="p-4 bg-cream-50 rounded-xl flex items-center justify-between group">
+                  <p className="text-sm font-medium text-gray-800">
                     {item.text}
                   </p>
                   <button 
                     onClick={() => handleDeleteQuestion(item.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-all opacity-0 group-hover:opacity-100"
+                    className="p-2 text-mocha-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -273,14 +273,14 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
   return (
     <div className="space-y-8">
       {/* AI Sommelier Aktif/Deaktif Toggle */}
-      <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl border-2 border-purple-200 dark:border-purple-700/50">
+      <div className="flex items-center justify-between p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200">
         <div className="flex items-center gap-4">
           <div className={`p-3 rounded-xl ${aiConfig.enabled ? 'bg-purple-600' : 'bg-gray-400'} transition-colors`}>
             <BrandIcon className="text-white" size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white">AI Sommelier Durumu</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <h3 className="font-bold text-lg text-mocha-900">AI Sommelier Durumu</h3>
+            <p className="text-sm text-mocha-600">
               {aiConfig.enabled
                 ? '✅ Aktif - Müşteriler AI asistanı görebilir'
                 : '⛔ Deaktif - AI asistan gizli (geliştirme modu)'}
@@ -302,22 +302,22 @@ export const SommelierTab: React.FC<SommelierTabProps> = ({ aiConfig, setAiConfi
       </div>
 
       {/* Sub-tab Navigation */}
-      <div className="flex justify-center gap-2 bg-slate-100 dark:bg-dark-900/50 p-2 rounded-2xl">
+      <div className="flex justify-center gap-2 bg-cream-100 p-2 rounded-2xl">
         <button
           onClick={() => setActiveSubTab('persona')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl transition-all ${activeSubTab === 'persona' ? 'bg-white dark:bg-dark-800 shadow text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl transition-all ${activeSubTab === 'persona' ? 'bg-white shadow text-purple-600' : 'text-mocha-500 hover:text-gray-700'}`}
         >
           <BrainCircuit size={16} /> Persona
         </button>
         <button
           onClick={() => setActiveSubTab('knowledgeBase')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl transition-all ${activeSubTab === 'knowledgeBase' ? 'bg-white dark:bg-dark-800 shadow text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl transition-all ${activeSubTab === 'knowledgeBase' ? 'bg-white shadow text-purple-600' : 'text-mocha-500 hover:text-gray-700'}`}
         >
           <BookOpen size={16} /> Bilgi Bankası
         </button>
         <button
           onClick={() => setActiveSubTab('questions')}
-          className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl transition-all ${activeSubTab === 'questions' ? 'bg-white dark:bg-dark-800 shadow text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-xl transition-all ${activeSubTab === 'questions' ? 'bg-white shadow text-purple-600' : 'text-mocha-500 hover:text-gray-700'}`}
         >
           <MessageSquare size={16} /> Sorular
         </button>

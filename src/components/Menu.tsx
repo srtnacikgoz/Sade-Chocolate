@@ -48,7 +48,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose }) => {
           <div className="mt-auto relative z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
             <div className="flex flex-col space-y-3 font-sans text-sm text-gray-500 mb-8">
                 <NavLink to="/about" onClick={onClose} className="hover:text-brown-900 transition-colors">{t('menu_about')}</NavLink>
-                <a href="mailto:bilgi@sadepatisserie.com" className="hover:text-brown-900 transition-colors">{t('menu_contact')}</a>
+                <a href="mailto:bilgi@sadechocolate.com" className="hover:text-brown-900 transition-colors">{t('menu_contact')}</a>
             </div>
             <div className="h-px bg-gray-100 dark:bg-gray-800 w-full mb-6"></div>
             <div className="flex justify-between items-center">

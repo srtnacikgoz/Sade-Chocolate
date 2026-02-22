@@ -4,6 +4,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Order } from '../types/order';
 import { CheckCircle, Package, Truck, MapPin, CreditCard, ArrowRight, Home, ShoppingBag, Loader } from 'lucide-react';
+import { trackPixelPurchase } from '../services/metaPixelService';
+import { trackPurchase } from '../services/analyticsService';
+import { trackOrderCompleted } from '../services/visitorTrackingService';
 
 const OrderConfirmation: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -29,7 +32,38 @@ const OrderConfirmation: React.FC = () => {
           return;
         }
 
-        setOrder({ ...orderDoc.data(), firestoreId: orderDoc.id } as Order);
+        const orderData = { ...orderDoc.data(), firestoreId: orderDoc.id } as Order;
+        setOrder(orderData);
+
+        // Tracking event'leri (sadece ilk yüklemede, session check ile)
+        const purchaseTracked = sessionStorage.getItem(`purchase_tracked_${orderId}`);
+        if (!purchaseTracked && orderData.items?.length) {
+          const orderItems = orderData.items.map((item) => ({
+            id: item.id,
+            quantity: item.quantity || 1,
+            price: item.price || 0
+          }));
+          const total = orderData.payment?.total || 0;
+
+          // Meta Pixel Purchase (pixelEventId varsa CAPI ile deduplication sağlanır)
+          const pixelEventId = (orderData as any).pixelEventId;
+          trackPixelPurchase({ orderId: orderId!, items: orderItems, total, eventId: pixelEventId });
+
+          // GA4 Purchase
+          trackPurchase(
+            orderId!,
+            orderItems.map((i) => ({ item_id: i.id, item_name: '', price: i.price, quantity: i.quantity })),
+            total,
+            orderData.payment?.shipping || 0
+          );
+
+          // Visitor Tracking - Sipariş tamamlandı (3D Secure redirect sonrası)
+          trackOrderCompleted(orderData.id || orderId!).catch((err) => {
+            console.warn('Order completion tracking failed:', err);
+          });
+
+          sessionStorage.setItem(`purchase_tracked_${orderId}`, 'true');
+        }
       } catch (err) {
         console.error('Order fetch error:', err);
         setError('Sipariş bilgileri yüklenirken bir hata oluştu');

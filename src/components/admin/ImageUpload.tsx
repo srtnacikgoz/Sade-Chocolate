@@ -89,7 +89,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div className="space-y-3">
-      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">
+      <label className="block text-[10px] font-black text-mocha-400 uppercase tracking-widest">
         {label}
       </label>
 
@@ -99,12 +99,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => !uploading && fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-[24px] p-8 transition-all cursor-pointer
+        className={`relative border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer
           ${isDragging
             ? 'border-gold bg-gold/5 scale-[1.02]'
             : value
-              ? 'border-gray-200 dark:border-gray-700 bg-slate-50/50 dark:bg-dark-900/50'
-              : 'border-gray-300 dark:border-gray-600 hover:border-gold hover:bg-gold/5'
+              ? 'border-cream-200 bg-cream-50/50'
+              : 'border-cream-200 hover:border-gold hover:bg-gold/5'
           }
           ${uploading ? 'pointer-events-none' : ''}
         `}
@@ -121,13 +121,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         {uploading ? (
           <div className="flex flex-col items-center gap-4">
             <Loader size={32} className="text-gold animate-spin" />
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-cream-200 rounded-full h-2 overflow-hidden">
               <div
                 className="h-full bg-gold transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-sm font-bold text-gray-600 dark:text-gray-400">
+            <p className="text-sm font-bold text-mocha-600">
               Yükleniyor... {progress}%
             </p>
           </div>
@@ -154,14 +154,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-dark-800 flex items-center justify-center">
-              <ImageIcon size={28} className="text-gray-400" />
+            <div className="w-16 h-16 rounded-full bg-cream-100 flex items-center justify-center">
+              <ImageIcon size={28} className="text-mocha-400" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+              <p className="text-sm font-bold text-mocha-600 mb-1">
                 Görseli sürükle-bırak veya tıkla
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-mocha-400">
                 PNG, JPG, WEBP (Max 5MB)
               </p>
             </div>
@@ -171,8 +171,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       {/* URL Display */}
       {value && !uploading && (
-        <div className="flex items-center gap-2 bg-emerald-50/30 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/20">
-          <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 truncate flex-1">
+        <div className="flex items-center gap-2 bg-emerald-50/30 p-3 rounded-xl border border-emerald-100">
+          <span className="text-[9px] font-mono text-emerald-600 truncate flex-1">
             {value}
           </span>
           <button
@@ -180,7 +180,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               navigator.clipboard.writeText(value);
               toast.success('URL kopyalandı!');
             }}
-            className="text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1"
+            className="text-[9px] font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 px-2 py-1"
           >
             KOPYALA
           </button>

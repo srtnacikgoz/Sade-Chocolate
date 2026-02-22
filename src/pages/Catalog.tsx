@@ -13,7 +13,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PRODUCT_CATEGORIES } from '../constants';
+import { trackViewItemList } from '../services/analyticsService';
 import { BonbonCollectionCard } from '../features/bonbon';
+import { SEOHead } from '../components/SEOHead';
 
 interface CatalogSettings {
   gridColumns: number;
@@ -204,6 +206,22 @@ export const Catalog: React.FC = () => {
     return currentProducts;
   }, [searchTerm, products, selectedCategory, minPrice, maxPrice, sortOrder, catalogSettings.defaultSortMode]);
 
+  // GA4 view_item_list event
+  useEffect(() => {
+    if (sortedAndFilteredProducts.length > 0) {
+      const listName = selectedCategory !== 'all' ? selectedCategory : 'Tüm Ürünler';
+      trackViewItemList(
+        sortedAndFilteredProducts.slice(0, 10).map(p => ({
+          item_id: p.id,
+          item_name: p.title || p.name,
+          price: p.price,
+          item_category: p.category
+        })),
+        listName
+      );
+    }
+  }, [selectedCategory]);
+
   const handleQuickView = (product: Product) => {
     setSelectedProduct(product);
   };
@@ -221,6 +239,16 @@ export const Catalog: React.FC = () => {
   );
 
   return (
+    <>
+    <SEOHead
+      title="Koleksiyon - Bonbon, Tablet ve Hediye Kutuları"
+      description="Sade Chocolate koleksiyonu: El yapımı bonbon, tablet çikolata ve özel hediye kutuları. Taze üretim, hızlı kargo."
+      path="/catalog"
+      breadcrumbs={[
+        { name: 'Ana Sayfa', url: '/' },
+        { name: 'Katalog', url: '/catalog' }
+      ]}
+    />
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-28 transition-all duration-300">
               <div className="pt-16">
               {searchTerm ? <SearchHeader /> : (
@@ -544,5 +572,6 @@ export const Catalog: React.FC = () => {
 
       <Footer />
     </div>
+    </>
   );
 };

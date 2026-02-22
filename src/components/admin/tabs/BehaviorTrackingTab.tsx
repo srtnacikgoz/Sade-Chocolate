@@ -282,10 +282,10 @@ export const BehaviorTrackingTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-brown-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-mocha-900">
             Musteri Yolculuk Takibi
           </h2>
-          <p className="text-sm text-gray-500 mt-1">Gercek zamanli ziyaretci ve sepet analizi</p>
+          <p className="text-sm text-mocha-500 mt-1">Gercek zamanli ziyaretci ve sepet analizi</p>
         </div>
         {(() => {
           const reallyActive = activeSessions.filter(s => isReallyActive(s.lastActivityAt)).length
@@ -295,21 +295,21 @@ export const BehaviorTrackingTab: React.FC = () => {
           }).length
           return (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-xl">
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-100 rounded-xl">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                <span className="text-sm font-medium text-green-700">
                   {reallyActive} Canli
                 </span>
               </div>
               {waiting > 0 && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl">
+                <div className="flex items-center gap-2 px-3 py-2 bg-yellow-100 rounded-xl">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full" />
-                  <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                  <span className="text-sm font-medium text-yellow-700">
                     {waiting} Beklemede
                   </span>
                 </div>
               )}
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-mocha-400">
                 Toplam: {activeSessions.length}
               </span>
             </div>
@@ -318,38 +318,38 @@ export const BehaviorTrackingTab: React.FC = () => {
       </div>
 
       {/* Aktivite Durumu Aciklamasi */}
-      <div className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-cream-200 dark:border-gray-700">
-        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+      <div className="bg-white rounded-xl p-4 border border-cream-200">
+        <h4 className="text-xs font-semibold text-mocha-500 uppercase tracking-wider mb-3">
           Aktivite Durumu Rehberi
         </h4>
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-green-500 rounded-full" />
-            <span className="text-xs text-gray-600 dark:text-gray-300">
+            <span className="text-xs text-mocha-600">
               <strong>Canli:</strong> Son 2 dakikada aktif
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-green-400 rounded-full" />
-            <span className="text-xs text-gray-600 dark:text-gray-300">
+            <span className="text-xs text-mocha-600">
               <strong>Aktif:</strong> 2-5 dakika once aktif
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-yellow-500 rounded-full" />
-            <span className="text-xs text-gray-600 dark:text-gray-300">
+            <span className="text-xs text-mocha-600">
               <strong>Beklemede:</strong> 5-15 dakika sessiz, geri donebilir
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-orange-500 rounded-full" />
-            <span className="text-xs text-gray-600 dark:text-gray-300">
+            <span className="text-xs text-mocha-600">
               <strong>Uzaklasti:</strong> 15-30 dakika sessiz, muhtemelen ayrildi
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-red-500 rounded-full" />
-            <span className="text-xs text-gray-600 dark:text-gray-300">
+            <span className="text-xs text-mocha-600">
               <strong>Kayip:</strong> 30+ dakika sessiz, siteyi terk etti
             </span>
           </div>
@@ -357,8 +357,8 @@ export const BehaviorTrackingTab: React.FC = () => {
       </div>
 
       {/* Funnel Visualization with Drop-off */}
-      <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-cream-200 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">
+      <div className="bg-white rounded-2xl p-6 border border-cream-200">
+        <h3 className="text-sm font-semibold text-mocha-500 uppercase tracking-wider mb-6">
           Ziyaretci Akisi ve Kayip Orani (Canli)
         </h3>
         <div className="flex items-end justify-between gap-2">
@@ -378,7 +378,7 @@ export const BehaviorTrackingTab: React.FC = () => {
               <div key={stage.id} className="flex-1 flex flex-col items-center gap-2 relative">
                 {/* Drop-off gostergesi */}
                 {idx > 0 && prevCount > 0 && (
-                  <div className="absolute -left-1 top-8 text-[9px] text-center">
+                  <div className="absolute -left-1 top-8 text-xs text-center">
                     {dropOff > 0 ? (
                       <span className="text-red-500">-{dropOff}%</span>
                     ) : (
@@ -387,11 +387,11 @@ export const BehaviorTrackingTab: React.FC = () => {
                   </div>
                 )}
 
-                <span className="text-2xl font-bold text-brown-900 dark:text-white">{count}</span>
+                <span className="text-2xl font-bold text-mocha-900">{count}</span>
 
                 {/* Conversion rate */}
                 {idx > 0 && prevCount > 0 && (
-                  <span className={`text-[10px] ${conversionRate >= 50 ? 'text-green-600' : conversionRate >= 20 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  <span className={`text-xs ${conversionRate >= 50 ? 'text-green-600' : conversionRate >= 20 ? 'text-yellow-600' : 'text-red-600'}`}>
                     {conversionRate}%
                   </span>
                 )}
@@ -401,8 +401,8 @@ export const BehaviorTrackingTab: React.FC = () => {
                   style={{ height: `${height}px` }}
                 />
                 <div className="flex flex-col items-center gap-1">
-                  <Icon className="w-5 h-5 text-gray-400" />
-                  <span className="text-[10px] text-gray-500 text-center">{stage.label}</span>
+                  <Icon className="w-5 h-5 text-mocha-400" />
+                  <span className="text-xs text-mocha-500 text-center">{stage.label}</span>
                 </div>
               </div>
             )
@@ -411,21 +411,21 @@ export const BehaviorTrackingTab: React.FC = () => {
 
         {/* Ozet Metrikleri */}
         {funnelData.landing > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-center gap-6 text-xs">
+          <div className="mt-4 pt-4 border-t border-cream-200 flex justify-center gap-6 text-xs">
             <div className="text-center">
-              <p className="text-gray-400">Sepet Orani</p>
+              <p className="text-mocha-400">Sepet Orani</p>
               <p className="font-bold text-yellow-600">
                 {Math.round((funnelData.cart / funnelData.landing) * 100) || 0}%
               </p>
             </div>
             <div className="text-center">
-              <p className="text-gray-400">Checkout Orani</p>
+              <p className="text-mocha-400">Checkout Orani</p>
               <p className="font-bold text-orange-600">
                 {Math.round((funnelData.checkout / funnelData.landing) * 100) || 0}%
               </p>
             </div>
             <div className="text-center">
-              <p className="text-gray-400">Toplam Donusum</p>
+              <p className="text-mocha-400">Toplam Donusum</p>
               <p className="font-bold text-green-600">
                 {Math.round((funnelData.completed / funnelData.landing) * 100) || 0}%
               </p>
@@ -579,32 +579,32 @@ export const BehaviorTrackingTab: React.FC = () => {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Abandoned Carts */}
-        <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-cream-200 dark:border-gray-700">
+        <div className="bg-white rounded-2xl p-6 border border-cream-200">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-mocha-500 uppercase tracking-wider flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-500" />
               Terk Edilen Sepetler ({abandonedCarts.length})
             </h3>
           </div>
 
           {abandonedCarts.length === 0 ? (
-            <p className="text-center text-gray-400 py-8">Bugun terk edilen sepet yok</p>
+            <p className="text-center text-mocha-400 py-8">Bugun terk edilen sepet yok</p>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {abandonedCarts.map((cart) => (
                 <div
                   key={cart.id}
-                  className="flex items-center justify-between p-4 bg-cream-50 dark:bg-dark-700 rounded-xl"
+                  className="flex items-center justify-between p-4 bg-cream-50 rounded-xl"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                       <ShoppingCart className="w-5 h-5 text-orange-500" />
                     </div>
                     <div>
-                      <p className="font-medium text-brown-900 dark:text-white">
+                      <p className="font-medium text-mocha-900">
                         {cart.customerName || 'Anonim'}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-mocha-500">
                         {cart.geo?.city && (
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
@@ -617,10 +617,10 @@ export const BehaviorTrackingTab: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-bold text-brown-900 dark:text-white">
+                      <p className="font-bold text-mocha-900">
                         {cart.cartValue.toLocaleString('tr-TR')} TL
                       </p>
-                      <p className="text-xs text-gray-400">{formatTimeAgo(cart.abandonedAt)}</p>
+                      <p className="text-xs text-mocha-400">{formatTimeAgo(cart.abandonedAt)}</p>
                     </div>
                     {cart.customerEmail && !cart.recoveryEmailSent && (
                       <Button
@@ -651,7 +651,7 @@ export const BehaviorTrackingTab: React.FC = () => {
         </div>
 
         {/* Active Sessions List */}
-        <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-cream-200 dark:border-gray-700">
+        <div className="bg-white rounded-2xl p-6 border border-cream-200">
           {(() => {
             // Gercek aktif: son 30 dakika icinde aktivite
             const thirtyMinsAgo = Date.now() - 30 * 60 * 1000
@@ -661,7 +661,7 @@ export const BehaviorTrackingTab: React.FC = () => {
             return (
               <>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                  <h3 className="text-sm font-semibold text-mocha-500 uppercase tracking-wider">
                     Aktif Ziyaretciler ({realActiveSessions.length})
                   </h3>
                   {lostSessions.length > 0 && (
@@ -672,7 +672,7 @@ export const BehaviorTrackingTab: React.FC = () => {
                 </div>
 
                 {realActiveSessions.length === 0 ? (
-                  <p className="text-center text-gray-400 py-8">Su an aktif ziyaretci yok</p>
+                  <p className="text-center text-mocha-400 py-8">Su an aktif ziyaretci yok</p>
                 ) : (
                   <div className="space-y-3 max-h-[500px] overflow-y-auto">
                     {/* En son aktif olanlar uste */}
@@ -687,7 +687,7 @@ export const BehaviorTrackingTab: React.FC = () => {
                 return (
                   <div
                     key={session.id}
-                    className="p-4 bg-cream-50 dark:bg-dark-700 rounded-xl hover:shadow-md transition-all"
+                    className="p-4 bg-cream-50 rounded-xl hover:shadow-md transition-all"
                   >
                     {/* Ust satir: Isim ve Stage */}
                     <div className="flex items-center justify-between mb-2">
@@ -699,23 +699,23 @@ export const BehaviorTrackingTab: React.FC = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm text-brown-900 dark:text-white">
+                            <p className="font-medium text-sm text-mocha-900">
                               {session.customerName || 'Anonim Ziyaretci'}
                             </p>
                             {session.isReturningCustomer && (
-                              <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                              <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
                                 VIP
                               </span>
                             )}
                           </div>
                           {session.customerEmail && (
-                            <p className="text-xs text-gray-500">{session.customerEmail}</p>
+                            <p className="text-xs text-mocha-500">{session.customerEmail}</p>
                           )}
                         </div>
                       </div>
                       <div className="text-right">
                         {session.cartValue > 0 && (
-                          <p className="font-bold text-brown-900 dark:text-white">
+                          <p className="font-bold text-mocha-900">
                             {session.cartValue.toLocaleString('tr-TR')} TL
                           </p>
                         )}
@@ -723,31 +723,31 @@ export const BehaviorTrackingTab: React.FC = () => {
                         {(() => {
                           const status = getActivityStatus(session.lastActivityAt)
                           return (
-                            <span className={`inline-block text-[10px] text-white px-2 py-0.5 rounded ${status.color}`}>
+                            <span className={`inline-block text-xs text-white px-2 py-0.5 rounded ${status.color}`}>
                               {status.label}
                             </span>
                           )
                         })()}
-                        <p className="text-[10px] text-gray-500 mt-1">
+                        <p className="text-xs text-mocha-500 mt-1">
                           {formatSessionDuration(session.startedAt, session.lastActivityAt)} sitede
                         </p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-xs text-mocha-400">
                           {formatTimeAgo(session.lastActivityAt)}
                         </p>
                       </div>
                     </div>
 
                     {/* Alt satir: Detaylar */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-mocha-500 mt-2 pt-2 border-t border-cream-200">
                       {/* Cihaz & Browser */}
-                      <span className="flex items-center gap-1 bg-white dark:bg-dark-800 px-2 py-1 rounded">
+                      <span className="flex items-center gap-1 bg-white px-2 py-1 rounded">
                         <DeviceIcon device={session.device} className="w-3 h-3" />
                         {session.device}
                         {sessionData.browser && ` / ${sessionData.browser}`}
                       </span>
 
                       {/* Konum - ilce, sehir, ulke */}
-                      <span className="flex items-center gap-1 bg-white dark:bg-dark-800 px-2 py-1 rounded">
+                      <span className="flex items-center gap-1 bg-white px-2 py-1 rounded">
                         <MapPin className="w-3 h-3" />
                         {session.geo && (session.geo.city || session.geo.region || session.geo.country)
                           ? [session.geo.city, session.geo.region, session.geo.country]
@@ -758,7 +758,7 @@ export const BehaviorTrackingTab: React.FC = () => {
 
                       {/* Kaynak */}
                       {sessionData.referrer && sessionData.referrer !== 'Direkt' && (
-                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
                           {sessionData.referrer}
                         </span>
                       )}
@@ -770,7 +770,7 @@ export const BehaviorTrackingTab: React.FC = () => {
 
                       {/* Sepet */}
                       {session.cartItems > 0 && (
-                        <span className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded">
+                        <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
                           <ShoppingCart className="w-3 h-3" />
                           {session.cartItems} urun
                         </span>
@@ -779,21 +779,21 @@ export const BehaviorTrackingTab: React.FC = () => {
 
                     {/* Sayfa Gecmisi */}
                     {session.pagesVisited && session.pagesVisited.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
-                        <p className="text-[10px] text-gray-400 mb-1">
+                      <div className="mt-2 pt-2 border-t border-cream-200">
+                        <p className="text-xs text-mocha-400 mb-1">
                           Sayfa Gecmisi ({session.pagesVisited.length} sayfa):
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {session.pagesVisited.slice(-5).map((page, idx) => (
                             <span
                               key={idx}
-                              className="text-[10px] bg-gray-100 dark:bg-dark-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300"
+                              className="text-xs bg-cream-100 px-1.5 py-0.5 rounded text-mocha-600"
                             >
                               {page === '/' ? 'Ana Sayfa' : page.replace(/\//g, ' / ').trim()}
                             </span>
                           ))}
                           {session.pagesVisited.length > 5 && (
-                            <span className="text-[10px] text-gray-400">
+                            <span className="text-xs text-mocha-400">
                               +{session.pagesVisited.length - 5} daha
                             </span>
                           )}
@@ -845,7 +845,7 @@ export const BehaviorTrackingTab: React.FC = () => {
                     )}
 
                     {/* Visitor ID - kisa ve belirgin */}
-                    <div className="mt-2 flex items-center gap-3 text-[10px] font-mono text-gray-400">
+                    <div className="mt-2 flex items-center gap-3 text-xs font-mono text-mocha-400">
                       <span>ID: #{session.visitorId?.split('_')[1] || session.visitorId?.slice(-8)}</span>
                       <span>Session: {session.id?.slice(-6)}</span>
                     </div>
@@ -879,21 +879,21 @@ export const BehaviorTrackingTab: React.FC = () => {
           }
 
           return (
-            <div className="bg-white dark:bg-dark-800 rounded-2xl border border-cream-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-cream-200 overflow-hidden">
               {/* Header - Tiklayinca ac/kapa */}
               <button
                 onClick={() => setIsLostSectionOpen(!isLostSectionOpen)}
-                className="w-full flex items-center justify-between p-4 hover:bg-cream-50 dark:hover:bg-dark-700 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-cream-50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
                     <UserX className="w-4 h-4 text-red-500" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    <h3 className="text-sm font-semibold text-mocha-700">
                       Kayip Ziyaretciler
                     </h3>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-mocha-400">
                       30+ dakika sessiz, siteyi terk etmis olabilir
                     </p>
                   </div>
@@ -901,16 +901,16 @@ export const BehaviorTrackingTab: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-red-500">{lostSessions.length}</span>
                   {isLostSectionOpen ? (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                    <ChevronDown className="w-5 h-5 text-mocha-400" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                    <ChevronRight className="w-5 h-5 text-mocha-400" />
                   )}
                 </div>
               </button>
 
               {/* Liste - Acilabilir */}
               {isLostSectionOpen && (
-                <div className="border-t border-cream-200 dark:border-gray-700 max-h-[400px] overflow-y-auto">
+                <div className="border-t border-cream-200 max-h-[400px] overflow-y-auto">
                   {lostSessions
                     .sort((a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime())
                     .map((session) => {
@@ -920,21 +920,21 @@ export const BehaviorTrackingTab: React.FC = () => {
                       const sessionData = session as any
 
                       return (
-                        <div key={session.id} className="border-b border-cream-100 dark:border-gray-700 last:border-b-0">
+                        <div key={session.id} className="border-b border-cream-100 last:border-b-0">
                           {/* Satir - Tiklayinca detay ac */}
                           <button
                             onClick={() => toggleLostSession(session.id)}
-                            className="w-full flex items-center justify-between p-3 hover:bg-cream-50 dark:hover:bg-dark-700 transition-colors text-left"
+                            className="w-full flex items-center justify-between p-3 hover:bg-cream-50 transition-colors text-left"
                           >
                             <div className="flex items-center gap-3">
                               <div className={`w-6 h-6 ${stageConfig?.color || 'bg-gray-400'} rounded flex items-center justify-center`}>
                                 <StageIcon className="w-3 h-3 text-white" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-brown-900 dark:text-white">
+                                <p className="text-sm font-medium text-mocha-900">
                                   {session.customerName || 'Anonim'}
                                 </p>
-                                <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                                <div className="flex items-center gap-2 text-xs text-mocha-400">
                                   <span>{session.device}</span>
                                   {session.geo?.city && (
                                     <>
@@ -951,33 +951,33 @@ export const BehaviorTrackingTab: React.FC = () => {
                                   {session.cartValue.toLocaleString('tr-TR')} TL
                                 </span>
                               )}
-                              <span className="text-[10px] text-gray-400">
+                              <span className="text-xs text-mocha-400">
                                 {formatTimeAgo(session.lastActivityAt)}
                               </span>
                               {isExpanded ? (
-                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                                <ChevronDown className="w-4 h-4 text-mocha-400" />
                               ) : (
-                                <ChevronRight className="w-4 h-4 text-gray-400" />
+                                <ChevronRight className="w-4 h-4 text-mocha-400" />
                               )}
                             </div>
                           </button>
 
                           {/* Detay Alani */}
                           {isExpanded && (
-                            <div className="px-4 pb-4 bg-cream-50 dark:bg-dark-700">
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-2">
-                                <span className="flex items-center gap-1 bg-white dark:bg-dark-800 px-2 py-1 rounded">
+                            <div className="px-4 pb-4 bg-cream-50">
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-mocha-500 mb-2">
+                                <span className="flex items-center gap-1 bg-white px-2 py-1 rounded">
                                   <DeviceIcon device={session.device} className="w-3 h-3" />
                                   {session.device} / {sessionData.browser || '-'}
                                 </span>
-                                <span className="flex items-center gap-1 bg-white dark:bg-dark-800 px-2 py-1 rounded">
+                                <span className="flex items-center gap-1 bg-white px-2 py-1 rounded">
                                   <MapPin className="w-3 h-3" />
                                   {session.geo
                                     ? [session.geo.city, session.geo.region, session.geo.country].filter(Boolean).join(', ')
                                     : 'Bilinmiyor'}
                                 </span>
                                 {sessionData.referrer && sessionData.referrer !== 'Direkt' && (
-                                  <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
                                     {sessionData.referrer}
                                   </span>
                                 )}
@@ -989,14 +989,14 @@ export const BehaviorTrackingTab: React.FC = () => {
                               {/* Sayfa Gecmisi */}
                               {session.pagesVisited && session.pagesVisited.length > 0 && (
                                 <div className="mb-2">
-                                  <p className="text-[10px] text-gray-400 mb-1">
+                                  <p className="text-xs text-mocha-400 mb-1">
                                     Sayfa Gecmisi ({session.pagesVisited.length} sayfa):
                                   </p>
                                   <div className="flex flex-wrap gap-1">
                                     {session.pagesVisited.slice(-8).map((page, idx) => (
                                       <span
                                         key={idx}
-                                        className="text-[10px] bg-white dark:bg-dark-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300"
+                                        className="text-xs bg-white px-1.5 py-0.5 rounded text-mocha-600"
                                       >
                                         {page === '/' ? 'Ana Sayfa' : page.replace(/\//g, ' / ').trim()}
                                       </span>
@@ -1009,13 +1009,13 @@ export const BehaviorTrackingTab: React.FC = () => {
                               {session.cartItems > 0 && (
                                 <div className="flex items-center gap-2 text-xs">
                                   <ShoppingCart className="w-3 h-3 text-yellow-500" />
-                                  <span className="text-yellow-600 dark:text-yellow-400">
+                                  <span className="text-yellow-600">
                                     {session.cartItems} urun - {session.cartValue.toLocaleString('tr-TR')} TL
                                   </span>
                                 </div>
                               )}
 
-                              <div className="mt-2 flex items-center gap-3 text-[10px] font-mono text-gray-400">
+                              <div className="mt-2 flex items-center gap-3 text-xs font-mono text-mocha-400">
                                 <span>Sitede: {formatSessionDuration(session.startedAt, session.lastActivityAt)}</span>
                                 <span>•</span>
                                 <span>ID: #{session.visitorId?.split('_')[1] || session.visitorId?.slice(-8)}</span>
@@ -1042,14 +1042,14 @@ const StatCard: React.FC<{
   icon: React.FC<{ className?: string }>
   color?: 'green' | 'red'
 }> = ({ label, value, icon: Icon, color }) => (
-  <div className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-cream-200 dark:border-gray-700">
+  <div className="bg-white rounded-xl p-4 border border-cream-200">
     <div className="flex items-center gap-2 mb-2">
       <Icon
         className={`w-4 h-4 ${
-          color === 'green' ? 'text-green-500' : color === 'red' ? 'text-red-500' : 'text-gray-400'
+          color === 'green' ? 'text-green-500' : color === 'red' ? 'text-red-500' : 'text-mocha-400'
         }`}
       />
-      <span className="text-xs text-gray-500 uppercase">{label}</span>
+      <span className="text-xs text-mocha-500 uppercase">{label}</span>
     </div>
     <p
       className={`text-2xl font-bold ${
@@ -1057,7 +1057,7 @@ const StatCard: React.FC<{
           ? 'text-green-600'
           : color === 'red'
             ? 'text-red-600'
-            : 'text-brown-900 dark:text-white'
+            : 'text-mocha-900'
       }`}
     >
       {value}

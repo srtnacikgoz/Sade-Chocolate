@@ -10,7 +10,7 @@ import { isBlackoutDay, getNextShippingDate, formatDateTR } from '../utils/shipp
 import { checkWeatherForShipping, TEMPERATURE_THRESHOLDS } from '../services/weatherService';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { doc, getDoc, setDoc, arrayUnion, updateDoc, onSnapshot, addDoc, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, arrayUnion, updateDoc, onSnapshot, addDoc, collection, increment } from 'firebase/firestore';
 import { db, auth, functions } from '../lib/firebase';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { CompanyInfo } from '../types';
@@ -20,7 +20,12 @@ import { TURKEY_CITIES, ALL_TURKEY_CITIES } from '../data/turkeyLocations';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import { IyzicoCheckoutModal } from '../components/IyzicoCheckoutModal';
+import { CouponInput } from '../components/CouponInput';
 import { trackCheckoutStart, updateCustomerInfo, trackOrderCompleted } from '../services/visitorTrackingService';
+import { trackPixelInitiateCheckout, trackPixelPurchase, getMetaCookies, generateEventId } from '../services/metaPixelService';
+import { sendCapiFromBrowser } from '../services/capiClient';
+import { trackPurchase, trackBeginCheckout } from '../services/analyticsService';
+import { SEOHead } from '../components/SEOHead';
 
 export const Checkout: React.FC = () => {
   const { items, cartTotal, isGift, setIsGift, giftMessage, setGiftMessage, clearCart, hasGiftBag } = useCart();
@@ -65,6 +70,7 @@ const [faturaFirstName, setFaturaFirstName] = useState(''); // Bireysel fatura i
 const [faturaLastName, setFaturaLastName] = useState(''); // Bireysel fatura için soyad
 const [faturaCity, setFaturaCity] = useState(''); // Fatura şehir
 const [faturaDistrict, setFaturaDistrict] = useState(''); // Fatura ilçe
+const [couponDiscount, setCouponDiscount] = useState(0); // Kupon indirimi
 
   // LocalStorage keys
   const DRAFT_KEY = 'sade_checkout_draft';
@@ -109,6 +115,29 @@ const [faturaDistrict, setFaturaDistrict] = useState(''); // Fatura ilçe
     trackCheckoutStart().catch((err) => {
       console.warn('Checkout tracking failed:', err);
     });
+
+    if (items.length > 0) {
+      // GA4 begin_checkout
+      trackBeginCheckout(
+        items.map(i => ({ item_id: i.id, item_name: i.name, price: i.price, quantity: i.quantity })),
+        cartTotal
+      );
+      // Meta Pixel + CAPI InitiateCheckout (aynı eventId ile deduplication)
+      const checkoutEventId = generateEventId();
+      const checkoutItems = items.map(i => ({ id: i.id, quantity: i.quantity, price: i.price }));
+      trackPixelInitiateCheckout(checkoutItems, cartTotal, checkoutEventId);
+      sendCapiFromBrowser({
+        eventName: 'InitiateCheckout',
+        eventId: checkoutEventId,
+        customData: {
+          value: cartTotal,
+          currency: 'TRY',
+          contentIds: items.map(i => i.id),
+          contentType: 'product',
+          numItems: items.reduce((sum, i) => sum + i.quantity, 0),
+        },
+      });
+    }
   }, []);
 
   // Visitor Tracking - Musteri bilgileri degistiginde guncelle
@@ -248,6 +277,8 @@ const shippingCost = cartTotal >= freeShippingLimit ? 0 : defaultShippingCost;
 const giftBagPrice = hasGiftBag && settings?.giftBag?.enabled ? (settings.giftBag.price || 0) : 0;
 const grandTotal = cartTotal + shippingCost + giftBagPrice;
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPreInfo, setAgreedToPreInfo] = useState(false);
+  const [agreedToKvkk, setAgreedToKvkk] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [legalContent, setLegalContent] = useState<any>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -301,7 +332,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   const bankTransferDiscount = bankTransferSettings?.isEnabled && paymentMethod === 'eft'
     ? (cartTotal * (bankTransferSettings?.discountPercent || 2) / 100)
     : 0;
-  const finalTotal = grandTotal - bankTransferDiscount;
+  const finalTotal = grandTotal - bankTransferDiscount - couponDiscount;
 
   // Shipping alerts state
   const [shippingAlerts, setShippingAlerts] = useState<{
@@ -581,6 +612,11 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       setIsSuccess(true);
       clearCart();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Visitor Tracking - Siparis tamamlandi (iyzico modal flow)
+      trackOrderCompleted(result.orderId).catch((err) => {
+        console.warn('Order completion tracking failed:', err);
+      });
     } else {
       toast.error('Ödeme başarısız. Lütfen tekrar deneyin.');
     }
@@ -644,7 +680,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       // Email kontrolü gerekli değil - kullanıcı giriş yapmış, Firebase Auth'ta email var
     }
 
-    if (!agreedToTerms) newErrors.terms = language === 'tr' ? "Lütfen satış sözleşmesini onaylayın." : "Please agree to the terms.";
+    if (!agreedToTerms) newErrors.terms = language === 'tr' ? "Lütfen Mesafeli Satış Sözleşmesi'ni onaylayın." : "Please agree to the Distance Sales Agreement.";
+    if (!agreedToPreInfo) newErrors.preInfo = language === 'tr' ? "Lütfen Ön Bilgilendirme Formu'nu onaylayın." : "Please agree to the Pre-Information Form.";
+    if (!agreedToKvkk) newErrors.kvkk = language === 'tr' ? "Lütfen KVKK Aydınlatma Metni'ni onaylayın." : "Please agree to the Data Protection Notice.";
 
     // Card payment artık İyzico iframe'de yapılıyor, frontend validation kaldırıldı
 
@@ -853,6 +891,10 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
       // Kargo firması hangisi büyükse onu kullanır
       const totalDesi = Math.max(1, Math.ceil(Math.max(totalWeight, totalDesiFromDimensions)));
 
+      // CAPI deduplication için eventId ve cookie'ler
+      const pixelEventId = generateEventId();
+      const metaCookies = getMetaCookies();
+
       if (isGuestMode) {
         // Guest sipariş oluştur - Admin panelinin beklediği formatta
         const { addDoc, collection } = await import('firebase/firestore');
@@ -917,7 +959,13 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
             status: paymentMethod === 'eft' ? 'pending' : 'processing',
             time: new Date().toLocaleString('tr-TR'),
             note: paymentMethod === 'eft' ? 'Ödeme bekleniyor' : 'Sipariş alındı'
-          }]
+          }],
+          // CAPI deduplication verileri
+          pixelEventId,
+          fbc: metaCookies.fbc || null,
+          fbp: metaCookies.fbp || null,
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
         });
 
         // Arka planda MNG API'den gerçek kargo maliyetini hesapla (müşteriyi bekletmez)
@@ -965,7 +1013,13 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           hasGiftBag: hasGiftBag && settings?.giftBag?.enabled,
           isGift: isGift,
           ...(isGift && giftMessage && { giftMessage }),
-        });
+          // CAPI deduplication verileri
+          pixelEventId,
+          fbc: metaCookies.fbc || null,
+          fbp: metaCookies.fbp || null,
+          userAgent: navigator.userAgent,
+          sourceUrl: window.location.href,
+        } as any);
       }
 
       // Sipariş Emaili Gönder
@@ -1033,6 +1087,25 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         }
       }
 
+      // Purchase tracking (havale siparişleri /order-confirmation'a gitmez, burada tetikle)
+      const purchaseOrderId = `SADE-${orderId}`;
+      const purchaseKey = `purchase_tracked_${purchaseOrderId}`;
+      if (!sessionStorage.getItem(purchaseKey)) {
+        const purchaseItems = items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          price: item.price
+        }));
+        trackPixelPurchase({ orderId: purchaseOrderId, items: purchaseItems, total: finalTotal, eventId: pixelEventId });
+        trackPurchase(
+          purchaseOrderId,
+          purchaseItems.map(i => ({ item_id: i.id, item_name: '', price: i.price, quantity: i.quantity })),
+          finalTotal,
+          shippingCost
+        );
+        sessionStorage.setItem(purchaseKey, 'true');
+      }
+
       // Sipariş verilerini kaydet (clearCart'tan önce!)
       setSuccessOrderData({
         total: finalTotal,
@@ -1047,6 +1120,26 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
         console.warn('Order completion tracking failed:', err);
       });
 
+      // Kupon kullanıldıysa güncelle
+      const appliedCouponId = localStorage.getItem('applied_coupon_id');
+      if (appliedCouponId) {
+        const isReusable = localStorage.getItem('applied_coupon_reusable') === 'true';
+        const couponRef = doc(db, 'coupons', appliedCouponId);
+        const userEmail = (auth.currentUser?.email || guestData.email || '').toLowerCase();
+        if (isReusable) {
+          // Kampanya kuponu — sayaç artır + email'i usedBy'a ekle
+          updateDoc(couponRef, {
+            usedCount: increment(1),
+            ...(userEmail && { usedBy: arrayUnion(userEmail) }),
+          }).catch(() => {});
+        } else {
+          // Tek kullanımlık kupon — kullanıldı olarak işaretle
+          updateDoc(couponRef, { isUsed: true }).catch(() => {});
+        }
+        localStorage.removeItem('applied_coupon_id');
+        localStorage.removeItem('applied_coupon_reusable');
+      }
+
       clearCart();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -1058,7 +1151,21 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     }
   };
 
-// ✅ TEK VE STABİL MUHAFIZ: Oturum doğrulanırken sabırla bekle
+  // Kullanıcı giriş yapmamışsa ve guest mode seçmemişse, Account sayfasına yönlendir
+  useEffect(() => {
+    if (!loading && !isLoggedIn && !isGuestMode) {
+      navigate('/account?redirect=checkout', { replace: true });
+    }
+  }, [loading, isLoggedIn, isGuestMode, navigate]);
+
+  // Sepet boşsa kataloga yönlendir
+  useEffect(() => {
+    if (items.length === 0 && !isSuccess) {
+      navigate('/catalog');
+    }
+  }, [items.length, isSuccess, navigate]);
+
+  // ✅ TEK VE STABİL MUHAFIZ: Oturum doğrulanırken sabırla bekle
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-dark-900">
@@ -1070,12 +1177,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     );
   }
 
-  // Kullanıcı giriş yapmamışsa ve guest mode seçmemişse, Account sayfasına yönlendir
   if (!isLoggedIn && !isGuestMode) {
-    navigate('/account?redirect=checkout', { replace: true });
     return null;
   }
-
 
   if (items.length === 0 && !isSuccess && !isRetryMode) {
     navigate('/catalog');
@@ -1218,6 +1322,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
 
   return (
     <main className="w-full max-w-full pt-20 pb-24 px-4 sm:px-6 lg:px-16 bg-cream-100 dark:bg-dark-900 min-h-screen animate-fade-in">
+      <SEOHead title="Güvenli Ödeme" description="Sade Chocolate güvenli ödeme sayfası. 3D Secure ile kredi kartı veya havale/EFT ile ödeme." path="/checkout" />
       {/* Üst Navigasyon - Läderach & Marcolini Stili */}
 <div className="relative mb-16">
   <nav className="flex items-center justify-center gap-8 text-[9px] font-black uppercase tracking-[0.4em]">
@@ -1418,6 +1523,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                 )}
               </div>
 
+              {/* Kupon Kodu */}
+              <CouponInput onApply={(discount) => setCouponDiscount(discount)} guestEmail={isGuestMode ? guestData.email : undefined} />
+
               {/* Fiyat Özeti */}
               <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
@@ -1435,6 +1543,15 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                   <div className="flex justify-between items-center text-sm">
                     <span className="uppercase tracking-wider font-medium text-pink-500">Hediye Çantası</span>
                     <span className="font-bold text-pink-500">+₺{giftBagPrice.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="uppercase tracking-wider font-bold text-purple-600 flex items-center gap-1">
+                      <Percent size={14} /> Kupon İndirimi
+                    </span>
+                    <span className="font-bold text-purple-600">-₺{couponDiscount.toFixed(2)}</span>
                   </div>
                 )}
 
@@ -2103,24 +2220,53 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
               </div>
             </section>
 
-            {/* TERMS & CTA BUTTON */}
+            {/* YASAL ONAYLAR & CTA BUTTON */}
             <div className="space-y-6">
-              <div className="flex items-start gap-4 cursor-pointer group bg-white dark:bg-dark-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700" onClick={() => setAgreedToTerms(!agreedToTerms)}>
-                <div className={`w-6 h-6 rounded-xl border-2 shrink-0 flex items-center justify-center transition-all ${agreedToTerms ? 'bg-brown-900 border-brown-900 dark:bg-gold dark:border-gold shadow-md' : 'border-gray-300 dark:border-gray-600'}`}>
+              {/* Ön Bilgilendirme Formu */}
+              <div className="flex items-start gap-4 cursor-pointer group bg-white dark:bg-dark-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700" onClick={() => setAgreedToPreInfo(!agreedToPreInfo)}>
+                <div className={`w-6 h-6 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all mt-0.5 ${agreedToPreInfo ? 'bg-brown-900 border-brown-900 dark:bg-gold dark:border-gold shadow-md' : 'border-gray-300 dark:border-gray-600'}`}>
+                  {agreedToPreInfo && <span className="material-icons-outlined text-white text-[16px] font-bold">check</span>}
+                </div>
+                <p className={`text-sm leading-relaxed transition-colors ${errors.preInfo ? 'text-red-500 font-bold' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-300'}`}>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); window.open('/legal/pre-info?popup=true', '_blank'); }}
+                    className="underline font-bold text-brown-900 dark:text-gold hover:text-gold dark:hover:text-brown-300 transition-colors"
+                  >
+                    Ön Bilgilendirme Formu
+                  </button>'nu okudum ve kabul ediyorum.
+                </p>
+              </div>
+
+              {/* Mesafeli Satış Sözleşmesi */}
+              <div className="flex items-start gap-4 cursor-pointer group bg-white dark:bg-dark-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700" onClick={() => setAgreedToTerms(!agreedToTerms)}>
+                <div className={`w-6 h-6 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all mt-0.5 ${agreedToTerms ? 'bg-brown-900 border-brown-900 dark:bg-gold dark:border-gold shadow-md' : 'border-gray-300 dark:border-gray-600'}`}>
                   {agreedToTerms && <span className="material-icons-outlined text-white text-[16px] font-bold">check</span>}
                 </div>
                 <p className={`text-sm leading-relaxed transition-colors ${errors.terms ? 'text-red-500 font-bold' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-300'}`}>
-                  {t('i_agree_to')}{' '}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAgreementModal(true);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); setShowAgreementModal(true); }}
                     className="underline font-bold text-brown-900 dark:text-gold hover:text-gold dark:hover:text-brown-300 transition-colors"
                   >
-                    {t('terms_link')}
-                  </button>.
+                    Mesafeli Satış Sözleşmesi
+                  </button>'ni okudum ve kabul ediyorum.
+                </p>
+              </div>
+
+              {/* KVKK Aydınlatma Metni */}
+              <div className="flex items-start gap-4 cursor-pointer group bg-white dark:bg-dark-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700" onClick={() => setAgreedToKvkk(!agreedToKvkk)}>
+                <div className={`w-6 h-6 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all mt-0.5 ${agreedToKvkk ? 'bg-brown-900 border-brown-900 dark:bg-gold dark:border-gold shadow-md' : 'border-gray-300 dark:border-gray-600'}`}>
+                  {agreedToKvkk && <span className="material-icons-outlined text-white text-[16px] font-bold">check</span>}
+                </div>
+                <p className={`text-sm leading-relaxed transition-colors ${errors.kvkk ? 'text-red-500 font-bold' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-300'}`}>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); window.open('/legal/kvkk?popup=true', '_blank'); }}
+                    className="underline font-bold text-brown-900 dark:text-gold hover:text-gold dark:hover:text-brown-300 transition-colors"
+                  >
+                    KVKK Aydınlatma Metni
+                  </button>'ni okudum, kişisel verilerimin işlenmesini kabul ediyorum.
                 </p>
               </div>
 
@@ -2166,7 +2312,13 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                   }
 
                   if (!agreedToTerms) {
-                    newErrors.terms = 'Lütfen satış sözleşmesini onaylayın.';
+                    newErrors.terms = 'Lütfen Mesafeli Satış Sözleşmesi\'ni onaylayın.';
+                  }
+                  if (!agreedToPreInfo) {
+                    newErrors.preInfo = 'Lütfen Ön Bilgilendirme Formu\'nu onaylayın.';
+                  }
+                  if (!agreedToKvkk) {
+                    newErrors.kvkk = 'Lütfen KVKK Aydınlatma Metni\'ni onaylayın.';
                   }
 
                   if (Object.keys(newErrors).length > 0) {
@@ -2177,11 +2329,12 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
 
                   setErrors({});
                   setCurrentStep(2);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 loading={isSubmitting}
-                disabled={(isGuestMode ? !isGuestFormValid : !selectedAddressId) || !agreedToTerms}
+                disabled={(isGuestMode ? !isGuestFormValid : !selectedAddressId) || !agreedToTerms || !agreedToPreInfo || !agreedToKvkk}
                 size="lg"
-                className={`w-full h-16 shadow-2xl rounded-xl text-sm font-bold uppercase tracking-wider ${!agreedToTerms ? 'opacity-50' : ''}`}
+                className={`w-full h-16 shadow-2xl rounded-xl text-sm font-bold uppercase tracking-wider ${(!agreedToTerms || !agreedToPreInfo || !agreedToKvkk) ? 'opacity-50' : ''}`}
               >
                 ÖDEMEYE DEVAM ET <ChevronRight className="ml-2 inline-block" size={18} />
               </Button>
@@ -2263,6 +2416,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
               <div className="w-12 h-8 bg-white dark:bg-dark-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
                 <span className="text-[10px] font-bold text-blue-800">AMEX</span>
               </div>
+              <div className="w-12 h-8 bg-white dark:bg-dark-800 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                <span className="text-[10px] font-bold text-teal-600">TROY</span>
+              </div>
             </div>
           </div>
 
@@ -2276,6 +2432,27 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           >
             {isSubmitting || paymentProcessing ? 'İŞLEM YAPILIYOR...' : 'SİPARİŞİ TAMAMLA'}
           </Button>
+
+          {/* Güven Unsurları */}
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-center gap-6 text-xs text-mocha-400 dark:text-gray-500">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-green-600" />
+                <span>256-bit SSL</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CreditCard size={14} className="text-blue-600" />
+                <span>3D Secure</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <RotateCcw size={14} className="text-amber-600" />
+                <span>14 Gün İade</span>
+              </div>
+            </div>
+            <p className="text-center text-[10px] text-mocha-300 dark:text-gray-600">
+              Ödeme bilgileriniz İyzico güvencesiyle işlenmektedir. Kart bilgileriniz tarafımızca saklanmaz.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-6 animate-fade-in">
@@ -2387,6 +2564,18 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           >
             {isSubmitting ? 'SİPARİŞ OLUŞTURULUYOR...' : 'SİPARİŞİ TAMAMLA'}
           </Button>
+
+          {/* Güven Unsurları - EFT */}
+          <div className="mt-4 flex items-center justify-center gap-6 text-xs text-mocha-400 dark:text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck size={14} className="text-green-600" />
+              <span>Güvenli İşlem</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <RotateCcw size={14} className="text-amber-600" />
+              <span>14 Gün İade</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

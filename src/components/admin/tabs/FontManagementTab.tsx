@@ -114,7 +114,7 @@ export const FontManagementTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brown-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mocha-900"></div>
       </div>
     );
   }
@@ -131,27 +131,27 @@ export const FontManagementTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-brown-900 to-brown-700 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 bg-mocha-900 rounded-2xl flex items-center justify-center shadow-sm">
             <Type className="text-white" size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white italic">
+            <h2 className="text-2xl font-semibold text-mocha-900 ">
               Font Yönetimi
             </h2>
-            <p className="text-sm text-gray-500">Email ve tipografi için kullanılabilir fontlar</p>
+            <p className="text-sm text-mocha-500">Email ve tipografi için kullanılabilir fontlar</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm text-mocha-500 hover:text-mocha-600 hover:bg-cream-100 rounded-xl transition-colors flex items-center gap-2"
           >
             <RefreshCw size={16} />
             Varsayılana Sıfırla
           </button>
           <button
             onClick={() => setIsAddingNew(!isAddingNew)}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm bg-cream-100 hover:bg-cream-200 text-mocha-600 rounded-xl transition-colors flex items-center gap-2"
           >
             <Plus size={16} />
             Yeni Font Ekle
@@ -159,7 +159,7 @@ export const FontManagementTab: React.FC = () => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2 text-sm bg-brown-900 hover:bg-brown-800 text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="px-6 py-2 text-sm bg-mocha-900 hover:bg-mocha-800 text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             <Save size={16} />
             {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -169,25 +169,25 @@ export const FontManagementTab: React.FC = () => {
 
       {/* Yeni Font Ekleme Formu */}
       {isAddingNew && (
-        <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border-2 border-gold/20">
-          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Yeni Font Ekle</h3>
+        <div className="bg-white rounded-2xl p-6 border-2 border-gold/20">
+          <h3 className="text-lg font-bold mb-4 text-mocha-900">Yeni Font Ekle</h3>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">ID (benzersiz, küçük harf)</label>
+              <label className="text-xs text-mocha-500 mb-1 block">ID (benzersiz, küçük harf)</label>
               <input
                 type="text"
                 value={newFont.id}
                 onChange={(e) => setNewFont({ ...newFont, id: e.target.value.toLowerCase().replace(/\s/g, '-') })}
-                className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                 placeholder="brush-script"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Kategori</label>
+              <label className="text-xs text-mocha-500 mb-1 block">Kategori</label>
               <select
                 value={newFont.category}
                 onChange={(e) => setNewFont({ ...newFont, category: e.target.value as any })}
-                className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
               >
                 <option value="serif">Serif</option>
                 <option value="sans-serif">Sans-serif</option>
@@ -196,22 +196,22 @@ export const FontManagementTab: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">CSS Değeri</label>
+              <label className="text-xs text-mocha-500 mb-1 block">CSS Değeri</label>
               <input
                 type="text"
                 value={newFont.value}
                 onChange={(e) => setNewFont({ ...newFont, value: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none font-mono"
+                className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none font-mono"
                 placeholder="Brush Script MT, cursive"
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Görünen İsim</label>
+              <label className="text-xs text-mocha-500 mb-1 block">Görünen İsim</label>
               <input
                 type="text"
                 value={newFont.label}
                 onChange={(e) => setNewFont({ ...newFont, label: e.target.value })}
-                className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                 placeholder="✍️ Brush Script (El Yazısı)"
               />
             </div>
@@ -222,7 +222,7 @@ export const FontManagementTab: React.FC = () => {
             </Button>
             <button
               onClick={() => setIsAddingNew(false)}
-              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
+              className="px-4 py-2 text-sm text-mocha-500 hover:text-mocha-600"
             >
               İptal
             </button>
@@ -233,13 +233,13 @@ export const FontManagementTab: React.FC = () => {
       {/* Font Listeleri - Kategorilere Göre */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {Object.entries(groupedFonts).map(([category, categoryFonts]) => (
-          <div key={category} className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wider">
+          <div key={category} className="bg-white rounded-2xl p-6 border border-cream-200">
+            <h3 className="text-sm font-bold text-mocha-600 mb-4 uppercase tracking-wider">
               {category === 'serif' && '📖 Serif Fonts'}
               {category === 'sans-serif' && '🎨 Sans-serif Fonts'}
               {category === 'cursive' && '✍️ El Yazısı Fonts'}
               {category === 'monospace' && '🖥️ Monospace Fonts'}
-              <span className="ml-2 text-xs text-gray-400">({categoryFonts.length})</span>
+              <span className="ml-2 text-xs text-mocha-400">({categoryFonts.length})</span>
             </h3>
             <div className="space-y-2">
               {categoryFonts.map((font) => (
@@ -247,16 +247,16 @@ export const FontManagementTab: React.FC = () => {
                   key={font.id}
                   className={`p-3 rounded-xl border transition-all ${
                     font.isActive
-                      ? 'bg-gray-50 dark:bg-dark-900 border-gray-200 dark:border-gray-700'
-                      : 'bg-gray-100/50 dark:bg-dark-900/50 border-gray-100 dark:border-gray-800 opacity-50'
+                      ? 'bg-cream-50 border-cream-200'
+                      : 'bg-cream-100/50 border-cream-200 opacity-50'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p style={{ fontFamily: font.value }} className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                      <p style={{ fontFamily: font.value }} className="text-sm font-medium text-mocha-900 mb-1">
                         {font.label}
                       </p>
-                      <p className="text-xs text-gray-400 font-mono">{font.value}</p>
+                      <p className="text-xs text-mocha-400 font-mono">{font.value}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -264,7 +264,7 @@ export const FontManagementTab: React.FC = () => {
                         className={`p-2 rounded-lg transition-colors ${
                           font.isActive
                             ? 'text-green-600 hover:bg-green-50'
-                            : 'text-gray-400 hover:bg-gray-100'
+                            : 'text-mocha-400 hover:bg-cream-100'
                         }`}
                         title={font.isActive ? 'Aktif' : 'Pasif'}
                       >
@@ -272,7 +272,7 @@ export const FontManagementTab: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteFont(font.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-mocha-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -286,8 +286,8 @@ export const FontManagementTab: React.FC = () => {
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-2xl p-4">
-        <p className="text-sm text-blue-700 dark:text-blue-300">
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+        <p className="text-sm text-blue-700">
           <strong>Not:</strong> Email'lerde sadece sistem fontları (email-safe fonts) çalışır.
           Google Fonts gibi web fontlar email istemcilerinde görünmez.
           Eklediğiniz fontların tüm platformlarda (Gmail, Outlook, Apple Mail) yüklü olduğundan emin olun.

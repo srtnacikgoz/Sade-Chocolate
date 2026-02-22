@@ -168,15 +168,15 @@ export const GiftNotesTab: React.FC = () => {
             <Wand2 className="text-gold" size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">AI Sommelier Şablonları</h2>
-            <p className="text-sm text-slate-400">Hediye notu önerilerini düzenleyin</p>
+            <h2 className="text-xl font-bold text-mocha-900">AI Sommelier Şablonları</h2>
+            <p className="text-sm text-mocha-400">Hediye notu önerilerini düzenleyin</p>
           </div>
         </div>
       </div>
 
       {/* Yer Tutucu Bilgisi */}
-      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-        <p className="text-xs text-slate-500">
+      <div className="bg-cream-50 rounded-2xl p-4 border border-cream-200">
+        <p className="text-xs text-mocha-500">
           <strong>Kullanılabilir yer tutucular:</strong>{' '}
           <code className="bg-white px-2 py-0.5 rounded text-gold">[ürün_adı]</code>{' '}
           <code className="bg-white px-2 py-0.5 rounded text-gold">[köken]</code>{' '}
@@ -194,8 +194,8 @@ export const GiftNotesTab: React.FC = () => {
           return (
             <div
               key={template.id}
-              className={`bg-white rounded-3xl border transition-all ${
-                isEditing ? 'border-gold shadow-lg' : 'border-slate-100 hover:shadow-md'
+              className={`bg-white rounded-xl border transition-all ${
+                isEditing ? 'border-gold shadow-sm' : 'border-cream-200 hover:shadow-md'
               } ${!template.active ? 'opacity-60' : ''}`}
             >
               {/* Kart Header */}
@@ -205,8 +205,8 @@ export const GiftNotesTab: React.FC = () => {
                     <Icon size={20} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800">{config.label}</h3>
-                    <p className="text-xs text-slate-500">{template.emotionLabel.en}</p>
+                    <h3 className="font-bold text-mocha-900">{config.label}</h3>
+                    <p className="text-xs text-mocha-500">{template.emotionLabel.en}</p>
                   </div>
                 </div>
 
@@ -214,10 +214,10 @@ export const GiftNotesTab: React.FC = () => {
                   {/* Aktif/Pasif Toggle */}
                   <button
                     onClick={() => toggleActive(template)}
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                    className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${
                       template.active
                         ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-slate-200 text-slate-500'
+                        : 'bg-cream-200 text-mocha-500'
                     }`}
                   >
                     {template.active ? 'Aktif' : 'Pasif'}
@@ -227,13 +227,13 @@ export const GiftNotesTab: React.FC = () => {
                     <>
                       <button
                         onClick={() => startEdit(template)}
-                        className="p-2 text-slate-400 hover:text-gold hover:bg-white rounded-lg transition-all"
+                        className="p-2 text-mocha-400 hover:text-gold hover:bg-white rounded-lg transition-all"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => deleteTemplate(template.id)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-white rounded-lg transition-all"
+                        className="p-2 text-mocha-400 hover:text-red-500 hover:bg-white rounded-lg transition-all"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -248,7 +248,7 @@ export const GiftNotesTab: React.FC = () => {
                       </button>
                       <button
                         onClick={() => { setEditingId(null); setEditForm(null); }}
-                        className="p-2 text-slate-400 hover:bg-white rounded-lg transition-all"
+                        className="p-2 text-mocha-400 hover:bg-white rounded-lg transition-all"
                       >
                         <X size={16} />
                       </button>
@@ -261,7 +261,7 @@ export const GiftNotesTab: React.FC = () => {
               <div className="p-6 space-y-4">
                 {(['minimalist', 'poetic', 'sensual'] as const).map((persona) => (
                   <div key={persona} className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <label className="text-xs font-medium text-mocha-400 uppercase tracking-wider">
                       {PERSONA_LABELS[persona]}
                     </label>
                     {isEditing ? (
@@ -276,11 +276,11 @@ export const GiftNotesTab: React.FC = () => {
                             } as any,
                           })
                         }
-                        className="w-full p-4 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-gold/30 resize-none"
+                        className="w-full p-4 bg-cream-50 rounded-xl text-sm outline-none border border-transparent focus:border-gold/30 resize-none"
                         rows={3}
                       />
                     ) : (
-                      <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl italic">
+                      <p className="text-sm text-mocha-600 bg-cream-50 p-4 rounded-xl italic">
                         "{template.personas[persona]}"
                       </p>
                     )}

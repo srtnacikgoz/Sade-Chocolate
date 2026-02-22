@@ -42,7 +42,7 @@ export const Cart: React.FC = () => {
           <div className="space-y-8">
             {items.map(item => (
               <div key={item.id} className="flex flex-col sm:flex-row gap-8 pb-8 border-b border-gray-50 dark:border-dark-800 group">
-                <img src={item.image} className="w-full sm:w-40 h-40 object-cover rounded-[40px] shadow-sm group-hover:shadow-md transition-all" alt={item.title} />
+                <img src={item.image} loading="lazy" decoding="async" className="w-full sm:w-40 h-40 object-cover rounded-[40px] shadow-sm group-hover:shadow-md transition-all" alt={item.title} />
                 <div className="flex-1 py-2 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <div>

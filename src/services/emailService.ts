@@ -61,8 +61,8 @@ const getEmailFooter = () => `
       Yeşilbahçe Mah. Çınarlı Cad. No:47, Antalya
     </p>
     <div style="font-size: 11px;">
-      <a href="https://sadechocolate.com/#/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
-      <a href="https://sadechocolate.com/#/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
+      <a href="https://sadechocolate.com/account" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Hesabım</a>
+      <a href="https://sadechocolate.com/catalog" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">Koleksiyonlar</a>
       <a href="mailto:bilgi@sadechocolate.com" style="color: ${COLORS.text}; text-decoration: none; margin: 0 10px; font-weight: bold;">İletişim</a>
     </div>
     <p style="font-size: 10px; color: #BDB6B0; margin-top: 20px;">© 2026 Sade Chocolate. All rights reserved.</p>
@@ -196,7 +196,7 @@ export const sendWelcomeEmail = async (
 
     <!-- CTA Section -->
     <div style="padding: 50px; text-align: center;">
-      <a href="https://sadechocolate.com/#/catalog" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+      <a href="https://sadechocolate.com/catalog" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
         Koleksiyonu Keşfet
       </a>
     </div>
@@ -208,7 +208,7 @@ export const sendWelcomeEmail = async (
     to: email,
     subject: `Hoş Geldin, ${firstName}!`,
     html: wrapEmail(content),
-    text: `Hoş Geldin ${firstName}! Sade Chocolate ailesine katıldığın için çok mutluyuz. Koleksiyonumuzu keşfet: https://sadechocolate.com/#/catalog`
+    text: `Hoş Geldin ${firstName}! Sade Chocolate ailesine katıldığın için çok mutluyuz. Koleksiyonumuzu keşfet: https://sadechocolate.com/catalog`
   });
 };
 
@@ -402,7 +402,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
     benefit2Title: 'Ayrıcalıklar',
     benefit2Text: 'Abonelere özel erken erişim, indirimler ve sürpriz hediyeler',
     ctaText: 'Koleksiyonu Keşfet',
-    ctaUrl: 'https://sadechocolate.com/#/catalog',
+    ctaUrl: 'https://sadechocolate.com/catalog',
     emailSubject: 'Hoş Geldin — İlk Siparişine %10 İndirim',
     colors: {
       headerBg: '#4B3832',
@@ -580,7 +580,7 @@ export const sendNewsletterWelcomeEmail = async (email: string) => {
                   </p>
                   <p style="margin: 16px 0 0; font-family: ${ty.bodyFont}; font-size: 10px; color: #BBBBBB;">
                     Bu email ${email} adresine gönderilmiştir.<br>
-                    <a href="https://sadechocolate.com/#/account" style="color: #C5A059; text-decoration: none;">Email tercihlerini yönet</a>
+                    <a href="https://sadechocolate.com/account" style="color: #C5A059; text-decoration: none;">Email tercihlerini yönet</a>
                   </p>
                 </td>
               </tr>
@@ -727,7 +727,7 @@ export const sendCampaignCodeEmail = async (
 
       <!-- CTA -->
       <div style="text-align: center; margin: 40px 0 20px;">
-        <a href="https://sadechocolate.com/#/register?ref=${campaignCode}" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
+        <a href="https://sadechocolate.com/register?ref=${campaignCode}" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
           Hemen Kayıt Ol
         </a>
       </div>
@@ -744,7 +744,7 @@ export const sendCampaignCodeEmail = async (
     to: email,
     subject: `🎁 Sizin İçin Özel: ${bonusPoints} Puan Kazan!`,
     html: wrapEmail(content),
-    text: `Merhaba ${firstName}! Sizin için özel kampanya kodu: ${campaignCode}. İlk siparişinizde ${bonusPoints} bonus puan kazanın! Son kullanma: ${expiryDate}. Kayıt ol: https://sadechocolate.com/#/register?ref=${campaignCode}`
+    text: `Merhaba ${firstName}! Sizin için özel kampanya kodu: ${campaignCode}. İlk siparişinizde ${bonusPoints} bonus puan kazanın! Son kullanma: ${expiryDate}. Kayıt ol: https://sadechocolate.com/register?ref=${campaignCode}`
   });
 };
 
@@ -806,7 +806,7 @@ export const sendCampaignReminderEmail = async (
 
       <!-- CTA -->
       <div style="text-align: center; margin: 40px 0 20px;">
-        <a href="https://sadechocolate.com/#/register?ref=${campaignCode}" style="display: inline-block; background: #DC143C; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(220,20,60,0.3);">
+        <a href="https://sadechocolate.com/register?ref=${campaignCode}" style="display: inline-block; background: #DC143C; color: white; padding: 18px 48px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(220,20,60,0.3);">
           Hemen Kullan
         </a>
       </div>
@@ -819,7 +819,7 @@ export const sendCampaignReminderEmail = async (
     to: email,
     subject: `⏰ Son ${daysLeft} Gün: ${bonusPoints} Puan Fırsatı!`,
     html: wrapEmail(content),
-    text: `Merhaba ${firstName}! Kampanya kodunuz ${expiryDate} tarihinde sona eriyor. Son ${daysLeft} gün! Kod: ${campaignCode}. Kayıt ol: https://sadechocolate.com/#/register?ref=${campaignCode}`
+    text: `Merhaba ${firstName}! Kampanya kodunuz ${expiryDate} tarihinde sona eriyor. Son ${daysLeft} gün! Kod: ${campaignCode}. Kayıt ol: https://sadechocolate.com/register?ref=${campaignCode}`
   });
 };
 
@@ -966,7 +966,7 @@ export const sendPaymentSuccessEmail = async (
 
       <!-- CTA -->
       <div style="text-align: center; margin: 40px 0 20px;">
-        <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
+        <a href="https://sadechocolate.com/account?view=orders" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(75,56,50,0.3);">
           Siparişi Takip Et
         </a>
       </div>
@@ -1212,7 +1212,7 @@ export const sendDeliveryConfirmationEmail = async (
           Yorum Yaz
         </a>
         ` : `
-        <a href="https://sadechocolate.com/#/account?view=orders" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+        <a href="https://sadechocolate.com/account?view=orders" style="display: inline-block; background: ${COLORS.gold}; color: ${COLORS.primary}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
           Siparişlerimi Gör
         </a>
         `}
@@ -1333,7 +1333,7 @@ export const sendOrderCancellationEmail = async (
         <p style="font-family: Georgia, serif; font-size: 15px; color: ${COLORS.lightText}; margin: 0 0 20px;">
           ${isPaymentNotReceived ? 'Siparişinizi yeniden oluşturmak isterseniz:' : 'Size yardımcı olmak için buradayız:'}
         </p>
-        <a href="https://sadechocolate.com/#/catalog" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+        <a href="https://sadechocolate.com/catalog" style="display: inline-block; background: ${COLORS.primary}; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
           ${isPaymentNotReceived ? 'Yeniden Sipariş Ver' : 'Mağazaya Git'}
         </a>
       </div>

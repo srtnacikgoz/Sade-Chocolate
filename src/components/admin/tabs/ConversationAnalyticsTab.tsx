@@ -98,7 +98,7 @@ export const ConversationAnalyticsTab: React.FC = () => {
         <h2 className="text-2xl font-bold flex items-center gap-3">
           <MessageCircle className="text-blue-500" /> Konuşma Analizi
         </h2>
-        <p className="text-sm text-gray-500 mt-2">
+        <p className="text-sm text-mocha-500 mt-2">
           Müşteri diyaloglarını analiz edin ve AI'ı geliştirin
         </p>
       </div>
@@ -106,50 +106,50 @@ export const ConversationAnalyticsTab: React.FC = () => {
       {/* KPI Cards */}
       {analytics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <div className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border border-cream-200 shadow-sm">
             <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-5">
               <MessageCircle size={24} />
             </div>
-            <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">
+            <div className="text-3xl font-semibold leading-none text-mocha-900">
               {analytics.totalConversations}
             </div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">
+            <div className="text-xs text-mocha-400 font-bold uppercase tracking-wider mt-3">
               Toplam Konuşma
             </div>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border border-cream-200 shadow-sm">
             <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-5">
               <CheckCircle size={24} />
             </div>
-            <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">
+            <div className="text-3xl font-semibold leading-none text-mocha-900">
               %{analytics.understandingRate}
             </div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">
+            <div className="text-xs text-mocha-400 font-bold uppercase tracking-wider mt-3">
               Anlama Oranı
             </div>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border border-cream-200 shadow-sm">
             <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-5">
               <TrendingUp size={24} />
             </div>
-            <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">
+            <div className="text-3xl font-semibold leading-none text-mocha-900">
               %{analytics.completionRate}
             </div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">
+            <div className="text-xs text-mocha-400 font-bold uppercase tracking-wider mt-3">
               Tamamlanma Oranı
             </div>
           </div>
 
-          <div className="bg-white dark:bg-dark-800 p-7 rounded-[32px] border border-gray-200 shadow-sm">
+          <div className="bg-white p-5 rounded-xl border border-cream-200 shadow-sm">
             <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5">
               <Clock size={24} />
             </div>
-            <div className="text-3xl font-display font-bold leading-none text-gray-900 dark:text-white">
+            <div className="text-3xl font-semibold leading-none text-mocha-900">
               {Math.floor(analytics.averageDuration / 60)}dk
             </div>
-            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-3">
+            <div className="text-xs text-mocha-400 font-bold uppercase tracking-wider mt-3">
               Ortalama Süre
             </div>
           </div>
@@ -158,24 +158,24 @@ export const ConversationAnalyticsTab: React.FC = () => {
 
       {/* AI Training Insights */}
       {analytics && analytics.topUnrecognizedQuestions.length > 0 && (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-[32px] border-2 border-amber-200 dark:border-amber-800 p-6">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0">
               <AlertCircle size={24} />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-lg text-amber-900 dark:text-amber-100 mb-2">
+              <h3 className="font-bold text-lg text-amber-900 mb-2">
                 🧠 AI Eğitim Önerileri
               </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
+              <p className="text-sm text-amber-700 mb-4">
                 Müşteriler bu soruları soruyor ama AI cevap veremiyor. Bilgi bankasına ekleyerek AI'ı geliştirebilirsiniz.
               </p>
               <div className="space-y-2">
                 {analytics.topUnrecognizedQuestions.slice(0, 5).map((item: any, idx: number) => (
-                  <div key={idx} className="bg-white dark:bg-dark-800 p-4 rounded-2xl flex items-center justify-between">
+                  <div key={idx} className="bg-white p-4 rounded-2xl flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white">"{item.question}"</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="font-medium text-mocha-900">"{item.question}"</p>
+                      <p className="text-xs text-mocha-500 mt-1">
                         {item.count} kez soruldu
                       </p>
                     </div>
@@ -194,16 +194,16 @@ export const ConversationAnalyticsTab: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-200 p-6">
+      <div className="bg-white rounded-xl border border-cream-200 p-6">
         <div className="flex flex-wrap gap-4 items-center">
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
               Dil
             </label>
             <select
               value={filterLanguage}
               onChange={(e) => setFilterLanguage(e.target.value as any)}
-              className="px-4 py-2 bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+              className="px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="all">Tümü</option>
               <option value="tr">🇹🇷 Türkçe</option>
@@ -213,13 +213,13 @@ export const ConversationAnalyticsTab: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+            <label className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2 block">
               Durum
             </label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="px-4 py-2 bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+              className="px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="all">Tümü</option>
               <option value="completed">✅ Tamamlandı</option>
@@ -228,10 +228,10 @@ export const ConversationAnalyticsTab: React.FC = () => {
           </div>
 
           <div className="ml-auto">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <div className="text-xs font-bold text-mocha-500 uppercase tracking-wider mb-2">
               Filtrelenmiş
             </div>
-            <div className="text-2xl font-display font-bold text-gray-900 dark:text-white">
+            <div className="text-2xl font-semibold text-mocha-900">
               {filteredLogs.length} konuşma
             </div>
           </div>
@@ -239,17 +239,17 @@ export const ConversationAnalyticsTab: React.FC = () => {
       </div>
 
       {/* Conversation Feed */}
-      <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b bg-slate-50/30">
+      <div className="bg-white rounded-xl border border-cream-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b bg-cream-50/30">
           <h3 className="font-bold text-lg">📋 Canlı Konuşma Akışı</h3>
-          <p className="text-sm text-gray-500 mt-1">Son 50 konuşma (anonim)</p>
+          <p className="text-sm text-mocha-500 mt-1">Son 50 konuşma (anonim)</p>
         </div>
 
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-cream-100">
           {filteredLogs.length === 0 ? (
             <div className="p-12 text-center">
               <MessageCircle size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-400 font-medium">Henüz konuşma kaydı yok</p>
+              <p className="text-mocha-400 font-medium">Henüz konuşma kaydı yok</p>
             </div>
           ) : (
             filteredLogs.map(log => {
@@ -257,12 +257,12 @@ export const ConversationAnalyticsTab: React.FC = () => {
               const startDate = log.startedAt?.toDate?.() || new Date();
               const languageFlag = log.language === 'tr' ? '🇹🇷' : log.language === 'en' ? '🇬🇧' : '🇷🇺';
               const statusIcon = log.metadata?.completedFlow ? '✅' : '⏸️';
-              const statusColor = log.metadata?.completedFlow ? 'text-green-600' : 'text-gray-400';
+              const statusColor = log.metadata?.completedFlow ? 'text-green-600' : 'text-mocha-400';
 
               return (
                 <div key={log.id} className="transition-all">
                   <div
-                    className="p-6 hover:bg-slate-50/50 cursor-pointer transition-all"
+                    className="p-6 hover:bg-cream-50/50 cursor-pointer transition-all"
                     onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
                   >
                     <div className="flex items-center justify-between">
@@ -270,15 +270,15 @@ export const ConversationAnalyticsTab: React.FC = () => {
                         <div className={`text-2xl ${statusColor}`}>{statusIcon}</div>
                         <div>
                           <div className="flex items-center gap-3 mb-1">
-                            <span className="text-sm font-mono text-gray-400">
+                            <span className="text-sm font-mono text-mocha-400">
                               {format(startDate, 'dd MMM HH:mm', { locale: tr })}
                             </span>
                             <span className="text-lg">{languageFlag}</span>
-                            <span className="text-xs font-bold text-gray-500">
+                            <span className="text-xs font-bold text-mocha-500">
                               {log.metadata?.totalMessages || 0} mesaj
                             </span>
                             {log.metadata?.duration && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-mocha-400">
                                 {Math.floor(log.metadata.duration / 60)}dk {log.metadata.duration % 60}s
                               </span>
                             )}
@@ -293,26 +293,26 @@ export const ConversationAnalyticsTab: React.FC = () => {
 
                       <ChevronDown
                         size={20}
-                        className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        className={`text-mocha-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                       />
                     </div>
                   </div>
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="px-6 pb-6 bg-slate-50/30 border-t border-gray-100 animate-in slide-in-from-top-2 duration-300">
+                    <div className="px-6 pb-6 bg-cream-50/30 border-t border-cream-200 animate-in slide-in-from-top-2 duration-300">
                       <div className="mt-4 space-y-3">
                         {log.messages?.map((msg, idx) => (
                           <div
                             key={idx}
                             className={`p-4 rounded-2xl ${
                               msg.role === 'user'
-                                ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
-                                : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                                ? 'bg-blue-50 border border-blue-200'
+                                : 'bg-cream-50 border border-cream-200'
                             }`}
                           >
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                              <span className="text-xs font-bold uppercase tracking-wider text-mocha-500">
                                 {msg.role === 'user' ? '👤 Müşteri' : '🤖 AI'}
                               </span>
                               {msg.role === 'user' && msg.wasUnderstood === false && (
@@ -326,7 +326,7 @@ export const ConversationAnalyticsTab: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <p className="text-sm text-gray-700">
                               {msg.content}
                             </p>
                           </div>
@@ -334,8 +334,8 @@ export const ConversationAnalyticsTab: React.FC = () => {
                       </div>
 
                       {log.metadata?.recommendedProducts && log.metadata.recommendedProducts.length > 0 && (
-                        <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-200 dark:border-green-800">
-                          <p className="text-xs font-bold text-green-700 dark:text-green-300 mb-2">
+                        <div className="mt-4 p-4 bg-green-50 rounded-2xl border border-green-200">
+                          <p className="text-xs font-bold text-green-700 mb-2">
                             🎁 Önerilen Ürünler: {log.metadata.recommendedProducts.length} adet
                           </p>
                         </div>

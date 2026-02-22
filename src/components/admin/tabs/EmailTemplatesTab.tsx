@@ -61,7 +61,7 @@ const DEFAULT_TEMPLATE: NewsletterTemplate = {
   benefit2Title: 'Ayrıcalıklar',
   benefit2Text: 'Abonelere özel erken erişim, indirimler ve sürpriz hediyeler',
   ctaText: 'Koleksiyonu Keşfet',
-  ctaUrl: 'https://sadechocolate.com/#/catalog',
+  ctaUrl: 'https://sadechocolate.com/catalog',
   emailSubject: 'Hoş Geldin — İlk Siparişine %10 İndirim',
   colors: {
     headerBg: '#4B3832',
@@ -250,26 +250,26 @@ export const EmailTemplatesTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-brown-900 to-brown-700 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 bg-mocha-900 rounded-2xl flex items-center justify-center shadow-sm">
             <Mail className="text-white" size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white italic">
+            <h2 className="text-2xl font-semibold text-mocha-900 ">
               Email Şablonları
             </h2>
-            <p className="text-sm text-gray-500">Sistemdeki tüm email şablonlarını görüntüle ve düzenle</p>
+            <p className="text-sm text-mocha-500">Sistemdeki tüm email şablonlarını görüntüle ve düzenle</p>
           </div>
         </div>
       </div>
 
       {/* Tab Selector */}
-      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-dark-800 rounded-xl w-fit">
+      <div className="flex gap-2 p-1 bg-cream-100 rounded-xl w-fit">
         <button
           onClick={() => setActiveTab('all_templates')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             activeTab === 'all_templates'
-              ? 'bg-white dark:bg-dark-700 text-brown-900 dark:text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-mocha-900 shadow-sm'
+              : 'text-mocha-500 hover:text-mocha-700'
           }`}
         >
           Tüm Şablonlar
@@ -278,8 +278,8 @@ export const EmailTemplatesTab: React.FC = () => {
           onClick={() => setActiveTab('newsletter_editor')}
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
             activeTab === 'newsletter_editor'
-              ? 'bg-white dark:bg-dark-700 text-brown-900 dark:text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-mocha-900 shadow-sm'
+              : 'text-mocha-500 hover:text-mocha-700'
           }`}
         >
           Newsletter Editörü
@@ -289,8 +289,8 @@ export const EmailTemplatesTab: React.FC = () => {
       {/* All Templates Tab */}
       {activeTab === 'all_templates' && (
         <div className="grid gap-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-blue-800">
               <strong>İpucu:</strong> Herhangi bir şablona tıklayarak önizlemesini görebilirsiniz. "Düzenlenebilir" etiketli şablonlar admin panelinden özelleştirilebilir.
             </p>
           </div>
@@ -299,22 +299,22 @@ export const EmailTemplatesTab: React.FC = () => {
             {ALL_EMAIL_TEMPLATES.map((tmpl) => (
               <div
                 key={tmpl.id}
-                className="bg-white dark:bg-dark-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 hover:border-gold/50 hover:shadow-md transition-all cursor-pointer group"
+                className="bg-white rounded-xl p-4 border border-cream-200 hover:border-gold/50 hover:shadow-md transition-all cursor-pointer group"
                 onClick={() => setPreviewTemplate({ id: tmpl.id, name: tmpl.name, icon: tmpl.icon })}
               >
                 <div className="flex items-start gap-4">
                   <div className="text-3xl">{tmpl.icon}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900 dark:text-white">{tmpl.name}</h3>
+                      <h3 className="font-bold text-mocha-900">{tmpl.name}</h3>
                       {tmpl.editable && (
                         <span className="px-2 py-0.5 text-xs bg-gold/20 text-gold rounded-full">
                           Düzenlenebilir
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{tmpl.description}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-1">
+                    <p className="text-sm text-mocha-600 mt-1">{tmpl.description}</p>
+                    <p className="text-xs text-mocha-400 mt-2 flex items-center gap-1">
                       <span className="material-icons-outlined text-sm">schedule</span>
                       {tmpl.trigger}
                     </p>
@@ -338,20 +338,20 @@ export const EmailTemplatesTab: React.FC = () => {
           {/* Editor Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Newsletter Hoş Geldin Emaili</h3>
-              <p className="text-sm text-gray-500">Yeni abonelere gönderilen email şablonunu düzenleyin</p>
+              <h3 className="text-lg font-bold text-mocha-900">Newsletter Hoş Geldin Emaili</h3>
+              <p className="text-sm text-mocha-500">Yeni abonelere gönderilen email şablonunu düzenleyin</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleReset}
-                className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm text-mocha-500 hover:text-mocha-700 hover:bg-cream-100 rounded-xl transition-colors flex items-center gap-2"
               >
                 <RefreshCw size={16} />
                 Sıfırla
               </button>
               <button
                 onClick={() => setShowPreview(!showPreview)}
-                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm bg-cream-100 hover:bg-cream-200 text-mocha-700 rounded-xl transition-colors flex items-center gap-2"
               >
                 <Eye size={16} />
                 {showPreview ? 'Düzenle' : 'Önizle'}
@@ -369,8 +369,8 @@ export const EmailTemplatesTab: React.FC = () => {
 
       {showPreview ? (
         /* Preview Mode */
-        <div className="bg-gray-100 rounded-3xl p-8 overflow-auto max-h-[70vh]">
-          <div className="max-w-[600px] mx-auto shadow-2xl" dangerouslySetInnerHTML={{ __html: generatePreviewHTML(template) }} />
+        <div className="bg-cream-100 rounded-3xl p-6 overflow-auto max-h-[70vh]">
+          <div className="max-w-[600px] mx-auto shadow-sm" dangerouslySetInnerHTML={{ __html: generatePreviewHTML(template) }} />
         </div>
       ) : (
         /* Edit Mode */
@@ -378,8 +378,8 @@ export const EmailTemplatesTab: React.FC = () => {
           {/* Sol Kolon - İçerik */}
           <div className="space-y-6">
             {/* Email Subject */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
+              <h3 className="text-sm font-bold text-mocha-700 mb-4 flex items-center gap-2">
                 <Mail size={16} className="text-gold" />
                 Email Konusu
               </h3>
@@ -387,29 +387,29 @@ export const EmailTemplatesTab: React.FC = () => {
                 type="text"
                 value={template.emailSubject}
                 onChange={(e) => setTemplate({ ...template, emailSubject: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold/20"
+                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold/20"
                 placeholder="Email konusu..."
               />
             </div>
 
             {/* Logo Customization */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">🏷️ Logo Özelleştirme</h3>
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
+              <h3 className="text-sm font-bold text-mocha-700 mb-4">🏷️ Logo Özelleştirme</h3>
               <div className="space-y-4">
                 {/* Logo Görsel Toggle */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-900 rounded-xl">
+                <div className="flex items-center justify-between p-3 bg-cream-50 rounded-xl">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kakao Logo Görseli</label>
-                    <p className="text-xs text-gray-500">Email başlığında logo görseli göster</p>
+                    <label className="text-sm font-medium text-mocha-700">Kakao Logo Görseli</label>
+                    <p className="text-xs text-mocha-500">Email başlığında logo görseli göster</p>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={template.logoShowImage !== false}
                       onChange={(e) => setTemplate({ ...template, logoShowImage: e.target.checked })}
-                      className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-gold"
+                      className="w-4 h-4 rounded border-cream-200 text-gold focus:ring-gold"
                     />
-                    <span className="text-xs text-gray-500">{template.logoShowImage !== false ? 'Göster' : 'Gizle'}</span>
+                    <span className="text-xs text-mocha-500">{template.logoShowImage !== false ? 'Göster' : 'Gizle'}</span>
                   </label>
                 </div>
 
@@ -418,46 +418,46 @@ export const EmailTemplatesTab: React.FC = () => {
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Logo Görsel URL</label>
+                        <label className="text-xs text-mocha-500 mb-1 block">Logo Görsel URL</label>
                         <input
                           type="text"
                           value={template.logoImageUrl || 'https://sadechocolate.com/kakaologo.png'}
                           onChange={(e) => setTemplate({ ...template, logoImageUrl: e.target.value })}
-                          className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                          className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                           placeholder="https://sadechocolate.com/kakaologo.png"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-gray-500 mb-1 block">Logo Boyutu (px)</label>
+                        <label className="text-xs text-mocha-500 mb-1 block">Logo Boyutu (px)</label>
                         <input
                           type="number"
                           value={template.logoImageSize || 60}
                           onChange={(e) => setTemplate({ ...template, logoImageSize: parseInt(e.target.value) || 60 })}
-                          className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                          className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                           min={30}
                           max={120}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Logo Rengi</label>
+                      <label className="text-xs text-mocha-500 mb-1 block">Logo Rengi</label>
                       <div className="flex gap-2">
                         <input
                           type="color"
                           value={template.logoColor || '#C5A059'}
                           onChange={(e) => setTemplate({ ...template, logoColor: e.target.value })}
-                          className="w-16 h-10 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer"
+                          className="w-16 h-10 rounded-xl border border-cream-200 cursor-pointer"
                         />
                         <input
                           type="text"
                           value={template.logoColor || '#C5A059'}
                           onChange={(e) => setTemplate({ ...template, logoColor: e.target.value })}
-                          className="flex-1 px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none font-mono"
+                          className="flex-1 px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none font-mono"
                           placeholder="#C5A059"
                         />
                         <button
                           onClick={() => setTemplate({ ...template, logoColor: '#C5A059' })}
-                          className="px-4 py-2 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 rounded-xl text-xs transition-colors"
+                          className="px-4 py-2 bg-cream-100 hover:bg-cream-200 rounded-xl text-xs transition-colors"
                           title="Varsayılan (Gold)"
                         >
                           Sıfırla
@@ -475,33 +475,33 @@ export const EmailTemplatesTab: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">SADE Metni</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">SADE Metni</label>
                     <input
                       type="text"
                       value={template.logoSadeText || 'SADE'}
                       onChange={(e) => setTemplate({ ...template, logoSadeText: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       placeholder="SADE"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Chocolate Metni</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Chocolate Metni</label>
                     <input
                       type="text"
                       value={template.logoChocolateText || 'Chocolate'}
                       onChange={(e) => setTemplate({ ...template, logoChocolateText: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       placeholder="Chocolate"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">SADE Fontu</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">SADE Fontu</label>
                     <select
                       value={template.logoSadeFont || "'Santana', Georgia, serif"}
                       onChange={(e) => setTemplate({ ...template, logoSadeFont: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                     >
                       <optgroup label="⭐ Önerilen">
                         <option value="'Santana', Georgia, serif">Santana (Özel Font)</option>
@@ -518,11 +518,11 @@ export const EmailTemplatesTab: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Chocolate Fontu</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Chocolate Fontu</label>
                     <select
                       value={template.logoChocolateFont || "'Santana', Georgia, serif"}
                       onChange={(e) => setTemplate({ ...template, logoChocolateFont: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                     >
                       <optgroup label="⭐ Önerilen">
                         <option value="'Santana', Georgia, serif">Santana (Özel Font)</option>
@@ -541,30 +541,30 @@ export const EmailTemplatesTab: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">SADE Boyutu (px)</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">SADE Boyutu (px)</label>
                     <input
                       type="number"
                       value={template.logoSadeSize || 28}
                       onChange={(e) => setTemplate({ ...template, logoSadeSize: parseInt(e.target.value) || 28 })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       min={16}
                       max={64}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Chocolate Boyutu (px)</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Chocolate Boyutu (px)</label>
                     <input
                       type="number"
                       value={template.logoChocolateSize || 11}
                       onChange={(e) => setTemplate({ ...template, logoChocolateSize: parseInt(e.target.value) || 11 })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       min={8}
                       max={32}
                     />
                   </div>
                 </div>
                 {/* Logo Preview */}
-                <div className="p-6 bg-brown-900 dark:bg-dark-900 rounded-xl text-center">
+                <div className="p-6 bg-brown-900 rounded-xl text-center">
                   {template.logoShowImage !== false && (
                     <div className="mb-4">
                       <img
@@ -592,35 +592,35 @@ export const EmailTemplatesTab: React.FC = () => {
             </div>
 
             {/* Header Section */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Başlık Alanı</h3>
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
+              <h3 className="text-sm font-bold text-mocha-700 mb-4">Başlık Alanı</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Badge Metni</label>
+                  <label className="text-xs text-mocha-500 mb-1 block">Badge Metni</label>
                   <input
                     type="text"
                     value={template.headerBadge}
                     onChange={(e) => setTemplate({ ...template, headerBadge: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                     placeholder="✦ Hoş Geldin ✦"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Ana Başlık (satır için \n kullanın)</label>
+                  <label className="text-xs text-mocha-500 mb-1 block">Ana Başlık (satır için \n kullanın)</label>
                   <textarea
                     value={template.mainTitle}
                     onChange={(e) => setTemplate({ ...template, mainTitle: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none resize-none"
+                    className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none resize-none"
                     rows={2}
                     placeholder="Artisan Çikolata\nDünyasına Adım Attın"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Hoş Geldin Metni</label>
+                  <label className="text-xs text-mocha-500 mb-1 block">Hoş Geldin Metni</label>
                   <textarea
                     value={template.welcomeText}
                     onChange={(e) => setTemplate({ ...template, welcomeText: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none resize-none"
+                    className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none resize-none"
                     rows={2}
                   />
                 </div>
@@ -628,50 +628,50 @@ export const EmailTemplatesTab: React.FC = () => {
             </div>
 
             {/* Discount Section */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">İndirim Bölümü</h3>
+                <h3 className="text-sm font-bold text-mocha-700">İndirim Bölümü</h3>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={template.discountEnabled}
                     onChange={(e) => setTemplate({ ...template, discountEnabled: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-gold"
+                    className="w-4 h-4 rounded border-cream-200 text-gold focus:ring-gold"
                   />
-                  <span className="text-xs text-gray-500">Aktif</span>
+                  <span className="text-xs text-mocha-500">Aktif</span>
                 </label>
               </div>
               {template.discountEnabled && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Üst Etiket</label>
+                      <label className="text-xs text-mocha-500 mb-1 block">Üst Etiket</label>
                       <input
                         type="text"
                         value={template.discountLabel}
                         onChange={(e) => setTemplate({ ...template, discountLabel: e.target.value })}
-                        className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                        className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">İndirim %</label>
+                      <label className="text-xs text-mocha-500 mb-1 block">İndirim %</label>
                       <input
                         type="number"
                         value={template.discountPercent}
                         onChange={(e) => setTemplate({ ...template, discountPercent: parseInt(e.target.value) || 0 })}
-                        className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                        className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                         min={0}
                         max={100}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">İndirim Kodu</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">İndirim Kodu</label>
                     <input
                       type="text"
                       value={template.discountCode}
                       onChange={(e) => setTemplate({ ...template, discountCode: e.target.value.toUpperCase() })}
-                      className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none font-mono tracking-wider"
+                      className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none font-mono tracking-wider"
                     />
                   </div>
                 </div>
@@ -682,39 +682,39 @@ export const EmailTemplatesTab: React.FC = () => {
           {/* Sağ Kolon - Benefits & CTA */}
           <div className="space-y-6">
             {/* Benefits */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Avantajlar (2 Sütun)</h3>
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
+              <h3 className="text-sm font-bold text-mocha-700 mb-4">Avantajlar (2 Sütun)</h3>
               <div className="space-y-6">
-                <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-xl">
+                <div className="p-4 bg-cream-50 rounded-xl">
                   <label className="text-xs text-gold mb-2 block font-bold">Sol Sütun</label>
                   <input
                     type="text"
                     value={template.benefit1Title}
                     onChange={(e) => setTemplate({ ...template, benefit1Title: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none mb-2"
+                    className="w-full px-3 py-2 bg-white border border-cream-200 rounded-lg text-sm outline-none mb-2"
                     placeholder="Başlık"
                   />
                   <textarea
                     value={template.benefit1Text}
                     onChange={(e) => setTemplate({ ...template, benefit1Text: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none resize-none"
+                    className="w-full px-3 py-2 bg-white border border-cream-200 rounded-lg text-sm outline-none resize-none"
                     rows={2}
                     placeholder="Açıklama"
                   />
                 </div>
-                <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-xl">
+                <div className="p-4 bg-cream-50 rounded-xl">
                   <label className="text-xs text-gold mb-2 block font-bold">Sağ Sütun</label>
                   <input
                     type="text"
                     value={template.benefit2Title}
                     onChange={(e) => setTemplate({ ...template, benefit2Title: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none mb-2"
+                    className="w-full px-3 py-2 bg-white border border-cream-200 rounded-lg text-sm outline-none mb-2"
                     placeholder="Başlık"
                   />
                   <textarea
                     value={template.benefit2Text}
                     onChange={(e) => setTemplate({ ...template, benefit2Text: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm outline-none resize-none"
+                    className="w-full px-3 py-2 bg-white border border-cream-200 rounded-lg text-sm outline-none resize-none"
                     rows={2}
                     placeholder="Açıklama"
                   />
@@ -723,47 +723,47 @@ export const EmailTemplatesTab: React.FC = () => {
             </div>
 
             {/* CTA Button */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Aksiyon Butonu</h3>
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
+              <h3 className="text-sm font-bold text-mocha-700 mb-4">Aksiyon Butonu</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Buton Metni</label>
+                  <label className="text-xs text-mocha-500 mb-1 block">Buton Metni</label>
                   <input
                     type="text"
                     value={template.ctaText}
                     onChange={(e) => setTemplate({ ...template, ctaText: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Buton URL</label>
+                  <label className="text-xs text-mocha-500 mb-1 block">Buton URL</label>
                   <input
                     type="url"
                     value={template.ctaUrl}
                     onChange={(e) => setTemplate({ ...template, ctaUrl: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                    className="w-full px-4 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Typography Settings */}
-            <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-6 border border-cream-200">
+              <h3 className="text-sm font-bold text-mocha-700 mb-4 flex items-center gap-2">
                 <span className="text-gold">Aa</span>
                 Tipografi Ayarları
               </h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Başlık Fontu</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Başlık Fontu</label>
                     <select
                       value={template.typography?.headingFont || DEFAULT_TEMPLATE.typography?.headingFont}
                       onChange={(e) => setTemplate({
                         ...template,
                         typography: { ...template.typography!, headingFont: e.target.value }
                       })}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                     >
                       {availableFonts.map(font => (
                         <option key={font.id} value={font.value}>{font.label}</option>
@@ -771,14 +771,14 @@ export const EmailTemplatesTab: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Gövde Fontu</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Gövde Fontu</label>
                     <select
                       value={template.typography?.bodyFont || DEFAULT_TEMPLATE.typography?.bodyFont}
                       onChange={(e) => setTemplate({
                         ...template,
                         typography: { ...template.typography!, bodyFont: e.target.value }
                       })}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                     >
                       {availableFonts.map(font => (
                         <option key={font.id} value={font.value}>{font.label}</option>
@@ -788,7 +788,7 @@ export const EmailTemplatesTab: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Başlık Boyutu (px)</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Başlık Boyutu (px)</label>
                     <input
                       type="number"
                       value={template.typography?.headingSize || 32}
@@ -796,13 +796,13 @@ export const EmailTemplatesTab: React.FC = () => {
                         ...template,
                         typography: { ...template.typography!, headingSize: parseInt(e.target.value) || 32 }
                       })}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       min={16}
                       max={64}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Gövde Boyutu (px)</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Gövde Boyutu (px)</label>
                     <input
                       type="number"
                       value={template.typography?.bodySize || 15}
@@ -810,13 +810,13 @@ export const EmailTemplatesTab: React.FC = () => {
                         ...template,
                         typography: { ...template.typography!, bodySize: parseInt(e.target.value) || 15 }
                       })}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       min={10}
                       max={24}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Satır Yüksekliği</label>
+                    <label className="text-xs text-mocha-500 mb-1 block">Satır Yüksekliği</label>
                     <input
                       type="number"
                       step="0.1"
@@ -825,19 +825,19 @@ export const EmailTemplatesTab: React.FC = () => {
                         ...template,
                         typography: { ...template.typography!, lineHeight: parseFloat(e.target.value) || 1.8 }
                       })}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"
+                      className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm outline-none"
                       min={1}
                       max={3}
                     />
                   </div>
                 </div>
                 {/* Preview */}
-                <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-xl border border-gray-100 dark:border-gray-700">
-                  <p className="text-xs text-gray-400 mb-2">Önizleme:</p>
-                  <p style={{ fontFamily: template.typography?.headingFont, fontSize: `${template.typography?.headingSize || 32}px`, fontStyle: 'italic' }} className="text-gray-900 dark:text-white mb-2">
+                <div className="p-4 bg-cream-50 rounded-xl border border-cream-200">
+                  <p className="text-xs text-mocha-400 mb-2">Önizleme:</p>
+                  <p style={{ fontFamily: template.typography?.headingFont, fontSize: `${template.typography?.headingSize || 32}px`, fontStyle: 'italic' }} className="text-mocha-900 mb-2">
                     Başlık Örneği
                   </p>
-                  <p style={{ fontFamily: template.typography?.bodyFont, fontSize: `${template.typography?.bodySize || 15}px`, lineHeight: template.typography?.lineHeight || 1.8 }} className="text-gray-600 dark:text-gray-400">
+                  <p style={{ fontFamily: template.typography?.bodyFont, fontSize: `${template.typography?.bodySize || 15}px`, lineHeight: template.typography?.lineHeight || 1.8 }} className="text-mocha-600">
                     Bu bir gövde metni örneğidir. Tipografi ayarlarınızın nasıl görüneceğini buradan kontrol edebilirsiniz.
                   </p>
                 </div>
@@ -845,14 +845,14 @@ export const EmailTemplatesTab: React.FC = () => {
             </div>
 
             {/* Color Settings (Collapsible) */}
-            <details className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-              <summary className="p-6 cursor-pointer text-sm font-bold text-gray-700 dark:text-gray-300">
+            <details className="bg-white rounded-2xl border border-cream-200">
+              <summary className="p-6 cursor-pointer text-sm font-bold text-mocha-700">
                 Renk Ayarları (Gelişmiş)
               </summary>
               <div className="px-6 pb-6 grid grid-cols-2 gap-4">
                 {template.colors && Object.entries(template.colors).map(([key, value]) => (
                   <div key={key}>
-                    <label className="text-xs text-gray-500 mb-1 block capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
+                    <label className="text-xs text-mocha-500 mb-1 block capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
@@ -870,7 +870,7 @@ export const EmailTemplatesTab: React.FC = () => {
                           ...template,
                           colors: { ...template.colors!, [key]: e.target.value }
                         })}
-                        className="flex-1 px-3 py-2 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-mono outline-none"
+                        className="flex-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-xs font-mono outline-none"
                       />
                     </div>
                   </div>
@@ -893,14 +893,14 @@ export const EmailTemplatesTab: React.FC = () => {
           />
 
           {/* Modal Content */}
-          <div className="relative bg-white dark:bg-dark-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="relative bg-white rounded-3xl shadow-sm w-full max-w-3xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between p-5 border-b border-cream-200">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{previewTemplate.icon}</span>
                 <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white">{previewTemplate.name}</h3>
-                  <p className="text-xs text-gray-500">Email şablonu önizlemesi</p>
+                  <h3 className="font-bold text-mocha-900">{previewTemplate.name}</h3>
+                  <p className="text-xs text-mocha-500">Email şablonu önizlemesi</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -918,15 +918,15 @@ export const EmailTemplatesTab: React.FC = () => {
                 )}
                 <button
                   onClick={() => setPreviewTemplate(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-xl transition-colors"
+                  className="p-2 hover:bg-cream-100 rounded-xl transition-colors"
                 >
-                  <X size={20} className="text-gray-500" />
+                  <X size={20} className="text-mocha-500" />
                 </button>
               </div>
             </div>
 
             {/* Preview Content */}
-            <div className="overflow-auto max-h-[calc(90vh-80px)] bg-gray-100 dark:bg-dark-900">
+            <div className="overflow-auto max-h-[calc(90vh-80px)] bg-cream-100">
               <div
                 className="p-6"
                 dangerouslySetInnerHTML={{ __html: getEmailPreviewHtml(previewTemplate.id) }}

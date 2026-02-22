@@ -109,8 +109,8 @@ export const BonbonSettingsTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-display font-bold text-gray-900">Bonbon Kartı Ayarları</h2>
-          <p className="text-sm text-gray-500 mt-1">Katalogdaki bonbon koleksiyon kartını özelleştirin</p>
+          <h2 className="text-2xl font-semibold text-mocha-900">Bonbon Kartı Ayarları</h2>
+          <p className="text-sm text-mocha-500 mt-1">Katalogdaki bonbon koleksiyon kartını özelleştirin</p>
         </div>
         <button
           onClick={handleSave}
@@ -126,14 +126,14 @@ export const BonbonSettingsTab: React.FC = () => {
         {/* Sol: Form */}
         <div className="space-y-6">
           {/* Kart Görseli */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-white rounded-xl border border-cream-200 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-mocha-100 flex items-center justify-center">
                 <Image className="text-mocha-600" size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Kart Görseli</h3>
-                <p className="text-sm text-gray-500">Katalogda görünecek görsel</p>
+                <h3 className="font-semibold text-mocha-900">Kart Görseli</h3>
+                <p className="text-sm text-mocha-500">Katalogda görünecek görsel</p>
               </div>
             </div>
 
@@ -154,15 +154,15 @@ export const BonbonSettingsTab: React.FC = () => {
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-[4/5] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gold transition-colors"
+                className="w-full aspect-[4/5] border-2 border-dashed border-cream-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gold transition-colors"
               >
                 {isUploading ? (
                   <div className="w-8 h-8 border-4 border-gold border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Upload className="text-gray-400 mb-2" size={32} />
-                    <span className="text-sm text-gray-500">Görsel Yükle</span>
-                    <span className="text-xs text-gray-400 mt-1">PNG, JPG (max 5MB)</span>
+                    <Upload className="text-mocha-400 mb-2" size={32} />
+                    <span className="text-sm text-mocha-500">Görsel Yükle</span>
+                    <span className="text-xs text-mocha-400 mt-1">PNG, JPG (max 5MB)</span>
                   </>
                 )}
               </div>
@@ -178,52 +178,52 @@ export const BonbonSettingsTab: React.FC = () => {
           </div>
 
           {/* Metinler */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="bg-white rounded-xl border border-cream-200 p-6 space-y-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
                 <Candy className="text-gold" size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Kart Metinleri</h3>
-                <p className="text-sm text-gray-500">Başlık, açıklama ve buton metni</p>
+                <h3 className="font-semibold text-mocha-900">Kart Metinleri</h3>
+                <p className="text-sm text-mocha-500">Başlık, açıklama ve buton metni</p>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-mocha-600 mb-1">
                 Başlık
               </label>
               <input
                 type="text"
                 value={config.cardTitle}
                 onChange={(e) => setConfig(prev => ({ ...prev, cardTitle: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none"
+                className="w-full px-4 py-2.5 border border-cream-200 rounded-lg focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none"
                 placeholder="Bonbon Koleksiyonu"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-mocha-600 mb-1">
                 Alt Başlık
               </label>
               <input
                 type="text"
                 value={config.cardSubtitle}
                 onChange={(e) => setConfig(prev => ({ ...prev, cardSubtitle: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none"
+                className="w-full px-4 py-2.5 border border-cream-200 rounded-lg focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none"
                 placeholder="Her biri özenle hazırlanmış eşsiz tatlar"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-mocha-600 mb-1">
                 Buton Metni
               </label>
               <input
                 type="text"
                 value={config.ctaText}
                 onChange={(e) => setConfig(prev => ({ ...prev, ctaText: e.target.value }))}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none"
+                className="w-full px-4 py-2.5 border border-cream-200 rounded-lg focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none"
                 placeholder="Koleksiyonu Keşfet"
               />
             </div>
@@ -232,13 +232,13 @@ export const BonbonSettingsTab: React.FC = () => {
 
         {/* Sağ: Önizleme */}
         <div>
-          <h3 className="font-semibold text-gray-900 mb-4">Önizleme</h3>
-          <div className="bg-gray-100 rounded-xl p-6">
+          <h3 className="font-semibold text-mocha-900 mb-4">Önizleme</h3>
+          <div className="bg-cream-100 rounded-xl p-6">
             <div className="max-w-[280px] mx-auto">
-              <article className="bg-cream-50 rounded-xl shadow-lg overflow-hidden">
+              <article className="bg-cream-50 rounded-xl shadow-sm overflow-hidden">
                 {/* Görsel */}
-                <div className="relative aspect-[4/5] bg-gray-200">
-                  <span className="absolute top-0 left-0 text-[10px] font-bold px-3 py-1 uppercase tracking-widest z-20 bg-mocha-800 text-white">
+                <div className="relative aspect-[4/5] bg-cream-200">
+                  <span className="absolute top-0 left-0 text-xs font-medium px-3 py-1 uppercase tracking-wider z-20 bg-mocha-800 text-white">
                     Koleksiyon
                   </span>
                   {config.cardImage ? (
@@ -249,7 +249,7 @@ export const BonbonSettingsTab: React.FC = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-mocha-100 to-mocha-200">
-                      <div className="w-16 h-16 bg-gradient-to-br from-mocha-600 to-mocha-800 rounded-xl flex items-center justify-center">
+                      <div className="w-16 h-16 bg-mocha-700 rounded-xl flex items-center justify-center">
                         <Candy className="text-white" size={32} />
                       </div>
                     </div>
@@ -258,19 +258,19 @@ export const BonbonSettingsTab: React.FC = () => {
 
                 {/* Alt bilgi */}
                 <div className="p-4 bg-cream-50">
-                  <h3 className="font-display text-lg font-semibold text-gray-900 mb-1">
+                  <h3 className="text-lg font-semibold text-mocha-900 mb-1">
                     {config.cardTitle || 'Bonbon Koleksiyonu'}
                   </h3>
-                  <p className="text-xs text-gray-500 mb-3">
+                  <p className="text-xs text-mocha-500 mb-3">
                     {config.cardSubtitle || 'Her biri özenle hazırlanmış eşsiz tatlar'}
                   </p>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[9px] font-bold text-gold uppercase">Keşfet • Tümünü Gör</span>
+                    <span className="text-xs font-medium text-gold uppercase">Keşfet • Tümünü Gör</span>
                     <div className="w-8 h-8 bg-gold rounded-full flex items-center justify-center">
                       <span className="text-white text-sm">→</span>
                     </div>
                   </div>
-                  <button className="w-full py-2.5 text-[10px] font-black uppercase tracking-wider text-mocha-900 border border-gold/20 rounded-lg">
+                  <button className="w-full py-2.5 text-xs font-medium uppercase tracking-wider text-mocha-900 border border-gold/20 rounded-lg">
                     {config.ctaText || 'Koleksiyonu Keşfet'}
                   </button>
                 </div>

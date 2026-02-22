@@ -402,18 +402,18 @@ export const TypographyTab: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-gold to-brand-mustard rounded-2xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-brand-mustard rounded-2xl flex items-center justify-center">
             <Type className="text-white" size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Typography Ayarları</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Fontlar, boyutlar ve renkler</p>
+            <h2 className="text-2xl font-bold text-mocha-900">Typography Ayarları</h2>
+            <p className="text-sm text-mocha-500">Fontlar, boyutlar ve renkler</p>
           </div>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => setSettings(DEFAULT_TYPOGRAPHY)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 hover:bg-cream-200 transition-colors"
           >
             <RotateCcw size={16} />
             <span className="text-sm font-medium">Varsayılan</span>
@@ -444,21 +444,21 @@ export const TypographyTab: React.FC = () => {
                 <button
                   key={preset.id}
                   onClick={() => applyPreset(preset.id)}
-                  className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gold dark:hover:border-gold hover:bg-gold/5 transition-all group"
+                  className="w-full text-left p-3 rounded-lg border border-cream-200 hover:border-gold hover:bg-gold/5 transition-all group"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-gold transition-colors">
+                      <h4 className="text-sm font-bold text-mocha-900 group-hover:text-gold transition-colors">
                         {preset.name}
                       </h4>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="text-xs text-mocha-500 mt-0.5">
                         {preset.description}
                       </p>
                     </div>
                     {/* Active indicator */}
                     {settings.h1Font.family === preset.headingFont &&
                      settings.bodyFont.family === preset.bodyFont && (
-                      <span className="px-2 py-0.5 bg-gold text-white text-[9px] font-bold rounded-full">
+                      <span className="px-2 py-0.5 bg-gold text-white text-xs font-medium rounded-full">
                         AKTİF
                       </span>
                     )}
@@ -476,8 +476,8 @@ export const TypographyTab: React.FC = () => {
           >
             <div className="space-y-3">
               {/* Başlık Fontları */}
-              <div className="pb-2 border-b border-gray-200 dark:border-gray-700">
-                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-2">BAŞLIKLAR</p>
+              <div className="pb-2 border-b border-cream-200">
+                <p className="text-xs font-medium text-mocha-500 mb-2">BAŞLIKLAR</p>
                 <div className="space-y-3">
                   <MiniFontSelector label="H1 Başlık" font={settings.h1Font} onChange={(u) => updateFont('h1Font', u)} availableFonts={availableFonts} />
                   <MiniFontSelector label="H2 Başlık" font={settings.h2Font} onChange={(u) => updateFont('h2Font', u)} availableFonts={availableFonts} />
@@ -488,7 +488,7 @@ export const TypographyTab: React.FC = () => {
 
               {/* Diğer Fontlar */}
               <div className="pt-2">
-                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-2">DİĞER</p>
+                <p className="text-xs font-medium text-mocha-500 mb-2">DİĞER</p>
                 <div className="space-y-3">
                   <MiniFontSelector label="Metin" font={settings.bodyFont} onChange={(u) => updateFont('bodyFont', u)} availableFonts={availableFonts} />
                   <MiniFontSelector label="Display" font={settings.displayFont} onChange={(u) => updateFont('displayFont', u)} availableFonts={availableFonts} />
@@ -497,8 +497,8 @@ export const TypographyTab: React.FC = () => {
                   <div className="p-3 bg-gold/10 border border-gold/30 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">Logo</label>
-                        <p className="text-[10px] text-gray-500 mt-0.5">Sabit - Değiştirilemez</p>
+                        <label className="block text-xs font-bold text-mocha-600">Logo</label>
+                        <p className="text-xs text-mocha-500 mt-0.5">Sabit - Değiştirilemez</p>
                       </div>
                       <span className="px-3 py-1 bg-gold/20 text-gold font-bold text-xs rounded-full">Santana</span>
                     </div>
@@ -607,15 +607,15 @@ export const TypographyTab: React.FC = () => {
 
         {/* Right: Preview */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-cream-200 overflow-hidden">
             {/* Preview Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <div className="flex border-b border-cream-200">
               <button
                 onClick={() => setActivePreviewTab('scale')}
                 className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${
                   activePreviewTab === 'scale'
                     ? 'bg-gold text-white'
-                    : 'bg-gray-50 dark:bg-dark-900 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700'
+                    : 'bg-cream-50 text-mocha-600 hover:bg-cream-100'
                 }`}
               >
                 Typography Scale
@@ -625,7 +625,7 @@ export const TypographyTab: React.FC = () => {
                 className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${
                   activePreviewTab === 'components'
                     ? 'bg-gold text-white'
-                    : 'bg-gray-50 dark:bg-dark-900 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700'
+                    : 'bg-cream-50 text-mocha-600 hover:bg-cream-100'
                 }`}
               >
                 Components
@@ -635,7 +635,7 @@ export const TypographyTab: React.FC = () => {
                 className={`flex-1 px-4 py-3 text-sm font-bold transition-colors ${
                   activePreviewTab === 'pages'
                     ? 'bg-gold text-white'
-                    : 'bg-gray-50 dark:bg-dark-900 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700'
+                    : 'bg-cream-50 text-mocha-600 hover:bg-cream-100'
                 }`}
               >
                 Pages
@@ -681,11 +681,11 @@ const MiniFontSelector: React.FC<{
 
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+      <label className="block text-xs font-bold text-mocha-600 mb-1">{label}</label>
       <select
         value={font.family}
         onChange={(e) => handleChange(e.target.value)}
-        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+        className="w-full px-3 py-2 text-sm rounded-lg border border-cream-200 bg-white"
       >
         {customFonts.length > 0 && (
           <optgroup label="⭐ Custom Fonts">
@@ -711,42 +711,42 @@ const MiniFontSelector: React.FC<{
 const FontSizeControl: React.FC<{ label: string; value: ResponsiveFontSize; onChange: (device: 'desktop' | 'tablet' | 'mobile', val: string) => void }> = ({ label, value, onChange }) => {
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">{label}</label>
+      <label className="block text-xs font-bold text-mocha-600 mb-2">{label}</label>
       <div className="grid grid-cols-3 gap-2">
         <div>
           <div className="flex items-center gap-1 mb-1">
-            <Monitor size={12} className="text-gray-400" />
-            <span className="text-[10px] text-gray-500">Desktop</span>
+            <Monitor size={12} className="text-mocha-400" />
+            <span className="text-xs text-mocha-500">Desktop</span>
           </div>
           <input
             type="text"
             value={value.desktop}
             onChange={(e) => onChange('desktop', e.target.value)}
-            className="w-full px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+            className="w-full px-2 py-1 text-xs rounded border border-cream-200 bg-white"
           />
         </div>
         <div>
           <div className="flex items-center gap-1 mb-1">
-            <Tablet size={12} className="text-gray-400" />
-            <span className="text-[10px] text-gray-500">Tablet</span>
+            <Tablet size={12} className="text-mocha-400" />
+            <span className="text-xs text-mocha-500">Tablet</span>
           </div>
           <input
             type="text"
             value={value.tablet}
             onChange={(e) => onChange('tablet', e.target.value)}
-            className="w-full px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+            className="w-full px-2 py-1 text-xs rounded border border-cream-200 bg-white"
           />
         </div>
         <div>
           <div className="flex items-center gap-1 mb-1">
-            <Smartphone size={12} className="text-gray-400" />
-            <span className="text-[10px] text-gray-500">Mobile</span>
+            <Smartphone size={12} className="text-mocha-400" />
+            <span className="text-xs text-mocha-500">Mobile</span>
           </div>
           <input
             type="text"
             value={value.mobile}
             onChange={(e) => onChange('mobile', e.target.value)}
-            className="w-full px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+            className="w-full px-2 py-1 text-xs rounded border border-cream-200 bg-white"
           />
         </div>
       </div>
@@ -768,11 +768,11 @@ const WeightSelector: React.FC<{ label: string; value: number; onChange: (val: n
 
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+      <label className="block text-xs font-bold text-mocha-600 mb-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+        className="w-full px-3 py-2 text-sm rounded-lg border border-cream-200 bg-white"
       >
         {weights.map(w => (
           <option key={w.value} value={w.value}>{w.label}</option>
@@ -797,11 +797,11 @@ const LetterSpacingSelector: React.FC<{ label: string; value: string; onChange: 
 
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+      <label className="block text-xs font-bold text-mocha-600 mb-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+        className="w-full px-3 py-2 text-sm rounded-lg border border-cream-200 bg-white"
       >
         {spacings.map(s => (
           <option key={s.value} value={s.value}>{s.label}</option>
@@ -827,11 +827,11 @@ const LineHeightSelector: React.FC<{ label: string; value: number; onChange: (va
 
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+      <label className="block text-xs font-bold text-mocha-600 mb-1">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900"
+        className="w-full px-3 py-2 text-sm rounded-lg border border-cream-200 bg-white"
       >
         {lineHeights.map(lh => (
           <option key={lh.value} value={lh.value}>{lh.label}</option>
@@ -845,19 +845,19 @@ const LineHeightSelector: React.FC<{ label: string; value: number; onChange: (va
 const ColorPicker: React.FC<{ label: string; value: string; onChange: (val: string) => void }> = ({ label, value, onChange }) => {
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+      <label className="block text-xs font-bold text-mocha-600 mb-1">{label}</label>
       <div className="flex gap-2">
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-10 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+          className="w-10 h-8 rounded border border-cream-200 cursor-pointer"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-900 font-mono"
+          className="flex-1 px-2 py-1 text-xs rounded border border-cream-200 bg-white font-mono"
         />
       </div>
     </div>
@@ -867,12 +867,12 @@ const ColorPicker: React.FC<{ label: string; value: string; onChange: (val: stri
 // Collapsible Section
 const CollapsibleSection: React.FC<{ title: string; isExpanded: boolean; onToggle: () => void; children: React.ReactNode }> = ({ title, isExpanded, onToggle, children }) => {
   return (
-    <div className="bg-white dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white rounded-xl border border-cream-200 overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-dark-900 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-cream-50 hover:bg-cream-100 transition-colors"
       >
-        <span className="text-sm font-bold text-gray-900 dark:text-white">{title}</span>
+        <span className="text-sm font-bold text-mocha-900">{title}</span>
         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
       {isExpanded && <div className="p-4">{children}</div>}
@@ -942,7 +942,7 @@ const ComponentPreview: React.FC<{ settings: TypographySettings }> = ({ settings
     <div className="space-y-6">
       {/* Buttons */}
       <div>
-        <p className="text-xs font-bold text-gray-500 mb-2">BUTONLAR</p>
+        <p className="text-xs font-bold text-mocha-500 mb-2">BUTONLAR</p>
         <div className="flex gap-3">
           <button
             style={{
@@ -975,9 +975,9 @@ const ComponentPreview: React.FC<{ settings: TypographySettings }> = ({ settings
 
       {/* Product Card */}
       <div>
-        <p className="text-xs font-bold text-gray-500 mb-2">ÜRÜN KARTI</p>
-        <div className="bg-cream-50 dark:bg-dark-900 p-4 rounded-xl max-w-xs">
-          <div className="bg-gray-200 dark:bg-gray-700 h-40 rounded-lg mb-3"></div>
+        <p className="text-xs font-bold text-mocha-500 mb-2">ÜRÜN KARTI</p>
+        <div className="bg-cream-50 p-4 rounded-xl max-w-xs">
+          <div className="bg-cream-200 h-40 rounded-lg mb-3"></div>
           <h3
             style={{
               fontFamily: `${settings.h4Font.family}, ${settings.h4Font.fallback}`,
@@ -998,7 +998,7 @@ const ComponentPreview: React.FC<{ settings: TypographySettings }> = ({ settings
               letterSpacing: settings.elementLetterSpacing.body,
               lineHeight: settings.elementLineHeight.body
             }}
-            className="text-gray-500 mb-3"
+            className="text-mocha-500 mb-3"
           >
             Egzotik meyvemsi notalar
           </p>
@@ -1019,9 +1019,9 @@ const ComponentPreview: React.FC<{ settings: TypographySettings }> = ({ settings
 // Page Preview - Mini E-ticaret Sayfası Mockup
 const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) => {
   return (
-    <div className="bg-cream-100 dark:bg-dark-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div className="bg-cream-100 rounded-xl overflow-hidden border border-cream-200">
       {/* Mini Header/Nav */}
-      <div className="bg-white dark:bg-dark-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <div className="bg-white px-4 py-3 border-b border-cream-200 flex items-center justify-between">
         <div style={{
           fontFamily: `${settings.logoFont.family}, ${settings.logoFont.fallback}`,
           fontSize: '18px',
@@ -1041,7 +1041,7 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
       </div>
 
       {/* Mini Hero Section */}
-      <div className="bg-gradient-to-br from-cream-50 to-mocha-50 dark:from-dark-900 dark:to-dark-800 px-6 py-8 text-center">
+      <div className="bg-gradient-to-br from-cream-50 to-mocha-50 px-6 py-8 text-center">
         <h1 style={{
           fontFamily: `${settings.h1Font.family}, ${settings.h1Font.fallback}`,
           fontSize: settings.fontSize.h2.desktop,
@@ -1057,7 +1057,7 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
           fontWeight: settings.elementWeights.body,
           letterSpacing: settings.elementLetterSpacing.body,
           lineHeight: settings.elementLineHeight.body
-        }} className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
+        }} className="text-mocha-600 mb-4 max-w-md mx-auto">
           Dünya çapında seçilmiş kakao çekirdeklerinden üretilen premium çikolatalar
         </p>
         <button style={{
@@ -1085,8 +1085,8 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
         </h3>
         <div className="grid grid-cols-3 gap-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-dark-800 rounded-lg p-2">
-              <div className="bg-gray-200 dark:bg-gray-700 h-20 rounded mb-2"></div>
+            <div key={i} className="bg-white rounded-lg p-2">
+              <div className="bg-cream-200 h-20 rounded mb-2"></div>
               <h4 style={{
                 fontFamily: `${settings.h4Font.family}, ${settings.h4Font.fallback}`,
                 fontSize: '11px',
@@ -1101,7 +1101,7 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
                 fontSize: '9px',
                 fontWeight: settings.elementWeights.body,
                 letterSpacing: settings.elementLetterSpacing.body
-              }} className="text-gray-500 dark:text-gray-400 text-[9px] mb-2">
+              }} className="text-mocha-500 text-xs mb-2">
                 Egzotik meyvemsi
               </p>
               <div className="flex items-center justify-between">
@@ -1109,7 +1109,7 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
                   fontSize: '10px',
                   fontWeight: settings.elementWeights.body
                 }} className="font-bold">₺399</span>
-                <button className="w-5 h-5 bg-gold text-white rounded-full text-[10px]">+</button>
+                <button className="w-5 h-5 bg-gold text-white rounded-full text-xs">+</button>
               </div>
             </div>
           ))}
@@ -1117,7 +1117,7 @@ const PagePreview: React.FC<{ settings: TypographySettings }> = ({ settings }) =
       </div>
 
       {/* Mini Footer */}
-      <div className="bg-mocha-900 dark:bg-black px-4 py-3 text-center">
+      <div className="bg-mocha-900 px-4 py-3 text-center">
         <p style={{
           fontFamily: `${settings.bodyFont.family}, ${settings.bodyFont.fallback}`,
           fontSize: '9px',

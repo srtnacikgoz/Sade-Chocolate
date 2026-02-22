@@ -10,14 +10,17 @@ export default {
           50: "#FFFEFA", // Çok açık fildişi
           100: "#FDFCF0", // Sıcak krem
           200: "#F5F5DC", // Ana arka plan (Bej)
+          300: "#E8E4D4", // Krem border/divider
         },
         mocha: {
           50: "#EFEBE9",
           100: "#D7CCC8",
           200: "#BCAAA4",
+          300: "#A1887F", // Orta kahve
           400: "#8D6E63",
           600: "#6D4C41", // Orta-koyu kahve
           700: "#5D4037", // Koyu kahve
+          800: "#4E342E", // Çok koyu kahve
           900: "#4B3832", // Derin çikolata (Ana metin rengi)
         },
         gold: {

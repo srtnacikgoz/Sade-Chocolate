@@ -280,8 +280,8 @@ export const TasteQuizTab: React.FC = () => {
           onClick={() => setActiveSection('results')}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
             activeSection === 'results'
-              ? 'bg-brown-900 text-white shadow-lg'
-              : 'bg-white text-gray-500 hover:bg-gray-50'
+              ? 'bg-mocha-900 text-white shadow-sm'
+              : 'bg-white text-mocha-500 hover:bg-cream-50'
           }`}
         >
           <Users size={18} />
@@ -291,8 +291,8 @@ export const TasteQuizTab: React.FC = () => {
           onClick={() => setActiveSection('stats')}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
             activeSection === 'stats'
-              ? 'bg-brown-900 text-white shadow-lg'
-              : 'bg-white text-gray-500 hover:bg-gray-50'
+              ? 'bg-mocha-900 text-white shadow-sm'
+              : 'bg-white text-mocha-500 hover:bg-cream-50'
           }`}
         >
           <PieChart size={18} />
@@ -302,8 +302,8 @@ export const TasteQuizTab: React.FC = () => {
           onClick={() => setActiveSection('settings')}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
             activeSection === 'settings'
-              ? 'bg-brown-900 text-white shadow-lg'
-              : 'bg-white text-gray-500 hover:bg-gray-50'
+              ? 'bg-mocha-900 text-white shadow-sm'
+              : 'bg-white text-mocha-500 hover:bg-cream-50'
           }`}
         >
           <Settings size={18} />
@@ -313,24 +313,24 @@ export const TasteQuizTab: React.FC = () => {
 
       {/* Results Section */}
       {activeSection === 'results' && (
-        <div className="bg-white rounded-[32px] border border-gray-200/60 p-8">
+        <div className="bg-white rounded-xl border border-cream-200 p-8">
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4 mb-6">
             <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-mocha-400" size={18} />
               <input
                 type="text"
                 placeholder="Email veya ID ile ara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-brown-900/20"
+                className="w-full pl-12 pr-4 py-3 bg-cream-50 rounded-xl border-none focus:ring-2 focus:ring-brown-900/20"
               />
             </div>
 
             <select
               value={segmentFilter}
               onChange={(e) => setSegmentFilter(e.target.value as CustomerSegment | 'all')}
-              className="px-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-brown-900/20"
+              className="px-4 py-3 bg-cream-50 rounded-xl border-none focus:ring-2 focus:ring-brown-900/20"
             >
               <option value="all">Tüm Segmentler</option>
               {Object.entries(SEGMENT_LABELS).map(([key, label]) => (
@@ -353,7 +353,7 @@ export const TasteQuizTab: React.FC = () => {
               <div className="w-8 h-8 border-4 border-mocha-200 border-t-brown-900 rounded-full animate-spin" />
             </div>
           ) : filteredProfiles.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-mocha-400">
               {profiles.length === 0 ? 'Henüz quiz sonucu bulunmuyor' : 'Filtrelere uygun sonuç bulunamadı'}
             </div>
           ) : (
@@ -361,11 +361,11 @@ export const TasteQuizTab: React.FC = () => {
               {filteredProfiles.map(profile => (
                 <div
                   key={profile.id}
-                  className="bg-gray-50 rounded-2xl overflow-hidden"
+                  className="bg-cream-50 rounded-2xl overflow-hidden"
                 >
                   {/* Profile Row */}
                   <div
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-cream-100 transition-colors"
                     onClick={() => setExpandedProfile(expandedProfile === profile.id ? null : profile.id)}
                   >
                     <div className="flex items-center gap-4">
@@ -373,10 +373,10 @@ export const TasteQuizTab: React.FC = () => {
                         <span className="text-lg">🍫</span>
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-mocha-900">
                           {profile.customerName || profile.customerEmail || profile.id.slice(0, 8)}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-mocha-400">
                           {new Date(profile.updatedAt).toLocaleDateString('tr-TR')}
                         </p>
                       </div>
@@ -394,7 +394,7 @@ export const TasteQuizTab: React.FC = () => {
                           </span>
                         ))}
                         {profile.segments.length > 2 && (
-                          <span className="px-2 py-1 bg-gray-200 text-gray-600 rounded-full text-xs">
+                          <span className="px-2 py-1 bg-cream-200 text-mocha-600 rounded-full text-xs">
                             +{profile.segments.length - 2}
                           </span>
                         )}
@@ -403,7 +403,7 @@ export const TasteQuizTab: React.FC = () => {
                       {/* Actions */}
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteProfile(profile.id); }}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                        className="p-2 text-mocha-400 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -414,12 +414,12 @@ export const TasteQuizTab: React.FC = () => {
 
                   {/* Expanded Details */}
                   {expandedProfile === profile.id && (
-                    <div className="px-4 pb-4 border-t border-gray-200 bg-white">
+                    <div className="px-4 pb-4 border-t border-cream-200 bg-white">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4">
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">Kakao Yoğunluğu</p>
+                          <p className="text-xs text-mocha-400 mb-1">Kakao Yoğunluğu</p>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-cream-200 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-brown-900 rounded-full"
                                 style={{ width: `${(profile.preferences?.cacaoIntensity || 1) * 20}%` }}
@@ -432,9 +432,9 @@ export const TasteQuizTab: React.FC = () => {
                         </div>
 
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">Tatlılık Seviyesi</p>
+                          <p className="text-xs text-mocha-400 mb-1">Tatlılık Seviyesi</p>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-cream-200 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-gold rounded-full"
                                 style={{ width: `${(profile.preferences?.sweetnessLevel || 1) * 20}%` }}
@@ -447,9 +447,9 @@ export const TasteQuizTab: React.FC = () => {
                         </div>
 
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">Maceracılık</p>
+                          <p className="text-xs text-mocha-400 mb-1">Maceracılık</p>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-cream-200 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-purple-500 rounded-full"
                                 style={{ width: `${(profile.preferences?.adventurousness || 1) * 20}%` }}
@@ -462,7 +462,7 @@ export const TasteQuizTab: React.FC = () => {
                         </div>
 
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">Doku Tercihi</p>
+                          <p className="text-xs text-mocha-400 mb-1">Doku Tercihi</p>
                           <p className="font-semibold text-gray-700">
                             {profile.preferences?.texturePreference === 'smooth' ? 'Pürüzsüz' :
                              profile.preferences?.texturePreference === 'crunchy' ? 'Çıtır' :
@@ -473,8 +473,8 @@ export const TasteQuizTab: React.FC = () => {
 
                       {/* Flavor Notes */}
                       {profile.preferences?.flavorNotes && profile.preferences.flavorNotes.length > 0 && (
-                        <div className="pt-3 border-t border-gray-100">
-                          <p className="text-xs text-gray-400 mb-2">Tercih Edilen Lezzet Notaları</p>
+                        <div className="pt-3 border-t border-cream-200">
+                          <p className="text-xs text-mocha-400 mb-2">Tercih Edilen Lezzet Notaları</p>
                           <div className="flex flex-wrap gap-2">
                             {profile.preferences.flavorNotes.map(note => (
                               <span
@@ -508,8 +508,8 @@ export const TasteQuizTab: React.FC = () => {
       {activeSection === 'stats' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Overview */}
-          <div className="bg-white rounded-[32px] border border-gray-200/60 p-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Genel Bakış</h3>
+          <div className="bg-white rounded-xl border border-cream-200 p-8">
+            <h3 className="text-lg font-bold text-mocha-900 mb-6">Genel Bakış</h3>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-mocha-50 rounded-2xl p-4 text-center">
@@ -537,8 +537,8 @@ export const TasteQuizTab: React.FC = () => {
           </div>
 
           {/* Segment Distribution */}
-          <div className="bg-white rounded-[32px] border border-gray-200/60 p-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Segment Dağılımı</h3>
+          <div className="bg-white rounded-xl border border-cream-200 p-8">
+            <h3 className="text-lg font-bold text-mocha-900 mb-6">Segment Dağılımı</h3>
 
             <div className="space-y-3">
               {Object.entries(stats.segmentCounts)
@@ -550,30 +550,30 @@ export const TasteQuizTab: React.FC = () => {
                         <span className="text-sm font-medium text-gray-700">
                           {SEGMENT_LABELS[segment as CustomerSegment]}
                         </span>
-                        <span className="text-sm text-gray-500">{count}</span>
+                        <span className="text-sm text-mocha-500">{count}</span>
                       </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-cream-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-mocha-400 to-brown-900 rounded-full transition-all"
                           style={{ width: `${(count / stats.totalProfiles) * 100}%` }}
                         />
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400 w-12 text-right">
+                    <span className="text-xs text-mocha-400 w-12 text-right">
                       {stats.totalProfiles > 0 ? Math.round((count / stats.totalProfiles) * 100) : 0}%
                     </span>
                   </div>
                 ))}
 
               {Object.keys(stats.segmentCounts).length === 0 && (
-                <p className="text-center text-gray-400 py-4">Henüz veri yok</p>
+                <p className="text-center text-mocha-400 py-4">Henüz veri yok</p>
               )}
             </div>
           </div>
 
           {/* Popular Flavor Notes */}
-          <div className="bg-white rounded-[32px] border border-gray-200/60 p-8 md:col-span-2">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">Popüler Lezzet Notaları</h3>
+          <div className="bg-white rounded-xl border border-cream-200 p-6 md:col-span-2">
+            <h3 className="text-lg font-bold text-mocha-900 mb-6">Popüler Lezzet Notaları</h3>
 
             <div className="flex flex-wrap gap-3">
               {Object.entries(stats.popularFlavorNotes)
@@ -581,7 +581,7 @@ export const TasteQuizTab: React.FC = () => {
                 .map(([note, count]) => (
                   <div
                     key={note}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cream-50 to-cream-100 rounded-full"
+                    className="flex items-center gap-2 px-4 py-2 bg-cream-50 rounded-full"
                   >
                     <span className="font-medium text-mocha-900">
                       {FLAVOR_LABELS[note as FlavorNote]}
@@ -593,7 +593,7 @@ export const TasteQuizTab: React.FC = () => {
                 ))}
 
               {Object.keys(stats.popularFlavorNotes).length === 0 && (
-                <p className="text-gray-400">Henüz veri yok</p>
+                <p className="text-mocha-400">Henüz veri yok</p>
               )}
             </div>
           </div>
@@ -602,9 +602,9 @@ export const TasteQuizTab: React.FC = () => {
 
       {/* Settings Section */}
       {activeSection === 'settings' && (
-        <div className="bg-white rounded-[32px] border border-gray-200/60 p-8">
+        <div className="bg-white rounded-xl border border-cream-200 p-8">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-gray-900">Quiz Ayarları</h3>
+            <h3 className="text-lg font-bold text-mocha-900">Quiz Ayarları</h3>
             <button
               onClick={handleSaveConfig}
               className="flex items-center gap-2 px-6 py-3 bg-brown-900 text-white rounded-xl hover:bg-black transition-colors"
@@ -615,13 +615,13 @@ export const TasteQuizTab: React.FC = () => {
           </div>
 
           {/* Quick Settings */}
-          <div className="flex gap-6 mb-8 pb-8 border-b border-gray-100">
+          <div className="flex gap-6 mb-8 pb-8 border-b border-cream-200">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={quizConfig.isActive}
                 onChange={(e) => setQuizConfig({ ...quizConfig, isActive: e.target.checked })}
-                className="w-5 h-5 rounded-lg border-gray-300 text-mocha-400 focus:ring-brown-900"
+                className="w-5 h-5 rounded-lg border-cream-300 text-mocha-400 focus:ring-brown-900"
               />
               <span className="text-sm font-medium text-gray-700">Quiz Aktif</span>
             </label>
@@ -631,7 +631,7 @@ export const TasteQuizTab: React.FC = () => {
                 type="checkbox"
                 checked={quizConfig.showOnHomepage}
                 onChange={(e) => setQuizConfig({ ...quizConfig, showOnHomepage: e.target.checked })}
-                className="w-5 h-5 rounded-lg border-gray-300 text-mocha-400 focus:ring-brown-900"
+                className="w-5 h-5 rounded-lg border-cream-300 text-mocha-400 focus:ring-brown-900"
               />
               <span className="text-sm font-medium text-gray-700">Ana Sayfada Göster</span>
             </label>
@@ -640,7 +640,7 @@ export const TasteQuizTab: React.FC = () => {
           {/* Questions */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Quiz Soruları</h4>
+              <h4 className="text-sm font-bold text-mocha-500 uppercase tracking-wider">Quiz Soruları</h4>
               <button
                 onClick={() => {
                   const newQuestion: TastingQuestion = {
@@ -669,7 +669,7 @@ export const TasteQuizTab: React.FC = () => {
             {quizConfig.questions.map((question, index) => (
               <div
                 key={question.id}
-                className="bg-gray-50 rounded-2xl p-6"
+                className="bg-cream-50 rounded-2xl p-6"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -688,7 +688,7 @@ export const TasteQuizTab: React.FC = () => {
                         <option value="multiple">Çoklu Seçim</option>
                         <option value="rating">Değerlendirme</option>
                       </select>
-                      <span className="text-xs text-gray-400">#{index + 1}</span>
+                      <span className="text-xs text-mocha-400">#{index + 1}</span>
                     </div>
 
                     {editingQuestion === question.id ? (
@@ -701,7 +701,7 @@ export const TasteQuizTab: React.FC = () => {
                             updated[index].question = e.target.value;
                             setQuizConfig({ ...quizConfig, questions: updated });
                           }}
-                          className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-brown-900/20"
+                          className="w-full px-4 py-2 bg-white rounded-xl border border-cream-200 focus:ring-2 focus:ring-brown-900/20"
                           placeholder="Soru metni"
                         />
                         <input
@@ -712,15 +712,15 @@ export const TasteQuizTab: React.FC = () => {
                             updated[index].description = e.target.value;
                             setQuizConfig({ ...quizConfig, questions: updated });
                           }}
-                          className="w-full px-4 py-2 bg-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-brown-900/20 text-sm"
+                          className="w-full px-4 py-2 bg-white rounded-xl border border-cream-200 focus:ring-2 focus:ring-brown-900/20 text-sm"
                           placeholder="Açıklama (opsiyonel)"
                         />
 
                         {/* Seçenek düzenleme - Tekli/Çoklu seçim için */}
                         {(question.type === 'single' || question.type === 'multiple') && (
-                          <div className="mt-4 p-4 bg-gray-100 rounded-xl">
+                          <div className="mt-4 p-4 bg-cream-100 rounded-xl">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-xs font-bold text-gray-500 uppercase">Seçenekler</span>
+                              <span className="text-xs font-bold text-mocha-500 uppercase">Seçenekler</span>
                               <button
                                 onClick={() => {
                                   const updated = [...quizConfig.questions];
@@ -750,7 +750,7 @@ export const TasteQuizTab: React.FC = () => {
                                       updated[index].options![optIndex].icon = e.target.value;
                                       setQuizConfig({ ...quizConfig, questions: updated });
                                     }}
-                                    className="w-12 px-2 py-1.5 bg-white rounded-lg border border-gray-200 text-center text-sm"
+                                    className="w-12 px-2 py-1.5 bg-white rounded-lg border border-cream-200 text-center text-sm"
                                     placeholder="🔹"
                                   />
                                   <input
@@ -761,7 +761,7 @@ export const TasteQuizTab: React.FC = () => {
                                       updated[index].options![optIndex].label = e.target.value;
                                       setQuizConfig({ ...quizConfig, questions: updated });
                                     }}
-                                    className="flex-1 px-3 py-1.5 bg-white rounded-lg border border-gray-200 text-sm"
+                                    className="flex-1 px-3 py-1.5 bg-white rounded-lg border border-cream-200 text-sm"
                                     placeholder="Seçenek adı"
                                   />
                                   <button
@@ -770,14 +770,14 @@ export const TasteQuizTab: React.FC = () => {
                                       updated[index].options = updated[index].options!.filter((_, i) => i !== optIndex);
                                       setQuizConfig({ ...quizConfig, questions: updated });
                                     }}
-                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="p-1.5 text-mocha-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                   >
                                     <Trash2 size={14} />
                                   </button>
                                 </div>
                               ))}
                               {(!question.options || question.options.length === 0) && (
-                                <p className="text-xs text-gray-400 text-center py-2">Henüz seçenek eklenmemiş</p>
+                                <p className="text-xs text-mocha-400 text-center py-2">Henüz seçenek eklenmemiş</p>
                               )}
                             </div>
                           </div>
@@ -785,9 +785,9 @@ export const TasteQuizTab: React.FC = () => {
                       </div>
                     ) : (
                       <>
-                        <p className="font-semibold text-gray-900">{question.question}</p>
+                        <p className="font-semibold text-mocha-900">{question.question}</p>
                         {question.description && (
-                          <p className="text-sm text-gray-500 mt-1">{question.description}</p>
+                          <p className="text-sm text-mocha-500 mt-1">{question.description}</p>
                         )}
                       </>
                     )}
@@ -798,7 +798,7 @@ export const TasteQuizTab: React.FC = () => {
                         {question.options.map(opt => (
                           <span
                             key={opt.value}
-                            className="px-3 py-1 bg-white rounded-full text-xs text-gray-600 border border-gray-200"
+                            className="px-3 py-1 bg-white rounded-full text-xs text-mocha-600 border border-cream-200"
                           >
                             {opt.icon} {opt.label}
                           </span>
@@ -813,7 +813,7 @@ export const TasteQuizTab: React.FC = () => {
                       className={`p-2 rounded-lg transition-colors ${
                         editingQuestion === question.id
                           ? 'bg-brown-100 text-brown-700'
-                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                          : 'text-mocha-400 hover:text-mocha-600 hover:bg-cream-100'
                       }`}
                       title={editingQuestion === question.id ? 'Kaydet' : 'Düzenle'}
                     >
@@ -827,7 +827,7 @@ export const TasteQuizTab: React.FC = () => {
                           toast.success('Soru silindi');
                         }
                       }}
-                      className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-2 rounded-lg text-mocha-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       title="Sil"
                     >
                       <Trash2 size={18} />
@@ -838,14 +838,14 @@ export const TasteQuizTab: React.FC = () => {
             ))}
 
             {quizConfig.questions.length === 0 && (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-mocha-400">
                 Henüz soru eklenmemiş. Yukarıdaki butona tıklayarak yeni soru ekleyin.
               </div>
             )}
           </div>
 
           {/* Last Updated */}
-          <p className="text-xs text-gray-400 mt-6 text-right">
+          <p className="text-xs text-mocha-400 mt-6 text-right">
             Son güncelleme: {new Date(quizConfig.updatedAt).toLocaleString('tr-TR')}
           </p>
         </div>

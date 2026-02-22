@@ -95,12 +95,12 @@ const EftCountdown = ({ deadline, compact = false }: { deadline: string; compact
   }
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isUrgent ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'}`}>
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isUrgent ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
       <Clock size={14} className={isUrgent ? 'text-red-500' : 'text-amber-500'} />
       <span className={`font-mono font-bold ${isUrgent ? 'text-red-600' : 'text-amber-600'}`}>
         {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
       </span>
-      <span className={`text-[10px] ${isUrgent ? 'text-red-500' : 'text-amber-500'}`}>kaldı</span>
+      <span className={`text-xs ${isUrgent ? 'text-red-500' : 'text-amber-500'}`}>kaldı</span>
     </div>
   );
 };
@@ -133,11 +133,11 @@ const StatusBadge = ({ status }: { status: Order['status'] | string }) => {
     'Refunded': 'İade Edildi'
   };
 
-  const style = styles[status] || 'bg-gray-100 text-gray-700 border-gray-300';
+  const style = styles[status] || 'bg-cream-100 text-mocha-700 border-cream-200';
   const label = labels[status] || status;
 
   return (
-    <span className={`text-[9px] uppercase tracking-widest px-2 py-1 rounded-full border font-bold ${style}`}>
+    <span className={`text-xs uppercase tracking-wider px-2 py-1 rounded-full border font-bold ${style}`}>
       {label}
     </span>
   );
@@ -156,82 +156,82 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-[32px] shadow-2xl">
+      <div className="relative bg-white w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-xl shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Sipariş Onayı Gönder</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Sipariş Onayı Gönder</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Müşteriye sipariş onay e-postası gönderilecek</p>
+          <p className="text-xs text-mocha-500">Müşteriye sipariş onay e-postası gönderilecek</p>
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)] space-y-6">
           {/* Recipient */}
-          <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-2">Alıcı</p>
+          <div className="p-4 bg-cream-50 rounded-2xl border border-cream-200">
+            <p className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-2">Alıcı</p>
             <div className="flex items-center gap-3">
               <Mail size={16} className="text-brand-blue" />
               <div>
-                <p className="text-sm font-medium text-brown-900 dark:text-white">{order.customer?.name || 'İsimsiz Müşteri'}</p>
-                <p className="text-xs text-gray-500">{order.customer?.email || 'Email Yok'}</p>
+                <p className="text-sm font-medium text-mocha-900">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                <p className="text-xs text-mocha-500">{order.customer?.email || 'Email Yok'}</p>
               </div>
             </div>
           </div>
 
           {/* Email Preview */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-lg">
+          <div className="border border-cream-200 rounded-2xl overflow-hidden shadow-sm">
             {/* Email Header */}
             <div className="bg-gradient-to-r from-brand-mustard to-brand-orange p-6 text-center">
-              <h4 className="font-display text-2xl text-white italic mb-1">Sade Chocolate</h4>
-              <p className="text-xs text-white/80 uppercase tracking-widest">Handcrafted Excellence</p>
+              <h4 className="text-xl font-semibold text-white mb-1">Sade Chocolate</h4>
+              <p className="text-xs text-white/80 uppercase tracking-wider">Handcrafted Excellence</p>
             </div>
 
             {/* Email Body */}
-            <div className="p-6 bg-white dark:bg-dark-800 space-y-5">
+            <div className="p-6 bg-white space-y-5">
               {/* Greeting */}
               <div>
-                <p className="text-base font-medium text-brown-900 dark:text-white mb-2">Merhaba {(order.customer?.name || '').split(' ')[0] || 'Değerli Müşterimiz'},</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-base font-medium text-mocha-900 mb-2">Merhaba {(order.customer?.name || '').split(' ')[0] || 'Değerli Müşterimiz'},</p>
+                <p className="text-sm text-mocha-600 leading-relaxed">
                   Siparişiniz başarıyla alındı ve işleme başlandı! Özenle hazırlayacağımız çikolatalarınız kısa süre içinde kapınıza ulaşacak.
                 </p>
               </div>
 
               {/* Order Summary */}
-              <div className="p-5 bg-gradient-to-br from-cream-100 to-brand-peach/10 dark:from-dark-900 dark:to-brand-peach/5 rounded-2xl border border-brand-peach/30">
+              <div className="p-5 bg-gradient-to-br from-cream-100 to-brand-peach/10 rounded-2xl border border-brand-peach/30">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-[10px] uppercase tracking-widest text-brand-mustard font-bold">Sipariş Detayları</p>
-                  <p className="text-xs font-mono font-bold text-brown-900 dark:text-white">#{order.orderNumber || order.id}</p>
+                  <p className="text-xs uppercase tracking-wider text-brand-mustard font-bold">Sipariş Detayları</p>
+                  <p className="text-xs font-mono font-bold text-mocha-900">#{order.orderNumber || order.id}</p>
                 </div>
 
                 <div className="space-y-3 mb-4">
                   {(order.items || []).map((item) => (
                     <div key={item.id} className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden shadow-sm">
                         {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : '🍫'}
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs font-medium text-brown-900 dark:text-white">{item.name}</p>
-                        <p className="text-[10px] text-gray-500">Adet: {item.quantity}</p>
+                        <p className="text-xs font-medium text-mocha-900">{item.name}</p>
+                        <p className="text-xs text-mocha-500">Adet: {item.quantity}</p>
                       </div>
-                      <p className="text-sm font-bold text-brown-900 dark:text-white">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</p>
+                      <p className="text-sm font-bold text-mocha-900">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</p>
                     </div>
                   ))}
                 </div>
 
                 <div className="pt-3 border-t border-brand-peach/50 space-y-1">
-                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                  <div className="flex justify-between text-xs text-mocha-600">
                     <span>Ara Toplam</span>
                     <span>₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                  <div className="flex justify-between text-xs text-mocha-600">
                     <span>Kargo</span>
                     <span>₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
                   </div>
-                  <div className="flex justify-between text-base font-bold text-brown-900 dark:text-white pt-2 border-t border-brand-peach/50">
+                  <div className="flex justify-between text-base font-bold text-mocha-900 pt-2 border-t border-brand-peach/50">
                     <span>Toplam</span>
                     <span className="text-brand-mustard">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
                   </div>
@@ -239,12 +239,12 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
               </div>
 
               {/* Shipping Info */}
-              <div className="p-4 bg-brand-blue/10 dark:bg-brand-blue/5 rounded-xl border border-brand-blue/30">
+              <div className="p-4 bg-brand-blue/10 rounded-xl border border-brand-blue/30">
                 <div className="flex items-start gap-3">
                   <Truck size={20} className="text-brand-blue shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-brown-900 dark:text-white mb-1">Teslimat Bilgileri</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{order.shipping?.address || 'Adres yok'}, {order.shipping?.city || 'Şehir yok'}</p>
+                    <p className="text-xs font-bold text-mocha-900 mb-1">Teslimat Bilgileri</p>
+                    <p className="text-xs text-mocha-600 mb-1">{order.shipping?.address || 'Adres yok'}, {order.shipping?.city || 'Şehir yok'}</p>
                     <p className="text-xs text-brand-blue font-medium">
                       Tahmini Teslimat: {order.shipping?.estimatedDate || 'Belirtilmemiş'}
                     </p>
@@ -254,20 +254,20 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
 
               {/* Logistics Info */}
               {(order.logistics?.coldPackage || order.tempAlert) && (
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-200 dark:border-orange-800">
+                <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
                   <div className="flex items-start gap-3">
                     <Thermometer size={20} className="text-orange-600 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-xs font-bold text-orange-600 mb-1">Özel Lojistik Uyarısı</p>
                       {order.logistics?.coldPackage && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                        <p className="text-xs text-mocha-600 mb-1">
                           ❄️ Çikolatalarınız soğuk paket ile korunarak gönderilecektir.
                         </p>
                       )}
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-mocha-600">
                         🕐 Kargo Penceresi: {order.logistics?.shippingWindow || 'N/A'}
                       </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 italic">
+                      <p className="text-xs text-mocha-500 mt-2 italic">
                         Ürünleriniz kalitesini korumak için özel paketleme uygulanmaktadır.
                       </p>
                     </div>
@@ -277,12 +277,12 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
 
               {/* Gift Note */}
               {order.gift && order.giftNote && (
-                <div className="p-4 bg-brand-peach/20 dark:bg-brand-peach/10 rounded-xl border border-brand-peach">
+                <div className="p-4 bg-brand-peach/20 rounded-xl border border-brand-peach">
                   <div className="flex items-start gap-3">
                     <Gift size={20} className="text-brand-orange shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-xs font-bold text-brand-orange mb-1">Hediye Notu</p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 italic">"{order.giftNote}"</p>
+                      <p className="text-xs text-mocha-700 italic">"{order.giftNote}"</p>
                     </div>
                   </div>
                 </div>
@@ -290,19 +290,19 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
 
               {/* Special Notes */}
               {order.specialNotes && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                   <div className="flex items-start gap-3">
-                    <FileText size={20} className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <FileText size={20} className="text-blue-600 shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">Özel Not / Talimat</p>
-                      <p className="text-xs text-gray-700 dark:text-gray-300">{order.specialNotes}</p>
+                      <p className="text-xs font-bold text-blue-600 mb-1">Özel Not / Talimat</p>
+                      <p className="text-xs text-mocha-700">{order.specialNotes}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Track Order Button */}
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+              <div className="pt-4 border-t border-cream-200">
                 <a
                   href="#"
                   className="block w-full py-3 bg-brand-mustard hover:bg-brand-orange text-white text-center text-sm font-medium rounded-xl transition-colors"
@@ -312,16 +312,16 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
               </div>
 
               {/* Customer Service */}
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="pt-4 border-t border-cream-200 space-y-3">
+                <p className="text-xs text-mocha-600">
                   Sorularınız için bize ulaşabilirsiniz:
                 </p>
                 <div className="flex flex-col gap-2 text-xs">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-mocha-600">
                     <Mail size={14} className="text-brand-blue" />
                     <a href="mailto:info@sadechocolate.com" className="hover:text-brand-mustard">info@sadechocolate.com</a>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-mocha-600">
                     <Phone size={14} className="text-brand-green" />
                     <a href="tel:+902121234567" className="hover:text-brand-mustard">+90 (212) 123 45 67</a>
                   </div>
@@ -329,23 +329,23 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
               </div>
 
               {/* Signature */}
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-3">
+              <div className="pt-4 border-t border-cream-200">
+                <p className="text-xs text-mocha-500 italic mb-3">
                   Güzel tatlar dileriz,<br />
-                  <span className="font-medium text-brown-900 dark:text-white">Sade Chocolate Ekibi</span>
+                  <span className="font-medium text-mocha-900">Sade Chocolate Ekibi</span>
                 </p>
                 {/* Social Media */}
                 <div className="flex items-center gap-3">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Bizi Takip Edin:</p>
+                  <p className="text-xs text-mocha-400 uppercase tracking-wider">Bizi Takip Edin:</p>
                   <div className="flex gap-2">
                     <a href="#" className="w-6 h-6 bg-brand-peach rounded-full flex items-center justify-center hover:bg-brand-orange transition-colors">
-                      <span className="text-[10px]">📷</span>
+                      <span className="text-xs">📷</span>
                     </a>
                     <a href="#" className="w-6 h-6 bg-brand-blue rounded-full flex items-center justify-center hover:bg-brand-mustard transition-colors">
-                      <span className="text-[10px]">𝕏</span>
+                      <span className="text-xs">𝕏</span>
                     </a>
                     <a href="#" className="w-6 h-6 bg-brand-green rounded-full flex items-center justify-center hover:bg-brand-mustard transition-colors">
-                      <span className="text-[10px]">💼</span>
+                      <span className="text-xs">💼</span>
                     </a>
                   </div>
                 </div>
@@ -353,18 +353,18 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
             </div>
 
             {/* Email Footer */}
-            <div className="bg-gray-50 dark:bg-dark-900 p-4 text-center border-t border-gray-100 dark:border-gray-700">
-              <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Artisan • Handcrafted Excellence</p>
-              <p className="text-[9px] text-gray-400">© 2025 Sade Chocolate • İstanbul, Türkiye</p>
+            <div className="bg-cream-50 p-4 text-center border-t border-cream-200">
+              <p className="text-xs text-mocha-400 uppercase tracking-wider mb-1">Artisan • Handcrafted Excellence</p>
+              <p className="text-xs text-mocha-400">© 2025 Sade Chocolate • İstanbul, Türkiye</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             İptal
           </button>
@@ -425,20 +425,20 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[32px] shadow-2xl border-2 border-red-500">
+      <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl shadow-sm border-2 border-red-500">
         {/* Header */}
-        <div className="p-6 border-b border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20">
+        <div className="p-6 border-b border-red-200 bg-red-50">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
                 <XCircle size={24} className="text-white" />
               </div>
               <div>
-                <h3 className="text-2xl font-display text-red-900 dark:text-red-400 italic">Siparişi İptal Et</h3>
-                <p className="text-xs text-red-600 dark:text-red-400">Bu işlem geri alınamaz!</p>
+                <h3 className="text-2xl text-red-900 italic">Siparişi İptal Et</h3>
+                <p className="text-xs text-red-600">Bu işlem geri alınamaz!</p>
               </div>
             </div>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-100 transition-colors">
               <X size={20} className="text-red-600" />
             </button>
           </div>
@@ -447,12 +447,12 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-240px)] space-y-6">
           {/* Warning */}
-          <div className="p-4 bg-red-50 dark:bg-red-900/10 border-2 border-red-500 dark:border-red-800 rounded-2xl">
+          <div className="p-4 bg-red-50 border-2 border-red-500 rounded-2xl">
             <div className="flex items-start gap-3">
               <AlertTriangle size={24} className="text-red-600 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-red-900 dark:text-red-400 mb-2">DİKKAT: KRİTİK İŞLEM</p>
-                <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                <p className="text-sm font-bold text-red-900 mb-2">DİKKAT: KRİTİK İŞLEM</p>
+                <p className="text-xs text-red-700 leading-relaxed">
                   Sipariş #{order.id} kalıcı olarak iptal edilecektir. Bu işlem geri alınamaz.
                   Müşteri bilgilendirilecek ve ödeme iadesi işlemi başlatılacaktır.
                 </p>
@@ -461,27 +461,27 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
           </div>
 
           {/* Order Summary */}
-          <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">İptal Edilecek Sipariş</p>
+          <div className="p-4 bg-cream-50 rounded-2xl border border-cream-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">İptal Edilecek Sipariş</p>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-  <span className="text-gray-600 dark:text-gray-400">Müşteri:</span>
-  <span className="font-medium text-brown-900 dark:text-white">{order.customer?.name || 'İsimsiz'}</span>
+  <span className="text-mocha-600">Müşteri:</span>
+  <span className="font-medium text-mocha-900">{order.customer?.name || 'İsimsiz'}</span>
 </div>
 <div className="flex justify-between">
-  <span className="text-gray-600 dark:text-gray-400">Tutar:</span>
-  <span className="font-bold text-brown-900 dark:text-white">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
+  <span className="text-mocha-600">Tutar:</span>
+  <span className="font-bold text-mocha-900">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
 </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Durum:</span>
-                <span className="text-brown-900 dark:text-white">{order.status}</span>
+                <span className="text-mocha-600">Durum:</span>
+                <span className="text-mocha-900">{order.status}</span>
               </div>
             </div>
           </div>
 
           {/* Cancel Reason */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               İptal Nedeni *
             </label>
             <select
@@ -490,10 +490,10 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
                 setCancelReason(e.target.value);
                 setShowError(false);
               }}
-              className={`w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 ${
+              className={`w-full px-4 py-3 bg-cream-50 border rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-red-500 ${
                 showError && !cancelReason
-                  ? 'border-red-500 dark:border-red-500'
-                  : 'border-gray-200 dark:border-gray-700'
+                  ? 'border-red-500'
+                  : 'border-cream-200'
               }`}
             >
               <option value="">Neden seçin...</option>
@@ -502,7 +502,7 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
               ))}
             </select>
             {showError && !cancelReason && (
-              <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+              <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
                 <AlertTriangle size={12} />
                 Lütfen iptal nedeni seçin
               </p>
@@ -511,36 +511,36 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
 
           {/* Options */}
           <div className="space-y-3">
-            <label className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-brand-mustard transition-colors">
+            <label className="flex items-center gap-3 p-4 bg-cream-50 rounded-2xl border border-cream-200 cursor-pointer hover:border-brand-mustard transition-colors">
               <input
                 type="checkbox"
                 checked={notifyCustomer}
                 onChange={(e) => setNotifyCustomer(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300 text-brand-mustard focus:ring-brand-mustard"
+                className="w-5 h-5 rounded border-cream-200 text-brand-mustard focus:ring-brand-mustard"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-brown-900 dark:text-white">Müşteriyi Bilgilendir</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">İptal e-postası gönder</p>
+                <p className="text-sm font-medium text-mocha-900">Müşteriyi Bilgilendir</p>
+                <p className="text-xs text-mocha-500">İptal e-postası gönder</p>
               </div>
             </label>
 
-            <label className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-brand-mustard transition-colors">
+            <label className="flex items-center gap-3 p-4 bg-cream-50 rounded-2xl border border-cream-200 cursor-pointer hover:border-brand-mustard transition-colors">
               <input
                 type="checkbox"
                 checked={refundPayment}
                 onChange={(e) => setRefundPayment(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300 text-brand-mustard focus:ring-brand-mustard"
+                className="w-5 h-5 rounded border-cream-200 text-brand-mustard focus:ring-brand-mustard"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-brown-900 dark:text-white">Otomatik İade Başlat</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">₺{(order.payment?.total || 0).toLocaleString('tr-TR')} iade edilecek</p>
+                <p className="text-sm font-medium text-mocha-900">Otomatik İade Başlat</p>
+                <p className="text-xs text-mocha-500">₺{(order.payment?.total || 0).toLocaleString('tr-TR')} iade edilecek</p>
               </div>
             </label>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               İç Notlar
             </label>
             <textarea
@@ -548,13 +548,13 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
               onChange={(e) => setNotes(e.target.value)}
               placeholder="İptal nedeni hakkında ek bilgiler (sadece personel görecek)..."
               rows={3}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 placeholder-mocha-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
             />
           </div>
 
           {/* Confirmation Checkbox */}
           <div>
-            <label className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border-2 border-red-500 dark:border-red-700 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+            <label className="flex items-start gap-3 p-4 bg-red-50 rounded-2xl border-2 border-red-500 cursor-pointer hover:bg-red-100 transition-colors">
               <input
                 type="checkbox"
                 checked={confirmChecked}
@@ -562,10 +562,10 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
                 className="w-5 h-5 mt-0.5 rounded border-red-300 text-red-600 focus:ring-red-500 cursor-pointer"
               />
               <div className="flex-1">
-                <p className="text-sm font-bold text-red-900 dark:text-red-400">
+                <p className="text-sm font-bold text-red-900">
                   Evet, bu siparişi iptal etmek istiyorum
                 </p>
-                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                <p className="text-xs text-red-700 mt-1">
                   Bu işlemin geri alınamayacağını anlıyorum
                 </p>
               </div>
@@ -574,10 +574,10 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 bg-cream-50 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-700 hover:bg-cream-100 transition-colors"
           >
             Vazgeç
           </button>
@@ -586,7 +586,7 @@ const CancelOrderModal = ({ order, onClose, onConfirm }: { order: Order; onClose
             disabled={!isConfirmValid}
             className={`px-6 py-3 rounded-2xl text-white text-sm font-bold transition-all flex items-center gap-2 ${
               isConfirmValid
-                ? 'bg-red-600 hover:bg-red-700 shadow-lg hover:shadow-xl'
+                ? 'bg-red-600 hover:bg-red-700 shadow-sm hover:shadow-xl'
                 : 'bg-gray-400 cursor-not-allowed opacity-50'
             }`}
           >
@@ -627,32 +627,32 @@ const StatusChangeModal = ({ order, onClose, onSave }: { order: Order; onClose: 
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-[32px] shadow-2xl">
+      <div className="relative bg-white w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-xl shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Sipariş Durumunu Değiştir</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Sipariş Durumunu Değiştir</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id}</p>
+          <p className="text-xs text-mocha-500">Sipariş #{order.id}</p>
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)] space-y-4">
-          <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-gray-700">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Mevcut Durum</p>
+          <div className="p-4 bg-cream-50 rounded-2xl border border-cream-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-2">Mevcut Durum</p>
             <div className="flex items-center gap-3">
-              {React.createElement(statuses.find(s => s.value === order.status)?.icon || Clock, { size: 20, className: 'text-gray-500' })}
-              <span className="font-medium text-brown-900 dark:text-white">
+              {React.createElement(statuses.find(s => s.value === order.status)?.icon || Clock, { size: 20, className: 'text-mocha-500' })}
+              <span className="font-medium text-mocha-900">
                 {statuses.find(s => s.value === order.status)?.label || order.status}
               </span>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Yeni Durum Seçin
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -668,21 +668,21 @@ const StatusChangeModal = ({ order, onClose, onSave }: { order: Order; onClose: 
                     disabled={isCurrent}
                     className={`p-4 rounded-2xl border-2 text-left transition-all ${
                       isCurrent
-                        ? 'bg-gray-100 dark:bg-dark-700 border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed'
+                        ? 'bg-cream-100 border-cream-200 opacity-50 cursor-not-allowed'
                         : isSelected
-                        ? 'bg-brand-mustard/10 border-brand-mustard dark:border-brand-mustard shadow-lg'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-brand-mustard dark:hover:border-brand-mustard hover:shadow-md'
+                        ? 'bg-brand-mustard/10 border-brand-mustard shadow-sm'
+                        : 'border-cream-200 hover:border-brand-mustard hover:shadow-md'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        isSelected ? 'bg-brand-mustard text-white' : 'bg-gray-100 dark:bg-dark-900 text-gray-500'
+                        isSelected ? 'bg-brand-mustard text-white' : 'bg-cream-100 text-mocha-500'
                       }`}>
                         <Icon size={20} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-brown-900 dark:text-white">{status.label}</p>
-                        {isCurrent && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Mevcut Durum</p>}
+                        <p className="text-sm font-bold text-mocha-900">{status.label}</p>
+                        {isCurrent && <p className="text-xs text-mocha-500 mt-1">Mevcut Durum</p>}
                       </div>
                       {isSelected && !isCurrent && (
                         <CheckCircle2 size={20} className="text-brand-mustard shrink-0" />
@@ -695,8 +695,8 @@ const StatusChangeModal = ({ order, onClose, onSave }: { order: Order; onClose: 
           </div>
 
           {selectedStatus !== order.status && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-900 dark:text-blue-300">
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200">
+              <p className="text-sm text-blue-900">
                 <strong>Not:</strong> Sipariş durumu "{statuses.find(s => s.value === order.status)?.label}" → "{statuses.find(s => s.value === selectedStatus)?.label}" olarak değiştirilecektir.
               </p>
             </div>
@@ -704,10 +704,10 @@ const StatusChangeModal = ({ order, onClose, onSave }: { order: Order; onClose: 
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-dark-900 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 bg-cream-50 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-100 transition-colors"
           >
             İptal
           </button>
@@ -783,29 +783,29 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[32px] shadow-2xl">
+      <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">İade Başlat</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">İade Başlat</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id} • Toplam: ₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</p>
+          <p className="text-xs text-mocha-500">Sipariş #{order.id} • Toplam: ₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</p>
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
           {/* Refund Reason */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               İade Nedeni *
             </label>
             <select
               value={refundReason}
               onChange={(e) => setRefundReason(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
             >
               <option value="">Neden seçin...</option>
               {refundReasons.map((reason) => (
@@ -816,7 +816,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
 
           {/* Refund Amount */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               İade Tutarı *
             </label>
             <div className="relative">
@@ -827,14 +827,14 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
                 min="0"
                 max={order.payment?.total || 0}
                 step="0.01"
-                className="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+                className="w-full px-4 py-3 pr-12 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">₺</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-mocha-400">₺</span>
             </div>
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => setRefundAmount((order.payment?.total || 0) / 2)}
-                className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors"
+                className="px-3 py-1.5 text-xs bg-cream-100 text-mocha-600 rounded-lg hover:bg-cream-200 transition-colors"
               >
                 50%
               </button>
@@ -846,7 +846,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
               </button>
             </div>
             {isPartialRefund && (
-              <p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+              <p className="mt-2 text-xs text-orange-600">
                 ⚠️ Kısmi iade: %{(order.payment?.total || 0) > 0 ? ((refundAmount / (order.payment?.total || 1)) * 100).toFixed(0) : '0'}
               </p>
             )}
@@ -854,7 +854,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
 
           {/* Refund Method */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               İade Yöntemi
             </label>
             <div className="space-y-2">
@@ -865,11 +865,11 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
                   className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center gap-3 ${
                     refundMethod === method.value
                       ? 'border-brand-mustard bg-brand-mustard/10'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-brand-mustard/50'
+                      : 'border-cream-200 hover:border-brand-mustard/50'
                   }`}
                 >
                   <span className="text-2xl">{method.icon}</span>
-                  <span className="text-sm font-medium text-brown-900 dark:text-white">{method.label}</span>
+                  <span className="text-sm font-medium text-mocha-900">{method.label}</span>
                 </button>
               ))}
             </div>
@@ -877,7 +877,7 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Açıklama / Notlar
             </label>
             <textarea
@@ -885,29 +885,29 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
               onChange={(e) => setNotes(e.target.value)}
               placeholder="İade ile ilgili ek bilgiler, müşteri ile yapılan görüşme notları..."
               rows={4}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 placeholder-mocha-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
             />
           </div>
 
           {/* Summary */}
-          <div className="p-4 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/10 dark:to-red-900/10 border border-orange-200 dark:border-orange-800 rounded-2xl">
+          <div className="p-4 bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-2xl">
             <div className="flex items-start gap-3">
               <RefreshCw size={20} className="text-orange-600 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-xs font-bold text-orange-600 mb-2">İade Özeti</p>
-                <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                <div className="space-y-1 text-xs text-mocha-600">
                   <div className="flex justify-between">
                     <span>İade Tutarı:</span>
-                    <span className="font-bold text-brown-900 dark:text-white">₺{refundAmount.toLocaleString('tr-TR')}</span>
+                    <span className="font-bold text-mocha-900">₺{refundAmount.toLocaleString('tr-TR')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>İade Yöntemi:</span>
-                    <span className="font-medium text-brown-900 dark:text-white">
+                    <span className="font-medium text-mocha-900">
                       {refundMethods.find(m => m.value === refundMethod)?.label}
                     </span>
                   </div>
                   {isPartialRefund && (
-                    <div className="pt-2 border-t border-orange-200 dark:border-orange-700 flex justify-between">
+                    <div className="pt-2 border-t border-orange-200 flex justify-between">
                       <span>Kalan Bakiye:</span>
                       <span className="font-bold text-green-600">₺{((order.payment?.total || 0) - refundAmount).toLocaleString('tr-TR')}</span>
                     </div>
@@ -919,10 +919,10 @@ const RefundModal = ({ order, onClose, onSave }: { order: Order; onClose: () => 
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             İptal
           </button>
@@ -987,73 +987,73 @@ const EditOrderModal = ({ order, onClose, onSave }: { order: Order; onClose: () 
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[32px] shadow-2xl">
+      <div className="relative bg-white w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Siparişi Düzenle</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Siparişi Düzenle</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id}</p>
+          <p className="text-xs text-mocha-500">Sipariş #{order.id}</p>
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
           {/* Customer Info */}
-          <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl border border-gray-100 dark:border-gray-700">
+          <div className="p-4 bg-cream-50 rounded-2xl border border-cream-200">
             <div className="flex items-center gap-3 mb-4">
              <div className="w-10 h-10 bg-brand-mustard text-white rounded-full flex items-center justify-center font-bold text-sm">
   {(order.customer?.name || '?')[0]}
 </div>
               <div>
-                <p className="text-sm font-medium text-brown-900 dark:text-white">{order.customer?.name || 'İsimsiz Müşteri'}</p>
-                <p className="text-xs text-gray-500">{order.customer?.email || 'Email Yok'}</p>
+                <p className="text-sm font-medium text-mocha-900">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                <p className="text-xs text-mocha-500">{order.customer?.email || 'Email Yok'}</p>
               </div>
             </div>
 
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-2">
               Telefon Numarası
             </label>
             <input
               type="tel"
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+              className="w-full px-4 py-3 bg-white border border-cream-200 rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
             />
           </div>
 
           {/* Shipping Address */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Teslimat Adresi
             </label>
             <textarea
               value={shippingAddress}
               onChange={(e) => setShippingAddress(e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
             />
           </div>
 
           {/* Shipping City */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Şehir
             </label>
             <input
               type="text"
               value={shippingCity}
               onChange={(e) => setShippingCity(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
             />
           </div>
 
           {/* Gift Note */}
           {order.gift && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3 flex items-center gap-2">
                 <Gift size={14} className="text-brand-orange" />
                 Hediye Notu
               </label>
@@ -1062,14 +1062,14 @@ const EditOrderModal = ({ order, onClose, onSave }: { order: Order; onClose: () 
                 onChange={(e) => setGiftNote(e.target.value)}
                 placeholder="Hediye mesajınızı buraya yazın..."
                 rows={3}
-                className="w-full px-4 py-3 bg-brand-peach/10 dark:bg-brand-peach/5 border border-brand-peach dark:border-brand-peach/50 rounded-2xl text-sm text-brown-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange resize-none"
+                className="w-full px-4 py-3 bg-brand-peach/10 border border-brand-peach rounded-2xl text-sm text-mocha-900 placeholder-mocha-400 focus:outline-none focus:ring-2 focus:ring-brand-orange resize-none"
               />
             </div>
           )}
 
           {/* Special Notes */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Özel Notlar / Talimatlar
             </label>
             <textarea
@@ -1077,17 +1077,17 @@ const EditOrderModal = ({ order, onClose, onSave }: { order: Order; onClose: () 
               onChange={(e) => setSpecialNotes(e.target.value)}
               placeholder="Paketleme, teslimat veya diğer özel talimatlar..."
               rows={4}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 placeholder-mocha-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard resize-none"
             />
           </div>
 
           {/* Warning */}
-          <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-2xl">
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-2xl">
             <div className="flex items-start gap-3">
               <AlertTriangle size={20} className="text-orange-600 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-bold text-orange-600 mb-1">Dikkat</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-mocha-600">
                   Sipariş üretim aşamasında ise, bazı değişiklikler uygulanamayabilir. Lütfen üretim ekibiyle koordine olun.
                 </p>
               </div>
@@ -1096,10 +1096,10 @@ const EditOrderModal = ({ order, onClose, onSave }: { order: Order; onClose: () 
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             İptal
           </button>
@@ -1165,23 +1165,23 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-lg rounded-[32px] shadow-2xl">
+      <div className="relative bg-white w-full max-w-lg rounded-xl shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Etiket Ekle</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Etiket Ekle</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id}</p>
+          <p className="text-xs text-mocha-500">Sipariş #{order.id}</p>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Predefined Tags */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Hazır Etiketler
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -1191,8 +1191,8 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
                   onClick={() => handlePredefinedSelect(tag.value, tag.color)}
                   className={`px-4 py-3 rounded-2xl border-2 text-sm font-medium transition-all ${
                     selectedTag === tag.value
-                      ? 'border-brand-mustard bg-brand-mustard/10 text-brown-900 dark:text-white'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-brand-mustard/50'
+                      ? 'border-brand-mustard bg-brand-mustard/10 text-mocha-900'
+                      : 'border-cream-200 text-mocha-600 hover:border-brand-mustard/50'
                   }`}
                 >
                   {tag.label}
@@ -1203,7 +1203,7 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
 
           {/* Custom Tag */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Özel Etiket Oluştur
             </label>
             <input
@@ -1214,13 +1214,13 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
                 setSelectedTag('');
               }}
               placeholder="Örn: Özel İstek"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 placeholder-mocha-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
             />
           </div>
 
           {/* Color Selection */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Renk Seçin
             </label>
             <div className="flex gap-3">
@@ -1230,7 +1230,7 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
                   onClick={() => setSelectedColor(color.name)}
                   className={`w-10 h-10 rounded-full ${color.bg} border-4 transition-all ${
                     selectedColor === color.name
-                      ? 'border-brown-900 dark:border-white scale-110'
+                      ? 'border-brown-900 scale-110'
                       : 'border-transparent hover:scale-105'
                   }`}
                   title={color.name}
@@ -1241,8 +1241,8 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
 
           {/* Preview */}
           {activeTag && (
-            <div className="p-4 bg-gray-50 dark:bg-dark-900 rounded-xl border border-gray-100 dark:border-gray-700">
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Önizleme</p>
+            <div className="p-4 bg-cream-50 rounded-xl border border-cream-200">
+              <p className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">Önizleme</p>
               <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${activeColor.bg} ${activeColor.text}`}>
                   <Tag size={12} />
@@ -1254,10 +1254,10 @@ const TagModal = ({ order, onClose, onSave }: { order: Order; onClose: () => voi
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             İptal
           </button>
@@ -1344,13 +1344,13 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-2xl rounded-[32px] shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-white w-full max-w-2xl rounded-xl shadow-sm max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Paketleme & Etiket</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Paketleme & Etiket</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
 
@@ -1361,7 +1361,7 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'geliver'
                   ? 'bg-brown-900 text-white'
-                  : 'bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                  : 'bg-cream-100 text-mocha-600 hover:bg-cream-200'
               }`}
             >
               <Truck size={14} className="inline mr-2" />
@@ -1372,7 +1372,7 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'packing'
                   ? 'bg-brown-900 text-white'
-                  : 'bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                  : 'bg-cream-100 text-mocha-600 hover:bg-cream-200'
               }`}
             >
               <Package size={14} className="inline mr-2" />
@@ -1382,35 +1382,35 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-dark-900">
+        <div className="flex-1 overflow-y-auto p-6 bg-cream-50">
           {activeTab === 'geliver' ? (
             <div className="space-y-4">
               {/* Geliver Label Info */}
               {hasGeliverLabel ? (
-                <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 text-center space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-6 text-center space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle size={32} className="text-green-600" />
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">Kargo Etiketi Hazır</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-lg font-bold text-mocha-900">Kargo Etiketi Hazır</p>
+                    <p className="text-sm text-mocha-500 mt-1">
                       {order.tracking?.carrier || 'Geliver'} tarafından oluşturuldu
                     </p>
                   </div>
 
                   {/* Tracking Info */}
-                  <div className="bg-gray-50 dark:bg-dark-700 rounded-xl p-4 space-y-2">
+                  <div className="bg-cream-50 rounded-xl p-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Barkod:</span>
+                      <span className="text-mocha-500">Barkod:</span>
                       <span className="font-mono font-bold">{order.tracking?.trackingNumber}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Kargo Firması:</span>
+                      <span className="text-mocha-500">Kargo Firması:</span>
                       <span className="font-bold">{order.tracking?.carrier}</span>
                     </div>
                     {order.tracking?.price && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Ücret:</span>
+                        <span className="text-mocha-500">Ücret:</span>
                         <span className="font-bold">{order.tracking.price.toFixed(2)}₺</span>
                       </div>
                     )}
@@ -1423,16 +1423,16 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
                     <ExternalLink size={18} />
                     Kargo Etiketini Aç (PDF)
                   </button>
-                  <p className="text-xs text-gray-400">Yeni sekmede açılır, yazdırabilirsiniz</p>
+                  <p className="text-xs text-mocha-400">Yeni sekmede açılır, yazdırabilirsiniz</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-dark-800 rounded-2xl p-6 text-center space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-6 text-center space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-amber-100 rounded-full flex items-center justify-center">
                     <AlertTriangle size={32} className="text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">Kargo Henüz Oluşturulmadı</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-lg font-bold text-mocha-900">Kargo Henüz Oluşturulmadı</p>
+                    <p className="text-sm text-mocha-500 mt-1">
                       Önce "Kargo Oluştur" ile Geliver üzerinden kargo oluşturun
                     </p>
                   </div>
@@ -1501,10 +1501,10 @@ const ShippingLabelModal = ({ order, onClose }: { order: Order; onClose: () => v
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             Kapat
           </button>
@@ -1545,29 +1545,29 @@ const TrackingNumberModal = ({ order, onClose, onSave }: { order: Order; onClose
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-md rounded-[32px] shadow-2xl">
+      <div className="relative bg-white w-full max-w-md rounded-xl shadow-sm">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="p-6 border-b border-cream-200">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 dark:text-white italic">Takip Numarası Ekle</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Takip Numarası Ekle</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sipariş #{order.id}</p>
+          <p className="text-xs text-mocha-500">Sipariş #{order.id}</p>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Carrier Selection */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Kargo Firması
             </label>
             <select
               value={carrier}
               onChange={(e) => setCarrier(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
             >
               {carriers.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -1577,7 +1577,7 @@ const TrackingNumberModal = ({ order, onClose, onSave }: { order: Order; onClose
 
           {/* Tracking Number Input */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">
               Takip Numarası
             </label>
             <input
@@ -1585,17 +1585,17 @@ const TrackingNumberModal = ({ order, onClose, onSave }: { order: Order; onClose
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
               placeholder="Örn: 1234567890123"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-brown-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
+              className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-2xl text-sm text-mocha-900 placeholder-mocha-400 focus:outline-none focus:ring-2 focus:ring-brand-mustard"
             />
           </div>
 
           {/* Preview */}
-          <div className="p-4 bg-brand-blue/10 dark:bg-brand-blue/5 rounded-xl border border-brand-blue/30">
+          <div className="p-4 bg-brand-blue/10 rounded-xl border border-brand-blue/30">
             <div className="flex items-start gap-3">
               <Package size={20} className="text-brand-blue shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-xs font-bold text-brown-900 dark:text-white mb-1">Kargo Bilgisi</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs font-bold text-mocha-900 mb-1">Kargo Bilgisi</p>
+                <p className="text-xs text-mocha-600">
                   {carrier} {trackingNumber && `• ${trackingNumber}`}
                 </p>
               </div>
@@ -1604,10 +1604,10 @@ const TrackingNumberModal = ({ order, onClose, onSave }: { order: Order; onClose
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3 justify-end">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             İptal
           </button>
@@ -1775,16 +1775,16 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm print:hidden" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-[32px] shadow-2xl print:max-w-full print:max-h-none print:overflow-visible print:rounded-none print:shadow-none">
+      <div className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl shadow-sm print:max-w-full print:max-h-none print:overflow-visible print:rounded-none print:shadow-none">
         {/* Header - Print Hidden Buttons */}
-        <div className="p-6 border-b border-gray-100 print:hidden">
+        <div className="p-6 border-b border-cream-200 print:hidden">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-2xl font-display text-brown-900 italic">Sipariş Yazdır</h3>
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-              <X size={20} className="text-gray-400" />
+            <h3 className="text-2xl text-mocha-900 italic">Sipariş Yazdır</h3>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+              <X size={20} className="text-mocha-400" />
             </button>
           </div>
-          <p className="text-xs text-gray-500">A4 formatında yazdırılabilir sipariş belgesi</p>
+          <p className="text-xs text-mocha-500">A4 formatında yazdırılabilir sipariş belgesi</p>
         </div>
 
         {/* Print Content - Hidden Structure for New Window */}
@@ -1922,16 +1922,16 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
         {/* Visual Preview */}
         <div className="p-8 overflow-y-auto max-h-[calc(90vh-180px)]">
           {/* Document Header */}
-          <div className="mb-8 pb-6 border-b-2 border-gray-200">
+          <div className="mb-8 pb-6 border-b-2 border-cream-200">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="font-display text-3xl text-brown-900 italic mb-1">Sade Chocolate</h1>
-                <p className="text-xs text-gray-500 uppercase tracking-widest">Handcrafted Excellence</p>
+                <h1 className="text-2xl font-semibold text-mocha-900 mb-1">Sade Chocolate</h1>
+                <p className="text-xs text-mocha-500 uppercase tracking-wider">Handcrafted Excellence</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500 mb-1">Sipariş Belgesi</p>
-                <p className="text-2xl font-bold text-brown-900">#{order.id}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-mocha-500 mb-1">Sipariş Belgesi</p>
+                <p className="text-2xl font-bold text-mocha-900">#{order.id}</p>
+                <p className="text-xs text-mocha-500 mt-1">
                   {order.createdAt || new Date().toLocaleString('tr-TR')}
                 </p>
               </div>
@@ -1940,9 +1940,9 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
           {/* Order Status & Priority */}
           <div className="mb-6 flex gap-3 print:mb-4">
-            <div className="px-4 py-2 bg-gray-100 rounded-lg">
-              <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Durum: </span>
-              <span className="text-xs font-bold text-brown-900">{order.status}</span>
+            <div className="px-4 py-2 bg-cream-100 rounded-lg">
+              <span className="text-xs font-bold text-mocha-600 uppercase tracking-wider">Durum: </span>
+              <span className="text-xs font-bold text-mocha-900">{order.status}</span>
             </div>
             {order.priority === 'High' && (
               <div className="px-4 py-2 bg-red-50 rounded-lg border border-red-200">
@@ -1955,15 +1955,15 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
           <div className="grid grid-cols-2 gap-6 mb-6">
             {/* Customer Info */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Müşteri Bilgileri</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">Müşteri Bilgileri</h4>
               <div className="space-y-2 text-sm">
-                <p className="font-medium text-brown-900">{order.customer?.name || 'İsimsiz Müşteri'}</p>
-                <p className="text-gray-600 flex items-center gap-2">
-                  <Mail size={14} className="text-gray-400" />
+                <p className="font-medium text-mocha-900">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                <p className="text-mocha-600 flex items-center gap-2">
+                  <Mail size={14} className="text-mocha-400" />
                   {order.customer?.email || 'Email Yok'}
                 </p>
-                <p className="text-gray-600 flex items-center gap-2">
-                  <Phone size={14} className="text-gray-400" />
+                <p className="text-mocha-600 flex items-center gap-2">
+                  <Phone size={14} className="text-mocha-400" />
                   {order.customer?.phone || 'Telefon Yok'}
                 </p>
               </div>
@@ -1971,11 +1971,11 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
             {/* Shipping Address */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Teslimat Adresi</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">Teslimat Adresi</h4>
               <div className="space-y-1 text-sm">
-                <p className="font-medium text-brown-900">{order.shipping?.method || 'Standart Teslimat'}</p>
-                <p className="text-gray-600">{order.shipping?.address || 'Adres Yok'}</p>
-                <p className="text-gray-600">{order.shipping?.city || ''}</p>
+                <p className="font-medium text-mocha-900">{order.shipping?.method || 'Standart Teslimat'}</p>
+                <p className="text-mocha-600">{order.shipping?.address || 'Adres Yok'}</p>
+                <p className="text-mocha-600">{order.shipping?.city || ''}</p>
                 <p className="text-brand-mustard font-medium mt-2">Tahmini: {order.shipping?.estimatedDate || 'Belirtilmemiş'}</p>
               </div>
             </div>
@@ -1983,28 +1983,28 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
           {/* Products Table */}
           <div className="mb-6">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Sipariş Kalemleri</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">Sipariş Kalemleri</h4>
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 text-xs font-bold uppercase tracking-wider text-gray-600">Ürün</th>
-                  <th className="text-center py-3 text-xs font-bold uppercase tracking-wider text-gray-600">Adet</th>
-                  <th className="text-right py-3 text-xs font-bold uppercase tracking-wider text-gray-600">Birim Fiyat</th>
-                  <th className="text-right py-3 text-xs font-bold uppercase tracking-wider text-gray-600">Toplam</th>
+                <tr className="border-b-2 border-cream-200">
+                  <th className="text-left py-3 text-xs font-bold uppercase tracking-wider text-mocha-600">Ürün</th>
+                  <th className="text-center py-3 text-xs font-bold uppercase tracking-wider text-mocha-600">Adet</th>
+                  <th className="text-right py-3 text-xs font-bold uppercase tracking-wider text-mocha-600">Birim Fiyat</th>
+                  <th className="text-right py-3 text-xs font-bold uppercase tracking-wider text-mocha-600">Toplam</th>
                 </tr>
               </thead>
               <tbody>
                 {(order.items || []).map((item) => (
-                  <tr key={item.id} className="border-b border-gray-100">
-                    <td className="py-3 text-sm text-brown-900">
+                  <tr key={item.id} className="border-b border-cream-200">
+                    <td className="py-3 text-sm text-mocha-900">
                       <div className="flex items-center gap-2">
                         {item.image ? <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" /> : <span className="text-lg">🍫</span>}
                         <span>{item.name}</span>
                       </div>
                     </td>
-                    <td className="py-3 text-sm text-center text-gray-600">{item.quantity}</td>
-                    <td className="py-3 text-sm text-right text-gray-600">₺{item.price.toLocaleString('tr-TR')}</td>
-                    <td className="py-3 text-sm text-right font-medium text-brown-900">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</td>
+                    <td className="py-3 text-sm text-center text-mocha-600">{item.quantity}</td>
+                    <td className="py-3 text-sm text-right text-mocha-600">₺{item.price.toLocaleString('tr-TR')}</td>
+                    <td className="py-3 text-sm text-right font-medium text-mocha-900">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -2015,39 +2015,39 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
           <div className="mb-6 flex justify-end">
             <div className="w-80 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Ara Toplam:</span>
-                <span className="text-brown-900">₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
+                <span className="text-mocha-600">Ara Toplam:</span>
+                <span className="text-mocha-900">₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Kargo:</span>
-                <span className="text-brown-900">₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
+                <span className="text-mocha-600">Kargo:</span>
+                <span className="text-mocha-900">₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
               </div>
-              <div className="flex justify-between text-base font-bold pt-2 border-t-2 border-gray-200">
-                <span className="text-brown-900">Genel Toplam:</span>
+              <div className="flex justify-between text-base font-bold pt-2 border-t-2 border-cream-200">
+                <span className="text-mocha-900">Genel Toplam:</span>
                 <span className="text-brand-mustard">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
               </div>
             </div>
           </div>
 
           {/* Logistics Information */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Lojistik Bilgileri</h4>
+          <div className="mb-6 p-4 bg-cream-50 rounded-lg border border-cream-200">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-mocha-500 mb-3">Lojistik Bilgileri</h4>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-gray-500 text-xs mb-1">Lot Numarası</p>
-                <p className="font-mono font-bold text-brown-900">{order.logistics?.lotNumber || 'N/A'}</p>
+                <p className="text-mocha-500 text-xs mb-1">Lot Numarası</p>
+                <p className="font-mono font-bold text-mocha-900">{order.logistics?.lotNumber || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-gray-500 text-xs mb-1">Soğuk Paket</p>
-                <p className="font-medium text-brown-900">{order.logistics?.coldPackage ? '✓ Eklendi' : '✗ Gerek yok'}</p>
+                <p className="text-mocha-500 text-xs mb-1">Soğuk Paket</p>
+                <p className="font-medium text-mocha-900">{order.logistics?.coldPackage ? '✓ Eklendi' : '✗ Gerek yok'}</p>
               </div>
               <div>
-                <p className="text-gray-500 text-xs mb-1">Kargo Penceresi</p>
-                <p className="font-medium text-brown-900">{order.logistics?.shippingWindow || 'N/A'}</p>
+                <p className="text-mocha-500 text-xs mb-1">Kargo Penceresi</p>
+                <p className="font-medium text-mocha-900">{order.logistics?.shippingWindow || 'N/A'}</p>
               </div>
             </div>
             {order.logistics?.weatherAlert && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="mt-3 pt-3 border-t border-cream-200">
                 <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
                   <Thermometer size={14} />
                   {order.logistics?.weatherAlert}
@@ -2063,7 +2063,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 <Gift size={14} />
                 Hediye Notu
               </h4>
-              <p className="text-sm text-gray-700 italic">"{order.giftNote}"</p>
+              <p className="text-sm text-mocha-700 italic">"{order.giftNote}"</p>
             </div>
           )}
 
@@ -2074,22 +2074,22 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 <FileText size={14} />
                 Özel Not / Talimat
               </h4>
-              <p className="text-sm text-gray-700">{order.specialNotes}</p>
+              <p className="text-sm text-mocha-700">{order.specialNotes}</p>
             </div>
           )}
 
           {/* Footer */}
-          <div className="pt-6 border-t-2 border-gray-200 text-center">
-            <p className="text-xs text-gray-500 mb-1">Sade Chocolate • Handcrafted Excellence</p>
-            <p className="text-xs text-gray-400">İstanbul, Türkiye • info@sadechocolate.com • +90 (212) 123 45 67</p>
+          <div className="pt-6 border-t-2 border-cream-200 text-center">
+            <p className="text-xs text-mocha-500 mb-1">Sade Chocolate • Handcrafted Excellence</p>
+            <p className="text-xs text-mocha-400">İstanbul, Türkiye • info@sadechocolate.com • +90 (212) 123 45 67</p>
           </div>
         </div>
 
         {/* Footer Buttons - Print Hidden */}
-        <div className="p-6 border-t border-gray-100 flex gap-3 justify-end print:hidden">
+        <div className="p-6 border-t border-cream-200 flex gap-3 justify-end print:hidden">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-2xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-cream-200 text-sm font-medium text-mocha-600 hover:bg-cream-50 transition-colors"
           >
             İptal
           </button>
@@ -2457,7 +2457,7 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           orderId: order.id,
           deliveryDate: new Date().toISOString(),
           items,
-          reviewUrl: `https://sadechocolate.com/#/account?view=orders&order=${order.id}`
+          reviewUrl: `https://sadechocolate.com/account?view=orders&order=${order.id}`
         }).catch(err => console.error('Teslimat emaili gönderilemedi:', err));
       }
     } catch (err: any) {
@@ -2471,59 +2471,59 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-dark-800 w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-[32px] shadow-2xl flex">
+      <div className="relative bg-white w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-xl shadow-sm flex">
 
         {/* Left Panel */}
-        <div className="flex-1 overflow-y-auto p-8 border-r border-gray-100 dark:border-gray-700">
+        <div className="flex-1 overflow-y-auto p-6 border-r border-cream-200">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-3xl font-display text-brown-900 dark:text-white italic">Sipariş #{order.id}</h2>
-              <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors">
-                <X size={20} className="text-gray-400" />
+              <h2 className="text-3xl text-mocha-900 italic">Sipariş #{order.id}</h2>
+              <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cream-100 transition-colors">
+                <X size={20} className="text-mocha-400" />
               </button>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <StatusBadge status={order.status} />
               {order.payment?.method === 'eft' && (
-                <span className="flex items-center gap-1 text-[9px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full border border-amber-300 dark:border-amber-700 font-bold uppercase">
+                <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full border border-amber-300 font-bold uppercase">
                   <Landmark size={10} /> Havale/EFT
                 </span>
               )}
               {order.payment?.method === 'card' && (
-                <span className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-bold uppercase ${
+                <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full border font-bold uppercase ${
                   order.payment?.status === 'paid'
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700'
+                    ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
                     : order.payment?.status === 'failed'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-300 dark:border-red-700'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700'
+                      ? 'bg-red-100 text-red-700 border-red-300'
+                      : 'bg-blue-100 text-blue-700 border-blue-300'
                 }`}>
                   💳 {order.payment?.cardAssociation || 'Kart'} {order.payment?.lastFourDigits ? `**** ${order.payment.lastFourDigits}` : ''}
                 </span>
               )}
               {order.priority === 'High' && (
-                <span className="flex items-center gap-1 text-[9px] text-red-600 font-bold uppercase">
+                <span className="flex items-center gap-1 text-xs text-red-600 font-bold uppercase">
                   <AlertTriangle size={12} /> Acil
                 </span>
               )}
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-mocha-400">
                 {order.createdAt ? new Date(order.createdAt).toLocaleString('tr-TR') : '-'}
               </span>
             </div>
 
             {/* Pending Payment Alert with Countdown */}
             {(order.status === 'Pending Payment' || order.status === 'pending' || order.payment?.status === 'pending') && order.paymentDeadline && (
-              <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-800">
+              <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-200">
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-1">Ödeme Bekleniyor</p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                    <p className="text-sm font-bold text-amber-800 mb-1">Ödeme Bekleniyor</p>
+                    <p className="text-xs text-amber-600">
                       Son ödeme: {new Date(order.paymentDeadline).toLocaleString('tr-TR')}
                     </p>
                   </div>
                   <EftCountdown deadline={order.paymentDeadline} />
                   {order.bankTransferDiscount && order.bankTransferDiscount > 0 && (
-                    <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-full font-bold">
+                    <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full font-bold">
                       -₺{order.bankTransferDiscount.toFixed(2)} indirim
                     </span>
                   )}
@@ -2535,27 +2535,27 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
             {(order.hasGiftBag || order.isGift) && (
               <div className="mt-4 space-y-3">
                 {order.hasGiftBag && (
-                  <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-2xl border-2 border-pink-300 dark:border-pink-700 animate-pulse">
+                  <div className="p-4 bg-pink-50 rounded-2xl border-2 border-pink-300 animate-pulse">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">🛍️</span>
                       <div>
-                        <p className="text-sm font-bold text-pink-700 dark:text-pink-300">Hediye Çantası İsteniyor!</p>
-                        <p className="text-xs text-pink-600 dark:text-pink-400">Bu siparişe hediye çantası eklemeyi unutmayın.</p>
+                        <p className="text-sm font-bold text-pink-700">Hediye Çantası İsteniyor!</p>
+                        <p className="text-xs text-pink-600">Bu siparişe hediye çantası eklemeyi unutmayın.</p>
                       </div>
                     </div>
                   </div>
                 )}
                 {order.isGift && (
-                  <div className="p-4 bg-gradient-to-r from-gold/10 to-amber-50 dark:from-gold/20 dark:to-amber-900/20 rounded-2xl border-2 border-gold dark:border-amber-600 animate-pulse">
+                  <div className="p-4 bg-gradient-to-r from-gold/10 to-amber-50 rounded-2xl border-2 border-gold animate-pulse">
                     <div className="flex items-start gap-3">
                       <span className="text-2xl">🎁</span>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Bu Bir Hediye Siparişi!</p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">Fiyat bilgisi içermeyen fatura düzenleyin.</p>
+                        <p className="text-sm font-bold text-amber-800">Bu Bir Hediye Siparişi!</p>
+                        <p className="text-xs text-amber-600 mb-2">Fiyat bilgisi içermeyen fatura düzenleyin.</p>
                         {order.giftMessage && (
-                          <div className="mt-2 p-3 bg-white dark:bg-dark-800 rounded-xl border border-gold/30">
-                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Hediye Mesajı:</p>
-                            <p className="text-sm text-brown-900 dark:text-white italic">"{order.giftMessage}"</p>
+                          <div className="mt-2 p-3 bg-white rounded-xl border border-gold/30">
+                            <p className="text-xs font-medium text-amber-600 uppercase tracking-wider mb-1">Hediye Mesajı:</p>
+                            <p className="text-sm text-mocha-900 italic">"{order.giftMessage}"</p>
                           </div>
                         )}
                       </div>
@@ -2568,34 +2568,34 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
 
           {/* Product List */}
           <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-4">Öğeler ({order.items?.length || 0})</h3>
+            <h3 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-4">Öğeler ({order.items?.length || 0})</h3>
             <div className="space-y-3">
               {(order.items || []).map((item) => (
-                <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl">
-                  <div className="w-12 h-12 bg-white dark:bg-dark-800 rounded-xl flex items-center justify-center overflow-hidden">
+                <div key={item.id} className="flex items-center gap-4 p-4 bg-cream-50 rounded-2xl">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden">
                     {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <span className="text-2xl">🍫</span>}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-brown-900 dark:text-white">{item.name}</p>
-                    <p className="text-xs text-gray-400">₺{item.price.toLocaleString('tr-TR')} × {item.quantity}</p>
+                    <p className="text-sm font-medium text-mocha-900">{item.name}</p>
+                    <p className="text-xs text-mocha-400">₺{item.price.toLocaleString('tr-TR')} × {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-bold text-brown-900 dark:text-white">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</p>
+                  <p className="text-sm font-bold text-mocha-900">₺{(item.price * item.quantity).toLocaleString('tr-TR')}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Payment Breakdown */}
-          <div className="mb-8 p-6 bg-cream-100 dark:bg-dark-900 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h3 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-4">Ödeme Bilgileri</h3>
+          <div className="mb-8 p-6 bg-cream-100 rounded-2xl border border-cream-200">
+            <h3 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-4">Ödeme Bilgileri</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Öğeler</span>
-                <span className="text-brown-900 dark:text-white">₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
+                <span className="text-mocha-600">Öğeler</span>
+                <span className="text-mocha-900">₺{(order.payment?.subtotal || 0).toLocaleString('tr-TR')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Gönderim</span>
-                <span className="text-brown-900 dark:text-white">₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
+                <span className="text-mocha-600">Gönderim</span>
+                <span className="text-mocha-900">₺{(order.payment?.shipping || 0).toLocaleString('tr-TR')}</span>
               </div>
               {(order.payment?.discount || 0) < 0 && (
                 <div className="flex justify-between text-green-600">
@@ -2603,59 +2603,59 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                   <span>₺{(order.payment?.discount || 0).toLocaleString('tr-TR')}</span>
                 </div>
               )}
-              <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700 font-bold text-base">
-                <span className="text-brown-900 dark:text-white">Toplam</span>
-                <span className="text-brown-900 dark:text-white">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
+              <div className="flex justify-between pt-3 border-t border-cream-200 font-bold text-base">
+                <span className="text-mocha-900">Toplam</span>
+                <span className="text-mocha-900">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
               </div>
 
               {/* İyzico Ödeme Detayları */}
               {order.payment?.method === 'card' && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className="text-[9px] uppercase tracking-widest text-gray-400 font-bold mb-3">Kart Ödeme Detayları</h4>
+                <div className="mt-4 pt-4 border-t border-cream-200">
+                  <h4 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-3">Kart Ödeme Detayları</h4>
                   <div className="space-y-2 text-xs">
                     {order.payment.cardAssociation && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Kart</span>
-                        <span className="text-brown-900 dark:text-white font-medium">
+                        <span className="text-mocha-500">Kart</span>
+                        <span className="text-mocha-900 font-medium">
                           {order.payment.cardAssociation} {order.payment.cardFamily && `(${order.payment.cardFamily})`}
                         </span>
                       </div>
                     )}
                     {order.payment.lastFourDigits && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Kart No</span>
-                        <span className="text-brown-900 dark:text-white font-mono">**** **** **** {order.payment.lastFourDigits}</span>
+                        <span className="text-mocha-500">Kart No</span>
+                        <span className="text-mocha-900 font-mono">**** **** **** {order.payment.lastFourDigits}</span>
                       </div>
                     )}
                     {order.payment.iyzicoPaymentId && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">İyzico ID</span>
-                        <span className="text-brown-900 dark:text-white font-mono text-[10px]">{order.payment.iyzicoPaymentId}</span>
+                        <span className="text-mocha-500">İyzico ID</span>
+                        <span className="text-mocha-900 font-mono text-xs">{order.payment.iyzicoPaymentId}</span>
                       </div>
                     )}
                     {order.payment.paidPrice !== undefined && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Ödenen</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">₺{order.payment.paidPrice.toLocaleString('tr-TR')}</span>
+                        <span className="text-mocha-500">Ödenen</span>
+                        <span className="text-emerald-600 font-bold">₺{order.payment.paidPrice.toLocaleString('tr-TR')}</span>
                       </div>
                     )}
                     {order.payment.iyzicoCommissionFee !== undefined && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">İyzico Komisyon</span>
-                        <span className="text-orange-600 dark:text-orange-400">₺{order.payment.iyzicoCommissionFee.toLocaleString('tr-TR')}</span>
+                        <span className="text-mocha-500">İyzico Komisyon</span>
+                        <span className="text-orange-600">₺{order.payment.iyzicoCommissionFee.toLocaleString('tr-TR')}</span>
                       </div>
                     )}
                     {order.payment.status === 'failed' && order.payment.failureReason && (
-                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                        <p className="text-[10px] text-red-600 dark:text-red-400 font-medium">
+                      <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                        <p className="text-xs text-red-600 font-medium">
                           ❌ Hata: {order.payment.failureReason}
                         </p>
                       </div>
                     )}
                     {order.payment.retryCount !== undefined && order.payment.retryCount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-gray-400">Deneme Sayısı</span>
-                        <span className="text-amber-600 dark:text-amber-400">{order.payment.retryCount}</span>
+                        <span className="text-mocha-500">Deneme Sayısı</span>
+                        <span className="text-amber-600">{order.payment.retryCount}</span>
                       </div>
                     )}
                   </div>
@@ -2666,36 +2666,36 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
 
           {/* Kargo Maliyet Analizi - Geliver Entegrasyonu */}
           {(order.tracking?.price || order.payment?.shipping !== undefined) && (
-            <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
-              <h3 className="text-[10px] uppercase tracking-widest text-blue-700 dark:text-blue-300 font-bold mb-4 flex items-center gap-2">
+            <div className="mb-8 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+              <h3 className="text-xs uppercase tracking-wider text-blue-700 font-bold mb-4 flex items-center gap-2">
                 <Truck size={14} />
                 Kargo Maliyet Analizi
                 {order.tracking?.carrier && (
-                  <span className="text-[9px] font-normal text-blue-500">({order.tracking.carrier})</span>
+                  <span className="text-xs font-normal text-blue-500">({order.tracking.carrier})</span>
                 )}
               </h3>
               <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
-                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Müşteri Ödedi</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <div className="text-center p-3 bg-white rounded-xl border border-blue-100">
+                  <p className="text-xs text-mocha-500 mb-1">Müşteri Ödedi</p>
+                  <p className="text-lg font-bold text-mocha-900">
                     ₺{(order.payment?.shipping ?? 0).toLocaleString('tr-TR')}
                   </p>
                 </div>
-                <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
-                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Gerçek Maliyet</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <div className="text-center p-3 bg-white rounded-xl border border-blue-100">
+                  <p className="text-xs text-mocha-500 mb-1">Gerçek Maliyet</p>
+                  <p className="text-lg font-bold text-mocha-900">
                     {order.tracking?.price
                       ? `₺${order.tracking.price.toFixed(2)}`
-                      : <span className="text-xs text-gray-400">Kargo oluşturulmadı</span>
+                      : <span className="text-xs text-mocha-400">Kargo oluşturulmadı</span>
                     }
                   </p>
                 </div>
-                <div className="text-center p-3 bg-white dark:bg-dark-800 rounded-xl border border-blue-100 dark:border-blue-900">
-                  <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">Kâr/Zarar</p>
+                <div className="text-center p-3 bg-white rounded-xl border border-blue-100">
+                  <p className="text-xs text-mocha-500 mb-1">Kâr/Zarar</p>
                   {(() => {
                     const customerPaid = order.payment?.shipping ?? 0;
                     const actualCost = order.tracking?.price;
-                    if (!actualCost) return <p className="text-lg font-bold text-gray-400">-</p>;
+                    if (!actualCost) return <p className="text-lg font-bold text-mocha-400">-</p>;
                     const profit = customerPaid - actualCost;
                     return (
                       <p className={`text-lg font-bold ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -2706,7 +2706,7 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                 </div>
               </div>
               {order.tracking?.createdAt && (
-                <p className="text-[9px] text-gray-400 mt-3 text-right">
+                <p className="text-xs text-mocha-400 mt-3 text-right">
                   Kargo: {typeof order.tracking.createdAt === 'string'
                     ? order.tracking.createdAt
                     : new Date(order.tracking.createdAt).toLocaleString('tr-TR')}
@@ -2717,15 +2717,15 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
 
           {/* Timeline */}
           <div>
-            <h3 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-4">Sipariş Hareketleri</h3>
+            <h3 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-4">Sipariş Hareketleri</h3>
             <div className="space-y-4">
               {(order.timeline || []).map((event, idx) => (
                 <div key={idx} className="flex gap-3">
                   <div className="w-2 h-2 rounded-full bg-brand-mustard mt-1.5 shrink-0"></div>
-                  <div className="flex-1 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                    <p className="text-sm text-brown-900 dark:text-white font-medium">{event.action}</p>
-                    <p className="text-xs text-gray-400 mt-1">{event.time}</p>
-                    {event.note && <p className="text-xs text-gray-500 italic mt-2">{event.note}</p>}
+                  <div className="flex-1 pb-4 border-b border-cream-200 last:border-0">
+                    <p className="text-sm text-mocha-900 font-medium">{event.action}</p>
+                    <p className="text-xs text-mocha-400 mt-1">{event.time}</p>
+                    {event.note && <p className="text-xs text-mocha-500 italic mt-2">{event.note}</p>}
                   </div>
                 </div>
               ))}
@@ -2734,12 +2734,12 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 overflow-y-auto p-6 bg-gray-50 dark:bg-dark-900 space-y-6">
+        <div className="w-80 overflow-y-auto p-6 bg-cream-50 space-y-6">
           {/* Actions Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm font-medium text-brown-900 dark:text-white hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors flex items-center justify-between"
+              className="w-full px-4 py-3 bg-white border border-cream-200 rounded-2xl text-sm font-medium text-mocha-900 hover:bg-cream-50 transition-colors flex items-center justify-between"
             >
               <span>Diğer Eylemler</span>
               <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -2747,48 +2747,48 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden z-10 animate-fade-in">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-cream-200 rounded-2xl shadow-sm overflow-hidden z-10 animate-fade-in">
                 {/* Sık Kullanılan */}
-                <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold px-3 py-2">Sık Kullanılan</p>
+                <div className="p-2 border-b border-cream-200">
+                  <p className="text-xs uppercase tracking-wider text-mocha-400 font-bold px-3 py-2">Sık Kullanılan</p>
                   <button
                     onClick={() => handleAction('E-posta Gönder')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Send size={16} className="text-brand-blue" />
-                    <span className="text-sm text-brown-900 dark:text-white">Sipariş Onayı Gönder</span>
+                    <span className="text-sm text-mocha-900">Sipariş Onayı Gönder</span>
                   </button>
                   <button
                     onClick={() => handleAction('Yazdır')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Printer size={16} className="text-brand-mustard" />
-                    <span className="text-sm text-brown-900 dark:text-white">Siparişi Yazdır</span>
+                    <span className="text-sm text-mocha-900">Siparişi Yazdır</span>
                   </button>
                   <button
                     onClick={() => handleAction('Fatura İndir')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Download size={16} className="text-brand-green" />
-                    <span className="text-sm text-brown-900 dark:text-white">Faturayı İndir</span>
+                    <span className="text-sm text-mocha-900">Faturayı İndir</span>
                   </button>
                 </div>
 
                 {/* Ödeme Onayı - Sadece Pending Payment durumunda */}
                 {order.status === 'Pending Payment' && (
-                  <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                    <p className="text-[9px] uppercase tracking-widest text-amber-600 font-bold px-3 py-2">Ödeme İşlemleri</p>
+                  <div className="p-2 border-b border-cream-200">
+                    <p className="text-xs uppercase tracking-wider text-amber-600 font-bold px-3 py-2">Ödeme İşlemleri</p>
                     <button
                       onClick={() => handleAction('Ödeme Onayla')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-xl transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors text-left"
                     >
                       <CheckCircle2 size={16} className="text-emerald-600" />
-                      <span className="text-sm text-brown-900 dark:text-white font-medium">Ödemeyi Onayla</span>
-                      <span className="ml-auto text-[9px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded-full font-bold">Havale/EFT</span>
+                      <span className="text-sm text-mocha-900 font-medium">Ödemeyi Onayla</span>
+                      <span className="ml-auto text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-bold">Havale/EFT</span>
                     </button>
                     <button
                       onClick={() => handleAction('Ödeme Alınamadı - İptal')}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 bg-red-50 hover:bg-red-100 rounded-xl transition-colors text-left"
                     >
                       <XCircle size={16} className="text-red-600" />
                       <span className="text-sm text-red-600 font-medium">Ödeme Alınamadı - İptal</span>
@@ -2797,84 +2797,84 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                 )}
 
                 {/* Lojistik */}
-                <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold px-3 py-2">Lojistik</p>
+                <div className="p-2 border-b border-cream-200">
+                  <p className="text-xs uppercase tracking-wider text-mocha-400 font-bold px-3 py-2">Lojistik</p>
                   <button
                     onClick={() => handleAction('Takip Numarası Ekle')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Package size={16} className="text-brand-blue" />
-                    <span className="text-sm text-brown-900 dark:text-white">Takip Numarası Ekle</span>
+                    <span className="text-sm text-mocha-900">Takip Numarası Ekle</span>
                   </button>
                   <button
                     onClick={() => handleAction('Kargo Etiketi Oluştur')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Truck size={16} className="text-brand-mustard" />
-                    <span className="text-sm text-brown-900 dark:text-white">Kargo Etiketi Oluştur</span>
+                    <span className="text-sm text-mocha-900">Kargo Etiketi Oluştur</span>
                   </button>
                   <button
                     onClick={() => handleAction('Kargo Oluştur')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Package size={16} className="text-green-600" />
-                    <span className="text-sm text-brown-900 dark:text-white">Kargo Oluştur</span>
+                    <span className="text-sm text-mocha-900">Kargo Oluştur</span>
                   </button>
                   {(order.status === 'shipped' || order.status === 'in_transit') && (
                     <button
                       onClick={() => handleAction('Kargo Kontrol')}
                       disabled={isCheckingShipment}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left disabled:opacity-50"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left disabled:opacity-50"
                     >
                       <RefreshCw size={16} className={`text-blue-600 ${isCheckingShipment ? 'animate-spin' : ''}`} />
-                      <span className="text-sm text-brown-900 dark:text-white">
+                      <span className="text-sm text-mocha-900">
                         {isCheckingShipment ? 'Kontrol Ediliyor...' : 'Kargo Durumunu Kontrol Et'}
                       </span>
                     </button>
                   )}
                   <button
                     onClick={() => handleAction('Etiket Ekle')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Tag size={16} className="text-brand-peach" />
-                    <span className="text-sm text-brown-900 dark:text-white">Etiket Ekle</span>
+                    <span className="text-sm text-mocha-900">Etiket Ekle</span>
                   </button>
                   <button
                     onClick={() => handleAction('Durumu Değiştir')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <RefreshCw size={16} className="text-purple-600" />
-                    <span className="text-sm text-brown-900 dark:text-white">Durumu Değiştir</span>
+                    <span className="text-sm text-mocha-900">Durumu Değiştir</span>
                   </button>
                 </div>
 
                 {/* Kritik */}
                 <div className="p-2">
-                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold px-3 py-2">Kritik</p>
+                  <p className="text-xs uppercase tracking-wider text-mocha-400 font-bold px-3 py-2">Kritik</p>
                   <button
                     onClick={() => handleAction('Siparişi Düzenle')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <Edit size={16} className="text-blue-600" />
-                    <span className="text-sm text-brown-900 dark:text-white">Siparişi Düzenle</span>
+                    <span className="text-sm text-mocha-900">Siparişi Düzenle</span>
                   </button>
                   <button
                     onClick={() => handleAction('İade Başlat')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-700 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cream-50 rounded-xl transition-colors text-left"
                   >
                     <RefreshCw size={16} className="text-orange-600" />
-                    <span className="text-sm text-brown-900 dark:text-white">İade Başlat</span>
+                    <span className="text-sm text-mocha-900">İade Başlat</span>
                   </button>
                   <button
                     onClick={() => handleAction('Siparişi İptal Et')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 rounded-xl transition-colors text-left"
                   >
                     <XCircle size={16} className="text-red-600" />
                     <span className="text-sm text-red-600">Siparişi İptal Et</span>
                   </button>
                   <button
                     onClick={() => handleAction('Siparişi Sil')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-colors text-left border-t border-red-100 dark:border-red-900/50 mt-2 pt-2"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-100 rounded-xl transition-colors text-left border-t border-red-100 mt-2 pt-2"
                   >
                     <Trash2 size={16} className="text-red-700" />
                     <span className="text-sm text-red-700 font-bold">Siparişi Sil</span>
@@ -2885,15 +2885,15 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           </div>
 
           {/* Customer Info */}
-          <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3">Müşteri Bilgileri</h4>
+          <div className="p-4 bg-white rounded-2xl border border-cream-200">
+            <h4 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-3">Müşteri Bilgileri</h4>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-brand-mustard text-white rounded-full flex items-center justify-center font-bold">
                   {order.customer?.name?.[0] || '?'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-brown-900 dark:text-white truncate">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                  <p className="text-sm font-medium text-mocha-900 truncate">{order.customer?.name || 'İsimsiz Müşteri'}</p>
                   {order.customerTier && (
                     <div className="mt-1">
                       <TierBadge tier={order.customerTier as LoyaltyTier} size="sm" />
@@ -2901,11 +2901,11 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 text-xs text-mocha-600">
                 <Mail size={14} />
                 <span className="truncate">{order.customer?.email || 'Email yok'}</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 text-xs text-mocha-600">
                 <Phone size={14} />
                 <span>{order.customer?.phone || 'Telefon yok'}</span>
               </div>
@@ -2913,12 +2913,12 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           </div>
 
           {/* Tags Section */}
-          <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+          <div className="p-4 bg-white rounded-2xl border border-cream-200">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Etiketler</h4>
+              <h4 className="text-xs uppercase tracking-wider text-mocha-400 font-bold">Etiketler</h4>
               <button
                 onClick={() => handleAction('Etiket Ekle')}
-                className="text-[9px] uppercase tracking-wider text-brand-mustard hover:text-brand-orange font-bold transition-colors"
+                className="text-xs uppercase tracking-wider text-brand-mustard hover:text-brand-orange font-bold transition-colors"
               >
                 + Ekle
               </button>
@@ -2938,7 +2938,7 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                       'bg-brand-mustard/20 border-brand-mustard'
                     }`}
                   >
-                    <span className="text-[10px] font-bold text-brown-900 dark:text-white uppercase tracking-wider">
+                    <span className="text-xs font-medium text-mocha-900 uppercase tracking-wider">
                       {tag.label}
                     </span>
                     <div className="flex items-center gap-2">
@@ -2970,7 +2970,7 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                             }
                           });
                         }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white text-gray-400"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white text-mocha-400"
                         title="Etiketi Kaldır"
                       >
                         <X size={12} />
@@ -2978,16 +2978,16 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                     </div>
                   </div>
                 ))}
-                <p className="text-[8px] text-gray-400 italic mt-2">
+                <p className="text-[8px] text-mocha-400 italic mt-2">
                   {order.tags.length} etiket
                 </p>
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-gray-400 italic">Henüz etiket eklenmemiş</p>
+                <p className="text-xs text-mocha-400 italic">Henüz etiket eklenmemiş</p>
                 <button
                   onClick={() => handleAction('Etiket Ekle')}
-                  className="mt-2 text-[10px] text-brand-mustard hover:text-brand-orange font-bold uppercase tracking-wider transition-colors"
+                  className="mt-2 text-xs text-brand-mustard hover:text-brand-orange font-bold uppercase tracking-wider transition-colors"
                 >
                   İlk Etiketi Ekle
                 </button>
@@ -2996,11 +2996,11 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           </div>
 
           {/* Shipping Address */}
-          <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3">Teslimat Adresi</h4>
+          <div className="p-4 bg-white rounded-2xl border border-cream-200">
+            <h4 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-3">Teslimat Adresi</h4>
             <div className="space-y-2">
-              <p className="text-xs font-medium text-brown-900 dark:text-white">{order.shipping?.method || 'Belirtilmemiş'}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-xs font-medium text-mocha-900">{order.shipping?.method || 'Belirtilmemiş'}</p>
+              <p className="text-xs text-mocha-600 leading-relaxed">
                 {order.shipping?.address || 'Adres yok'}<br />
                 {order.shipping?.city || 'Şehir yok'}
               </p>
@@ -3011,16 +3011,16 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           </div>
 
           {/* Billing/Invoice Info */}
-          <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h4 className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3">Fatura Bilgileri</h4>
+          <div className="p-4 bg-white rounded-2xl border border-cream-200">
+            <h4 className="text-xs uppercase tracking-wider text-mocha-400 font-bold mb-3">Fatura Bilgileri</h4>
             {order.invoice ? (
               <div className="space-y-2">
-                <p className="text-xs font-bold text-gray-800 dark:text-white">
+                <p className="text-xs font-bold text-mocha-800">
                   {order.invoice.type === 'corporate' ? (
                     <>
                       {order.invoice.companyName || 'Kurumsal Fatura'}
                       {order.invoice.taxOffice && (
-                        <span className="block text-[10px] font-normal text-gray-500 mt-1">
+                        <span className="block text-xs font-normal text-mocha-500 mt-1">
                           {order.invoice.taxOffice} - {order.invoice.taxNo}
                         </span>
                       )}
@@ -3030,52 +3030,52 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
                   )}
                 </p>
                 {order.invoice.address && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-mocha-600">
                     {order.invoice.address}
                     {order.invoice.city && <>, {order.invoice.city}</>}
                   </p>
                 )}
               </div>
             ) : order.billing ? (
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-xs text-mocha-600 leading-relaxed">
                 {order.billing.address || 'Adres yok'}<br />
                 {order.billing.city || 'Şehir yok'}
               </p>
             ) : (
-              <p className="text-xs text-gray-500 italic">Bireysel Fatura</p>
+              <p className="text-xs text-mocha-500 italic">Bireysel Fatura</p>
             )}
           </div>
 
           {/* Gift Note */}
           {order.gift && order.giftNote && (
-            <div className="p-4 bg-brand-peach/20 dark:bg-brand-peach/10 rounded-2xl border border-brand-peach">
+            <div className="p-4 bg-brand-peach/20 rounded-2xl border border-brand-peach">
               <div className="flex items-center gap-2 mb-2">
                 <Gift size={14} className="text-brand-orange" />
-                <h4 className="text-[10px] uppercase tracking-widest text-brand-orange font-bold">Hediye Notu</h4>
+                <h4 className="text-xs uppercase tracking-wider text-brand-orange font-bold">Hediye Notu</h4>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-300 italic">"{order.giftNote}"</p>
+              <p className="text-xs text-mocha-600 italic">"{order.giftNote}"</p>
             </div>
           )}
 
           {/* Special Notes */}
           {order.specialNotes && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-200 dark:border-blue-800">
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-200">
               <div className="flex items-center gap-2 mb-2">
-                <FileText size={14} className="text-blue-600 dark:text-blue-400" />
-                <h4 className="text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-bold">Özel Not / Talimat</h4>
+                <FileText size={14} className="text-blue-600" />
+                <h4 className="text-xs uppercase tracking-wider text-blue-600 font-bold">Özel Not / Talimat</h4>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-300">{order.specialNotes}</p>
+              <p className="text-xs text-mocha-600">{order.specialNotes}</p>
             </div>
           )}
 
           {/* Loyalty Points Earned */}
           {order.loyaltyPointsEarned && order.loyaltyPointsEarned > 0 && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-200 dark:border-green-800">
+            <div className="p-4 bg-green-50 rounded-2xl border border-green-200">
               <div className="flex items-center gap-2">
                 <span className="text-xl">⭐</span>
                 <div className="flex-1">
-                  <h4 className="text-[10px] uppercase tracking-widest text-green-600 dark:text-green-400 font-bold mb-1">Kazanılan Sadakat Puanı</h4>
-                  <p className="text-lg font-bold text-green-700 dark:text-green-300">{order.loyaltyPointsEarned} Puan</p>
+                  <h4 className="text-xs uppercase tracking-wider text-green-600 font-bold mb-1">Kazanılan Sadakat Puanı</h4>
+                  <p className="text-lg font-bold text-green-700">{order.loyaltyPointsEarned} Puan</p>
                 </div>
               </div>
             </div>
@@ -3083,7 +3083,7 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
 
           {/* Alerts */}
           {order.tempAlert && (
-            <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-200 dark:border-orange-800">
+            <div className="p-4 bg-orange-50 rounded-2xl border border-orange-200">
               <div className="flex items-center gap-2">
                 <Thermometer size={14} className="text-orange-600" />
                 <p className="text-xs text-orange-600 font-medium">Isı Hassasiyeti Var</p>
@@ -3277,39 +3277,39 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           })()}
 
           {/* Logistics Info - Geliver Entegrasyonu */}
-          <div className="p-4 bg-white dark:bg-dark-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h4 className="text-[10px] uppercase tracking-widest text-brand-mustard font-bold mb-3">Lojistik Bilgileri</h4>
+          <div className="p-4 bg-white rounded-2xl border border-cream-200">
+            <h4 className="text-xs uppercase tracking-wider text-brand-mustard font-bold mb-3">Lojistik Bilgileri</h4>
             <div className="space-y-3 text-xs">
               {/* Kargo Takip Bilgileri - Geliver */}
               {order.tracking?.trackingNumber && (
                 <>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Kargo Firması:</span>
+                    <span className="text-mocha-500">Kargo Firması:</span>
                     <span className="font-bold text-blue-600">{order.tracking.carrier || 'Geliver'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Takip No:</span>
-                    <span className="font-mono font-bold text-brown-900 dark:text-white">{order.tracking.trackingNumber}</span>
+                    <span className="text-mocha-500">Takip No:</span>
+                    <span className="font-mono font-bold text-mocha-900">{order.tracking.trackingNumber}</span>
                   </div>
-                  <div className="border-t border-gray-100 dark:border-gray-700 pt-3"></div>
+                  <div className="border-t border-cream-200 pt-3"></div>
                 </>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Lot Numarası:</span>
-                <span className="font-mono font-bold text-brown-900 dark:text-white">{order.logistics?.lotNumber || 'N/A'}</span>
+                <span className="text-mocha-500">Lot Numarası:</span>
+                <span className="font-mono font-bold text-mocha-900">{order.logistics?.lotNumber || 'N/A'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Soğuk Paket:</span>
-                <span className={`font-medium ${order.logistics?.coldPackage ? 'text-blue-600' : 'text-gray-400'}`}>
+                <span className="text-mocha-500">Soğuk Paket:</span>
+                <span className={`font-medium ${order.logistics?.coldPackage ? 'text-blue-600' : 'text-mocha-400'}`}>
                   {order.logistics?.coldPackage ? '✓ Eklendi' : '✗ Gerek yok'}
                 </span>
               </div>
-              <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
-                <p className="text-gray-500 mb-1">Kargo Penceresi:</p>
-                <p className="font-medium text-brown-900 dark:text-white">{order.logistics?.shippingWindow || 'N/A'}</p>
+              <div className="border-t border-cream-200 pt-3">
+                <p className="text-mocha-500 mb-1">Kargo Penceresi:</p>
+                <p className="font-medium text-mocha-900">{order.logistics?.shippingWindow || 'N/A'}</p>
               </div>
               {order.logistics?.weatherAlert && (
-                <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                <div className="border-t border-cream-200 pt-3">
                   <p className="text-brand-orange font-medium flex items-center gap-1">
                     <Thermometer size={12} />
                     {order.logistics?.weatherAlert}
@@ -3452,27 +3452,27 @@ const LogisticsRulesPanel: React.FC = () => {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-display text-brown-900 dark:text-white italic mb-2">Lojistik Kuralları</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Dandelion Chocolate modeliyle ısı hassasiyetli kargo yönetimi</p>
+        <h2 className="text-2xl text-mocha-900 italic mb-2">Lojistik Kuralları</h2>
+        <p className="text-sm text-mocha-500">Dandelion Chocolate modeliyle ısı hassasiyetli kargo yönetimi</p>
       </div>
 
       {/* No-Melt Guarantee */}
-      <div className="p-6 bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700">
+      <div className="p-6 bg-white rounded-xl border border-cream-200">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-brown-900 dark:text-white mb-1">No-Melt Guarantee</h3>
-            <p className="text-xs text-gray-500">Ürünlerin erimeden teslimatı için otomatik koruma</p>
+            <h3 className="text-lg font-bold text-mocha-900 mb-1">No-Melt Guarantee</h3>
+            <p className="text-xs text-mocha-500">Ürünlerin erimeden teslimatı için otomatik koruma</p>
           </div>
           <button
             onClick={() => setNoMeltEnabled(!noMeltEnabled)}
-            className={`w-14 h-8 rounded-full transition-all ${noMeltEnabled ? 'bg-brand-mustard' : 'bg-gray-200'}`}
+            className={`w-14 h-8 rounded-full transition-all ${noMeltEnabled ? 'bg-brand-mustard' : 'bg-cream-200'}`}
           >
-            <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-transform ${noMeltEnabled ? 'translate-x-7' : 'translate-x-1'}`}></div>
+            <div className={`w-6 h-6 bg-white rounded-full shadow-sm transition-transform ${noMeltEnabled ? 'translate-x-7' : 'translate-x-1'}`}></div>
           </button>
         </div>
         {noMeltEnabled && (
           <div className="p-4 bg-brand-peach/20 rounded-2xl border border-brand-peach">
-            <p className="text-xs text-gray-600 dark:text-gray-300">
+            <p className="text-xs text-mocha-600">
               ✓ Hava sıcaklığı {tempThreshold}°C üzerinde otomatik buz aküsü eklenir<br/>
               ✓ Hafta sonu kargo beklemesini önlemek için gönderim günleri sınırlandırılır
             </p>
@@ -3481,9 +3481,9 @@ const LogisticsRulesPanel: React.FC = () => {
       </div>
 
       {/* Shipping Days */}
-      <div className="p-6 bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700">
-        <h3 className="text-lg font-bold text-brown-900 dark:text-white mb-4">Kargo Günleri</h3>
-        <p className="text-xs text-gray-500 mb-4">Siparişlerin hangi günler kargoya verilebileceğini belirleyin</p>
+      <div className="p-6 bg-white rounded-xl border border-cream-200">
+        <h3 className="text-lg font-bold text-mocha-900 mb-4">Kargo Günleri</h3>
+        <p className="text-xs text-mocha-500 mb-4">Siparişlerin hangi günler kargoya verilebileceğini belirleyin</p>
         <div className="grid grid-cols-7 gap-3">
           {Object.entries(shippingDays).map(([day, enabled]) => (
             <button
@@ -3491,8 +3491,8 @@ const LogisticsRulesPanel: React.FC = () => {
               onClick={() => setShippingDays({ ...shippingDays, [day]: !enabled })}
               className={`p-4 rounded-2xl text-xs font-bold uppercase transition-all ${
                 enabled
-                  ? 'bg-brand-mustard text-white shadow-lg'
-                  : 'bg-gray-100 dark:bg-dark-900 text-gray-400'
+                  ? 'bg-brand-mustard text-white shadow-sm'
+                  : 'bg-cream-100 text-mocha-400'
               }`}
             >
               {day.slice(0, 3)}
@@ -3502,9 +3502,9 @@ const LogisticsRulesPanel: React.FC = () => {
       </div>
 
       {/* Temperature Threshold */}
-      <div className="p-6 bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700">
-        <h3 className="text-lg font-bold text-brown-900 dark:text-white mb-4">Sıcaklık Eşiği</h3>
-        <p className="text-xs text-gray-500 mb-4">Bu sıcaklığın üzerinde buz aküsü otomatik eklenir</p>
+      <div className="p-6 bg-white rounded-xl border border-cream-200">
+        <h3 className="text-lg font-bold text-mocha-900 mb-4">Sıcaklık Eşiği</h3>
+        <p className="text-xs text-mocha-500 mb-4">Bu sıcaklığın üzerinde buz aküsü otomatik eklenir</p>
         <div className="flex items-center gap-6">
           <input
             type="range"
@@ -3512,18 +3512,18 @@ const LogisticsRulesPanel: React.FC = () => {
             max="30"
             value={tempThreshold}
             onChange={(e) => setTempThreshold(Number(e.target.value))}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            className="flex-1 h-2 bg-cream-200 rounded-lg appearance-none cursor-pointer"
           />
           <div className="w-24 text-center">
-            <span className="text-3xl font-display text-brown-900 dark:text-white">{tempThreshold}</span>
-            <span className="text-sm text-gray-400">°C</span>
+            <span className="text-3xl text-mocha-900">{tempThreshold}</span>
+            <span className="text-sm text-mocha-400">°C</span>
           </div>
         </div>
       </div>
 
       {/* City Delivery Times */}
-      <div className="p-6 bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700">
-        <h3 className="text-lg font-bold text-brown-900 dark:text-white mb-4">Şehir Bazlı Teslimat Süreleri</h3>
+      <div className="p-6 bg-white rounded-xl border border-cream-200">
+        <h3 className="text-lg font-bold text-mocha-900 mb-4">Şehir Bazlı Teslimat Süreleri</h3>
         <div className="space-y-3">
           {[
             { city: 'İstanbul', hours: 24 },
@@ -3532,9 +3532,9 @@ const LogisticsRulesPanel: React.FC = () => {
             { city: 'Antalya', hours: 48 },
             { city: 'Van', hours: 72 }
           ].map((item) => (
-            <div key={item.city} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-900 rounded-2xl">
-              <span className="text-sm font-medium text-brown-900 dark:text-white">{item.city}</span>
-              <span className="text-xs text-gray-500">{item.hours} saat</span>
+            <div key={item.city} className="flex items-center justify-between p-4 bg-cream-50 rounded-2xl">
+              <span className="text-sm font-medium text-mocha-900">{item.city}</span>
+              <span className="text-xs text-mocha-500">{item.hours} saat</span>
             </div>
           ))}
         </div>
@@ -3722,7 +3722,7 @@ export const OrderManagementTab: React.FC = () => {
       <div className="w-full h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 border-4 border-brand-mustard/30 border-t-brand-mustard rounded-full animate-spin mx-auto"></div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Siparişler yükleniyor...</p>
+          <p className="text-sm text-mocha-500">Siparişler yükleniyor...</p>
         </div>
       </div>
     );
@@ -3734,8 +3734,8 @@ export const OrderManagementTab: React.FC = () => {
       <div className="w-full h-screen flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md">
           <AlertTriangle size={48} className="text-red-500 mx-auto" />
-          <h3 className="text-xl font-display text-brown-900 dark:text-white">Bağlantı Hatası</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
+          <h3 className="text-xl text-mocha-900">Bağlantı Hatası</h3>
+          <p className="text-sm text-mocha-500">{error}</p>
           <button
             onClick={() => initialize()}
             className="px-6 py-3 bg-brand-mustard text-white rounded-2xl hover:bg-brand-mustard/90 transition-colors"
@@ -3750,24 +3750,24 @@ export const OrderManagementTab: React.FC = () => {
   return (
     <div className="w-full animate-fade-in">
       {/* Tab Navigation */}
-      <div className="mb-8 border-b border-gray-200 dark:border-gray-700">
+      <div className="mb-8 border-b border-cream-200">
         <div className="flex gap-6">
           <button
             onClick={() => setActiveTab('orders')}
-            className={`pb-4 px-2 text-sm font-bold uppercase tracking-widest transition-all ${
+            className={`pb-4 px-2 text-sm font-bold uppercase tracking-wider transition-all ${
               activeTab === 'orders'
-                ? 'text-brown-900 dark:text-white border-b-2 border-brand-mustard'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                ? 'text-mocha-900 border-b-2 border-brand-mustard'
+                : 'text-mocha-400 hover:text-mocha-600'
             }`}
           >
             Siparişler
           </button>
           <button
             onClick={() => setActiveTab('logistics')}
-            className={`pb-4 px-2 text-sm font-bold uppercase tracking-widest transition-all ${
+            className={`pb-4 px-2 text-sm font-bold uppercase tracking-wider transition-all ${
               activeTab === 'logistics'
-                ? 'text-brown-900 dark:text-white border-b-2 border-brand-mustard'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                ? 'text-mocha-900 border-b-2 border-brand-mustard'
+                : 'text-mocha-400 hover:text-mocha-600'
             }`}
           >
             Lojistik Kuralları
@@ -3784,26 +3784,26 @@ export const OrderManagementTab: React.FC = () => {
       <header className="mb-8">
         <div className="flex justify-between items-end">
           <div>
-            <span className="text-brand-mustard text-[10px] font-bold uppercase tracking-[0.5em] mb-3 block">
+            <span className="text-brand-mustard text-xs font-medium uppercase tracking-[0.5em] mb-3 block">
               Operasyonel Orkestrasyon
             </span>
-            <h1 className="text-4xl font-display font-light tracking-tight text-brown-900 dark:text-white italic">
+            <h1 className="text-4xl font-light tracking-tight text-mocha-900 italic">
               Sipariş Yönetim Paneli
             </h1>
           </div>
 
           <div className="flex gap-8 text-right">
             <div>
-              <p className="text-3xl font-display text-brown-900 dark:text-white">{stats.total}</p>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Aktif Sipariş</p>
+              <p className="text-3xl text-mocha-900">{stats.total}</p>
+              <p className="text-xs uppercase tracking-wider text-mocha-400 font-bold">Aktif Sipariş</p>
             </div>
             <div>
-              <p className="text-3xl font-display text-red-600">{stats.urgent}</p>
-              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Kritik SLA</p>
+              <p className="text-3xl text-red-600">{stats.urgent}</p>
+              <p className="text-xs uppercase tracking-wider text-mocha-400 font-bold">Kritik SLA</p>
             </div>
             <div className="bg-brand-mustard text-black p-4 rounded-2xl shadow-xl">
-              <p className="text-2xl font-display">{stats.inProduction}</p>
-              <p className="text-[9px] uppercase tracking-widest opacity-60 font-bold">Şu An Mutfakta</p>
+              <p className="text-2xl font-semibold">{stats.inProduction}</p>
+              <p className="text-xs uppercase tracking-wider opacity-60 font-bold">Şu An Mutfakta</p>
             </div>
           </div>
         </div>
@@ -3811,20 +3811,20 @@ export const OrderManagementTab: React.FC = () => {
 
       {/* EFT Ödeme Onay Paneli */}
       {pendingEftOrders.length > 0 && (
-        <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-3xl border border-amber-200 dark:border-amber-800 overflow-hidden">
-          <div className="p-4 border-b border-amber-200 dark:border-amber-800 flex items-center justify-between">
+        <div className="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl border border-amber-200 overflow-hidden">
+          <div className="p-4 border-b border-amber-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">
                 <Landmark className="text-white" size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-amber-900 dark:text-amber-200">Bekleyen EFT Ödemeleri</h3>
-                <p className="text-xs text-amber-600 dark:text-amber-400">{pendingEftOrders.length} sipariş ödeme bekliyor</p>
+                <h3 className="font-bold text-amber-900">Bekleyen EFT Ödemeleri</h3>
+                <p className="text-xs text-amber-600">{pendingEftOrders.length} sipariş ödeme bekliyor</p>
               </div>
             </div>
             <button
               onClick={copyAmountsToClipboard}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark-800 border border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-amber-700 hover:bg-amber-50 transition-colors"
             >
               <FileText size={14} />
               Tutarları Kopyala
@@ -3835,22 +3835,22 @@ export const OrderManagementTab: React.FC = () => {
             {pendingEftOrders.map(order => (
               <div
                 key={order.id}
-                className="flex items-center gap-4 p-3 bg-white dark:bg-dark-800 rounded-xl border border-amber-100 dark:border-amber-900 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+                className="flex items-center gap-4 p-3 bg-white rounded-xl border border-amber-100 hover:border-amber-300 transition-colors"
               >
                 {/* Sipariş Bilgisi */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-display font-bold text-brown-900 dark:text-white">{order.id}</span>
-                    <span className="text-xs text-gray-400">{order.customer?.name}</span>
+                    <span className="font-semibold text-mocha-900">{order.id}</span>
+                    <span className="text-xs text-mocha-400">{order.customer?.name}</span>
                   </div>
-                  <p className="text-xs text-gray-500 truncate">{order.customer?.email}</p>
+                  <p className="text-xs text-mocha-500 truncate">{order.customer?.email}</p>
                 </div>
 
                 {/* Tutar */}
                 <div className="text-right">
                   <p className="text-lg font-bold text-amber-600">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</p>
                   {order.bankTransferDiscount && order.bankTransferDiscount > 0 && (
-                    <p className="text-[10px] text-emerald-600">-₺{order.bankTransferDiscount.toFixed(0)} indirim</p>
+                    <p className="text-xs text-emerald-600">-₺{order.bankTransferDiscount.toFixed(0)} indirim</p>
                   )}
                 </div>
 
@@ -3859,7 +3859,7 @@ export const OrderManagementTab: React.FC = () => {
                   {order.paymentDeadline ? (
                     <EftCountdown deadline={order.paymentDeadline} compact />
                   ) : (
-                    <span className="text-xs text-gray-400">Süre yok</span>
+                    <span className="text-xs text-mocha-400">Süre yok</span>
                   )}
                 </div>
 
@@ -3895,8 +3895,8 @@ export const OrderManagementTab: React.FC = () => {
           </div>
 
           {/* Toplam */}
-          <div className="p-4 bg-amber-100 dark:bg-amber-900/30 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between">
-            <span className="text-sm font-bold text-amber-800 dark:text-amber-200">Toplam Beklenen</span>
+          <div className="p-4 bg-amber-100 border-t border-amber-200 flex items-center justify-between">
+            <span className="text-sm font-bold text-amber-800">Toplam Beklenen</span>
             <span className="text-xl font-bold text-amber-600">
               ₺{pendingEftOrders.reduce((sum, o) => sum + (o.payment?.total || 0), 0).toLocaleString('tr-TR')}
             </span>
@@ -3921,14 +3921,14 @@ export const OrderManagementTab: React.FC = () => {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-[10px] uppercase tracking-widest px-5 py-2.5 rounded-full transition-all font-bold ${
+                className={`text-xs uppercase tracking-wider px-5 py-2.5 rounded-full transition-all font-bold ${
                   filter === f
                     ? isPendingPayment
-                      ? 'bg-amber-500 text-white shadow-lg'
-                      : 'bg-brown-900 dark:bg-brand-mustard text-white dark:text-black shadow-lg'
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'bg-brown-900 text-white shadow-sm'
                     : isPendingPayment
-                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30'
-                      : 'bg-gray-100 dark:bg-dark-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-dark-700'
+                      ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                      : 'bg-cream-100 text-mocha-500 hover:bg-cream-200'
                 }`}
               >
                 {labels[f] || f}
@@ -3937,7 +3937,7 @@ export const OrderManagementTab: React.FC = () => {
           })}
 
           {/* Ayırıcı */}
-          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+          <div className="w-px h-6 bg-cream-200 mx-1" />
 
           {/* Ödeme Filtreleri */}
           <div className="flex gap-1.5">
@@ -3951,7 +3951,7 @@ export const OrderManagementTab: React.FC = () => {
               <button
                 key={key}
                 onClick={() => setPaymentFilter(key as typeof paymentFilter)}
-                className={`text-[9px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all font-bold flex items-center gap-1 ${
+                className={`text-xs uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all font-bold flex items-center gap-1 ${
                   paymentFilter === key
                     ? key === 'paid'
                       ? 'bg-emerald-500 text-white shadow'
@@ -3961,8 +3961,8 @@ export const OrderManagementTab: React.FC = () => {
                           ? 'bg-blue-500 text-white shadow'
                           : key === 'eft'
                             ? 'bg-amber-500 text-white shadow'
-                            : 'bg-gray-700 dark:bg-gray-600 text-white shadow'
-                    : 'bg-gray-50 dark:bg-dark-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 border border-gray-200 dark:border-gray-700'
+                            : 'bg-gray-700 text-white shadow'
+                    : 'bg-cream-50 text-mocha-500 hover:bg-cream-100 border border-cream-200'
                 }`}
                 title={label}
               >
@@ -3976,7 +3976,7 @@ export const OrderManagementTab: React.FC = () => {
           <button
             onClick={handleSeedOrders}
             disabled={isSeedingOrders}
-            className="px-4 py-2 bg-brand-mustard hover:bg-brand-mustard/80 disabled:bg-brand-mustard/50 text-brown-900 text-[10px] uppercase tracking-widest font-bold rounded-2xl transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-brand-mustard hover:bg-brand-mustard/80 disabled:bg-brand-mustard/50 text-mocha-900 text-xs uppercase tracking-wider font-bold rounded-2xl transition-colors flex items-center gap-2"
             title="Test için örnek siparişler ekle"
           >
             <Package size={14} />
@@ -3985,7 +3985,7 @@ export const OrderManagementTab: React.FC = () => {
           <button
             onClick={handleCleanup}
             disabled={isCleaningUp}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-[10px] uppercase tracking-widest font-bold rounded-2xl transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-xs uppercase tracking-wider font-bold rounded-2xl transition-colors flex items-center gap-2"
             title="Geçersiz siparişleri temizle"
           >
             <XCircle size={14} />
@@ -3994,20 +3994,20 @@ export const OrderManagementTab: React.FC = () => {
           <button
             onClick={handleCheckAllShipments}
             disabled={isCheckingShipments}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-[10px] uppercase tracking-widest font-bold rounded-2xl transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white text-xs uppercase tracking-wider font-bold rounded-2xl transition-colors flex items-center gap-2"
             title="Tüm shipped siparişlerin kargo durumunu kontrol et"
           >
             <RefreshCw size={14} className={isCheckingShipments ? 'animate-spin' : ''} />
             {isCheckingShipments ? 'Kontrol Ediliyor...' : 'Kargoları Kontrol Et'}
           </button>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-mocha-400" size={16} />
             <input
               type="text"
               placeholder="Sipariş No, Ad, Email, Telefon..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-64 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-mustard outline-none text-xs dark:text-white"
+              className="pl-10 pr-4 py-2 w-64 bg-cream-50 border border-cream-200 rounded-2xl focus:border-brand-mustard outline-none text-xs"
             />
           </div>
         </div>
@@ -4017,16 +4017,16 @@ export const OrderManagementTab: React.FC = () => {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       {/* Orders Table/List */}
-      <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white rounded-xl border border-cream-200 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-dark-900 border-b border-gray-100 dark:border-gray-700">
+          <thead className="bg-cream-50 border-b border-cream-200">
             <tr>
-              <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Sipariş No</th>
-              <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Müşteri</th>
-              <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Ürünler</th>
-              <th className="text-left px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Durum</th>
-              <th className="text-right px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Toplam</th>
-              <th className="text-right px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">SLA</th>
+              <th className="text-left px-6 py-4 text-xs uppercase tracking-wider text-mocha-400 font-bold">Sipariş No</th>
+              <th className="text-left px-6 py-4 text-xs uppercase tracking-wider text-mocha-400 font-bold">Müşteri</th>
+              <th className="text-left px-6 py-4 text-xs uppercase tracking-wider text-mocha-400 font-bold">Ürünler</th>
+              <th className="text-left px-6 py-4 text-xs uppercase tracking-wider text-mocha-400 font-bold">Durum</th>
+              <th className="text-right px-6 py-4 text-xs uppercase tracking-wider text-mocha-400 font-bold">Toplam</th>
+              <th className="text-right px-6 py-4 text-xs uppercase tracking-wider text-mocha-400 font-bold">SLA</th>
             </tr>
           </thead>
           <tbody>
@@ -4054,16 +4054,16 @@ export const OrderManagementTab: React.FC = () => {
                 <tr
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
-                  className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark-900 cursor-pointer transition-colors group"
+                  className="border-b border-cream-200 hover:bg-cream-50 cursor-pointer transition-colors group"
                 >
                   <td className="px-6 py-4">
-                    <span className="text-sm font-display text-brown-900 dark:text-white italic">{order.id}</span>
+                    <span className="text-sm text-mocha-900 italic">{order.id}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <p className="text-sm text-brown-900 dark:text-white font-medium">{order.customer?.name || 'İsimsiz Müşteri'}</p>
-                        <p className="text-xs text-gray-400">{order.customer?.email || 'Email yok'}</p>
+                        <p className="text-sm text-mocha-900 font-medium">{order.customer?.name || 'İsimsiz Müşteri'}</p>
+                        <p className="text-xs text-mocha-400">{order.customer?.email || 'Email yok'}</p>
                       </div>
                       {order.customerTier && (
                         <TierBadge tier={order.customerTier} size="sm" showLabel={false} />
@@ -4088,43 +4088,43 @@ export const OrderManagementTab: React.FC = () => {
                           </span>
                         ))}
                         {order.tags.length > 3 && (
-                          <span className="text-[8px] text-gray-400 font-bold">+{order.tags.length - 3}</span>
+                          <span className="text-[8px] text-mocha-400 font-bold">+{order.tags.length - 3}</span>
                         )}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{order.items?.length || 0} ürün</p>
+                    <p className="text-xs text-mocha-600">{order.items?.length || 0} ürün</p>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <StatusBadge status={order.status || 'Awaiting Prep'} />
                         {order.payment?.method === 'eft' && (
-                          <span className="text-[8px] bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
+                          <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold">
                             EFT
                           </span>
                         )}
                         {order.payment?.method === 'card' && (
                           <span className={`text-[8px] px-1.5 py-0.5 rounded font-bold ${
                             order.payment?.status === 'paid'
-                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                              ? 'bg-emerald-100 text-emerald-600'
                               : order.payment?.status === 'failed'
-                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                ? 'bg-red-100 text-red-600'
+                                : 'bg-blue-100 text-blue-600'
                           }`}>
                             💳 {order.payment?.lastFourDigits ? `*${order.payment.lastFourDigits}` : 'Kart'}
                           </span>
                         )}
                         {/* Hediye Çantası Uyarısı */}
                         {order.hasGiftBag && (
-                          <span className="text-[8px] bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 px-1.5 py-0.5 rounded font-bold animate-pulse flex items-center gap-1">
+                          <span className="text-[8px] bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded font-bold animate-pulse flex items-center gap-1">
                             🛍️ Çanta
                           </span>
                         )}
                         {/* Hediye Mesajı Uyarısı */}
                         {order.isGift && (
-                          <span className="text-[8px] bg-gold/20 dark:bg-gold/30 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold animate-pulse flex items-center gap-1">
+                          <span className="text-[8px] bg-gold/20 text-amber-700 px-1.5 py-0.5 rounded font-bold animate-pulse flex items-center gap-1">
                             🎁 Hediye
                           </span>
                         )}
@@ -4136,10 +4136,10 @@ export const OrderManagementTab: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-sm font-bold text-brown-900 dark:text-white">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
+                    <span className="text-sm font-bold text-mocha-900">₺{(order.payment?.total || 0).toLocaleString('tr-TR')}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className={`text-xs font-medium ${(order.sla || 0) < 15 ? 'text-red-600' : (order.sla || 0) > 1440 ? 'text-orange-500' : 'text-gray-500'}`}>
+                    <span className={`text-xs font-medium ${(order.sla || 0) < 15 ? 'text-red-600' : (order.sla || 0) > 1440 ? 'text-orange-500' : 'text-mocha-500'}`}>
                       {formatSLA(order.sla || 0)}
                     </span>
                   </td>

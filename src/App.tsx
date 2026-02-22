@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy, ComponentType } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import { Header } from './components/Header';
@@ -18,8 +18,12 @@ import { AIAssistant } from './components/AIAssistant';
 import { CookieConsent } from './components/CookieConsent';
 import { FloatingFeedback } from './components/FloatingFeedback';
 import { useLoyaltyStore } from './stores/loyaltyStore';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { TypographySettings } from './types';
 import { initSession, trackPageView } from './services/visitorTrackingService';
+import { initMetaPixel, trackPixelPageView } from './services/metaPixelService';
+import { updateAnalyticsConsent } from './lib/firebase';
+import { canLoadAnalytics } from './utils/cookieConsent';
 
 // Chunk yükleme hatası yakalayan lazy loader
 // Deploy sonrası eski chunk'lar geçersiz olduğunda sayfayı yeniler
@@ -71,6 +75,7 @@ const Maintenance = lazyWithRetry(() => import('./pages/Maintenance').then(m => 
 const OrderConfirmation = lazyWithRetry(() => import('./pages/OrderConfirmation'));
 const Bonbonlar = lazyWithRetry(() => import('./pages/Bonbonlar'));
 const BonbonDetay = lazyWithRetry(() => import('./pages/BonbonDetay'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
 
 // Minimal loading component - no spinner
 const PageLoader = () => (
@@ -131,6 +136,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     initSession().catch((err) => {
       console.warn('Visitor tracking init failed:', err);
     });
+
+    // Meta Pixel baslat (cookie consent'e bagli)
+    initMetaPixel();
+
+    // GA4 Analytics - cookie consent'e gore ac/kapa
+    updateAnalyticsConsent(canLoadAnalytics());
+
+    // Cookie tercihi degistiginde analytics'i guncelle
+    const handleConsentChange = () => {
+      updateAnalyticsConsent(canLoadAnalytics());
+    };
+    window.addEventListener('cookie_consent_changed', handleConsentChange);
+    return () => window.removeEventListener('cookie_consent_changed', handleConsentChange);
   }, [isAdmin]);
 
   // Visitor Tracking - Sayfa degisikliklerini takip et
@@ -141,6 +159,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     trackPageView(location.pathname).catch((err) => {
       console.warn('Page view tracking failed:', err);
     });
+
+    // Meta Pixel PageView
+    trackPixelPageView();
   }, [location.pathname, isAdmin]);
 
   // Bakım modunda admin hariç tüm sayfalar Maintenance gösterir
@@ -315,20 +336,20 @@ const App: React.FC = () => {
     const error = urlParams.get('error');
 
     if (payment && orderId) {
-      // Redirect to appropriate hash route (full page reload to clean URL)
       if (payment === 'success') {
         // Sepeti temizle (başarılı ödeme sonrası)
         localStorage.removeItem('sade_cart');
-        window.location.href = `${window.location.origin}/#/order-confirmation/${orderId}`;
+        window.location.href = `${window.location.origin}/order-confirmation/${orderId}`;
       } else if (payment === 'failed') {
-        window.location.href = `${window.location.origin}/#/checkout?orderId=${orderId}&retry=true&error=${encodeURIComponent(error || 'Ödeme başarısız')}`;
+        window.location.href = `${window.location.origin}/checkout?orderId=${orderId}&retry=true&error=${encodeURIComponent(error || 'Ödeme başarısız')}`;
       }
       return;
     }
 
-    // Fix malformed URLs (cleanup old broken redirects)
-    if (window.location.pathname !== '/' && window.location.pathname.length > 1) {
-      window.location.href = `${window.location.origin}/#${window.location.hash.replace('#', '') || '/'}`;
+    // Eski hash URL'lerini BrowserRouter formatına yönlendir
+    if (window.location.hash.startsWith('#/')) {
+      const newPath = window.location.hash.replace('#', '');
+      window.location.href = `${window.location.origin}${newPath}`;
     }
   }, []);
 
@@ -385,12 +406,14 @@ const App: React.FC = () => {
   }, [initializeLoyalty]);
 
   return (
+    <ErrorBoundary>
     <LanguageProvider>
       <UserProvider>
         <ProductProvider>
           <CartProvider>
             <Router>
               <Layout>
+                <main id="main-content">
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Home />} />
@@ -416,14 +439,17 @@ const App: React.FC = () => {
                     <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                     <Route path="/bonbonlar" element={<Bonbonlar />} />
                     <Route path="/bonbonlar/:slug" element={<BonbonDetay />} />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
+                </main>
               </Layout>
             </Router>
           </CartProvider>
         </ProductProvider>
       </UserProvider>
     </LanguageProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -1,0 +1,155 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Yardımcı fonksiyonlar
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Ürünler - herkes okuyabilir, sadece admin yazabilir
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Siparişler - sadece kendi siparişini okuyabilir, admin hepsini
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.customerId == request.auth.uid);
+      allow create: if true; // Misafir checkout için
+      allow update, delete: if isAdmin();
+    }
+
+    // Müşteriler - sadece kendi profilini okuyabilir, admin hepsini
+    match /customers/{customerId} {
+      allow read: if isAdmin() || isOwner(customerId);
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || isOwner(customerId);
+      allow delete: if isAdmin();
+    }
+
+    // Kullanıcı profilleri
+    match /users/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow create: if isAuthenticated();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Site ayarları - herkes okuyabilir, sadece admin yazabilir
+    match /site_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Uygulama ayarları - herkes okuyabilir, sadece admin yazabilir
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Site içerik (CMS) - herkes okuyabilir, sadece admin yazabilir
+    match /site_content/{contentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Kutu konfigürasyonu - herkes okuyabilir, sadece admin yazabilir
+    match /box_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Email kuyruğu - sadece authenticated kullanıcılar oluşturabilir
+    match /mail/{mailId} {
+      allow create: if true; // Cloud Functions da yazıyor
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Visitor sessions - herkes oluşturabilir ve kendi session'ını okuyabilir (tracking)
+    match /sessions/{sessionId} {
+      allow create, update, read: if true;
+      allow delete: if isAdmin();
+    }
+
+    // Visitors - herkes oluşturabilir (tracking), sadece admin okuyabilir
+    match /visitors/{visitorId} {
+      allow create, update: if true;
+      allow read, delete: if isAdmin();
+    }
+
+    // Konuşma logları - herkes oluşturabilir, sadece admin okuyabilir
+    match /conversation_logs/{logId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Yorumlar/Reviews - herkes okuyabilir, authenticated oluşturabilir
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+
+    // Kuponlar - herkes okuyabilir, sadece admin yazabilir
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Newsletter abonelikleri
+    match /newsletter/{subscriberId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Bonbon koleksiyonları - herkes okuyabilir, sadece admin yazabilir
+    match /bonbon_collections/{collectionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bonbons/{bonbonId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Sadakat programı ayarları - herkes okuyabilir, sadece admin yazabilir
+    match /loyalty_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Ürün rozetleri - herkes okuyabilir, sadece admin yazabilir
+    match /product_badges/{badgeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Kampanyalar
+    match /campaigns/{campaignId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Referans kodları
+    match /referral_codes/{codeId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // Varsayılan kural - diğer tüm koleksiyonlar sadece admin
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

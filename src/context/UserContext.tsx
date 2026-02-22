@@ -13,6 +13,7 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import { doc, onSnapshot, updateDoc, collection, serverTimestamp, runTransaction, setDoc, query, where, orderBy } from 'firebase/firestore';
 import { createOrderWithLoyalty } from '../services/orderService';
+import { deleteAccount as deleteAccountService } from '../services/accountService';
 import type { Order as LoyaltyOrder } from '../types/order';
 
 export interface UserAddress {
@@ -124,6 +125,7 @@ interface UserContextType {
   logout: () => void;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
   addOrder: (order: Omit<Order, 'id' | 'date'>) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -337,6 +339,12 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 phone: customerPhone,
                 address: customerAddress?.address || customerAddress?.street || ''
             },
+            // CAPI deduplication verileri (order objesinden aktar)
+            ...((order as any).pixelEventId && { pixelEventId: (order as any).pixelEventId }),
+            ...((order as any).fbc !== undefined && { fbc: (order as any).fbc }),
+            ...((order as any).fbp !== undefined && { fbp: (order as any).fbp }),
+            ...((order as any).userAgent && { userAgent: (order as any).userAgent }),
+            ...((order as any).sourceUrl && { sourceUrl: (order as any).sourceUrl }),
             items: order.items.map((item: any) => ({
                 productId: item.id || item.productId || '',
                 name: item.name || item.title || '',
@@ -395,10 +403,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 };
 
+  const handleDeleteAccount = async () => {
+    if (!user?.uid || !user?.email) return;
+    await deleteAccountService(user.uid, user.email);
+    // Auth silme accountService içinde yapılıyor, state temizle
+    setUser(null);
+    setOrders([]);
+  };
+
   return (
     <UserContext.Provider value={{
       user, isLoggedIn: !!user, loading, orders,
-      login, loginWithGoogle, resetPassword, register, logout, updateProfile, addOrder
+      login, loginWithGoogle, resetPassword, register, logout, updateProfile, addOrder,
+      deleteAccount: handleDeleteAccount
     }}>
       {children}
     </UserContext.Provider>

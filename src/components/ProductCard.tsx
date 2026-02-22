@@ -147,6 +147,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
             <img
               src={currentImage}
               alt={product.title}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-center group-hover:scale-110 transition-all duration-300 ease-out relative z-10"
             />
           ) : (
@@ -258,6 +260,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
             <img
               src={currentImage}
               alt={product.title}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
             />
           ) : (
@@ -347,6 +351,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode, onQ
             <img
               src={currentImage}
               alt={product.title}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 z-10"
             />
           ) : (

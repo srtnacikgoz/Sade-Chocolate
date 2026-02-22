@@ -238,7 +238,7 @@ export const ScenariosTab: React.FC = () => {
           <h2 className="text-2xl font-bold flex items-center gap-3">
             <GitBranch className="text-purple-500" /> Konuşma Senaryoları
           </h2>
-          <p className="text-sm text-gray-500 mt-2">Müşterilerle interaktif diyaloglar oluşturun</p>
+          <p className="text-sm text-mocha-500 mt-2">Müşterilerle interaktif diyaloglar oluşturun</p>
         </div>
         <button
           onClick={() => {
@@ -274,23 +274,23 @@ export const ScenariosTab: React.FC = () => {
       {!isCreating && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {scenarios.map(scenario => (
-            <div key={scenario.id} className="bg-white dark:bg-dark-800 rounded-[30px] border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+            <div key={scenario.id} className="bg-white rounded-xl border border-cream-200 p-6 shadow-sm">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-bold text-lg">{scenario.name}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${scenario.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${scenario.active ? 'bg-green-100 text-green-700' : 'bg-cream-100 text-mocha-500'}`}>
                       {scenario.active ? 'Aktif' : 'Pasif'}
                     </span>
                   </div>
                   {scenario.description && (
-                    <p className="text-sm text-gray-500 mb-3">{scenario.description}</p>
+                    <p className="text-sm text-mocha-500 mb-3">{scenario.description}</p>
                   )}
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <div className="flex items-center gap-2 text-xs text-mocha-400">
                     <MessageCircle size={14} />
                     <span>Tetikleyici: "{scenario.trigger}"</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                  <div className="flex items-center gap-2 text-xs text-mocha-400 mt-1">
                     <GitBranch size={14} />
                     <span>{scenario.steps?.length || 0} Adım</span>
                   </div>
@@ -300,7 +300,7 @@ export const ScenariosTab: React.FC = () => {
               <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => handleToggleActive(scenario)}
-                  className={`flex-1 px-4 py-2 rounded-xl text-sm font-bold transition-all ${scenario.active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
+                  className={`flex-1 px-4 py-2 rounded-xl text-sm font-bold transition-all ${scenario.active ? 'bg-cream-100 text-mocha-600 hover:bg-cream-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
                 >
                   {scenario.active ? 'Devre Dışı Bırak' : 'Aktif Et'}
                 </button>
@@ -333,7 +333,7 @@ export const ScenariosTab: React.FC = () => {
 
       {/* Scenario Builder */}
       {isCreating && (
-        <div className="bg-white dark:bg-dark-800 rounded-[48px] border border-gray-200 dark:border-gray-700 p-10 shadow-lg">
+        <div className="bg-white rounded-xl border border-cream-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-2xl font-bold">
               {editingScenario ? 'Senaryo Düzenle' : 'Yeni Senaryo Oluştur'}
@@ -343,7 +343,7 @@ export const ScenariosTab: React.FC = () => {
                 setIsCreating(false);
                 setEditingScenario(null);
               }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              className="p-2 hover:bg-cream-100 rounded-full transition-colors"
             >
               <X size={20} />
             </button>
@@ -352,53 +352,53 @@ export const ScenariosTab: React.FC = () => {
           {/* Basic Info */}
           <div className="space-y-6 mb-8">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Senaryo Adı *</label>
+              <label className="block text-xs font-bold text-mocha-400 uppercase tracking-wider mb-2">Senaryo Adı *</label>
               <input
                 type="text"
                 placeholder="Örn: Hediye Seçim Asistanı"
                 value={newScenario.name}
                 onChange={(e) => setNewScenario({ ...newScenario, name: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Açıklama</label>
+              <label className="block text-xs font-bold text-mocha-400 uppercase tracking-wider mb-2">Açıklama</label>
               <input
                 type="text"
                 placeholder="Bu senaryo ne için kullanılıyor?"
                 value={newScenario.description}
                 onChange={(e) => setNewScenario({ ...newScenario, description: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Tetikleyici Anahtar Kelime *</label>
+              <label className="block text-xs font-bold text-mocha-400 uppercase tracking-wider mb-2">Tetikleyici Anahtar Kelime *</label>
               <input
                 type="text"
                 placeholder="Örn: hediye almak, sevgilime hediye, ne alsam"
                 value={newScenario.trigger}
                 onChange={(e) => setNewScenario({ ...newScenario, trigger: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
               />
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-mocha-400 mt-2">
                 💡 <strong>Virgülle ayırarak</strong> birden fazla tetikleyici ekleyebilirsiniz.
                 <br />
                 Örn: "hediye, armağan, sürpriz" → Her üç kelime de senaryoyu başlatır
               </p>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">✨ Hedef Persona Tipi</label>
+              <label className="block text-xs font-bold text-mocha-400 uppercase tracking-wider mb-2">✨ Hedef Persona Tipi</label>
               <select
                 value={newScenario.personaType || 'gifter'}
                 onChange={(e) => setNewScenario({ ...newScenario, personaType: e.target.value as any })}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
               >
                 <option value="gifter">🎁 Hediye Veren (Gifter) - Hediye seçimi için yardım</option>
                 <option value="connoisseur">🍷 Uzman (Connoisseur) - Tat profili keşfi</option>
                 <option value="aspiring">📚 Öğrenen (Aspiring) - Çikolata eğitimi</option>
                 <option value="archivist">📦 Koleksiyoncu (Archivist) - Nadir ürünler</option>
               </select>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-mocha-400 mt-2">
                 Bu senaryo hangi kullanıcı tipine hitap ediyor? AI yanıtlarını buna göre optimize eder.
               </p>
             </div>
@@ -425,7 +425,7 @@ export const ScenariosTab: React.FC = () => {
             </div>
 
             {newScenario.steps?.map((step, stepIndex) => (
-              <div key={step.id} data-step-card className="bg-gray-50 dark:bg-dark-900 rounded-2xl p-6 border-l-4 border-purple-500">
+              <div key={step.id} data-step-card className="bg-cream-50 rounded-2xl p-6 border-l-4 border-purple-500">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     {step.type === 'question' ? (
@@ -433,7 +433,7 @@ export const ScenariosTab: React.FC = () => {
                     ) : (
                       <CheckCircle className="text-green-500" size={20} />
                     )}
-                    <span className="font-bold text-sm uppercase tracking-wider text-gray-500">
+                    <span className="font-bold text-sm uppercase tracking-wider text-mocha-500">
                       {step.displayName || `${step.id} - ${step.type === 'question' ? 'Soru' : 'Sonuç'}`}
                     </span>
                   </div>
@@ -452,18 +452,18 @@ export const ScenariosTab: React.FC = () => {
                       placeholder="Bu adıma özel isim verin (örn: 'Romantik Partner Seçimi', 'Hediye Alıcısı Sorusu')"
                       value={step.displayName || ''}
                       onChange={(e) => handleUpdateStep(step.id, { displayName: e.target.value })}
-                      className="w-full px-4 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 mb-3 focus:ring-2 focus:ring-purple-500/20 outline-none placeholder:text-purple-400 placeholder:font-normal"
+                      className="w-full px-4 py-2 bg-purple-50 border border-purple-200 rounded-xl text-xs font-bold text-purple-700 mb-3 focus:ring-2 focus:ring-purple-500/20 outline-none placeholder:text-purple-400 placeholder:font-normal"
                     />
                     <input
                       type="text"
                       placeholder="Soruyu buraya yazın..."
                       value={step.question}
                       onChange={(e) => handleUpdateStep(step.id, { question: e.target.value })}
-                      className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm mb-4 focus:ring-2 focus:ring-purple-500/20 outline-none"
+                      className="w-full px-4 py-3 bg-white border border-cream-200 rounded-xl text-sm mb-4 focus:ring-2 focus:ring-purple-500/20 outline-none"
                     />
 
                     <div className="space-y-3">
-                      <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Cevap Seçenekleri</label>
+                      <label className="block text-xs font-bold text-mocha-400 uppercase tracking-wider">Cevap Seçenekleri</label>
                       {step.options?.map((option, optIndex) => (
                         <div key={optIndex} className="flex gap-3">
                           <input
@@ -471,12 +471,12 @@ export const ScenariosTab: React.FC = () => {
                             placeholder="Seçenek metni"
                             value={option.label}
                             onChange={(e) => handleUpdateOption(step.id, optIndex, { label: e.target.value })}
-                            className="flex-1 px-4 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                            className="flex-1 px-4 py-2 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                           />
                           <select
                             value={option.nextStepId || ''}
                             onChange={(e) => handleUpdateOption(step.id, optIndex, { nextStepId: e.target.value || null })}
-                            className="px-4 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
+                            className="px-4 py-2 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500/20 outline-none"
                           >
                             <option value="">Sonuç (Bitir)</option>
                             {newScenario.steps?.filter(s => s.id !== step.id).map(s => {
@@ -506,23 +506,23 @@ export const ScenariosTab: React.FC = () => {
                       placeholder="Bu sonuç adımına özel isim verin (örn: 'Romantik Partner Önerisi', 'Öğretmen İçin Truffle Sonucu')"
                       value={step.displayName || ''}
                       onChange={(e) => handleUpdateStep(step.id, { displayName: e.target.value })}
-                      className="w-full px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-xs font-bold text-green-700 dark:text-green-300 mb-3 focus:ring-2 focus:ring-green-500/20 outline-none placeholder:text-green-400 placeholder:font-normal"
+                      className="w-full px-4 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-bold text-green-700 mb-3 focus:ring-2 focus:ring-green-500/20 outline-none placeholder:text-green-400 placeholder:font-normal"
                     />
                     <textarea
                       placeholder="Sonuç mesajını buraya yazın (AI müşteriye bunu gönderecek)..."
                       value={step.resultMessage}
                       onChange={(e) => handleUpdateStep(step.id, { resultMessage: e.target.value })}
                       rows={4}
-                      className="w-full px-4 py-3 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-green-500/20 outline-none"
+                      className="w-full px-4 py-3 bg-white border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500/20 outline-none"
                     />
 
                     {/* Görsel Ürün Seçici */}
-                    <div className="mt-4 p-6 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <div className="mt-4 p-6 bg-amber-50 rounded-xl border border-amber-200">
                       <div className="flex items-center gap-2 mb-4">
                         <Package className="text-amber-600" size={20} />
-                        <h4 className="font-bold text-sm text-amber-900 dark:text-amber-100">🎁 ÖNERİLEN ÜRÜNLER SEÇİN</h4>
+                        <h4 className="font-bold text-sm text-amber-900">🎁 ÖNERİLEN ÜRÜNLER SEÇİN</h4>
                       </div>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mb-4">
+                      <p className="text-xs text-amber-700 mb-4">
                         AI bu adıma ulaşan müşterilere aşağıdaki ürünleri interaktif kartlar olarak gösterecek. Sürükleyerek sıralayabilirsiniz.
                       </p>
 
@@ -561,8 +561,8 @@ export const ScenariosTab: React.FC = () => {
                               }}
                               className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group ${
                                 isSelected
-                                  ? 'border-amber-500 bg-amber-100 dark:bg-amber-900/30 shadow-md'
-                                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-800 hover:border-amber-300'
+                                  ? 'border-amber-500 bg-amber-100 shadow-md'
+                                  : 'border-cream-200 bg-white hover:border-amber-300'
                               }`}
                               onClick={() => {
                                 const currentRecs = step.productRecommendations || [];
@@ -584,11 +584,11 @@ export const ScenariosTab: React.FC = () => {
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => {}} // onClick handles it
-                                className="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                className="w-5 h-5 rounded border-cream-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                               />
 
                               {/* Product Image */}
-                              <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50">
+                              <div className="w-16 h-16 rounded-xl overflow-hidden border border-cream-200 flex-shrink-0 bg-cream-50">
                                 {product.image ? (
                                   <img
                                     src={product.image}
@@ -597,17 +597,17 @@ export const ScenariosTab: React.FC = () => {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
-                                    <Package size={24} className="text-gray-300" />
+                                    <Package size={24} className="text-mocha-300" />
                                   </div>
                                 )}
                               </div>
 
                               {/* Product Info */}
                               <div className="flex-1 min-w-0">
-                                <h5 className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                                <h5 className="font-bold text-sm text-mocha-900 truncate">
                                   {product.title}
                                 </h5>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                <p className="text-xs text-mocha-500 truncate">
                                   {product.description}
                                 </p>
                                 <div className="flex items-center gap-3 mt-1">
@@ -627,15 +627,15 @@ export const ScenariosTab: React.FC = () => {
                       </div>
 
                       {step.productRecommendations && step.productRecommendations.length > 0 && (
-                        <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/40 rounded-xl border border-amber-300 dark:border-amber-700">
-                          <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                        <div className="mt-4 p-3 bg-amber-100 rounded-xl border border-amber-300">
+                          <p className="text-xs font-bold text-amber-800">
                             ✓ {step.productRecommendations.length} ürün seçildi
                           </p>
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                    <div className="mt-4 p-4 bg-purple-50 rounded-xl border border-purple-200">
                       <label className="flex items-center gap-3 cursor-pointer">
                         <input
                           type="checkbox"
@@ -643,11 +643,11 @@ export const ScenariosTab: React.FC = () => {
                           onChange={(e) => handleUpdateStep(step.id, {
                             metadata: { ...step.metadata, triggerGiftMode: e.target.checked }
                           })}
-                          className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          className="w-4 h-4 rounded border-cream-300 text-purple-600 focus:ring-purple-500"
                         />
                         <div>
-                          <span className="text-sm font-bold text-purple-700 dark:text-purple-300">✨ Hediye Modunu Otomatik Aktif Et</span>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Bu adıma ulaşan kullanıcılara hediye paketi seçeneğini otomatik öner</p>
+                          <span className="text-sm font-bold text-purple-700">✨ Hediye Modunu Otomatik Aktif Et</span>
+                          <p className="text-xs text-mocha-500 mt-1">Bu adıma ulaşan kullanıcılara hediye paketi seçeneğini otomatik öner</p>
                         </div>
                       </label>
                     </div>
@@ -661,17 +661,17 @@ export const ScenariosTab: React.FC = () => {
           <div className="fixed bottom-8 right-8 z-50">
             {/* Mini Menu */}
             {isFloatingMenuOpen && (
-              <div className="absolute bottom-20 right-0 bg-white dark:bg-dark-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-2 w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="absolute bottom-20 right-0 bg-white rounded-2xl shadow-sm border border-cream-200 p-2 w-48 animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <button
                   onClick={() => handleAddStepFloating('question')}
-                  className="w-full px-4 py-3 text-left text-sm font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all flex items-center gap-2"
+                  className="w-full px-4 py-3 text-left text-sm font-bold text-purple-700 hover:bg-purple-50 rounded-xl transition-all flex items-center gap-2"
                 >
                   <MessageCircle size={16} />
                   🟣 Soru Adımı Ekle
                 </button>
                 <button
                   onClick={() => handleAddStepFloating('result')}
-                  className="w-full px-4 py-3 text-left text-sm font-bold text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-all flex items-center gap-2 mt-1"
+                  className="w-full px-4 py-3 text-left text-sm font-bold text-green-700 hover:bg-green-50 rounded-xl transition-all flex items-center gap-2 mt-1"
                 >
                   <CheckCircle size={16} />
                   🟢 Sonuç Adımı Ekle
@@ -682,7 +682,7 @@ export const ScenariosTab: React.FC = () => {
             {/* Main Floating Button */}
             <button
               onClick={() => setIsFloatingMenuOpen(!isFloatingMenuOpen)}
-              className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full shadow-2xl hover:scale-110 hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center group"
+              className="w-16 h-16 bg-purple-500 text-white rounded-full shadow-sm hover:scale-110 hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center group"
             >
               <Plus
                 size={28}
@@ -700,7 +700,7 @@ export const ScenariosTab: React.FC = () => {
           {/* Save Button */}
           <button
             onClick={handleSaveScenario}
-            className="group w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center"
+            className="group w-12 h-12 bg-purple-500 text-white rounded-full shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center"
             title="Senaryoyu Kaydet"
           >
             <Save size={18} className="group-hover:rotate-12 transition-transform" />
@@ -712,7 +712,7 @@ export const ScenariosTab: React.FC = () => {
               setIsCreating(false);
               setEditingScenario(null);
             }}
-            className="group w-10 h-10 bg-gray-600 text-white rounded-full shadow-lg hover:shadow-gray-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center"
+            className="group w-10 h-10 bg-mocha-600 text-white rounded-full shadow-sm hover:shadow-gray-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center"
             title="İptal"
           >
             <X size={16} className="group-hover:rotate-90 transition-transform" />

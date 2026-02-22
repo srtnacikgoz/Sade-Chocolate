@@ -454,7 +454,7 @@ export interface NewsletterTemplate {
 
   // CTA Button
   ctaText: string;               // "Koleksiyonu Keşfet"
-  ctaUrl: string;                // "https://sadechocolate.com/#/catalog"
+  ctaUrl: string;                // "https://sadechocolate.com/catalog"
 
   // Email Subject
   emailSubject: string;          // "Hoş Geldin — İlk Siparişine %10 İndirim"

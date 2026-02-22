@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { X, Search as SearchIcon, ArrowRight } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { trackSearch } from '../services/analyticsService';
 
 export const SearchDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
@@ -29,6 +30,16 @@ export const SearchDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
   }, [isOpen, query === '']); // Çekmece açıldığında veya arama temizlendiğinde yenilenir
 
   if (!isOpen) return null;
+
+  // Debounce ile arama tracking (500ms)
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (value.trim().length >= 2) {
+      searchTimerRef.current = setTimeout(() => trackSearch(value.trim()), 500);
+    }
+  }, []);
 
   const handleViewAll = () => {
     onClose();
@@ -68,7 +79,7 @@ export const SearchDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = 
               autoFocus
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Ne aramıştınız?..."
               className="w-full bg-transparent text-4xl font-serif italic text-mocha-900 dark:text-white outline-none placeholder:text-gray-100"
             />

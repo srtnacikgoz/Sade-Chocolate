@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { db, functions } from '../lib/firebase'
+import { canLoadAnalytics } from '../utils/cookieConsent'
 import type { JourneyStage, DeviceType, CartItemSummary, GeoLocation, ViewedProduct } from '../types/visitorTracking'
 
 // Cloud Function referanslari
@@ -213,11 +214,12 @@ const detectStageFromPath = (path: string): JourneyStage => {
 /**
  * Session baslat veya devam et
  * Sayfa ilk yuklendiginde cagrilmali
- * Server-side geo detection kullanir (Wix gibi her zaman lokasyon gosterir)
+ * KVKK: Analytics cookie onayı olmadan kişisel veri (IP, email, isim) toplanmaz
  */
 export const initSession = async (customerEmail?: string, customerName?: string): Promise<string> => {
   const sessionId = getOrCreateSessionId()
   const visitorId = getOrCreateVisitorId()
+  const hasAnalyticsConsent = canLoadAnalytics()
   const sessionRef = doc(db, 'sessions', sessionId)
 
   try {
@@ -227,16 +229,16 @@ export const initSession = async (customerEmail?: string, customerName?: string)
       // Yeni session - Cloud Function ile olustur (server-side geo)
       const isReturning = await checkReturningCustomer(visitorId)
 
-      // Session data hazirla
+      // KVKK: Kişisel veri sadece onay varsa kaydedilir
       const sessionData = {
         visitorId,
-        customerEmail: customerEmail || null,
-        customerName: customerName || null,
+        customerEmail: hasAnalyticsConsent ? (customerEmail || null) : null,
+        customerName: hasAnalyticsConsent ? (customerName || null) : null,
         isReturningCustomer: isReturning,
         device: detectDevice(),
-        browser: detectBrowser(),
-        os: detectOS(),
-        screenResolution: getScreenResolution(),
+        browser: hasAnalyticsConsent ? detectBrowser() : null,
+        os: hasAnalyticsConsent ? detectOS() : null,
+        screenResolution: hasAnalyticsConsent ? getScreenResolution() : null,
         language: navigator.language || null,
         referrer: getReferrerSource(),
         currentStage: detectStageFromPath(window.location.pathname),
@@ -244,26 +246,36 @@ export const initSession = async (customerEmail?: string, customerName?: string)
         cartItems: 0,
         cartItemsDetail: [],
         pagesVisited: [window.location.pathname],
-        isActive: true
+        isActive: true,
+        hasAnalyticsConsent
       }
 
-      try {
-        // Cloud Function cagir - server-side geo detection
-        const result = await initVisitorSessionFn({
-          sessionId,
-          visitorId,
-          sessionData
-        })
-
-        console.log('Session olusturuldu (server-side geo):', result.data.geo)
-      } catch (fnError) {
-        // Cloud Function basarisiz olursa client-side fallback
-        console.warn('Cloud Function failed, falling back to client-side:', fnError)
-
-        const geo = await fetchGeoLocation()
+      // KVKK: IP geolocation sadece analytics onayı varsa yapılır
+      if (hasAnalyticsConsent) {
+        try {
+          // Cloud Function cagir - server-side geo detection
+          const result = await initVisitorSessionFn({
+            sessionId,
+            visitorId,
+            sessionData
+          })
+          console.log('Session olusturuldu (server-side geo):', result.data.geo)
+        } catch (fnError) {
+          // Cloud Function basarisiz olursa client-side fallback
+          console.warn('Cloud Function failed, falling back to client-side:', fnError)
+          const geo = await fetchGeoLocation()
+          await setDoc(sessionRef, {
+            ...sessionData,
+            geo: geo,
+            startedAt: serverTimestamp(),
+            lastActivityAt: serverTimestamp()
+          })
+        }
+      } else {
+        // Onay yoksa geo olmadan session olustur
         await setDoc(sessionRef, {
           ...sessionData,
-          geo: geo,
+          geo: null,
           startedAt: serverTimestamp(),
           lastActivityAt: serverTimestamp()
         })
@@ -275,8 +287,8 @@ export const initSession = async (customerEmail?: string, customerName?: string)
         isActive: true
       }
 
-      // Geo yoksa Cloud Function ile yeniden dene
-      if (!existingSession.data()?.geo) {
+      // KVKK: Geo yoksa ve analytics onayı varsa Cloud Function ile yeniden dene
+      if (!existingSession.data()?.geo && hasAnalyticsConsent) {
         try {
           const result = await initVisitorSessionFn({
             sessionId,
@@ -294,8 +306,11 @@ export const initSession = async (customerEmail?: string, customerName?: string)
         }
       }
 
-      if (customerEmail) updates.customerEmail = customerEmail
-      if (customerName) updates.customerName = customerName
+      // KVKK: Kişisel bilgiler sadece onay varsa kaydedilir
+      if (hasAnalyticsConsent) {
+        if (customerEmail) updates.customerEmail = customerEmail
+        if (customerName) updates.customerName = customerName
+      }
 
       await updateDoc(sessionRef, updates)
     }
@@ -335,10 +350,9 @@ export const trackPageView = async (pagePath: string): Promise<void> => {
       pagesVisited: [...currentPages, pagePath].slice(-50) // Son 50 sayfa
     }
 
-    // Eger geo bilgisi yoksa server-side ile yeniden dene
-    if (!sessionData?.geo) {
+    // KVKK: Eger geo bilgisi yoksa ve analytics onayı varsa server-side ile yeniden dene
+    if (!sessionData?.geo && canLoadAnalytics()) {
       try {
-        // Server-side geo detection
         const result = await initVisitorSessionFn({
           sessionId,
           visitorId,
@@ -346,7 +360,6 @@ export const trackPageView = async (pagePath: string): Promise<void> => {
         })
         if (result.data.geo) {
           console.log('Geo guncellendi (server-side):', result.data.geo)
-          // Cloud Function zaten geo'yu guncelliyor, burada tekrar yapmaya gerek yok
         }
       } catch {
         // Fallback - client-side geo
@@ -391,12 +404,20 @@ export const trackCartUpdate = async (
       await initSession()
     }
 
+    // Firestore undefined kabul etmez, sanitize et
+    const sanitizedItems = (items || []).map(item => ({
+      productId: item.productId || '',
+      productName: item.productName || '',
+      quantity: typeof item.quantity === 'number' ? item.quantity : 0,
+      price: typeof item.price === 'number' ? item.price : 0
+    }))
+
     await updateDoc(sessionRef, {
       lastActivityAt: serverTimestamp(),
       currentStage: cartItems > 0 ? 'cart' : detectStageFromPath(window.location.pathname),
-      cartValue,
-      cartItems,
-      cartItemsDetail: items
+      cartValue: cartValue || 0,
+      cartItems: cartItems || 0,
+      cartItemsDetail: sanitizedItems
     })
   } catch (error) {
     console.error('Track cart update error:', error)
@@ -412,12 +433,12 @@ export const trackCheckoutStart = async (): Promise<void> => {
   const sessionRef = doc(db, 'sessions', sessionId)
 
   try {
-    await updateDoc(sessionRef, {
+    await setDoc(sessionRef, {
       lastActivityAt: serverTimestamp(),
       currentStage: 'checkout' as JourneyStage
-    })
+    }, { merge: true })
   } catch (error) {
-    console.error('Track checkout start error:', error)
+    console.warn('Track checkout start error:', error)
   }
 }
 
@@ -465,8 +486,11 @@ export const trackOrderCompleted = async (orderId: string): Promise<void> => {
 /**
  * Musteri bilgilerini guncelle
  * Login veya checkout formunda bilgi alindiktan sonra cagrilmali
+ * KVKK: Sadece analytics onayı varsa kişisel bilgi kaydedilir
  */
 export const updateCustomerInfo = async (email: string, name: string): Promise<void> => {
+  if (!canLoadAnalytics()) return
+
   const sessionId = getOrCreateSessionId()
   const sessionRef = doc(db, 'sessions', sessionId)
 
@@ -523,19 +547,21 @@ export const trackProductView = async (
     // Son 10 saniye icinde ayni urun zaten goruntulenmisse, ekleme (spam onleme)
     const tenSecsAgo = Date.now() - 10000
     const recentSameView = existingViewed.find(
-      (v: ViewedProduct) =>
+      (v: ViewedProduct & { viewedAt?: { toDate?: () => Date } | string }) =>
         v.productId === productId &&
-        (v.viewedAt?.toDate?.()?.getTime() || 0) > tenSecsAgo
+        (typeof v.viewedAt === 'string'
+          ? new Date(v.viewedAt).getTime()
+          : v.viewedAt?.toDate?.()?.getTime() || 0) > tenSecsAgo
     )
     if (recentSameView) return
 
-    const newView: Omit<ViewedProduct, 'viewedAt'> & { viewedAt: ReturnType<typeof serverTimestamp> } = {
+    const newView = {
       productId,
       productName,
       productPrice,
-      productImage,
+      productImage: productImage || null,
       viewType,
-      viewedAt: serverTimestamp()
+      viewedAt: new Date().toISOString()
     }
 
     // Son 50 urun goruntuleme kaydi tut

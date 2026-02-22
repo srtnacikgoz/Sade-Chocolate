@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, setAnalyticsCollectionEnabled } from "firebase/analytics";
 import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
@@ -31,7 +31,15 @@ export const db = initializeFirestore(app, {
 });
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+// Analytics başlat - collection varsayılan olarak kapalı, cookie onayı ile açılır
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
+
+// Analytics veri toplama durumunu güncelle
+export const updateAnalyticsConsent = (enabled: boolean) => {
+  if (analytics) {
+    setAnalyticsCollectionEnabled(analytics, enabled);
+  }
+};
 export const functions = getFunctions(app, 'europe-west3');
 
 export default app;

@@ -1,4 +1,10 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "functions": {
     "source": "functions",
     "predeploy": [
@@ -14,6 +20,14 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/sitemap.xml",
+        "function": "sitemap"
+      },
+      {
+        "source": "/api/iyzico/callback",
+        "function": "handleIyzicoCallback"
+      },
       {
         "source": "**",
         "destination": "/index.html"
@@ -44,6 +58,31 @@
           {
             "key": "Cache-Control",
             "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.googleapis.com https://*.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://*.firebaseapp.com https://*.iyzipay.com https://esm.sh https://static.hotjar.com https://script.hotjar.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.iyzipay.com; font-src 'self' https://fonts.gstatic.com https://cdn.iyzipay.com data:; img-src 'self' data: blob: https://*.googleapis.com https://*.googleusercontent.com https://firebasestorage.googleapis.com https://*.facebook.com https://*.fbcdn.net https://www.google-analytics.com https://www.googletagmanager.com https://*.google.com https://*.google.com.tr https://*.iyzipay.com https://*.cdninstagram.com https://cdn.iyzipay.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://firestore.googleapis.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://europe-west3-sade-chocolate-prod.cloudfunctions.net https://*.iyzipay.com https://*.iyzico.com https://graph.facebook.com https://*.facebook.com https://*.facebook.net https://api.geliver.com https://api.openweathermap.org https://*.hotjar.com https://*.hotjar.io https://*.ingest.sentry.io; frame-src 'self' https://*.iyzipay.com https://*.firebaseapp.com https://*.hotjar.com; object-src 'none'; base-uri 'self'; form-action 'self' https://*.iyzipay.com;"
           }
         ]
       }

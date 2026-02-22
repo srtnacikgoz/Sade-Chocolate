@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://sadechocolate.com/sitemap.xml
+
+# Admin ve özel sayfaları engelle
+Disallow: /admin
+Disallow: /admin-setup
+Disallow: /seed-data
+Disallow: /checkout
+Disallow: /order-confirmation/
+Disallow: /login-gateway

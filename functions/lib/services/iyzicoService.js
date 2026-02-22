@@ -35,15 +35,8 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extractPaymentDetails = exports.verifyWebhookSignature = exports.retrieveCheckoutForm = exports.initializeCheckoutForm = void 0;
 const functions = __importStar(require("firebase-functions"));
-const params_1 = require("firebase-functions/params");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Iyzipay = require('iyzipay');
-// Environment variables
-const IYZICO_API_KEY = (0, params_1.defineString)('IYZICO_API_KEY');
-const IYZICO_SECRET_KEY = (0, params_1.defineString)('IYZICO_SECRET_KEY');
-const IYZICO_BASE_URL = (0, params_1.defineString)('IYZICO_BASE_URL', {
-    default: 'https://sandbox-api.iyzipay.com'
-});
 // İyzico client instance (singleton pattern)
 let iyzicoClient = null;
 /**
@@ -51,9 +44,9 @@ let iyzicoClient = null;
  */
 const getIyzicoClient = () => {
     if (!iyzicoClient) {
-        const apiKey = IYZICO_API_KEY.value();
-        const secretKey = IYZICO_SECRET_KEY.value();
-        const baseUrl = IYZICO_BASE_URL.value();
+        const apiKey = process.env.IYZICO_API_KEY;
+        const secretKey = process.env.IYZICO_SECRET_KEY;
+        const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
         if (!apiKey || !secretKey) {
             throw new Error('İyzico API credentials not configured');
         }
@@ -142,7 +135,7 @@ const initializeCheckoutForm = async (orderData) => {
         currency: Iyzipay.CURRENCY.TRY,
         basketId: orderData.id,
         paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-        callbackUrl: `${process.env.FUNCTIONS_EMULATOR ? 'http://localhost:5001' : 'https://handleiyzicocallback-3jgp7kw3lq-ey.a.run.app'}`,
+        callbackUrl: `${process.env.FUNCTIONS_EMULATOR ? 'http://localhost:5001/sade-chocolate-prod/europe-west3/handleIyzicoCallback' : 'https://sadechocolate.com/api/iyzico/callback'}`,
         enabledInstallments: [1], // Sadece tek çekim
         buyer,
         shippingAddress,

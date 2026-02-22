@@ -11,7 +11,7 @@ export const BottomNav: React.FC = () => {
     }`;
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-900 border-t border-gray-100 dark:border-gray-800 pb-safe z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+    <nav aria-label="Mobil navigasyon" className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-900 border-t border-gray-100 dark:border-gray-800 pb-safe z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
       <div className="flex justify-between items-center h-16 px-2">
         <NavLink to="/home" className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
           isActive ? 'text-brown-900 dark:text-white' : 'text-gray-400 hover:text-brown-900 dark:hover:text-white'

@@ -11,6 +11,7 @@ export const NewsletterPopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [agreedToMarketing, setAgreedToMarketing] = useState(false);
 
   useEffect(() => {
     // Check if user has already seen/dismissed the popup
@@ -34,22 +35,45 @@ export const NewsletterPopup: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !agreedToMarketing) {
+      if (!agreedToMarketing) toast.error('Lütfen ticari ileti iznini onaylayın.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
+      // Benzersiz kupon kodu oluştur
+      const couponCode = `HOSGELDIN${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
       await addDoc(collection(db, 'newsletter_subscribers'), {
         email,
         subscribedAt: serverTimestamp(),
-        source: 'popup'
+        source: 'popup',
+        couponCode,
+        marketingConsent: true,
+        marketingConsentDate: new Date().toISOString()
       });
+
+      // Kuponu kaydet - Checkout'ta kontrol edilecek
+      await addDoc(collection(db, 'coupons'), {
+        code: couponCode,
+        type: 'percentage',
+        value: 10,
+        email,
+        isUsed: false,
+        createdAt: serverTimestamp(),
+        source: 'newsletter'
+      });
+
+      // Kupon kodunu localStorage'a kaydet (Checkout'ta otomatik uygulanması için)
+      localStorage.setItem('newsletter_coupon', couponCode);
 
       // Hoş geldin emaili gönder (arka planda, hata olsa bile kullanıcıya gösterme)
       sendNewsletterWelcomeEmail(email).catch(err => {
         console.error('Newsletter welcome email error:', err);
       });
 
-      toast.success('Bültenimize abone oldunuz! 🎉');
+      toast.success(`%10 indirim kodunuz: ${couponCode}`);
       localStorage.setItem('newsletter_subscribed', 'true');
       setEmail('');
       setTimeout(() => {
@@ -113,9 +137,23 @@ export const NewsletterPopup: React.FC = () => {
               className="w-full px-6 py-4 rounded-full bg-gray-50 dark:bg-dark-700 border-2 border-gray-200 dark:border-gray-600 text-base outline-none focus:border-gold dark:text-white placeholder:text-gray-400 transition-colors"
               required
             />
+
+            {/* Ticari İleti İzni (6563 sayılı kanun gereği) */}
+            <div
+              className="flex items-start gap-3 cursor-pointer group px-2"
+              onClick={() => setAgreedToMarketing(!agreedToMarketing)}
+            >
+              <div className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all mt-0.5 ${agreedToMarketing ? 'bg-brown-900 border-brown-900 dark:bg-gold dark:border-gold' : 'border-gray-300 dark:border-gray-600'}`}>
+                {agreedToMarketing && <span className="material-icons-outlined text-white text-[14px]">check</span>}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Sade Chocolate tarafından kampanya, indirim ve yeni ürün bilgilendirmeleri içeren ticari elektronik ileti gönderilmesini kabul ediyorum. <a href="/legal/kvkk" target="_blank" className="underline text-brown-900 dark:text-gold">KVKK Aydınlatma Metni</a>
+              </p>
+            </div>
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !agreedToMarketing}
               className="w-full px-6 py-4 bg-brown-900 dark:bg-gold text-white dark:text-black rounded-full hover:bg-gold dark:hover:bg-gold/90 transition-all flex items-center justify-center gap-3 font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               <Send size={20} />
@@ -125,7 +163,7 @@ export const NewsletterPopup: React.FC = () => {
 
           {/* Footer Note */}
           <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-6">
-            Bültenimizden istediğiniz zaman çıkabilirsiniz. Gizliliğinize saygı duyuyoruz.
+            Bültenimizden istediğiniz zaman çıkabilirsiniz. Her e-postanın altında abonelikten çıkma bağlantısı bulunur.
           </p>
         </div>
       </div>

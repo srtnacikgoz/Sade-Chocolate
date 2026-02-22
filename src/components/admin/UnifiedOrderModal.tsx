@@ -204,20 +204,20 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" style={{ isolation: 'isolate' }}>
-      <div className="absolute right-0 top-0 h-full w-full max-w-5xl bg-white shadow-2xl animate-in slide-in-from-right-full duration-500 flex flex-col">
+      <div className="absolute right-0 top-0 h-full w-full max-w-5xl bg-white shadow-sm animate-in slide-in-from-right-full duration-500 flex flex-col">
         {/* Header */}
         <div className="p-6 border-b bg-gradient-to-r from-brown-50 to-amber-50">
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-display font-bold text-gray-900">
+                <h2 className="text-2xl font-semibold text-mocha-900">
                   Sipariş #{order.id.substring(0, 8)}
                 </h2>
-                <span className={`text-[10px] font-black px-3 py-1.5 rounded-full border ${statusConfig[order.status]?.color || statusConfig.pending.color}`}>
+                <span className={`text-xs font-medium px-3 py-1.5 rounded-full border ${statusConfig[order.status]?.color || statusConfig.pending.color}`}>
                   {statusConfig[order.status]?.label.toUpperCase() || 'BEKLEMEDE'}
                 </span>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-sm text-mocha-600">
                 <span className="flex items-center gap-1">
                   <User size={14} />
                   {order.customer?.name}
@@ -226,7 +226,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                   <Calendar size={14} />
                   {format(order.createdAt?.toDate?.() || new Date(order.createdAt), 'dd MMM yyyy, HH:mm', { locale: tr })}
                 </span>
-                <span className="flex items-center gap-1 font-bold text-brown-900">
+                <span className="flex items-center gap-1 font-bold text-mocha-900">
                   <ShoppingBag size={14} />
                   ₺{order.payment?.total.toFixed(2)}
                 </span>
@@ -236,7 +236,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
               onClick={onClose}
               className="p-3 hover:bg-white rounded-2xl transition-all"
             >
-              <X size={24} className="text-gray-400" />
+              <X size={24} className="text-mocha-400" />
             </button>
           </div>
 
@@ -250,8 +250,8 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
                     activeTab === tab.id
-                      ? 'bg-brown-900 text-white shadow-lg'
-                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                      ? 'bg-mocha-900 text-white shadow-sm'
+                      : 'bg-white text-mocha-600 hover:bg-cream-50'
                   }`}
                 >
                   <Icon size={16} />
@@ -282,10 +282,10 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
             <div className="space-y-6">
               {/* Ürünler */}
               <div>
-                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-mocha-600">
                   <Box size={20} /> Sipariş Ürünleri
                 </h3>
-                <div className="space-y-3 p-6 bg-slate-50 rounded-3xl border border-gray-200">
+                <div className="space-y-3 p-6 bg-cream-50 rounded-xl border border-cream-200">
                   {order.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between pb-3 border-b last:border-b-0 last:pb-0">
                       <div className="flex items-center gap-3">
@@ -293,21 +293,21 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                           <img src={item.image} alt={item.name} className="w-16 h-16 rounded-xl object-cover" />
                         )}
                         <div>
-                          <p className="text-sm font-bold text-gray-800">{item.name}</p>
-                          <p className="text-xs text-gray-500">x{item.quantity} • ₺{item.price.toFixed(2)}</p>
+                          <p className="text-sm font-bold text-mocha-900">{item.name}</p>
+                          <p className="text-xs text-mocha-500">x{item.quantity} • ₺{item.price.toFixed(2)}</p>
                           {(item as any).isLimitedEdition && (
-                            <span className="text-[9px] font-black px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full mt-1 inline-block">
+                            <span className="text-xs font-medium px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full mt-1 inline-block">
                               LIMITED EDITION
                             </span>
                           )}
                         </div>
                       </div>
-                      <p className="text-sm font-bold text-gray-700">₺{(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-sm font-bold text-mocha-600">₺{(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                   <div className="pt-4 border-t-2 flex justify-between items-center">
-                    <span className="font-bold text-gray-700">Toplam</span>
-                    <span className="text-2xl font-display font-bold text-brown-900">₺{order.payment?.total.toFixed(2)}</span>
+                    <span className="font-bold text-mocha-600">Toplam</span>
+                    <span className="text-2xl font-semibold text-mocha-900">₺{order.payment?.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -315,10 +315,10 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
               {/* Hediye Detayları */}
               {order.giftDetails && (
                 <div>
-                  <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
+                  <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-mocha-600">
                     <Gift size={20} /> Dijital Hediye Kartı
                   </h3>
-                  <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-3xl p-8 flex items-center justify-center border-4 border-zinc-200 shadow-xl">
+                  <div className="aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl p-8 flex items-center justify-center border-4 border-zinc-200 shadow-sm">
                     <div className="text-center">
                       {order.giftDetails.recipientName && (
                         <p className="text-amber-400 text-sm font-bold mb-3">Kime: {order.giftDetails.recipientName}</p>
@@ -336,11 +336,11 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
 
               {/* Duyusal Profil (Placeholder) */}
               <div>
-                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-mocha-600">
                   <BrandIcon size={20} /> Duyusal Profil
                 </h3>
-                <div className="space-y-3 p-6 bg-slate-50 rounded-3xl border border-gray-200">
-                  <p className="text-sm text-gray-500 italic">Ürün taste profili bilgisi eklendiğinde burada gösterilecek</p>
+                <div className="space-y-3 p-6 bg-cream-50 rounded-xl border border-cream-200">
+                  <p className="text-sm text-mocha-500 italic">Ürün taste profili bilgisi eklendiğinde burada gösterilecek</p>
                 </div>
               </div>
             </div>
@@ -351,12 +351,12 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
             <div className="space-y-6">
               {/* RFM Kartları */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-3xl border border-purple-200">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp size={18} className="text-purple-600" />
                     <span className="text-xs font-bold text-purple-600 uppercase">RFM Skoru</span>
                   </div>
-                  <div className="text-4xl font-display font-bold text-purple-900">{analytics.rfmScore}</div>
+                  <div className="text-4xl font-semibold text-purple-900">{analytics.rfmScore}</div>
                   <div className="mt-3 bg-white/50 rounded-full h-2 overflow-hidden">
                     <div
                       className="h-full bg-purple-600 rounded-full transition-all duration-1000"
@@ -365,74 +365,74 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-3xl border border-blue-200">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
                   <div className="flex items-center gap-2 mb-2">
                     <ShoppingBag size={18} className="text-blue-600" />
                     <span className="text-xs font-bold text-blue-600 uppercase">Sipariş</span>
                   </div>
-                  <div className="text-4xl font-display font-bold text-blue-900">{analytics.orderCount}</div>
+                  <div className="text-4xl font-semibold text-blue-900">{analytics.orderCount}</div>
                   <div className="text-xs text-blue-600 mt-2">₺{analytics.avgOrderValue.toFixed(0)} ortalama</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-3xl border border-emerald-200">
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl border border-emerald-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Heart size={18} className="text-emerald-600" />
                     <span className="text-xs font-bold text-emerald-600 uppercase">Toplam</span>
                   </div>
-                  <div className="text-3xl font-display font-bold text-emerald-900">₺{analytics.totalSpent.toLocaleString()}</div>
+                  <div className="text-3xl font-semibold text-emerald-900">₺{analytics.totalSpent.toLocaleString()}</div>
                   <div className="text-xs text-emerald-600 mt-2">{analytics.orderCount} siparişte</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-3xl border border-orange-200">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl border border-orange-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Calendar size={18} className="text-orange-600" />
                     <span className="text-xs font-bold text-orange-600 uppercase">Kıdem</span>
                   </div>
-                  <div className="text-4xl font-display font-bold text-orange-900">{analytics.tenureDays}</div>
+                  <div className="text-4xl font-semibold text-orange-900">{analytics.tenureDays}</div>
                   <div className="text-xs text-orange-600 mt-2">gün müşteri</div>
                 </div>
               </div>
 
               {/* Müşteri Geçmişi & Özel Bilgiler */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200">
-                  <h3 className="font-display font-bold text-sm mb-4 flex items-center gap-2 text-gray-700">
+                <div className="bg-cream-50 p-6 rounded-xl border border-cream-200">
+                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 text-mocha-600">
                     <Calendar size={18} /> Müşteri Geçmişi
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">İlk Sipariş</p>
-                      <p className="text-sm text-gray-800">{format(analytics.firstOrderDate, 'dd MMMM yyyy', { locale: tr })}</p>
+                      <p className="text-xs font-bold text-mocha-500 mb-1">İlk Sipariş</p>
+                      <p className="text-sm text-mocha-900">{format(analytics.firstOrderDate, 'dd MMMM yyyy', { locale: tr })}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">Son Sipariş</p>
-                      <p className="text-sm text-gray-800">{format(analytics.lastOrderDate, 'dd MMMM yyyy', { locale: tr })}</p>
-                      <p className="text-xs text-gray-400 mt-1">{analytics.daysSinceLastOrder} gün önce</p>
+                      <p className="text-xs font-bold text-mocha-500 mb-1">Son Sipariş</p>
+                      <p className="text-sm text-mocha-900">{format(analytics.lastOrderDate, 'dd MMMM yyyy', { locale: tr })}</p>
+                      <p className="text-xs text-mocha-400 mt-1">{analytics.daysSinceLastOrder} gün önce</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 p-6 rounded-3xl border border-gray-200">
-                  <h3 className="font-display font-bold text-sm mb-4 flex items-center gap-2 text-gray-700">
+                <div className="bg-cream-50 p-6 rounded-xl border border-cream-200">
+                  <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 text-mocha-600">
                     <BrandIcon size={18} /> Özel Bilgiler
                   </h3>
                   <div className="space-y-3">
                     {analytics.referralCount > 0 && (
                       <div>
-                        <p className="text-xs font-bold text-gray-500 mb-1">Ambassador Durumu</p>
+                        <p className="text-xs font-bold text-mocha-500 mb-1">Ambassador Durumu</p>
                         <div className="flex items-center gap-2">
                           <Award size={16} className="text-amber-600" />
                           <span className="text-sm font-bold text-amber-900">{analytics.ambassadorLevel}</span>
-                          <span className="text-xs text-gray-500">({analytics.referralCount} referral)</span>
+                          <span className="text-xs text-mocha-500">({analytics.referralCount} referral)</span>
                         </div>
                       </div>
                     )}
                     {analytics.tasteDNA.length > 0 && (
                       <div>
-                        <p className="text-xs font-bold text-gray-500 mb-2">Taste DNA</p>
+                        <p className="text-xs font-bold text-mocha-500 mb-2">Taste DNA</p>
                         <div className="flex flex-wrap gap-2">
                           {analytics.tasteDNA.map((taste, idx) => (
-                            <span key={idx} className="px-3 py-1 bg-brown-100 text-brown-900 text-xs font-bold rounded-full">
+                            <span key={idx} className="px-3 py-1 bg-brown-100 text-mocha-900 text-xs font-bold rounded-full">
                               {taste}
                             </span>
                           ))}
@@ -444,20 +444,20 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
               </div>
 
               {/* AI Önerisi */}
-              <div className={`${recommendation.color} border-2 rounded-3xl p-6`}>
+              <div className={`${recommendation.color} border-2 rounded-xl p-6`}>
                 <div className="flex items-start gap-4">
                   <div className={`w-12 h-12 ${recommendation.color} rounded-2xl flex items-center justify-center flex-shrink-0`}>
                     <RecommendationIcon size={24} className={recommendation.iconColor} />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-display font-bold text-lg mb-2 text-gray-900">{recommendation.title}</h3>
-                    <p className="text-sm text-gray-700 mb-4">{recommendation.message}</p>
+                    <h3 className="font-semibold text-lg mb-2 text-mocha-900">{recommendation.title}</h3>
+                    <p className="text-sm text-mocha-600 mb-4">{recommendation.message}</p>
                     <div className="space-y-2">
-                      <p className="text-xs font-bold text-gray-600 uppercase mb-2">Önerilen Aksiyonlar:</p>
+                      <p className="text-xs font-bold text-mocha-600 uppercase mb-2">Önerilen Aksiyonlar:</p>
                       {recommendation.actions.map((action, idx) => (
                         <div key={idx} className="flex items-start gap-2">
                           <span className="text-xs">•</span>
-                          <span className="text-sm text-gray-800">{action}</span>
+                          <span className="text-sm text-mocha-900">{action}</span>
                         </div>
                       ))}
                     </div>
@@ -472,34 +472,34 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
             <div className="space-y-6">
               {/* Adres & İletişim */}
               <div>
-                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-mocha-600">
                   <MapPin size={20} /> Adres & İletişim
                 </h3>
-                <div className="space-y-4 p-6 bg-slate-50 rounded-3xl border border-gray-200">
+                <div className="space-y-4 p-6 bg-cream-50 rounded-xl border border-cream-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                      <p className="text-xs font-bold text-mocha-500 mb-1 flex items-center gap-1">
                         <User size={12} /> Müşteri
                       </p>
-                      <p className="text-sm text-gray-800 font-medium">{order.customer?.name}</p>
+                      <p className="text-sm text-mocha-900 font-medium">{order.customer?.name}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                      <p className="text-xs font-bold text-mocha-500 mb-1 flex items-center gap-1">
                         <Phone size={12} /> Telefon
                       </p>
-                      <p className="text-sm text-gray-800">{order.customer?.phone}</p>
+                      <p className="text-sm text-mocha-900">{order.customer?.phone}</p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                      <p className="text-xs font-bold text-mocha-500 mb-1 flex items-center gap-1">
                         <Mail size={12} /> Email
                       </p>
-                      <p className="text-sm text-gray-800">{order.customer?.email}</p>
+                      <p className="text-sm text-mocha-900">{order.customer?.email}</p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1">
+                      <p className="text-xs font-bold text-mocha-500 mb-1 flex items-center gap-1">
                         <MapPin size={12} /> Teslimat Adresi
                       </p>
-                      <p className="text-sm text-gray-800">{order.shipping?.address}</p>
+                      <p className="text-sm text-mocha-900">{order.shipping?.address}</p>
                     </div>
                   </div>
                 </div>
@@ -507,10 +507,10 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
 
               {/* Dinamik Teslimat Tarihi (EDD) */}
               <div>
-                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-mocha-600">
                   <Clock size={20} /> Tahmini Teslimat Tarihi
                 </h3>
-                <div className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl border-2 border-purple-200">
+                <div className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border-2 border-purple-200">
                   {(() => {
                     const edd = calculateEstimatedDeliveryDate(order);
                     const deliveryStatus = getDeliveryStatus(order);
@@ -524,10 +524,10 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                             <p className={`text-sm font-bold ${deliveryStatus.color} uppercase mb-1`}>
                               {deliveryStatus.status}
                             </p>
-                            <p className="text-2xl font-display font-bold text-gray-900">
+                            <p className="text-2xl font-semibold text-mocha-900">
                               {format(edd, 'dd MMMM yyyy, EEEE', { locale: tr })}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-mocha-500 mt-1">
                               {format(edd, 'HH:mm', { locale: tr })} civarı
                             </p>
                           </div>
@@ -535,7 +535,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
 
                         {/* EDD Açıklama */}
                         <div className="bg-white/60 p-4 rounded-2xl border border-purple-100">
-                          <p className="text-xs text-gray-600 leading-relaxed">
+                          <p className="text-xs text-mocha-600 leading-relaxed">
                             <strong>Not:</strong> Bu tarih, sipariş hazırlama süresi, kargo süresi ve hava koşulları dikkate alınarak hesaplanmıştır.
                             {order.weatherAlert?.requiresIce && (
                               <span className="text-orange-600 font-bold"> Yüksek sıcaklık nedeniyle özel paketleme süresi eklenmiştir.</span>
@@ -550,12 +550,12 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
 
               {/* Kargo Durumu */}
               <div>
-                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-gray-700">
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-mocha-600">
                   <Package size={20} /> Lojistik Durumu
                 </h3>
-                <div className="space-y-4 p-6 bg-slate-50 rounded-3xl border border-gray-200">
+                <div className="space-y-4 p-6 bg-cream-50 rounded-xl border border-cream-200">
                   <div>
-                    <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1">
+                    <p className="text-xs font-bold text-mocha-500 mb-2 flex items-center gap-1">
                       <Truck size={12} /> Kargo Takip No
                     </p>
                     <div className="flex gap-2">
@@ -563,14 +563,14 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                         type="text"
                         placeholder="Kargo takip numarasını girin"
                         defaultValue={order.logistics?.trackingNumber || ''}
-                        className="flex-1 p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-brown-900/20 outline-none"
+                        className="flex-1 p-3 border border-cream-200 rounded-xl text-sm focus:ring-2 focus:ring-brown-900/20 outline-none"
                       />
                       {order.logistics?.trackingNumber && (
                         <a
                           href={`/track/${order.logistics.trackingNumber}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-4 py-3 bg-brown-900 text-white text-xs font-bold rounded-xl hover:bg-black transition-colors"
+                          className="px-4 py-3 bg-mocha-900 text-white text-xs font-bold rounded-xl hover:bg-black transition-colors"
                         >
                           TAKİP ET
                         </a>
@@ -578,14 +578,14 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-gray-500 mb-2">Kargo Firması</p>
-                    <p className="text-sm text-gray-800 p-3 bg-gray-50 rounded-xl">
+                    <p className="text-xs font-bold text-mocha-500 mb-2">Kargo Firması</p>
+                    <p className="text-sm text-mocha-900 p-3 bg-cream-50 rounded-xl">
                       {order.tracking?.carrier || order.shipping?.carrier || 'Henüz atanmadı'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-gray-500 mb-2">Ödeme Yöntemi</p>
-                    <p className="text-sm text-gray-800">{order.paymentMethod || 'Kredi Kartı'}</p>
+                    <p className="text-xs font-bold text-mocha-500 mb-2">Ödeme Yöntemi</p>
+                    <p className="text-sm text-mocha-900">{order.paymentMethod || 'Kredi Kartı'}</p>
                   </div>
 
                   {/* Ödeme Sorunu Destek Maili */}
@@ -641,31 +641,31 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                         <TrendingUp size={14} />
                         KARGO MALİYET ANALİZİ
                         {order.tracking?.carrier && (
-                          <span className="text-[10px] font-normal text-blue-600">({order.tracking.carrier})</span>
+                          <span className="text-xs font-normal text-blue-600">({order.tracking.carrier})</span>
                         )}
                       </p>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
-                          <p className="text-[10px] text-gray-500 mb-1">Müşteriden Alınan</p>
-                          <p className="text-lg font-black text-gray-900">
+                          <p className="text-xs text-mocha-500 mb-1">Müşteriden Alınan</p>
+                          <p className="text-lg font-black text-mocha-900">
                             {order.payment?.shipping ?? 0}₺
                           </p>
                         </div>
                         <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
-                          <p className="text-[10px] text-gray-500 mb-1">Gerçek Maliyet</p>
-                          <p className="text-lg font-black text-gray-900">
+                          <p className="text-xs text-mocha-500 mb-1">Gerçek Maliyet</p>
+                          <p className="text-lg font-black text-mocha-900">
                             {order.tracking?.price
                               ? `${order.tracking.price.toFixed(2)}₺`
-                              : <span className="text-xs text-gray-400">Kargo oluşturulmadı</span>
+                              : <span className="text-xs text-mocha-400">Kargo oluşturulmadı</span>
                             }
                           </p>
                         </div>
                         <div className="text-center p-3 bg-white rounded-lg border border-blue-100">
-                          <p className="text-[10px] text-gray-500 mb-1">Kar/Zarar</p>
+                          <p className="text-xs text-mocha-500 mb-1">Kar/Zarar</p>
                           {(() => {
                             const customerPaid = order.payment?.shipping ?? 0;
                             const actualCost = order.tracking?.price;
-                            if (!actualCost) return <p className="text-lg font-black text-gray-400">-</p>;
+                            if (!actualCost) return <p className="text-lg font-black text-mocha-400">-</p>;
                             const profit = customerPaid - actualCost;
                             return (
                               <p className={`text-lg font-black ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
@@ -676,7 +676,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                         </div>
                       </div>
                       {order.tracking?.createdAt && (
-                        <p className="text-[10px] text-gray-400 mt-2 text-right">
+                        <p className="text-xs text-mocha-400 mt-2 text-right">
                           Kargo: {new Date(order.tracking.createdAt).toLocaleString('tr-TR')}
                         </p>
                       )}
@@ -684,7 +684,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                   )}
 
                   <div>
-                    <p className="text-xs font-bold text-gray-500 mb-2">Sipariş Durumu Güncelle</p>
+                    <p className="text-xs font-bold text-mocha-500 mb-2">Sipariş Durumu Güncelle</p>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(statusConfig).map(([status, config]) => (
                         <button
@@ -694,7 +694,7 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
                           className={`px-4 py-2 text-xs font-black rounded-xl transition-all ${
                             order.status === status
                               ? config.color + ' border'
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                              : 'bg-cream-100 text-mocha-400 hover:bg-cream-50'
                           } disabled:cursor-not-allowed`}
                         >
                           {config.label.toUpperCase()}
@@ -709,14 +709,14 @@ export const UnifiedOrderModal: React.FC<UnifiedOrderModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-slate-50 flex items-center justify-end gap-3">
+        <div className="p-6 border-t bg-cream-50 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-2xl transition-colors"
+            className="px-6 py-3 text-sm font-bold text-mocha-600 hover:bg-cream-50 rounded-2xl transition-colors"
           >
             Kapat
           </button>
-          <button className="px-8 py-3 text-sm font-bold text-white bg-brown-900 hover:bg-black rounded-2xl transition-colors shadow-lg">
+          <button className="px-8 py-3 text-sm font-bold text-white bg-mocha-900 hover:bg-black rounded-2xl transition-colors shadow-sm">
             Değişiklikleri Kaydet
           </button>
         </div>

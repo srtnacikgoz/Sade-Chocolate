@@ -13,6 +13,7 @@ import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Package } from 'lucide-react';
 import { BrandIcon } from '../components/ui/BrandIcon';
+import { SEOHead } from '../components/SEOHead';
 
 export const Home: React.FC = () => {
   const { addToCart } = useCart();
@@ -107,7 +108,9 @@ export const Home: React.FC = () => {
   };
 
   return (
-    <main 
+    <>
+    <SEOHead path="/" />
+    <main
   className="w-full max-w-full pb-24 bg-cream-100 dark:bg-dark-900 min-h-screen"
   /* Padding-top ve header-height arasındaki hesaplama, boşluğu tamamen yok etmek için senkronize edildi */
   style={{ paddingTop: 'calc(var(--top-bar-height, 0px) + var(--header-height, 80px) + -20px)' }}
@@ -353,7 +356,7 @@ export const Home: React.FC = () => {
                 className="group cursor-pointer bg-white dark:bg-dark-800 rounded-[40px] overflow-hidden transition-all duration-700 hover:shadow-luxurious border border-gray-100 dark:border-gray-800"
               >
                 <div className="relative aspect-square overflow-hidden">
-                  <img src={collection.image} alt={collection.title} className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110" />
+                  <img src={collection.image} alt={collection.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="p-10 text-center">
@@ -374,9 +377,11 @@ export const Home: React.FC = () => {
             <h2 className="font-display text-3xl lg:text-5xl text-gray-900 dark:text-white mb-16 text-center italic">{t('featured_month')}</h2>
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center bg-white dark:bg-dark-800 rounded-[60px] p-8 lg:p-20 border border-gray-100 dark:border-gray-700 shadow-luxurious">
               <div className="w-full lg:w-1/2 relative aspect-square bg-gray-50 dark:bg-dark-900 rounded-[40px] shadow-inner group overflow-hidden border border-gray-100 dark:border-gray-800">
-                  <img 
-                    src={featuredProduct.image} 
+                  <img
+                    src={featuredProduct.image}
                     alt={featuredProduct.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain p-12 transform group-hover:scale-105 transition-transform duration-1000"
                   />
                   <button 
@@ -426,5 +431,6 @@ export const Home: React.FC = () => {
         onClose={() => setIsAdminModalOpen(false)}
       />
     </main>
+    </>
   );
 };

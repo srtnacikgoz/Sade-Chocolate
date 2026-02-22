@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { Footer } from '../components/Footer';
 import { CompanyInfo } from '../types';
 import { MapPin, Phone, ExternalLink, Snowflake, BadgeCheck, Leaf, Droplets, Clock } from 'lucide-react';
+import { SEOHead } from '../components/SEOHead';
 
 // CMS veri tipleri
 interface AboutCMSLanguageData {
@@ -330,6 +331,16 @@ export const About: React.FC = () => {
   const store2Map = activeBranches[1]?.mapLink || aboutData?.store2_map || 'https://www.google.com/maps/search/?api=1&query=Sade+Patisserie+Çağlayan';
 
   return (
+    <>
+    <SEOHead
+      title="Hakkımızda - El Yapımı Artisan Çikolata"
+      description="2016'dan bu yana Antalya'da el yapımı premium çikolata üretiyoruz. %100 doğal, katkısız, saf kakao yağı ile."
+      path="/about"
+      breadcrumbs={[
+        { name: 'Ana Sayfa', url: '/' },
+        { name: 'Hakkımızda', url: '/about' }
+      ]}
+    />
     <main className="w-full bg-cream-100 dark:bg-dark-900 min-h-screen overflow-hidden">
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -664,5 +675,6 @@ export const About: React.FC = () => {
 
       <Footer />
     </main>
+    </>
   );
 };

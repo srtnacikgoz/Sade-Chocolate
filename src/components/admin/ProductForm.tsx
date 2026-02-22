@@ -27,18 +27,18 @@ import { Trash2, Plus } from 'lucide-react';
 const FormAccordion = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="border border-slate-100 rounded-[24px] overflow-hidden bg-slate-50/30">
+    <div className="border border-cream-200 rounded-xl overflow-hidden bg-cream-50/30">
       <button
         type="button" onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-100/50 transition-colors duration-150"
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-cream-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm text-slate-400">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm text-mocha-400">
             <Icon size={16} />
           </div>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{title}</span>
+          <span className="text-xs font-medium text-mocha-500 uppercase tracking-wider">{title}</span>
         </div>
-        <Plus size={16} className={`text-slate-300 transition-transform duration-200 ease-in-out ${isOpen ? 'rotate-45' : ''}`} />
+        <Plus size={16} className={`text-mocha-400 transition-transform duration-200 ease-in-out ${isOpen ? 'rotate-45' : ''}`} />
       </button>
       <div
         className="grid transition-[grid-template-rows] duration-150 ease-in-out"
@@ -450,7 +450,7 @@ const addAttribute = () => {
 };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full space-y-8 overflow-y-auto px-8 md:px-12 py-8 custom-scrollbar w-full bg-white dark:bg-dark-900 transition-all">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full space-y-8 overflow-y-auto px-8 md:px-12 py-8 custom-scrollbar w-full bg-white transition-all">
       
       <div className="grid grid-cols-12 gap-12 items-start">
         {/* Sol: Görsel Yükleme */}
@@ -460,17 +460,17 @@ const addAttribute = () => {
             <div
               onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
               onClick={() => !isUploading && fileInputRef.current?.click()}
-              className={`relative group h-64 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
-                ${dragActive ? 'border-brown-900 bg-brown-50' : 'border-slate-200 bg-slate-50 hover:border-brown-900/30'}
+              className={`relative group h-64 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
+                ${dragActive ? 'border-brown-900 bg-brown-50' : 'border-cream-200 bg-cream-50 hover:border-brown-900/30'}
                 ${isUploading ? 'cursor-wait opacity-70' : ''}`}
             >
               <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={onFileChange} />
               {formData.image && <img src={formData.image} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
               <div className="relative z-10 text-center">
-                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-3">
-                  {isUploading ? <Loader2 className="animate-spin text-brown-900" /> : <Upload className="text-slate-400" />}
+                <div className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-3">
+                  {isUploading ? <Loader2 className="animate-spin text-mocha-900" /> : <Upload className="text-mocha-400" />}
                 </div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                <p className="text-xs font-medium text-mocha-400 uppercase tracking-wider leading-relaxed">
                   {isUploading ? 'YÜKLENİYOR...' : 'ANA GÖRSEL'}
                 </p>
               </div>
@@ -484,7 +484,7 @@ const addAttribute = () => {
                   setFormData({ ...formData, image: '' });
                   toast.info('Ana görsel kaldırıldı');
                 }}
-                className="absolute top-3 right-3 z-20 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                className="absolute top-3 right-3 z-20 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm transition-all hover:scale-110"
               >
                 <Trash2 size={14} />
               </button>
@@ -496,20 +496,20 @@ const addAttribute = () => {
             <div
               onDragEnter={handleDragAlternate} onDragLeave={handleDragAlternate} onDragOver={handleDragAlternate} onDrop={handleDropAlternate}
               onClick={() => !isUploadingAlternate && alternateFileInputRef.current?.click()}
-              className={`relative group h-48 rounded-[40px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
-                ${dragActiveAlternate ? 'border-gold bg-gold/5' : 'border-slate-200 bg-slate-50 hover:border-gold/50'}
+              className={`relative group h-48 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden
+                ${dragActiveAlternate ? 'border-gold bg-gold/5' : 'border-cream-200 bg-cream-50 hover:border-gold/50'}
                 ${isUploadingAlternate ? 'cursor-wait opacity-70' : ''}`}
             >
               <input ref={alternateFileInputRef} type="file" className="hidden" accept="image/*" onChange={onAlternateFileChange} />
               {formData.alternateImage && <img src={formData.alternateImage} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-40" alt="" />}
               <div className="relative z-10 text-center">
                 <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-2">
-                  {isUploadingAlternate ? <Loader2 className="animate-spin text-gold" /> : <Upload className="text-slate-400" size={18} />}
+                  {isUploadingAlternate ? <Loader2 className="animate-spin text-gold" /> : <Upload className="text-mocha-400" size={18} />}
                 </div>
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                <p className="text-[8px] font-black text-mocha-400 uppercase tracking-wider leading-relaxed">
                   {isUploadingAlternate ? 'YÜKLENİYOR...' : 'HOVER GÖRSELI'}
                 </p>
-                <p className="text-[7px] text-slate-300 mt-1">İsteğe bağlı</p>
+                <p className="text-[7px] text-mocha-400 mt-1">İsteğe bağlı</p>
               </div>
             </div>
             {/* Hover Görseli Silme Butonu */}
@@ -521,7 +521,7 @@ const addAttribute = () => {
                   setFormData({ ...formData, alternateImage: '' });
                   toast.info('Hover görseli kaldırıldı');
                 }}
-                className="absolute top-3 right-3 z-20 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                className="absolute top-3 right-3 z-20 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-sm transition-all hover:scale-110"
               >
                 <Trash2 size={12} />
               </button>
@@ -531,8 +531,8 @@ const addAttribute = () => {
           {/* ✅ Galeri Görselleri (Dandelion Tarzı) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Galeri Görselleri</label>
-              <span className="text-[9px] text-slate-300">{formData.images?.length || 0} görsel</span>
+              <label className="text-xs font-medium text-mocha-400 uppercase tracking-wider">Galeri Görselleri</label>
+              <span className="text-xs text-mocha-400">{formData.images?.length || 0} görsel</span>
             </div>
 
             {/* Mevcut Galeriler */}
@@ -547,8 +547,8 @@ const addAttribute = () => {
                     onDragEnd={handleGalleryDragEnd}
                     className={`relative group w-16 h-16 rounded-xl overflow-hidden border-2 transition-all cursor-move ${
                       draggedGalleryIndex === index
-                        ? 'border-gold scale-105 shadow-lg opacity-50'
-                        : 'border-slate-200 hover:border-gold/50'
+                        ? 'border-gold scale-105 shadow-sm opacity-50'
+                        : 'border-cream-200 hover:border-gold/50'
                     }`}
                   >
                     <img src={img} alt={`Galeri ${index + 1}`} className="w-full h-full object-cover pointer-events-none" />
@@ -565,7 +565,7 @@ const addAttribute = () => {
                     {/* Sürükleme İpucu */}
                     <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all">
                       <div className="w-4 h-4 bg-white/90 rounded-full flex items-center justify-center">
-                        <span className="material-icons-outlined text-[10px] text-slate-400">drag_indicator</span>
+                        <span className="material-icons-outlined text-xs text-mocha-400">drag_indicator</span>
                       </div>
                     </div>
                   </div>
@@ -577,20 +577,20 @@ const addAttribute = () => {
             <div
               onDragEnter={handleDragGallery} onDragLeave={handleDragGallery} onDragOver={handleDragGallery} onDrop={handleDropGallery}
               onClick={() => !isUploadingGallery && galleryFileInputRef.current?.click()}
-              className={`relative group h-24 rounded-[24px] border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer
-                ${dragActiveGallery ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50/50 hover:border-emerald-500/50'}
+              className={`relative group h-24 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer
+                ${dragActiveGallery ? 'border-emerald-500 bg-emerald-50' : 'border-cream-200 bg-cream-50/50 hover:border-emerald-500/50'}
                 ${isUploadingGallery ? 'cursor-wait opacity-70' : ''}`}
             >
               <input ref={galleryFileInputRef} type="file" className="hidden" accept="image/*" multiple onChange={onGalleryFileChange} />
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
-                  {isUploadingGallery ? <Loader2 className="animate-spin text-emerald-500" size={18} /> : <Plus className="text-slate-400" size={18} />}
+                  {isUploadingGallery ? <Loader2 className="animate-spin text-emerald-500" size={18} /> : <Plus className="text-mocha-400" size={18} />}
                 </div>
                 <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  <p className="text-xs font-medium text-mocha-400 uppercase tracking-wider">
                     {isUploadingGallery ? 'YÜKLENİYOR...' : 'GÖRSEL EKLE'}
                   </p>
-                  <p className="text-[7px] text-slate-300">Birden fazla seçebilirsiniz</p>
+                  <p className="text-[7px] text-mocha-400">Birden fazla seçebilirsiniz</p>
                 </div>
               </div>
             </div>
@@ -601,26 +601,26 @@ const addAttribute = () => {
         <div className="col-span-8 space-y-8">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ürün Adı</label>
-              <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full p-4 bg-slate-50 rounded-[20px] text-sm outline-none border border-transparent focus:border-brown-900/20" required />
+              <label className="text-xs font-medium text-mocha-400 uppercase tracking-wider">Ürün Adı</label>
+              <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full p-4 bg-cream-50 rounded-lg text-sm outline-none border border-transparent focus:border-brown-900/20" required />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fiyat & Menşei</label>
+              <label className="text-xs font-medium text-mocha-400 uppercase tracking-wider">Fiyat & Menşei</label>
               <div className="flex gap-3">
-                <input type="number" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} className="flex-1 p-4 bg-slate-50 rounded-[20px] text-sm" required />
-                <input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} placeholder="Ülke" className="flex-1 p-4 bg-slate-50 rounded-[20px] text-sm" />
+                <input type="number" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} className="flex-1 p-4 bg-cream-50 rounded-lg text-sm" required />
+                <input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} placeholder="Ülke" className="flex-1 p-4 bg-cream-50 rounded-lg text-sm" />
               </div>
             </div>
           </div>
 
           {/* --- ROZET SEÇİCİ --- */}
-          <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ürün Rozeti</label>
+          <div className="bg-cream-50/50 p-6 rounded-xl border border-cream-200 space-y-4">
+            <label className="text-xs font-medium text-mocha-400 uppercase tracking-wider">Ürün Rozeti</label>
             <div className="flex items-center gap-4">
               <select
                 value={formData.badge || ''}
                 onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                className="flex-1 p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-brown-900/20"
+                className="flex-1 p-3 bg-white border border-cream-200 rounded-xl text-sm outline-none focus:border-brown-900/20"
               >
                 <option value="">Rozet Yok</option>
                 {badges.map(badge => (
@@ -631,7 +631,7 @@ const addAttribute = () => {
               </select>
               {formData.badge && badges.find(b => b.id === formData.badge) && (
                 <div
-                  className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded"
+                  className="px-4 py-2 text-xs font-medium uppercase tracking-wider rounded"
                   style={{
                     backgroundColor: badges.find(b => b.id === formData.badge)!.bgColor,
                     color: badges.find(b => b.id === formData.badge)!.textColor
@@ -652,10 +652,10 @@ const addAttribute = () => {
                   <span className="material-icons-outlined">{formData.isOutOfStock ? 'remove_shopping_cart' : 'check_circle'}</span>
                 </div>
                 <div>
-                  <label className={`text-[10px] font-black uppercase tracking-widest ${formData.isOutOfStock ? 'text-red-700' : 'text-emerald-700'}`}>
+                  <label className={`text-xs font-medium uppercase tracking-wider ${formData.isOutOfStock ? 'text-red-700' : 'text-emerald-700'}`}>
                     Stok Durumu
                   </label>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-mocha-500">
                     {formData.isOutOfStock ? 'Ürün şu anda tükendi' : 'Ürün stokta mevcut'}
                   </p>
                 </div>
@@ -734,32 +734,32 @@ const addAttribute = () => {
           </div>
 
           {/* --- SIRA NUMARASI --- */}
-          <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-4 rounded-[24px] border border-slate-200/50">
+          <div className="bg-cream-50 p-4 rounded-xl border border-cream-200/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500">
+                <div className="w-10 h-10 rounded-xl bg-cream-200 flex items-center justify-center text-mocha-500">
                   <span className="material-icons-outlined text-lg">sort</span>
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest block">Sıra Numarası</label>
-                  <span className="text-[9px] text-slate-400">Katalogda sıralama (düşük = önce)</span>
+                  <label className="text-xs font-medium text-mocha-600 uppercase tracking-wider block">Sıra Numarası</label>
+                  <span className="text-xs text-mocha-400">Katalogda sıralama (düşük = önce)</span>
                 </div>
               </div>
               <input
                 type="number"
                 value={formData.sortOrder || 0}
                 onChange={e => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-                className="w-20 p-3 bg-white border border-slate-200 rounded-xl text-center text-lg font-bold text-slate-700 focus:ring-2 focus:ring-gold/30 focus:border-gold"
+                className="w-20 p-3 bg-white border border-cream-200 rounded-xl text-center text-lg font-bold text-mocha-600 focus:ring-2 focus:ring-gold/30 focus:border-gold"
                 min="0"
               />
             </div>
           </div>
 
          {/* --- KATEGORİ SEÇİMİ (Dinamik + Yeni Ekleme) --- */}
-          <div className="bg-gradient-to-r from-brown-50 to-amber-50 p-6 rounded-[32px] border border-brown-200/50 space-y-4">
+          <div className="bg-gradient-to-r from-brown-50 to-amber-50 p-6 rounded-xl border border-brown-200/50 space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-brown-700 uppercase tracking-widest">Kategori</label>
-              <span className="text-[9px] text-slate-400 italic">Mevcut seç veya yeni ekle</span>
+              <label className="text-xs font-medium text-brown-700 uppercase tracking-wider">Kategori</label>
+              <span className="text-xs text-mocha-400 italic">Mevcut seç veya yeni ekle</span>
             </div>
             <div className="flex flex-wrap gap-3">
               {PRODUCT_CATEGORIES.map(cat => (
@@ -769,8 +769,8 @@ const addAttribute = () => {
                   onClick={() => setFormData({ ...formData, category: cat.id })}
                   className={`px-5 py-3 rounded-xl border-2 transition-all text-sm font-bold ${
                     formData.category === cat.id
-                      ? 'border-brown-900 bg-white text-brown-900 shadow-md'
-                      : 'border-slate-200 bg-white/50 text-slate-400 hover:border-brown-900/30'
+                      ? 'border-brown-900 bg-white text-mocha-900 shadow-md'
+                      : 'border-cream-200 bg-white/50 text-mocha-400 hover:border-brown-900/30'
                   }`}
                 >
                   {cat.label}
@@ -781,7 +781,7 @@ const addAttribute = () => {
               {!PRODUCT_CATEGORIES.find(c => c.id === formData.category) && formData.category && (
                 <button
                   type="button"
-                  className="px-5 py-3 rounded-xl border-2 border-brown-900 bg-white text-brown-900 shadow-md text-sm font-bold"
+                  className="px-5 py-3 rounded-xl border-2 border-brown-900 bg-white text-mocha-900 shadow-md text-sm font-bold"
                 >
                   {formData.category.charAt(0).toUpperCase() + formData.category.slice(1)}
                 </button>
@@ -790,11 +790,11 @@ const addAttribute = () => {
 
             {/* Yeni Kategori Input */}
             <div className="flex gap-3 items-center pt-2 border-t border-brown-100">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Veya yeni:</span>
+              <span className="text-xs font-medium text-mocha-400 uppercase tracking-wider">Veya yeni:</span>
               <input
                 type="text"
                 placeholder="Yeni kategori adı..."
-                className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brown-900/20 outline-none"
+                className="flex-1 px-4 py-2 rounded-xl border border-cream-200 text-sm focus:ring-2 focus:ring-brown-900/20 outline-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -808,15 +808,15 @@ const addAttribute = () => {
                   }
                 }}
               />
-              <span className="text-[8px] text-slate-300 italic">Enter'a bas</span>
+              <span className="text-[8px] text-mocha-400 italic">Enter'a bas</span>
             </div>
           </div>
 
          {/* --- ÜRÜN TİPİ SEÇİMİ (Tablet vs Diğer) --- */}
-          <div className="bg-gradient-to-r from-gold/5 to-amber-50 p-8 rounded-[40px] border border-gold/20 space-y-4">
+          <div className="bg-gradient-to-r from-gold/5 to-amber-50 p-6 rounded-xl border border-gold/20 space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-gold uppercase tracking-widest">Ürün Tipi</label>
-              <span className="text-[9px] text-slate-400 italic">Tablet ürünler Dandelion tarzı minimal görünüm kullanır</span>
+              <label className="text-xs font-medium text-gold uppercase tracking-wider">Ürün Tipi</label>
+              <span className="text-xs text-mocha-400 italic">Tablet ürünler Dandelion tarzı minimal görünüm kullanır</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -831,21 +831,21 @@ const addAttribute = () => {
                   onClick={() => setFormData({ ...formData, productType: type.id })}
                   className={`flex-1 p-4 rounded-2xl border-2 transition-all text-left ${
                     formData.productType === type.id
-                      ? 'border-gold bg-white shadow-lg'
-                      : 'border-slate-200 bg-white/50 hover:border-gold/50'
+                      ? 'border-gold bg-white shadow-sm'
+                      : 'border-cream-200 bg-white/50 hover:border-gold/50'
                   }`}
                 >
-                  <p className={`text-sm font-bold ${formData.productType === type.id ? 'text-gold' : 'text-slate-600'}`}>
+                  <p className={`text-sm font-bold ${formData.productType === type.id ? 'text-gold' : 'text-mocha-600'}`}>
                     {type.label}
                   </p>
-                  <p className="text-[9px] text-slate-400 mt-1">{type.desc}</p>
+                  <p className="text-xs text-mocha-400 mt-1">{type.desc}</p>
                 </button>
               ))}
             </div>
           </div>
 
          {/* --- 🎁 KUTU İÇERİĞİ TOGGLE --- */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-8 rounded-[40px] border border-orange-200/50 space-y-4">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-xl border border-orange-200/50 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <input
@@ -855,11 +855,11 @@ const addAttribute = () => {
                   onChange={(e) => setFormData({ ...formData, isBoxContent: e.target.checked })}
                   className="w-5 h-5 rounded border-orange-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
                 />
-                <label htmlFor="isBoxContent" className="text-[10px] font-black text-orange-600 uppercase tracking-widest cursor-pointer">
+                <label htmlFor="isBoxContent" className="text-xs font-medium text-orange-600 uppercase tracking-wider cursor-pointer">
                   Kutu İçeriği Olarak Seçilebilsin Mi?
                 </label>
               </div>
-              <span className="text-[9px] text-slate-400 italic">Bonbonlar kutularda kullanılabilir</span>
+              <span className="text-xs text-mocha-400 italic">Bonbonlar kutularda kullanılabilir</span>
             </div>
             {formData.isBoxContent && (
               <p className="text-xs text-orange-600 bg-white/70 p-3 rounded-xl border border-orange-200">
@@ -870,11 +870,11 @@ const addAttribute = () => {
 
          {/* --- 🎁 KUTU İÇERİĞİ SEÇİCİ (Sadece productType === 'box' ise) --- */}
          {formData.productType === 'box' && (
-          <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-8 rounded-[40px] border border-rose-200/50 space-y-6">
+          <div className="bg-gradient-to-r from-pink-50 to-rose-50 p-6 rounded-xl border border-rose-200/50 space-y-6">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Kutu İçeriği Seç</label>
+              <label className="text-xs font-medium text-rose-600 uppercase tracking-wider">Kutu İçeriği Seç</label>
               <div className="flex items-center gap-4">
-                <span className="text-[9px] text-slate-400 italic">
+                <span className="text-xs text-mocha-400 italic">
                   {(formData.boxContentIds || []).length} / {formData.boxSize || 4} bonbon seçildi
                 </span>
                 <select
@@ -891,7 +891,7 @@ const addAttribute = () => {
             </div>
 
             {bonbonProducts.length === 0 ? (
-              <p className="text-xs text-slate-400 bg-white/70 p-4 rounded-xl text-center">
+              <p className="text-xs text-mocha-400 bg-white/70 p-4 rounded-xl text-center">
                 Henüz kutu içeriği olarak işaretlenmiş bonbon yok. Önce bonbon ürünleri oluşturup "Kutu İçeriği Olarak Seçilebilsin Mi?" seçeneğini aktifleştirin.
               </p>
             ) : (
@@ -907,8 +907,8 @@ const addAttribute = () => {
                       onClick={() => toggleBonbon(bonbon.id)}
                       className={`relative border-2 rounded-2xl p-3 transition-all group ${
                         isSelected
-                          ? 'border-rose-400 bg-rose-50 shadow-lg ring-2 ring-rose-200'
-                          : 'border-slate-200 bg-white hover:border-rose-300 hover:shadow'
+                          ? 'border-rose-400 bg-rose-50 shadow-sm ring-2 ring-rose-200'
+                          : 'border-cream-200 bg-white hover:border-rose-300 hover:shadow'
                       }`}
                     >
                       <div className="aspect-square rounded-xl overflow-hidden mb-2">
@@ -918,11 +918,11 @@ const addAttribute = () => {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                         />
                       </div>
-                      <p className={`text-xs font-bold line-clamp-2 ${isSelected ? 'text-rose-600' : 'text-slate-600'}`}>
+                      <p className={`text-xs font-bold line-clamp-2 ${isSelected ? 'text-rose-600' : 'text-mocha-600'}`}>
                         {bonbon.title}
                       </p>
                       {isSelected && (
-                        <div className="absolute -top-2 -right-2 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-lg">
+                        <div className="absolute -top-2 -right-2 w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs font-black shadow-sm">
                           {selectedCount}
                         </div>
                       )}
@@ -934,7 +934,7 @@ const addAttribute = () => {
 
             {(formData.boxContentIds || []).length > 0 && (
               <div className="bg-white/70 p-4 rounded-xl border border-rose-200">
-                <p className="text-[9px] font-black text-rose-600 uppercase tracking-widest mb-2">Seçilen Bonbonlar:</p>
+                <p className="text-xs font-medium text-rose-600 uppercase tracking-wider mb-2">Seçilen Bonbonlar:</p>
                 <div className="flex flex-wrap gap-2">
                   {(formData.boxContentIds || []).map((id: string, idx: number) => {
                     const bonbon = bonbonProducts.find(b => b.id === id);
@@ -953,10 +953,10 @@ const addAttribute = () => {
         </div>
       </div>
 {/* --- DEĞER ETİKETLERİ YÖNETİMİ (CEO SELECTION) --- */}
-      <div className="p-10 bg-slate-50/30 rounded-[40px] border border-slate-100 space-y-8">
+      <div className="p-10 bg-cream-50/30 rounded-xl border border-cream-200 space-y-8">
         <div className="flex items-center justify-between">
-          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Değer Simgeleri (Dinamik Etiketler)</label>
-          <span className="text-[10px] text-slate-400 italic">Ürünün en güçlü 3 özelliğini buradan seçin veya havuza ekleyin.</span>
+          <label className="text-[11px] font-black text-mocha-500 uppercase tracking-wider">Değer Simgeleri (Dinamik Etiketler)</label>
+          <span className="text-xs text-mocha-400 italic">Ürünün en güçlü 3 özelliğini buradan seçin veya havuza ekleyin.</span>
         </div>
         
         <div className="flex flex-wrap gap-4">
@@ -971,10 +971,10 @@ const addAttribute = () => {
                     const next = isSelected ? current.filter((v: any) => v.label !== b.label) : [...current, b];
                     setFormData({ ...formData, valueBadges: next });
                   }}
-                  className={`flex items-center gap-3 px-6 py-4 rounded-[24px] border transition-all ${isSelected ? 'bg-brown-900 text-gold border-brown-900 shadow-xl scale-105' : 'bg-white text-slate-400 border-slate-200'}`}
+                  className={`flex items-center gap-3 px-6 py-4 rounded-xl border transition-all ${isSelected ? 'bg-mocha-900 text-gold border-brown-900 shadow-sm scale-105' : 'bg-white text-mocha-400 border-cream-200'}`}
                 >
                   <span className="material-icons-outlined text-xl">{b.icon}</span>
-                  <span className="text-[10px] font-black uppercase tracking-wider">{b.label}</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">{b.label}</span>
                 </button>
                 <button type="button" onClick={() => removeFromBadgePool(b.label)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-red-600 z-10 scale-75 hover:scale-100">
                   <CloseIcon size={12} strokeWidth={3} />
@@ -984,9 +984,9 @@ const addAttribute = () => {
           })}
         </div>
 
-        <div className="flex gap-4 pt-4 border-t border-slate-100">
-          <input value={selectedBadgeIcon} onChange={e => setSelectedBadgeIcon(e.target.value)} placeholder="İkon Adı (verified, eco vb.)" className="w-48 p-4 bg-white border border-slate-200 rounded-2xl text-xs outline-none" />
-          <input value={newBadgeLabel} onChange={e => setNewBadgeLabel(e.target.value)} placeholder="Etiket Metni (Örn: Taze Üretim)" className="flex-1 p-4 bg-white border border-slate-200 rounded-2xl text-xs outline-none" />
+        <div className="flex gap-4 pt-4 border-t border-cream-200">
+          <input value={selectedBadgeIcon} onChange={e => setSelectedBadgeIcon(e.target.value)} placeholder="İkon Adı (verified, eco vb.)" className="w-48 p-4 bg-white border border-cream-200 rounded-2xl text-xs outline-none" />
+          <input value={newBadgeLabel} onChange={e => setNewBadgeLabel(e.target.value)} placeholder="Etiket Metni (Örn: Taze Üretim)" className="flex-1 p-4 bg-white border border-cream-200 rounded-2xl text-xs outline-none" />
           <button 
             type="button" 
             onClick={() => {
@@ -995,7 +995,7 @@ const addAttribute = () => {
               setBadgePool([...badgePool, newB]);
               setNewBadgeLabel('');
             }}
-            className="px-8 bg-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase hover:bg-brown-900 hover:text-white transition-all"
+            className="px-8 bg-cream-200 text-mocha-600 rounded-2xl text-xs font-medium uppercase hover:bg-mocha-900 hover:text-white transition-all"
           >
             HAVUZA EKLE
           </button>
@@ -1003,16 +1003,16 @@ const addAttribute = () => {
       </div>
       
 {/* --- DİNAMİK LEZZET HAVUZU (CHEF'S SELECTION) --- */}
-      <div className="p-10 bg-slate-50/50 rounded-[40px] border border-slate-100 space-y-8">
+      <div className="p-10 bg-cream-50/50 rounded-xl border border-cream-200 space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BrandIcon size={20} className="text-gold" />
-            <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Lezzet Havuzu</span>
+            <span className="text-[11px] font-black text-mocha-500 uppercase tracking-[0.2em]">Lezzet Havuzu</span>
           </div>
-          <span className="text-[10px] text-slate-400 italic font-medium">Havuzdan seçim yapın veya yeni bir karakter oluşturun.</span>
+          <span className="text-xs text-mocha-400 italic font-medium">Havuzdan seçim yapın veya yeni bir karakter oluşturun.</span>
         </div>
 
-        <div className="flex flex-wrap gap-3 pb-8 border-b border-slate-200/60">
+        <div className="flex flex-wrap gap-3 pb-8 border-b border-cream-200/60">
           {attributePool.map(attr => {
   const isSelected = formData.attributes?.includes(attr);
   return (
@@ -1020,12 +1020,12 @@ const addAttribute = () => {
       <button
         type="button"
         onClick={() => toggleAttribute(attr)}
-        className={`flex items-center gap-3 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-tight transition-all border
+        className={`flex items-center gap-3 px-6 py-3 rounded-2xl text-xs font-medium uppercase tracking-tight transition-all border
           ${isSelected 
-            ? 'bg-brown-900 text-white border-brown-900 shadow-xl shadow-brown-900/20 scale-105' 
-            : 'bg-white text-slate-500 border-slate-200 hover:border-brown-900/30 hover:bg-slate-50'}`}
+            ? 'bg-mocha-900 text-white border-brown-900 shadow-sm shadow-brown-900/20 scale-105' 
+            : 'bg-white text-mocha-500 border-cream-200 hover:border-brown-900/30 hover:bg-cream-50'}`}
       >
-        <div className={`flex items-center justify-center transition-all ${isSelected ? 'text-gold scale-110 drop-shadow-md' : 'text-slate-300'}`}>
+        <div className={`flex items-center justify-center transition-all ${isSelected ? 'text-gold scale-110 drop-shadow-md' : 'text-mocha-400'}`}>
   {getAttrIcon(attr)}
 </div>
 <span className="ml-1">{attr}</span>
@@ -1035,7 +1035,7 @@ const addAttribute = () => {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); removeFromPool(attr); }}
-        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-red-600 z-10 scale-75 hover:scale-100"
+        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm hover:bg-red-600 z-10 scale-75 hover:scale-100"
       >
         <CloseIcon size={12} strokeWidth={3} />
       </button>
@@ -1045,13 +1045,13 @@ const addAttribute = () => {
         </div>
 
       <div className="space-y-4">
-          <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 w-fit">
-            <span className="text-[9px] font-black text-slate-400 uppercase ml-2">İkon Seç:</span>
+          <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-cream-200 w-fit">
+            <span className="text-xs font-medium text-mocha-400 uppercase ml-2">İkon Seç:</span>
             <div className="flex gap-2">
               {ICON_LIBRARY.map(item => (
                 <button 
                   key={item.id} type="button" onClick={() => setSelectedIcon(item.id)}
-                  className={`p-2 rounded-lg transition-all ${selectedIcon === item.id ? 'bg-brown-900 text-gold shadow-md' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
+                  className={`p-2 rounded-lg transition-all ${selectedIcon === item.id ? 'bg-mocha-900 text-gold shadow-md' : 'bg-cream-50 text-mocha-400 hover:bg-cream-50'}`}
                 >
                   <item.icon size={16} />
                 </button>
@@ -1064,12 +1064,12 @@ const addAttribute = () => {
               onChange={e => setNewAttr(e.target.value)} 
               onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addToPoolAndSelect())} 
               placeholder="Yeni lezzet karakteri yazın..." 
-              className="flex-1 p-4 bg-white border border-slate-200 rounded-2xl text-xs outline-none focus:ring-4 focus:ring-brown-900/5 transition-all" 
+              className="flex-1 p-4 bg-white border border-cream-200 rounded-2xl text-xs outline-none focus:ring-4 focus:ring-brown-900/5 transition-all" 
             />
             <button 
               type="button" 
               onClick={addToPoolAndSelect} 
-              className="px-8 bg-brown-900 text-white rounded-2xl text-[10px] font-black uppercase hover:bg-black transition-all"
+              className="px-8 bg-mocha-900 text-white rounded-2xl text-xs font-medium uppercase hover:bg-black transition-all"
             >
               HAVUZA EKLE
             </button>
@@ -1078,29 +1078,29 @@ const addAttribute = () => {
       </div>
 
       {/* --- DUYUSAL PROFİL KONTROLÜ (FULL WIDTH & TOGGLE) --- */}
-      <div className={`p-10 bg-slate-50/50 rounded-[40px] border border-slate-100 space-y-12 transition-all duration-500 ${!formData.showSensory ? 'bg-slate-100/50 ring-0 shadow-none' : 'bg-white shadow-sm ring-1 ring-slate-100'}`}>
+      <div className={`p-10 bg-cream-50/50 rounded-xl border border-cream-200 space-y-8 transition-all duration-500 ${!formData.showSensory ? 'bg-cream-100/50 ring-0 shadow-none' : 'bg-white shadow-sm ring-1 ring-cream-200'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-5">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${formData.showSensory ? 'bg-brown-900 text-gold shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
+            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${formData.showSensory ? 'bg-mocha-900 text-gold shadow-sm' : 'bg-cream-200 text-mocha-400'}`}>
               <Activity size={28} />
             </div>
             <div>
-              <span className="text-[12px] font-black text-slate-600 uppercase tracking-[0.2em]">Duyusal Karakter Analizi</span>
-              <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+              <span className="text-[12px] font-black text-mocha-600 uppercase tracking-[0.2em]">Duyusal Karakter Analizi</span>
+              <p className="text-xs text-mocha-400 font-bold mt-1 uppercase tracking-wider">
                 {formData.showSensory ? 'Profil Analizi Sayfada Gösterilecek' : 'Profil Analizi Sayfada Gizlenecek'}
               </p>
             </div>
           </div>
           
           {/* Bölüm Aktif/Pasif Butonu */}
-          <div className="flex items-center gap-4 bg-slate-100 p-2 rounded-2xl border border-slate-200">
-            <span className={`text-[9px] font-black uppercase tracking-widest ${formData.showSensory ? 'text-emerald-600' : 'text-slate-400'}`}>
+          <div className="flex items-center gap-4 bg-cream-100 p-2 rounded-2xl border border-cream-200">
+            <span className={`text-xs font-medium uppercase tracking-wider ${formData.showSensory ? 'text-emerald-600' : 'text-mocha-400'}`}>
               {formData.showSensory ? 'AKTİF' : 'PASİF'}
             </span>
             <button 
               type="button" 
               onClick={() => setFormData({...formData, showSensory: !formData.showSensory})} 
-              className={`w-12 h-6 rounded-full relative transition-all shadow-inner ${formData.showSensory ? 'bg-emerald-500' : 'bg-slate-300'}`}
+              className={`w-12 h-6 rounded-full relative transition-all shadow-inner ${formData.showSensory ? 'bg-emerald-500' : 'bg-cream-300'}`}
             >
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-md ${formData.showSensory ? 'left-7' : 'left-1'}`} />
             </button>
@@ -1112,41 +1112,41 @@ const addAttribute = () => {
           {Object.keys(formData.sensory).map((key) => (
             <div key={key} className="space-y-4">
               <div className="flex justify-between items-end">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{key}</span>
-                <span className="text-sm font-display font-bold text-brown-900 italic">{formData.sensory[key]}%</span>
+                <span className="text-xs font-medium text-mocha-500 uppercase tracking-wider">{key}</span>
+                <span className="text-sm font-semibold text-mocha-900 italic">{formData.sensory[key]}%</span>
               </div>
               <input 
                 type="range" 
                 value={formData.sensory[key]} 
                 onChange={e => setFormData({...formData, sensory: { ...formData.sensory, [key]: parseInt(e.target.value) }})} 
-                className="w-full h-1.5 bg-slate-200 accent-brown-900 appearance-none rounded-full cursor-pointer transition-all hover:accent-gold" 
+                className="w-full h-1.5 bg-cream-200 accent-brown-900 appearance-none rounded-full cursor-pointer transition-all hover:accent-gold" 
               />
             </div>
           ))}
         </div>
       </div>
       {/* --- LÄDERACH AKORDİYON İÇERİK GİRİŞLERİ (HER ZAMAN AKTİF) --- */}
-      <div className="p-10 bg-white rounded-[40px] border border-slate-100 space-y-4">
+      <div className="p-10 bg-white rounded-xl border border-cream-200 space-y-4">
         <div className="flex items-center gap-3 mb-4">
-          <Info size={20} className="text-slate-400" />
-          <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Detaylı Ürün Bilgileri</span>
+          <Info size={20} className="text-mocha-400" />
+          <span className="text-[11px] font-black text-mocha-500 uppercase tracking-[0.2em]">Detaylı Ürün Bilgileri</span>
         </div>
         <div className="grid grid-cols-1 gap-4">
           <FormAccordion title="Ürün Hikayesi & Detay" icon={Info}>
-            <textarea value={formData.detailedDescription} onChange={e => setFormData({...formData, detailedDescription: e.target.value})} placeholder="Ürünün hikayesini yazın..." className="w-full p-4 bg-white rounded-2xl text-xs min-h-[120px] outline-none border border-slate-100" />
+            <textarea value={formData.detailedDescription} onChange={e => setFormData({...formData, detailedDescription: e.target.value})} placeholder="Ürünün hikayesini yazın..." className="w-full p-4 bg-white rounded-2xl text-xs min-h-[120px] outline-none border border-cream-200" />
           </FormAccordion>
 
           <FormAccordion title="İçindekiler & Alerjenler" icon={AlertCircle}>
             <div className="grid grid-cols-2 gap-4 pt-2">
-              <textarea value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} placeholder="İçindekiler..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-slate-100" />
-              <textarea value={formData.allergens} onChange={e => setFormData({...formData, allergens: e.target.value})} placeholder="Alerjenler..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-slate-100" />
+              <textarea value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} placeholder="İçindekiler..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-cream-200" />
+              <textarea value={formData.allergens} onChange={e => setFormData({...formData, allergens: e.target.value})} placeholder="Alerjenler..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-cream-200" />
             </div>
           </FormAccordion>
 
           <FormAccordion title="Besin Değerleri & Menşei" icon={MapPin}>
             <div className="grid grid-cols-2 gap-4 pt-2">
-              <textarea value={formData.nutritionalValues} onChange={e => setFormData({...formData, nutritionalValues: e.target.value})} placeholder="Besin Değerleri..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-slate-100" />
-              <input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} placeholder="Menşei" className="p-4 bg-white rounded-2xl text-xs outline-none border border-slate-100" />
+              <textarea value={formData.nutritionalValues} onChange={e => setFormData({...formData, nutritionalValues: e.target.value})} placeholder="Besin Değerleri..." className="p-4 bg-white rounded-2xl text-xs min-h-[100px] outline-none border border-cream-200" />
+              <input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} placeholder="Menşei" className="p-4 bg-white rounded-2xl text-xs outline-none border border-cream-200" />
             </div>
           </FormAccordion>
 
@@ -1154,7 +1154,7 @@ const addAttribute = () => {
             <div className="space-y-4 pt-2">
               {/* Ağırlık */}
               <div>
-                <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-mocha-500 uppercase tracking-wider mb-2">
                   <Scale size={12} />
                   Ürün Ağırlığı (gram)
                 </label>
@@ -1163,19 +1163,19 @@ const addAttribute = () => {
                   value={formData.weight || ''}
                   onChange={e => setFormData({...formData, weight: Number(e.target.value)})}
                   placeholder="Örn: 100"
-                  className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold"
+                  className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-cream-200 focus:border-gold"
                 />
               </div>
 
               {/* Kutu Ölçüleri */}
               <div>
-                <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-mocha-500 uppercase tracking-wider mb-2">
                   <Ruler size={12} />
                   Paket Ölçüleri (cm)
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <span className="text-[9px] text-slate-400 block mb-1">Uzunluk</span>
+                    <span className="text-xs text-mocha-400 block mb-1">Uzunluk</span>
                     <input
                       type="number"
                       value={formData.dimensions?.length || ''}
@@ -1184,11 +1184,11 @@ const addAttribute = () => {
                         dimensions: { ...formData.dimensions, length: Number(e.target.value) }
                       })}
                       placeholder="U"
-                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold text-center"
+                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-cream-200 focus:border-gold text-center"
                     />
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 block mb-1">Genişlik</span>
+                    <span className="text-xs text-mocha-400 block mb-1">Genişlik</span>
                     <input
                       type="number"
                       value={formData.dimensions?.width || ''}
@@ -1197,11 +1197,11 @@ const addAttribute = () => {
                         dimensions: { ...formData.dimensions, width: Number(e.target.value) }
                       })}
                       placeholder="G"
-                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold text-center"
+                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-cream-200 focus:border-gold text-center"
                     />
                   </div>
                   <div>
-                    <span className="text-[9px] text-slate-400 block mb-1">Yükseklik</span>
+                    <span className="text-xs text-mocha-400 block mb-1">Yükseklik</span>
                     <input
                       type="number"
                       value={formData.dimensions?.height || ''}
@@ -1210,7 +1210,7 @@ const addAttribute = () => {
                         dimensions: { ...formData.dimensions, height: Number(e.target.value) }
                       })}
                       placeholder="Y"
-                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 focus:border-gold text-center"
+                      className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-cream-200 focus:border-gold text-center"
                     />
                   </div>
                 </div>
@@ -1221,8 +1221,8 @@ const addAttribute = () => {
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Hesaplanan Desi</p>
-                      <p className="text-[9px] text-blue-500 mt-1">
+                      <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Hesaplanan Desi</p>
+                      <p className="text-xs text-blue-500 mt-1">
                         ({formData.dimensions.length} × {formData.dimensions.width} × {formData.dimensions.height}) ÷ 3000
                       </p>
                     </div>
@@ -1230,7 +1230,7 @@ const addAttribute = () => {
                       <p className="text-2xl font-bold text-blue-700">
                         {((formData.dimensions.length * formData.dimensions.width * formData.dimensions.height) / 3000).toFixed(2)}
                       </p>
-                      <p className="text-[9px] text-blue-500">desi</p>
+                      <p className="text-xs text-blue-500">desi</p>
                     </div>
                   </div>
                 </div>
@@ -1239,7 +1239,7 @@ const addAttribute = () => {
               {/* Ağırlık vs Desi Karşılaştırma */}
               {formData.weight > 0 && formData.dimensions?.length > 0 && formData.dimensions?.width > 0 && formData.dimensions?.height > 0 && (
                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-[9px] text-amber-700">
+                  <p className="text-xs text-amber-700">
                     <strong>Not:</strong> Kargo firmaları ağırlık ({(formData.weight / 1000).toFixed(2)} kg) ve desi ({((formData.dimensions.length * formData.dimensions.width * formData.dimensions.height) / 3000).toFixed(2)}) arasından büyük olanı ücretlendirir.
                   </p>
                 </div>
@@ -1249,13 +1249,13 @@ const addAttribute = () => {
         </div>
       </div>
 
-      <div className="p-6 bg-slate-50/50 rounded-[32px] border border-slate-100 space-y-4">
+      <div className="p-6 bg-cream-50/50 rounded-xl border border-cream-200 space-y-4">
   <div className="flex items-center justify-between mb-2">
     <div className="flex items-center gap-2">
       <div className="w-8 h-8 bg-gold/10 rounded-full flex items-center justify-center">
         <Package size={16} className="text-gold" />
       </div>
-      <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Kutu İçeriği (Marcolini Stil)</span>
+      <span className="text-[11px] font-black text-mocha-500 uppercase tracking-wider">Kutu İçeriği (Marcolini Stil)</span>
     </div>
     <button
       type="button"
@@ -1271,7 +1271,7 @@ const addAttribute = () => {
         };
         setFormData({ ...formData, boxItems: [...(formData.boxItems || []), newItem] });
       }}
-      className="flex items-center gap-2 px-4 py-2 bg-white text-gold border border-gold/20 rounded-full text-[10px] font-black uppercase hover:bg-gold hover:text-white transition-all shadow-sm"
+      className="flex items-center gap-2 px-4 py-2 bg-white text-gold border border-gold/20 rounded-full text-xs font-medium uppercase hover:bg-gold hover:text-white transition-all shadow-sm"
     >
       <Plus size={14} /> Yeni Lezzet Ekle
     </button>
@@ -1279,12 +1279,12 @@ const addAttribute = () => {
 
   <div className="grid gap-4">
     {formData.boxItems?.map((item: BoxItem, index: number) => (
-      <div key={item.id} className="p-4 bg-white rounded-2xl border border-slate-100 group hover:shadow-md transition-all">
+      <div key={item.id} className="p-4 bg-white rounded-2xl border border-cream-200 group hover:shadow-md transition-all">
         <div className="flex items-start gap-4">
           {/* Görsel Yükleme Alanı */}
           <div
             onClick={() => document.getElementById(`box-file-${index}`)?.click()}
-            className="relative w-16 h-16 rounded-xl bg-slate-100 flex-shrink-0 cursor-pointer overflow-hidden border-2 border-white shadow-inner"
+            className="relative w-16 h-16 rounded-xl bg-cream-100 flex-shrink-0 cursor-pointer overflow-hidden border-2 border-white shadow-inner"
           >
             {uploadingBoxIndex === index ? (
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center"><Loader2 className="animate-spin text-white" size={16} /></div>
@@ -1305,7 +1305,7 @@ const addAttribute = () => {
                   setFormData({ ...formData, boxItems: newItems });
                 }}
                 placeholder="Lezzet Adı (Örn: Anamalai)"
-                className="flex-1 bg-slate-50 rounded-lg px-3 py-2 text-[11px] font-bold text-slate-700 outline-none placeholder:text-slate-300"
+                className="flex-1 bg-cream-50 rounded-lg px-3 py-2 text-[11px] font-bold text-mocha-600 outline-none placeholder:text-mocha-400"
               />
               <input
                 type="number"
@@ -1316,7 +1316,7 @@ const addAttribute = () => {
                   setFormData({ ...formData, boxItems: newItems });
                 }}
                 placeholder="%"
-                className="w-16 bg-slate-50 rounded-lg px-2 py-2 text-[11px] font-bold text-gold text-center outline-none placeholder:text-slate-300"
+                className="w-16 bg-cream-50 rounded-lg px-2 py-2 text-[11px] font-bold text-gold text-center outline-none placeholder:text-mocha-400"
               />
             </div>
 
@@ -1329,7 +1329,7 @@ const addAttribute = () => {
                   setFormData({ ...formData, boxItems: newItems });
                 }}
                 placeholder="Menşei (Örn: India, Tanzania)"
-                className="flex-1 bg-slate-50 rounded-lg px-3 py-1.5 text-[10px] text-slate-500 outline-none placeholder:text-slate-300"
+                className="flex-1 bg-cream-50 rounded-lg px-3 py-1.5 text-xs text-mocha-500 outline-none placeholder:text-mocha-400"
               />
             </div>
 
@@ -1341,7 +1341,7 @@ const addAttribute = () => {
                 setFormData({ ...formData, boxItems: newItems });
               }}
               placeholder="Kısa açıklama..."
-              className="w-full bg-slate-50 rounded-lg px-3 py-1.5 text-[10px] text-slate-400 outline-none italic placeholder:text-slate-300"
+              className="w-full bg-cream-50 rounded-lg px-3 py-1.5 text-xs text-mocha-400 outline-none italic placeholder:text-mocha-400"
             />
 
             {/* Tasting Notes */}
@@ -1353,14 +1353,14 @@ const addAttribute = () => {
                 setFormData({ ...formData, boxItems: newItems });
               }}
               placeholder="Tadım notları (virgülle ayırın: kumquat, hojicha, vanilya)"
-              className="w-full bg-gold/5 border border-gold/10 rounded-lg px-3 py-1.5 text-[10px] text-gold outline-none placeholder:text-gold/40"
+              className="w-full bg-gold/5 border border-gold/10 rounded-lg px-3 py-1.5 text-xs text-gold outline-none placeholder:text-gold/40"
             />
           </div>
 
           <button
             type="button"
             onClick={() => setFormData({ ...formData, boxItems: formData.boxItems.filter((_: any, i: number) => i !== index) })}
-            className="p-2 text-slate-200 hover:text-red-500 hover:bg-red-50/50 rounded-full transition-all"
+            className="p-2 text-mocha-400 hover:text-red-500 hover:bg-red-50/50 rounded-full transition-all"
           >
             <Trash2 size={16} />
           </button>
@@ -1371,8 +1371,8 @@ const addAttribute = () => {
 </div>
 
       <div className="flex gap-3 sticky bottom-0 bg-white pt-4 pb-2">
-        <button type="button" onClick={onCancel} className="flex-1 py-4 text-[10px] font-black text-slate-400 uppercase">İptal</button>
-        <button type="submit" disabled={isUploading} className="flex-[2] bg-brown-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center justify-center gap-2 hover:bg-black transition-all disabled:bg-slate-300">
+        <button type="button" onClick={onCancel} className="flex-1 py-4 text-xs font-medium text-mocha-400 uppercase">İptal</button>
+        <button type="submit" disabled={isUploading} className="flex-[2] bg-mocha-900 text-white py-4 rounded-2xl text-xs font-medium uppercase shadow-sm flex items-center justify-center gap-2 hover:bg-black transition-all disabled:bg-cream-300">
           {isUploading ? 'Yükleniyor...' : <><Save size={16} /> Ürünü Kaydet</>}
         </button>
       </div>
