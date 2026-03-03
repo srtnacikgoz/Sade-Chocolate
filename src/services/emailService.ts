@@ -156,8 +156,128 @@ export const checkEmailDeliveryStatus = async (mailDocId: string): Promise<{
  */
 export const sendWelcomeEmail = async (
   email: string,
-  firstName: string
+  firstName: string,
+  couponCode?: string
 ) => {
+  // Kupon kodu varsa premium template kullan
+  if (couponCode) {
+    const headerBg = '#4B3832';
+    const bodyBg = '#FDFCF8';
+    const outerBg = '#E8E4DC';
+    const accent = '#C5A059';
+    const textPrimary = '#4B3832';
+    const textSecondary = '#666666';
+
+    const premiumContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Sade Chocolate - Hoş Geldin</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: ${outerBg}; font-family: Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${outerBg}; padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: ${bodyBg}; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+
+              <!-- Header Band -->
+              <tr>
+                <td style="background-color: ${headerBg}; padding: 40px 48px; text-align: center;">
+                  <img src="https://sadechocolate.com/images/email-logo-dark.png" alt="Sade Chocolate" width="280" height="50" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
+                </td>
+              </tr>
+
+              <!-- Main Content -->
+              <tr>
+                <td style="background-color: ${bodyBg}; padding: 60px 48px;">
+
+                  <!-- Welcome Badge -->
+                  <p style="text-align: center; margin: 0 0 16px; font-size: 10px; letter-spacing: 3px; color: ${accent}; text-transform: uppercase;">
+                    ✦ Hoş Geldin ✦
+                  </p>
+
+                  <!-- Greeting -->
+                  <h2 style="text-align: center; margin: 0 0 32px; font-family: Georgia, serif; font-size: 32px; font-weight: normal; font-style: italic; color: ${textPrimary}; line-height: 1.3;">
+                    Hoş Geldin, ${firstName}
+                  </h2>
+
+                  <!-- Divider -->
+                  <div style="width: 60px; height: 1px; background-color: ${accent}; margin: 0 auto 32px;"></div>
+
+                  <!-- Welcome Text -->
+                  <p style="text-align: center; margin: 0 0 48px; font-size: 15px; line-height: 1.8; color: ${textSecondary};">
+                    Sade Chocolate ailesine katıldığın için çok mutluyuz. Sana özel bir hoş geldin hediyemiz var!
+                  </p>
+
+                  <!-- Discount Section -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${headerBg}; margin-bottom: 48px;">
+                    <tr>
+                      <td style="padding: 40px 32px; text-align: center;">
+                        <p style="margin: 0 0 8px; font-size: 10px; letter-spacing: 3px; color: ${accent}; text-transform: uppercase;">
+                          İlk Siparişine Özel
+                        </p>
+                        <p style="margin: 0 0 4px; font-family: Georgia, serif; font-size: 64px; font-weight: normal; color: ${bodyBg}; line-height: 1;">
+                          %10
+                        </p>
+                        <p style="margin: 0 0 24px; font-family: Georgia, serif; font-size: 16px; font-style: italic; color: ${accent};">
+                          indirim
+                        </p>
+                        <div style="display: inline-block; border: 1px solid rgba(255,255,255,0.2); padding: 12px 24px;">
+                          <p style="margin: 0 0 4px; font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,0.5); text-transform: uppercase;">
+                            Kod
+                          </p>
+                          <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 20px; letter-spacing: 4px; color: ${bodyBg}; font-weight: bold;">
+                            ${couponCode}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- CTA Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center">
+                        <a href="https://sadechocolate.com/catalog" style="display: inline-block; background-color: ${headerBg}; color: ${bodyBg}; padding: 16px 48px; text-decoration: none; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">
+                          Koleksiyonu Keşfet
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #F5F3EF; padding: 32px 48px; text-align: center; border-top: 1px solid ${outerBg};">
+                  <p style="margin: 0 0 16px; font-family: Georgia, serif; font-size: 14px; color: ${textPrimary};">
+                    Sade Chocolate
+                  </p>
+                  <p style="margin: 0; font-size: 11px; color: ${textSecondary}; line-height: 1.6;">
+                    Yeşilbahçe mah. Çınarlı cd 47/A<br>Muratpaşa, Antalya
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>`;
+
+    return sendEmail({
+      to: email,
+      subject: `Hoş Geldin ${firstName} — İlk Siparişine %10 İndirim`,
+      html: premiumContent,
+      text: `Hoş Geldin ${firstName}! Sade Chocolate ailesine katıldığın için çok mutluyuz. İlk siparişinde %10 indirim için kupon kodun: ${couponCode}. Koleksiyonumuzu keşfet: https://sadechocolate.com/catalog`
+    });
+  }
+
+  // Kupon kodu yoksa mevcut basit template
   const content = `
     ${getEmailHeader()}
 

@@ -11,9 +11,6 @@ import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
 import { ProductForm } from '../components/admin/ProductForm';
 import { InventoryTab } from '../components/admin/tabs/InventoryTab';
-import { SommelierTab } from '../components/admin/tabs/SommelierTab';
-import { ScenariosTab } from '../components/admin/tabs/ScenariosTab';
-import { ConversationAnalyticsTab } from '../components/admin/tabs/ConversationAnalyticsTab';
 import { BehaviorTrackingTab } from '../components/admin/tabs/BehaviorTrackingTab';
 import { OrderManagementTab } from '../components/admin/tabs/OrderManagementTab';
 import { LoyaltySettingsPanel } from '../components/admin/LoyaltySettingsPanel';
@@ -41,7 +38,7 @@ import { MetaAdsTab } from '../components/admin/tabs/MetaAdsTab';
 import { Building2, Truck } from 'lucide-react';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 
-type TabId = 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
+type TabId = 'inventory' | 'operations' | 'cms' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
 
 type ProductType = 'tablet' | 'box' | 'other';
 
@@ -55,9 +52,6 @@ const menuItems = [
   { id: 'badges', label: 'Rozetler' },
   { id: 'gift-notes', label: 'Hediye Notları' },
   { id: 'email-templates', label: 'Email Şablonları' },
-  { id: 'ai', label: 'AI Sommelier' },
-  { id: 'scenarios', label: 'Senaryolar' },
-  { id: 'analytics', label: 'Konuşma Logları' },
   { id: 'journey', label: 'Yolculuk Takibi' },
   { id: 'meta-ads', label: 'Meta & Reklam' },
   { id: 'taste-quiz', label: 'Damak Tadı' },
@@ -88,17 +82,6 @@ export const Admin = () => {
   const [isNewProductDropdownOpen, setIsNewProductDropdownOpen] = useState(false);
   const newProductDropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // AI config (geçirilen prop olarak)
-  const [aiConfig, setAiConfig] = useState<any>({
-    enabled: true,
-    persona: {
-      tone: 'friendly',
-      greeting: '',
-      expertise: `Sen Sade Chocolate'ın kurumsal hafızası ve sommelier'isin. Ses tonun, Playfair Display fontunun zarafetini ve krem tonlarının sıcaklığını taşımalı. Müşteriye bir 'tüketici' gibi değil, bir 'koleksiyoner' gibi davran.`
-    },
-    questions: [],
-    rules: []
-  });
 
   // Admin Authentication
   useEffect(() => {
@@ -144,13 +127,6 @@ export const Admin = () => {
     return () => unsub();
   }, []);
 
-  // AI config
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'ai'), (d) => {
-      if (d.exists()) setAiConfig(d.data());
-    });
-    return () => unsub();
-  }, []);
 
   // Siparişler (badge sayacı için)
   useEffect(() => {
@@ -172,24 +148,6 @@ export const Admin = () => {
     }
   };
 
-  const validateAIConfig = (config: any) => {
-    const dangerousPatterns = [/ignore previous instructions/i, /system:/i, /role:/i, /<script>/i];
-    const textFields = [config.persona.greeting, config.persona.expertise, ...(config.questions || []).map((q: any) => q.text)].join(' ');
-    for (const pattern of dangerousPatterns) {
-      if (pattern.test(textFields)) throw new Error('Güvenlik riski tespit edildi');
-    }
-    return true;
-  };
-
-  const handleAiSave = async () => {
-    try {
-      validateAIConfig(aiConfig);
-      await setDoc(doc(db, 'settings', 'ai'), aiConfig, { merge: true });
-      toast.success('AI Sommelier güncellendi');
-    } catch (err: any) {
-      toast.error(err.message || 'Kaydedilemedi');
-    }
-  };
 
   // Auth kontrol ekranı
   if (isCheckingAuth) {
@@ -305,10 +263,9 @@ export const Admin = () => {
                 </div>
               )}
 
-              {/* Kaydet (CMS, AI, vb.) */}
-              {(activeTab === 'ai' || activeTab === 'gift-notes' || activeTab === 'taste-quiz' || activeTab === 'loyalty-settings') && (
+              {/* Kaydet butonu */}
+              {(activeTab === 'gift-notes' || activeTab === 'taste-quiz' || activeTab === 'loyalty-settings') && (
                 <button
-                  onClick={activeTab === 'ai' ? handleAiSave : undefined}
                   className="flex items-center gap-1.5 bg-brand-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-green/90 transition-colors"
                 >
                   <Save size={16} />
@@ -337,12 +294,6 @@ export const Admin = () => {
             <CustomersTab />
           ) : activeTab === 'badges' ? (
             <BadgesTab />
-          ) : activeTab === 'ai' ? (
-            <SommelierTab aiConfig={aiConfig} setAiConfig={setAiConfig} />
-          ) : activeTab === 'scenarios' ? (
-            <ScenariosTab />
-          ) : activeTab === 'analytics' ? (
-            <ConversationAnalyticsTab />
           ) : activeTab === 'dashboard' ? (
             <DashboardTab />
           ) : activeTab === 'journey' ? (

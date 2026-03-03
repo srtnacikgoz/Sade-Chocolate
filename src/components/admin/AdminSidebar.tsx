@@ -8,7 +8,6 @@ import {
   Globe,
   Tag,
   Mail,
-  MessageSquare,
   BarChart3,
   TrendingUp,
   Heart,
@@ -29,11 +28,10 @@ import {
   Percent,
   Megaphone
 } from 'lucide-react';
-import { BrandIcon } from '../ui/BrandIcon';
 import { toast } from 'sonner';
 
 // Menu item type
-type TabId = 'dashboard' | 'inventory' | 'operations' | 'cms' | 'ai' | 'scenarios' | 'analytics' | 'journey' | 'segments' | 'cohort' | 'reports' | 'email-automation' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
+type TabId = 'dashboard' | 'inventory' | 'operations' | 'cms' | 'journey' | 'segments' | 'cohort' | 'reports' | 'email-automation' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
 
 type MenuItem = {
   id: TabId;
@@ -63,15 +61,12 @@ const menuItems: MenuItem[] = [
   { id: 'badges', label: 'Rozetler', icon: Tag, group: 'icerik' },
   { id: 'gift-notes', label: 'Hediye Notları', icon: Gift, group: 'icerik' },
   { id: 'email-templates', label: 'Email Şablonları', icon: Mail, group: 'icerik' },
-  { id: 'ai', label: 'AI Sommelier', icon: BrandIcon, group: 'ai' },
-  { id: 'scenarios', label: 'Senaryolar', icon: MessageSquare, group: 'ai' },
-  { id: 'analytics', label: 'Konuşma Logları', icon: BarChart3, group: 'ai' },
   { id: 'journey', label: 'Yolculuk Takibi', icon: TrendingUp, group: 'analitik' },
   { id: 'segments', label: 'Müşteri Segmentleri', icon: Users, group: 'analitik' },
   { id: 'cohort', label: 'Cohort Analizi', icon: BarChart3, group: 'analitik' },
   { id: 'reports', label: 'Raporlar', icon: FileSpreadsheet, group: 'analitik' },
   { id: 'meta-ads', label: 'Meta & Reklam', icon: Megaphone, group: 'analitik' },
-  { id: 'email-automation', label: 'Email Otomasyonu', icon: Mail, group: 'ai' },
+  { id: 'email-automation', label: 'Email Otomasyonu', icon: Mail, group: 'icerik' },
   { id: 'taste-quiz', label: 'Damak Tadı', icon: Heart, group: 'analitik' },
   { id: 'loyalty-settings', label: 'Sadakat Sistemi', icon: Settings, group: 'ayarlar' },
   { id: 'company-info', label: 'Şirket Künyesi', icon: Building2, group: 'ayarlar' },
@@ -86,7 +81,6 @@ const menuItems: MenuItem[] = [
 const menuGroups: Record<string, string> = {
   ana: 'Ana İşlemler',
   icerik: 'İçerik Yönetimi',
-  ai: 'AI & Otomasyon',
   analitik: 'Analitik',
   ayarlar: 'Ayarlar',
 };
@@ -104,7 +98,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     ana: true,
     icerik: true,
-    ai: true,
     analitik: true,
     ayarlar: true,
   });

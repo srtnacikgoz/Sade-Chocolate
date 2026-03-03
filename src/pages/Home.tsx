@@ -23,16 +23,35 @@ export const Home: React.FC = () => {
   const { t, language } = useLanguage();
 
   const [liveContent, setLiveContent] = useState<any>(null);
+  const [contentLoaded, setContentLoaded] = useState(false);
   const [boxConfig, setBoxConfig] = useState<BoxConfig | null>(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const clickCount = useRef(0);
   const clickTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'site_content', 'home'), (doc) => {
-      if (doc.exists()) setLiveContent(doc.data());
-    });
-    return () => unsub();
+    // 5 saniye sonra hala yüklenmediyse skeleton'u kaldır
+    const timeout = setTimeout(() => {
+      setContentLoaded(true);
+    }, 5000);
+
+    const unsub = onSnapshot(
+      doc(db, 'site_content', 'home'),
+      (doc) => {
+        if (doc.exists()) setLiveContent(doc.data());
+        setContentLoaded(true);
+        clearTimeout(timeout);
+      },
+      (error) => {
+        console.error('Site içeriği yüklenemedi:', error);
+        setContentLoaded(true);
+        clearTimeout(timeout);
+      }
+    );
+    return () => {
+      unsub();
+      clearTimeout(timeout);
+    };
   }, []);
 
   // Firestore'dan box_config yapılandırmasını çek
@@ -116,8 +135,8 @@ export const Home: React.FC = () => {
   style={{ paddingTop: 'calc(var(--top-bar-height, 0px) + var(--header-height, 80px) + -20px)' }}
 >
       {/* 🍫 Hero Section - Menüye tam yapışık ve Above the Fold sınırında */}
-      {!heroImageDesktop && !heroImageMobile ? (
-        /* Skeleton Loader - Firebase verisi gelene kadar */
+      {!contentLoaded && !heroImageDesktop && !heroImageMobile ? (
+        /* Skeleton Loader - Firebase verisi gelene kadar (max 5sn) */
         <section
           className="relative w-full overflow-hidden bg-gray-200 dark:bg-gray-800 animate-pulse"
           style={{

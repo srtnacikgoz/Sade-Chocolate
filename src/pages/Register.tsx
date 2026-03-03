@@ -5,10 +5,16 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Check } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, addDoc, collection } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { sendWelcomeEmail } from '../services/emailService';
+
+// Benzersiz kupon kodu üretme
+const generateCouponCode = (): string => {
+  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `HOSGELDIN${random}`;
+};
 import { validateReferralCodeAdvanced, trackReferralUsage } from '../services/referralCodeService';
 
 // Şifre gücü hesaplama yardımcı fonksiyonu
@@ -100,7 +106,23 @@ export const Register: React.FC = () => {
         }
       }
 
-      sendWelcomeEmail(formData.email, formData.firstName).catch(err => {
+      // Benzersiz %10 indirim kuponu oluştur
+      const couponCode = generateCouponCode();
+      await addDoc(collection(db, 'coupons'), {
+        code: couponCode,
+        type: 'percentage',
+        value: 10,
+        email: formData.email,
+        isUsed: false,
+        createdAt: serverTimestamp(),
+        source: 'registration'
+      });
+
+      // Kupon kodunu localStorage'a kaydet (Checkout'ta otomatik uygulanması için)
+      localStorage.setItem('newsletter_coupon', couponCode);
+
+      // Kupon kodunu içeren hoş geldin emaili gönder
+      sendWelcomeEmail(formData.email, formData.firstName, couponCode).catch(err => {
         console.log('Hoş geldin emaili gönderilemedi:', err);
       });
 
@@ -108,7 +130,78 @@ export const Register: React.FC = () => {
       navigate('/home');
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
-        toast.error("Bu e-posta adresi zaten kullanımda. Giriş yapmayı deneyebilirsiniz.");
+        // Auth'da var ama Firestore'da profil olmayabilir - giriş yaptırıp profili oluştur
+        try {
+          const { user } = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+
+          const profileData = {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            role: 'user',
+            referredBy: formData.referralCode || null
+          };
+
+          if (!userDoc.exists()) {
+            // Firestore profili hiç yok, oluştur
+            await setDoc(userRef, {
+              ...profileData,
+              createdAt: new Date().toISOString()
+            });
+
+            // İlk kez profil tamamlanıyor - kupon oluştur ve email gönder
+            const couponCode = generateCouponCode();
+            await addDoc(collection(db, 'coupons'), {
+              code: couponCode,
+              type: 'percentage',
+              value: 10,
+              email: formData.email,
+              isUsed: false,
+              createdAt: serverTimestamp(),
+              source: 'registration'
+            });
+            localStorage.setItem('newsletter_coupon', couponCode);
+
+            sendWelcomeEmail(formData.email, formData.firstName, couponCode).catch(err => {
+              console.log('Hoş geldin emaili gönderilemedi:', err);
+            });
+
+            toast.success("Hesabınız tamamlandı! Hoş geldiniz.");
+          } else if (!userDoc.data()?.firstName) {
+            // Doküman var ama profil bilgileri eksik, tamamla
+            await setDoc(userRef, profileData, { merge: true });
+
+            // Profil tamamlanıyor - kupon oluştur ve email gönder
+            const couponCode = generateCouponCode();
+            await addDoc(collection(db, 'coupons'), {
+              code: couponCode,
+              type: 'percentage',
+              value: 10,
+              email: formData.email,
+              isUsed: false,
+              createdAt: serverTimestamp(),
+              source: 'registration'
+            });
+            localStorage.setItem('newsletter_coupon', couponCode);
+
+            sendWelcomeEmail(formData.email, formData.firstName, couponCode).catch(err => {
+              console.log('Hoş geldin emaili gönderilemedi:', err);
+            });
+
+            toast.success("Hesabınız tamamlandı! Hoş geldiniz.");
+          } else {
+            toast.success("Bu e-posta ile zaten hesabınız var. Giriş yapıldı.");
+          }
+          navigate('/home');
+        } catch (loginError: any) {
+          // Şifre yanlışsa giriş sayfasına yönlendir
+          toast.error("Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin veya şifrenizi sıfırlayın.");
+          navigate('/account');
+        }
+      } else if (error.code === 'auth/weak-password') {
+        toast.error("Şifre çok zayıf. En az 6 karakter kullanın.");
       } else {
         toast.error("Kayıt sırasında bir hata oluştu. Lütfen bilgilerinizi kontrol edin.");
       }

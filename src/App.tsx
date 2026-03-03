@@ -14,7 +14,6 @@ import { Toaster } from 'sonner';
 import { TopBar } from './components/TopBar';
 import { SearchDrawer } from './components/SearchDrawer';
 import { NewsletterPopup } from './components/NewsletterPopup';
-import { AIAssistant } from './components/AIAssistant';
 import { CookieConsent } from './components/CookieConsent';
 import { FloatingFeedback } from './components/FloatingFeedback';
 import { useLoyaltyStore } from './stores/loyaltyStore';
@@ -90,27 +89,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isAiEnabled, setIsAiEnabled] = useState(true); // Varsayılan aktif
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const { t } = useLanguage();
 
-  // Firestore'dan AI Sommelier enabled durumunu dinle (canlı)
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, 'settings', 'ai'),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const config = docSnap.data();
-          setIsAiEnabled(config.enabled !== false); // Varsayılan true
-        }
-      },
-      (error) => {
-        console.error('AI config dinlenemedi:', error);
-        // Hata durumunda varsayılan true bırak
-      }
-    );
-    return () => unsubscribe();
-  }, []);
 
   // Firestore'dan bakım modu durumunu dinle
   useEffect(() => {
@@ -199,9 +180,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </div>
 
       {!isAdmin && !isCheckout && <BottomNav />}
-
-      {/* AI Asistan - Tüm sitede erişilebilir (enabled ise) */}
-      {!isAdmin && !isCheckout && isAiEnabled && <AIAssistant />}
 
       {/* Floating Feedback - Don't show on admin or checkout */}
       {!isAdmin && !isCheckout && <FloatingFeedback />}
