@@ -159,13 +159,15 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               phone: data.phone || firebaseUser.phoneNumber || ''
             } as UserProfile);
           } else {
-            // Firestore belgesi yoksa Firebase Auth'dan oluştur
+            // Firestore belgesi yoksa sadece Auth bilgileriyle UI state ayarla
+            // Profil oluşturma Register.tsx veya loginWithGoogle'da yapılır
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email || '',
               firstName: firebaseUser.displayName?.split(' ')[0] || '',
               lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
-              phone: firebaseUser.phoneNumber || ''
+              phone: firebaseUser.phoneNumber || '',
+              birthDate: ''
             } as any);
           }
           setLoading(false);
