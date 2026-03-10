@@ -275,7 +275,7 @@ export const About: React.FC = () => {
   const heroLabel = aboutData?.[language]?.hero_label || 'Hikayemiz';
   const heroTitle = aboutData?.[language]?.hero_title || 'Hile Yok,\nKalite Var.';
   const heroDescription = aboutData?.[language]?.hero_description || 'Sertan Açıkgöz\'ün butik pastanecilik vizyonuyla 2016\'dan bu yana Antalya\'da şekillenen Sade Patisserie, çikolatanın en saf halini modern bir sanat dalı olarak sunuyor.';
-  const heroImage = aboutData?.[language]?.hero_image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPsg3jC391kW1kEstLZOiXYJ4jKeH3Ert6-SapPNTbe7UBTW72yhpEVQxRGouZVEwRX-i7uX-GpwZ9neF6MrhK2LhPe6QLacGfceRfOdJ_K37BAQLTzLKt_h8sx6qhFiqVyw5uaRjTbWGfD6oCOVh_xQvZflmUXHakFaeSX4YdxsGfUBIP8_OuhOi-G3sU22UrQfU6LFC8NSCm6Mw9eemRL8gBfnlKax26WRn4jZX4-iYvm7G3kRAGdqFhRT98yXL0F2g2l_aL3cs';
+  const heroImage = aboutData?.[language]?.hero_image || '';
   const signature = aboutData?.[language]?.signature || 'Sertan Açıkgöz';
   const signatureFont = aboutData?.[language]?.signature_font || 'handwriting';
   const signatureColor = aboutData?.[language]?.signature_color || 'mocha-900';

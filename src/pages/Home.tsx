@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { COLLECTIONS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../context/ProductContext';
 import { QuickViewModal } from '../components/QuickViewModal';
@@ -95,7 +94,8 @@ export const Home: React.FC = () => {
         .map((id: string) => products.find(p => p.id === id))
         .filter(Boolean);
     }
-    return COLLECTIONS;
+    // Firestore'da premium_collection_ids yoksa, ilk 2 ürünü göster
+    return products.slice(0, 2);
   }, [products, liveContent]);
 
   const featuredProduct = useMemo(() => {

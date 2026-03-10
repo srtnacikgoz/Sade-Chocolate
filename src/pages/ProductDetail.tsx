@@ -420,13 +420,13 @@ export const ProductDetail: React.FC = () => {
   useEffect(() => {
     trackViewItem({
       item_id: product.id,
-      item_name: product.name,
+      item_name: product.title,
       price: product.price,
       item_category: product.category
     });
     trackPixelViewContent({
       id: product.id,
-      name: product.name,
+      name: product.title,
       price: product.price,
       category: product.category
     });
@@ -435,25 +435,23 @@ export const ProductDetail: React.FC = () => {
   return (
     <>
     <SEOHead
-      title={product.name}
-      description={product.description || `${product.name} - Sade Chocolate premium el yapımı çikolata`}
+      title={product.title}
+      description={product.description || `${product.title} - Sade Chocolate premium el yapımı çikolata`}
       path={`/product/${product.id}`}
-      image={product.imageUrl}
+      image={product.image}
       type="product"
       product={{
-        name: product.name,
+        name: product.title,
         price: product.price,
         currency: 'TRY',
         availability: isOut ? 'OutOfStock' : 'InStock',
-        image: product.imageUrl,
-        description: product.description,
-        ratingValue: product.averageRating,
-        reviewCount: product.reviewCount
+        image: product.image,
+        description: product.description
       }}
       breadcrumbs={[
         { name: 'Ana Sayfa', url: '/' },
         { name: 'Katalog', url: '/catalog' },
-        { name: product.name, url: `/product/${product.id}` }
+        { name: product.title, url: `/product/${product.id}` }
       ]}
     />
     <main className="w-full max-w-screen-xl mx-auto pt-40 pb-28 md:pb-24 px-4 sm:px-6 lg:px-12 bg-cream-100 dark:bg-dark-900 min-h-screen">

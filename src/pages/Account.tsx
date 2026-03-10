@@ -206,7 +206,7 @@ export const Account: React.FC = () => {
   // Giriş yapmamış kullanıcılar için login formu
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen w-full flex flex-col items-center justify-center bg-cream-100 dark:bg-dark-900 px-6 py-12">
+      <main className="min-h-screen w-full flex flex-col items-center justify-center bg-cream-100 dark:bg-dark-900 px-6 py-12" style={{ paddingTop: 'calc(var(--top-bar-height, 0px) + var(--header-height, 80px) + 48px)' }}>
         <div className="w-full max-w-[420px] animate-fade-in">
           <div className="bg-white dark:bg-dark-800 rounded-[32px] border border-gray-100 dark:border-gray-700 shadow-sm p-10 space-y-8">
             <div className="text-center space-y-3">
@@ -337,14 +337,29 @@ export const Account: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => navigate('/checkout?guest=true')}
-                      className="w-full flex items-center justify-center gap-3 py-4 text-gray-500 hover:text-brown-900 dark:hover:text-gold transition-colors group"
+                      className="w-full h-14 rounded-full border-2 border-dashed border-gold/40 hover:border-gold bg-cream-50/50 dark:bg-dark-900 hover:bg-cream-100 dark:hover:bg-dark-800 text-brown-800 dark:text-cream-200 font-bold text-[11px] uppercase tracking-[0.3em] transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-3 group"
                     >
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Misafir Olarak Devam Et</span>
-                      <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      <span>Misafir Olarak Devam Et</span>
+                      <ArrowRight size={16} className="text-gold group-hover:translate-x-1 transition-transform" />
                     </button>
-                    <p className="text-[9px] text-gray-400 text-center mt-1">Kayıt olmadan sipariş verebilirsiniz</p>
+                    <p className="text-[9px] text-gray-400 text-center mt-2">Hesap oluşturmadan hızlıca sipariş verin</p>
                   </div>
                 )}
+
+                {/* Sipariş Sorgula - Misafir kullanıcılar için */}
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/siparis-takip')}
+                    className="w-full h-12 rounded-full border border-gray-200 dark:border-gray-700 hover:border-gold/60 bg-white dark:bg-dark-900 hover:bg-cream-50 dark:hover:bg-dark-800 text-gray-500 dark:text-gray-400 hover:text-brown-900 dark:hover:text-gold font-bold text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Sipariş Sorgula
+                  </button>
+                  <p className="text-[9px] text-gray-400 text-center mt-1.5">Misafir olarak verdiğiniz siparişi takip edin</p>
+                </div>
 
                 <div className="text-center pt-4 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">

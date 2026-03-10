@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '../lib/firebase';
 import { Order } from '../types/order';
 import { CheckCircle, Package, Truck, MapPin, CreditCard, ArrowRight, Home, ShoppingBag, Loader } from 'lucide-react';
 import { trackPixelPurchase } from '../services/metaPixelService';
@@ -16,12 +17,21 @@ const OrderConfirmation: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) {
-        setError('Sipariş numarası bulunamadı');
-        setLoading(false);
-        return;
-      }
+    if (!orderId) {
+      setError('Sipariş numarası bulunamadı');
+      setLoading(false);
+      return;
+    }
+
+    let fetched = false;
+
+    // 3D Secure redirect sonrası auth state henüz restore olmamış olabilir
+    // onAuthStateChanged ile auth hazır olmasını bekle, sonra siparişi çek
+    const unsubscribe = onAuthStateChanged(auth, async () => {
+      if (fetched) return;
+      fetched = true;
+      // Auth state hazır, artık listener'a gerek yok
+      unsubscribe();
 
       try {
         const orderDoc = await getDoc(doc(db, 'orders', orderId));
@@ -70,9 +80,9 @@ const OrderConfirmation: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    };
+    });
 
-    fetchOrder();
+    return () => unsubscribe();
   }, [orderId]);
 
   if (loading) {
@@ -97,21 +107,29 @@ const OrderConfirmation: React.FC = () => {
             {error || 'Sipariş bulunamadı'}
           </h1>
           <p className="text-mocha-600 dark:text-mocha-400 mb-6">
-            Sipariş bilgilerine ulaşılamadı. Lütfen hesabınızdan siparişlerinizi kontrol edin.
+            Sipariş bilgilerine ulaşılamadı. E-posta adresiniz ve sipariş numaranız ile sorgulama yapabilirsiniz.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
             <Link
-              to="/"
-              className="flex-1 py-3 px-4 bg-cream-100 dark:bg-dark-700 text-mocha-700 dark:text-mocha-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-dark-600 transition-colors"
+              to="/siparis-takip"
+              className="w-full py-3 px-4 bg-mocha-600 text-white rounded-xl font-medium hover:bg-mocha-700 transition-colors"
             >
-              Ana Sayfa
+              Sipariş Sorgula
             </Link>
-            <Link
-              to="/account"
-              className="flex-1 py-3 px-4 bg-mocha-600 text-white rounded-xl font-medium hover:bg-mocha-700 transition-colors"
-            >
-              Siparişlerim
-            </Link>
+            <div className="flex gap-3">
+              <Link
+                to="/"
+                className="flex-1 py-3 px-4 bg-cream-100 dark:bg-dark-700 text-mocha-700 dark:text-mocha-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-dark-600 transition-colors"
+              >
+                Ana Sayfa
+              </Link>
+              <Link
+                to="/account"
+                className="flex-1 py-3 px-4 bg-cream-100 dark:bg-dark-700 text-mocha-700 dark:text-mocha-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-dark-600 transition-colors"
+              >
+                Hesabım
+              </Link>
+            </div>
           </div>
         </div>
       </div>

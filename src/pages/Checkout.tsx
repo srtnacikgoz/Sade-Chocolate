@@ -694,7 +694,6 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     }
 
     setIsSubmitting(true);
-
     try {
       // Stok kontrolü (retry modunda skip - sipariş zaten var)
       if (!isRetryMode) {
@@ -812,6 +811,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
             ...(isGift && giftMessage && { giftMessage }),
             status: 'pending',
             isGuest: isGuestMode,
+            ...(!isGuestMode && user?.uid && { customerId: user.uid }),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             timeline: [{
@@ -836,10 +836,15 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
             token: string;
             checkoutFormContent: string;
             tokenExpireTime: number;
+            paymentPageUrl: string;
           };
 
-          if (data.success && data.checkoutFormContent) {
-            // İyzico modal'ı aç
+          if (data.success && data.paymentPageUrl) {
+            // İyzico ödeme sayfasına redirect (tüm cihazlarda çalışır)
+            window.location.href = data.paymentPageUrl;
+            return;
+          } else if (data.success && data.checkoutFormContent) {
+            // Fallback: paymentPageUrl yoksa modal aç
             setIyzicoModal({
               isOpen: true,
               token: data.token,
@@ -847,7 +852,8 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
               orderId: firestoreOrderId
             });
             setIsSubmitting(false);
-            return; // Modal açıldı, fonksiyondan çık
+            setPaymentProcessing(false);
+            return;
           } else {
             throw new Error('Ödeme formu alınamadı');
           }
@@ -862,6 +868,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           toast.error('Ödeme başlatılamadı. Lütfen tekrar deneyin.');
           setPaymentProcessing(false);
           setIsSubmitting(false);
+          isOrderInProgress.current = false;
           return;
         }
       }
@@ -2329,7 +2336,14 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
 
                   setErrors({});
                   setCurrentStep(2);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // iOS Safari uyumlu: once aninda yukari scroll, sonra buton gorunsun
+                  window.scrollTo(0, 0);
+                  setTimeout(() => {
+                    const el = document.getElementById('payment-submit-section');
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }, 400);
                 }}
                 loading={isSubmitting}
                 disabled={(isGuestMode ? !isGuestFormValid : !selectedAddressId) || !agreedToTerms || !agreedToPreInfo || !agreedToKvkk}
@@ -2423,15 +2437,17 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           </div>
 
           {/* Ödeme Butonu */}
-          <Button
-            onClick={handleCompleteOrder}
-            loading={isSubmitting || paymentProcessing}
-            disabled={isSubmitting || paymentProcessing}
-            size="lg"
-            className="w-full h-20 shadow-2xl rounded-[30px] text-sm font-black uppercase tracking-[0.3em] bg-brown-900 dark:bg-gold text-white dark:text-black hover:scale-[1.02] active:scale-95 transition-all"
-          >
-            {isSubmitting || paymentProcessing ? 'İŞLEM YAPILIYOR...' : 'SİPARİŞİ TAMAMLA'}
-          </Button>
+          <div id="payment-submit-section">
+            <Button
+              onClick={handleCompleteOrder}
+              loading={isSubmitting || paymentProcessing}
+              disabled={isSubmitting || paymentProcessing}
+              size="lg"
+              className="w-full h-20 shadow-2xl rounded-[30px] text-sm font-black uppercase tracking-[0.3em] bg-brown-900 dark:bg-gold text-white dark:text-black hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              {isSubmitting || paymentProcessing ? 'İŞLEM YAPILIYOR...' : 'SİPARİŞİ TAMAMLA'}
+            </Button>
+          </div>
 
           {/* Güven Unsurları */}
           <div className="mt-4 space-y-3">

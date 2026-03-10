@@ -193,6 +193,9 @@ export const Footer: React.FC<FooterProps> = ({ onLogoClick }) => {
           <Link to="/legal/shipping" className="text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors">
             Teslimat
           </Link>
+          <Link to="/siparis-takip" className="text-gray-400 hover:text-brown-900 dark:hover:text-gold transition-colors">
+            Sipariş Sorgula
+          </Link>
           <button
             onClick={() => {
               // Cookie consent modal'ı yeniden göster

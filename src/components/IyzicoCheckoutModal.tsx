@@ -34,11 +34,14 @@ export const IyzicoCheckoutModal: React.FC<IyzicoCheckoutModalProps> = ({
 
     // Script'leri ayır ve sonra ekle (DOM'a eklenince çalışması için)
     const scripts = tempDiv.querySelectorAll('script');
-    const scriptContents: string[] = [];
+    const inlineScripts: string[] = [];
+    const externalScripts: string[] = [];
 
     scripts.forEach(script => {
-      if (script.textContent) {
-        scriptContents.push(script.textContent);
+      if (script.src) {
+        externalScripts.push(script.src);
+      } else if (script.textContent) {
+        inlineScripts.push(script.textContent);
       }
       script.remove();
     });
@@ -46,11 +49,27 @@ export const IyzicoCheckoutModal: React.FC<IyzicoCheckoutModalProps> = ({
     // Container'ı body'ye ekle
     document.body.appendChild(tempDiv);
 
-    // Script'leri çalıştır
-    scriptContents.forEach(content => {
-      const newScript = document.createElement('script');
-      newScript.textContent = content;
-      document.body.appendChild(newScript);
+    // Önce external script'leri yükle, sonra inline'ları çalıştır
+    const loadExternalScripts = externalScripts.map(src => {
+      return new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => {
+          console.error('İyzico external script yüklenemedi:', src);
+          resolve(); // Hata olsa bile devam et
+        };
+        document.body.appendChild(script);
+      });
+    });
+
+    Promise.all(loadExternalScripts).then(() => {
+      // External script'ler yüklendikten sonra inline script'leri çalıştır
+      inlineScripts.forEach(content => {
+        const newScript = document.createElement('script');
+        newScript.textContent = content;
+        document.body.appendChild(newScript);
+      });
     });
 
     // İyzico form yüklendiğinde loading'i kapat

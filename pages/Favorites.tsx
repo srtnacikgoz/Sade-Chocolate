@@ -55,7 +55,7 @@ export const Favorites: React.FC = () => {
                 price: 750.00,
                 currency: '₺',
                 category: 'gift-box',
-                image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAZczwKf5voGVSZ7Ysr3Mi6zR_p7ZiwwS06oIjdi_NS1FBV5mNJrZydaIQY4p3zdJABhzonyJx3hBP_jsYC_MKAmsWH2XYEjNr-HK-Bd19b3uhvT_zuhO5R6bw4xF7MePdhW6zIYskcHEB2HzG4FA7eMSK9K8Tj4QTlEvFOjWUWHu7NV36TfBrS_t-ubgL7zqH-uRNINJviAJxVMCUz3CWa1ESfajTarCel5KmcrWu6_PygICbM0_knskpk2lBY-7N5ygj-lsHuA38',
+                image: favoriteProducts[0]?.image || products[0]?.image || '',
                 detailedDescription: `${t('custom_box_content')} ${favoriteNames}.`,
                 badge: 'Special',
                 ingredients: 'Custom selection based on user favorites.',

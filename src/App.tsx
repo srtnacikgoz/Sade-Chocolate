@@ -72,6 +72,7 @@ const TastingQuiz = lazyWithRetry(() => import('./pages/TastingQuiz').then(m => 
 const Campaigns = lazyWithRetry(() => import('./pages/Campaigns').then(m => ({ default: m.Campaigns })));
 const Maintenance = lazyWithRetry(() => import('./pages/Maintenance').then(m => ({ default: m.Maintenance })));
 const OrderConfirmation = lazyWithRetry(() => import('./pages/OrderConfirmation'));
+const OrderTracking = lazyWithRetry(() => import('./pages/OrderTracking'));
 const Bonbonlar = lazyWithRetry(() => import('./pages/Bonbonlar'));
 const BonbonDetay = lazyWithRetry(() => import('./pages/BonbonDetay'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
@@ -415,6 +416,7 @@ const App: React.FC = () => {
                     <Route path="/campaigns" element={<Campaigns />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                    <Route path="/siparis-takip" element={<OrderTracking />} />
                     <Route path="/bonbonlar" element={<Bonbonlar />} />
                     <Route path="/bonbonlar/:slug" element={<BonbonDetay />} />
                     <Route path="*" element={<NotFound />} />

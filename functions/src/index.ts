@@ -1390,9 +1390,12 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
                 </div>
                 <!-- CTA Button -->
                 <div style="text-align: center; margin: 40px 0 0;">
-                  <a href="https://sadechocolate.com/account?view=orders" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
-                    Siparişi Takip Et
+                  <a href="https://sadechocolate.com/order-confirmation/${firestoreOrderId}" style="display: inline-block; border: 1px solid ${COLORS.gold}; color: ${COLORS.text}; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">
+                    Siparişi Görüntüle
                   </a>
+                  <p style="margin-top: 16px; font-size: 12px; color: ${COLORS.gray};">
+                    Siparişinizi daha sonra da <a href="https://sadechocolate.com/siparis-takip?email=${encodeURIComponent(customerEmail)}&order=${encodeURIComponent(orderId)}" style="color: ${COLORS.text}; font-weight: 600; text-decoration: underline;">Sipariş Sorgula</a> sayfasından takip edebilirsiniz.
+                  </p>
                 </div>
               </div>
               ${emailFooter}
@@ -1400,7 +1403,7 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
           } else {
             // Payment Failed Email - Yeni Premium Tasarım
             const total = orderData.payment?.total || 0;
-            const retryUrl = `https://sadechocolate.com/checkout?orderId=${orderId}&retry=true`;
+            const retryUrl = `https://sadechocolate.com/checkout?orderId=${firestoreOrderId}&retry=true`;
             const errorMessage = paymentDetails.failureReason || 'Kart bilgilerinizi kontrol ediniz veya farklı bir kart deneyiniz.';
 
             emailSubject = `Ödeme Tamamlanamadı - Sipariş #${orderId}`;
@@ -1469,8 +1472,8 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
         }
       };
 
-      // Email'i arka planda gönder (await yok, hata tolere edilir)
-      sendPaymentEmail().catch(err => functions.logger.error('Email background error:', err));
+      // Email'i gönder (redirect'ten önce kuyruklanmasını garanti et)
+      await sendPaymentEmail().catch(err => functions.logger.error('Email error:', err));
 
       // Redirect (Firestore document ID kullan)
       if (isSuccess) {
@@ -2912,75 +2915,236 @@ export const calculateDailyStats = onSchedule({
 
     const sessions = sessionsSnap.docs.map(d => d.data());
 
-    // Unique visitor sayisi
-    const uniqueVisitors = new Set(sessions.map(s => s.visitorId)).size;
+    // === TEMEL METRIKLER ===
+    const uniqueVisitorIds = new Set(sessions.map(s => s.visitorId));
+    const uniqueVisitors = uniqueVisitorIds.size;
+    const returningUnique = new Set(sessions.filter(s => s.isReturningCustomer).map(s => s.visitorId)).size;
 
-    // Stage sayilari
-    const cartAdditions = sessions.filter(s =>
+    // === CIHAZ DAGILIMI ===
+    const deviceStats: Record<string, number> = {};
+    sessions.forEach(s => {
+      const device = s.device || 'bilinmiyor';
+      deviceStats[device] = (deviceStats[device] || 0) + 1;
+    });
+
+    // === TRAFIK KAYNAKLARI ===
+    const referrerStats: Record<string, number> = {};
+    sessions.forEach(s => {
+      const ref = s.referrer || 'Direct';
+      referrerStats[ref] = (referrerStats[ref] || 0) + 1;
+    });
+    const topReferrers = Object.entries(referrerStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([ref, count]) => `${ref}: ${count}`)
+      .join(' | ');
+
+    // === SATIS HUNISI (tekil kisi bazli) ===
+    const productViewSessions = sessions.filter(s =>
+      ['product', 'cart', 'checkout', 'completed', 'abandoned'].includes(s.currentStage)
+    );
+    const productViewUnique = new Set(productViewSessions.map(s => s.visitorId)).size;
+
+    const cartSessions = sessions.filter(s =>
       ['cart', 'checkout', 'completed', 'abandoned'].includes(s.currentStage)
-    ).length;
+    );
+    const cartAdditions = cartSessions.length;
+    const cartUnique = new Set(cartSessions.map(s => s.visitorId)).size;
 
-    const checkoutStarts = sessions.filter(s =>
+    const checkoutSessions = sessions.filter(s =>
       ['checkout', 'completed'].includes(s.currentStage)
-    ).length;
+    );
+    const checkoutStarts = checkoutSessions.length;
+    const checkoutUnique = new Set(checkoutSessions.map(s => s.visitorId)).size;
 
-    const completedOrders = sessions.filter(s => s.currentStage === 'completed').length;
+    const completedSessions = sessions.filter(s => s.currentStage === 'completed');
+    const completedOrders = completedSessions.length;
+    const completedUnique = new Set(completedSessions.map(s => s.visitorId)).size;
+
     const abandonedCarts = sessions.filter(s => s.currentStage === 'abandoned').length;
 
-    // Ortalama sepet degeri
+    // Funnel yuzdeleri (tekil visitor bazli)
+    const pctProduct = uniqueVisitors > 0 ? Math.round((productViewUnique / uniqueVisitors) * 100) : 0;
+    const pctCart = uniqueVisitors > 0 ? Math.round((cartUnique / uniqueVisitors) * 100) : 0;
+    const pctCheckout = uniqueVisitors > 0 ? Math.round((checkoutUnique / uniqueVisitors) * 100) : 0;
+    const pctCompleted = uniqueVisitors > 0 ? Math.round((completedUnique / uniqueVisitors) * 100) : 0;
+
+    // === SEPET DETAYLARI ===
     const cartsWithValue = sessions.filter(s => (s.cartValue || 0) > 0);
     const avgCartValue = cartsWithValue.length > 0
       ? cartsWithValue.reduce((sum, s) => sum + (s.cartValue || 0), 0) / cartsWithValue.length
       : 0;
+    const maxCartValue = cartsWithValue.length > 0
+      ? Math.max(...cartsWithValue.map(s => s.cartValue || 0))
+      : 0;
+    const totalRevenue = completedSessions.reduce((sum, s) => sum + (s.cartValue || 0), 0);
 
     // Donusum orani
-    const conversionRate = sessions.length > 0
-      ? (completedOrders / sessions.length) * 100
+    const conversionRate = uniqueVisitors > 0
+      ? (completedUnique / uniqueVisitors) * 100
       : 0;
 
-    // Ulke dagilimi
+    // === EN COK SEPETE EKLENEN URUNLER ===
+    const productCartCounts: Record<string, { name: string; count: number }> = {};
+    sessions.forEach(s => {
+      if (s.cartItemsDetail && Array.isArray(s.cartItemsDetail)) {
+        s.cartItemsDetail.forEach((item: any) => {
+          const key = item.productId || item.productName;
+          if (key) {
+            if (!productCartCounts[key]) {
+              productCartCounts[key] = { name: item.productName || key, count: 0 };
+            }
+            productCartCounts[key].count += item.quantity || 1;
+          }
+        });
+      }
+    });
+    const topCartProducts = Object.values(productCartCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+
+    // === EN COK INCELENEN URUNLER ===
+    const productViewCounts: Record<string, { name: string; count: number }> = {};
+    sessions.forEach(s => {
+      if (s.viewedProducts && Array.isArray(s.viewedProducts)) {
+        s.viewedProducts.forEach((vp: any) => {
+          const key = vp.productId || vp.productName;
+          if (key) {
+            if (!productViewCounts[key]) {
+              productViewCounts[key] = { name: vp.productName || key, count: 0 };
+            }
+            productViewCounts[key].count += 1;
+          }
+        });
+      }
+    });
+    const topViewedProducts = Object.values(productViewCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+
+    // === ULKE / SEHIR DAGILIMI ===
     const countryStats: Record<string, number> = {};
+    const cityStats: Record<string, number> = {};
     sessions.forEach(s => {
       const country = s.geo?.country || 'Bilinmiyor';
       countryStats[country] = (countryStats[country] || 0) + 1;
+      const city = s.geo?.city;
+      if (city) {
+        cityStats[city] = (cityStats[city] || 0) + 1;
+      }
     });
 
-    // En cok ziyaretci gelen 3 ulke
     const topCountries = Object.entries(countryStats)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([country, count]) => `${country}: ${count}`)
-      .join(', ');
+      .slice(0, 3);
 
-    // Kaydet
+    // Ulke + sehir formati: "Turkiye: 5 (Istanbul: 3, Antalya: 2)"
+    const locationLines = topCountries.map(([country, count]) => {
+      if (country === 'Bilinmiyor') return `Bilinmiyor: ${count}`;
+      // Bu ulkeye ait sehirler
+      const countrySessions = sessions.filter(s => (s.geo?.country || 'Bilinmiyor') === country);
+      const countryCities: Record<string, number> = {};
+      countrySessions.forEach(s => {
+        const city = s.geo?.city;
+        if (city) countryCities[city] = (countryCities[city] || 0) + 1;
+      });
+      const topCities = Object.entries(countryCities)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([city, c]) => `${city}: ${c}`)
+        .join(', ');
+      return `${country}: ${count}${topCities ? ` (${topCities})` : ''}`;
+    });
+
+    // === YOGUN SAATLER ===
+    const hourStats: Record<number, number> = {};
+    sessions.forEach(s => {
+      if (s.startedAt) {
+        const ts = s.startedAt.toDate ? s.startedAt.toDate() : new Date(s.startedAt);
+        // Istanbul saatine cevir (+3)
+        const utcHour = ts.getUTCHours();
+        const istanbulHour = (utcHour + 3) % 24;
+        hourStats[istanbulHour] = (hourStats[istanbulHour] || 0) + 1;
+      }
+    });
+    const topHours = Object.entries(hourStats)
+      .sort((a, b) => Number(b[1]) - Number(a[1]))
+      .slice(0, 3)
+      .map(([hour, count]) => {
+        const h = Number(hour);
+        const bar = '▓'.repeat(Math.min(count as number, 8));
+        return `${bar} ${h.toString().padStart(2, '0')}:00-${((h + 1) % 24).toString().padStart(2, '0')}:00 (${count})`;
+      });
+
+    // === KAYDET ===
     await db.collection('daily_stats').doc(dateStr).set({
       date: dateStr,
       totalVisitors: sessions.length,
       uniqueVisitors,
+      returningVisitors: returningUnique,
       cartAdditions,
+      cartUnique,
       checkoutStarts,
+      checkoutUnique,
       completedOrders,
+      completedUnique,
       abandonedCarts,
       conversionRate: Math.round(conversionRate * 100) / 100,
       avgCartValue: Math.round(avgCartValue),
+      maxCartValue: Math.round(maxCartValue),
+      totalRevenue: Math.round(totalRevenue),
       countryStats,
+      cityStats,
+      deviceStats,
+      referrerStats,
+      hourStats,
       calculatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // Telegram ozet raporu
+    // === TELEGRAM ZENGIN RAPOR ===
+    const deviceLine = [
+      deviceStats['mobile'] ? `📱 ${deviceStats['mobile']}` : null,
+      deviceStats['desktop'] ? `💻 ${deviceStats['desktop']}` : null,
+      deviceStats['tablet'] ? `📟 ${deviceStats['tablet']}` : null,
+    ].filter(Boolean).join(' | ') || 'Veri yok';
+
+    const topViewedLines = topViewedProducts.length > 0
+      ? topViewedProducts.map((p, i) => `  ${i + 1}. ${p.name} (${p.count}x)`).join('\n')
+      : '  Veri yok';
+
+    const topCartLines = topCartProducts.length > 0
+      ? topCartProducts.map(p => `  • ${p.name} (${p.count}x)`).join('\n')
+      : '';
+
     const message = `
 📊 <b>GUNLUK RAPOR - ${dateStr}</b>
 
-<b>Ziyaretci:</b> ${sessions.length} (${uniqueVisitors} tekil)
-<b>Sepete Ekleme:</b> ${cartAdditions}
-<b>Checkout:</b> ${checkoutStarts}
-<b>Siparis:</b> ${completedOrders}
-<b>Terk:</b> ${abandonedCarts}
+👥 <b>ZIYARETCILER</b>
+Toplam: ${sessions.length} | Tekil: ${uniqueVisitors} | Geri Donen: ${returningUnique}
+${deviceLine}
 
-<b>Donusum:</b> %${conversionRate.toFixed(1)}
-<b>Ort. Sepet:</b> ${Math.round(avgCartValue)} TL
+🔗 <b>TRAFIK</b>
+${topReferrers || 'Veri yok'}
 
-<b>Ulkeler:</b> ${topCountries || 'Veri yok'}
+🛒 <b>SATIS HUNISI</b>
+Ziyaret:      ${uniqueVisitors} tekil kisi
+Urun Incele:  ${productViewUnique} (%${pctProduct})
+Sepet:        ${cartUnique} kisi (%${pctCart})
+Checkout:     ${checkoutUnique} kisi (%${pctCheckout})
+Siparis:      ${completedUnique} (%${pctCompleted})
+Terk:         ${abandonedCarts}
+
+💰 <b>SEPET</b>
+Ort: ${Math.round(avgCartValue)} TL | Max: ${Math.round(maxCartValue)} TL | Ciro: ${Math.round(totalRevenue)} TL${topCartLines ? `\nEn cok eklenen:\n${topCartLines}` : ''}
+
+🔥 <b>EN COK INCELENEN</b>
+${topViewedLines}
+
+📍 <b>LOKASYON</b>
+${locationLines.join('\n') || 'Veri yok'}
+
+⏰ <b>YOGUN SAATLER</b>
+${topHours.length > 0 ? topHours.join('\n') : 'Veri yok'}
     `.trim();
 
     await sendTelegramMessage(message);
@@ -3252,6 +3416,102 @@ export const sitemap = functions.https.onRequest(async (req, res) => {
   } catch (error) {
     functions.logger.error('Sitemap oluşturma hatası:', error);
     res.status(500).send('Sitemap oluşturulamadı');
+  }
+});
+
+// ==========================================
+// SIPARIS TAKIP - Guvenli siparis sorgulama
+// ==========================================
+
+/**
+ * Siparis numarasi + email ile siparis sorgulama.
+ * isGuest filtresi olmadan tum siparisleri arayabilir.
+ * Email dogrulamasi server-side yapilir.
+ */
+export const lookupOrder = functions.https.onCall(async (request: any) => {
+  const { orderNumber, email } = request.data || {};
+
+  functions.logger.info('lookupOrder called:', { orderNumber, email, hasData: !!request.data });
+
+  if (!orderNumber || !email) {
+    functions.logger.warn('lookupOrder: missing params', { orderNumber, email });
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Siparis numarasi ve e-posta adresi gerekli'
+    );
+  }
+
+  // Siparis numarasini normalize et (case-sensitive, sadece SADE- prefix ekle)
+  const trimmed = orderNumber.trim();
+  const normalizedOrderNumber = trimmed.toUpperCase().startsWith('SADE-')
+    ? `SADE-${trimmed.substring(5)}`
+    : `SADE-${trimmed}`;
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  functions.logger.info('lookupOrder query:', { normalizedOrderNumber, normalizedEmail });
+
+  const db = admin.firestore();
+
+  try {
+    const snap = await db.collection('orders')
+      .where('id', '==', normalizedOrderNumber)
+      .limit(1)
+      .get();
+
+    functions.logger.info('lookupOrder result:', { empty: snap.empty, count: snap.size });
+
+    if (snap.empty) {
+      return { found: false };
+    }
+
+    const doc = snap.docs[0];
+    const data = doc.data();
+
+    // Email dogrulamasi (server-side guvenlik)
+    const orderEmail = (data.customer?.email || '').toLowerCase();
+    functions.logger.info('lookupOrder email check:', { orderEmail, normalizedEmail, match: orderEmail === normalizedEmail });
+    if (orderEmail !== normalizedEmail) {
+      return { found: false };
+    }
+
+    // Sadece gerekli alanlari dondur (hassas veri gonderme)
+    return {
+      found: true,
+      order: {
+        firestoreId: doc.id,
+        id: data.id || '',
+        status: data.status || 'pending',
+        customer: {
+          name: data.customer?.name || '',
+        },
+        items: (data.items || []).map((item: any) => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image || null,
+        })),
+        payment: {
+          method: data.payment?.method || '',
+          status: data.payment?.status || '',
+          total: data.payment?.total || 0,
+          subtotal: data.payment?.subtotal || 0,
+          shipping: data.payment?.shipping || 0,
+        },
+        shipping: data.shipping ? {
+          address: data.shipping.address || '',
+          city: data.shipping.city || '',
+          district: data.shipping.district || '',
+          trackingNumber: data.shipping.trackingNumber || null,
+          carrier: data.shipping.carrier || null,
+        } : null,
+        tracking: data.tracking || null,
+        createdAt: data.createdAt || '',
+      }
+    };
+  } catch (error: any) {
+    functions.logger.error('lookupOrder error:', error.message);
+    throw new functions.https.HttpsError('internal', 'Siparis sorgulanirken bir hata olustu');
   }
 });
 

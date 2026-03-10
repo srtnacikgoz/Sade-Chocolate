@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { useCart } from '../context/CartContext';
+import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -24,14 +25,24 @@ interface ChatResponse {
   price?: string;
 }
 
-const IMAGE_MAP: Record<string, string> = {
-  'ruby_tablet': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDC3lWEV-WeRIfV4nzWK9bZ664ajoZ3eoDrtplgj2yNtEqgt7uu24jic9ClBvVsFOl-uBxe--L0jb5gPV5u2OTOc3ACorl0AQ_X5WtS1wX-lozSBj48E4gJgnNkdv_4f3ALQdlEiZTTNVbzRyJ5z6RArRH9SQSQFvwa3ogJn3DvGmCyIYUBfZ79ShH_U-gN27aEEvZDByzZwPGvkCPKXAAh5D74yzZS_KmxOR-DVFhr5peRmZOIX1iTLjU1D2gW_QViRlgqON2qaCc',
-  'gold_tablet': 'https://lh3.googleusercontent.com/aida-public/AB6AXuBjqOhvBngusto_92lMYI2KMz2NI9K7yatgV4HiHOZh1oqb0pkdBpagfgHulKLVbSrMUYws4KtZoLXn6LZWQarXSXc_J4UYz1jWKKHhpZsK6jtBaZVZ8OdmvlFCZhnSSJfLQh_Q-ydYBeBtFgMTTgrSfagxRNEhK7uz6-oNw_Mq2tlCmHCOCiR97SwVA9ntohNUpk1D2fDJnRSEJ718hpgDZeYEiKhHVEfAhCAVYYTiQDGo4k8VqxgBn2u6DQehNwIlMq6CbNl987c',
-  'bitter_tablet': 'https://lh3.googleusercontent.com/aida-public/AB6AXuAJnyCfUriN68tho5hC9VWjKb1kfNt1Kj8FOxRvN3SCkQiPBp0jvU7K3bGdKme7SAAmnGXhTt_pWaI2qOjjoyx0mQBxfMtT3rRjgss7YzIRyIEj6E0sJHGApBsoWHU11-xUZMaKcMOHgT1PPBL-64eQPkjQhJIE3-oDa-m4QYyK-gZZPCquLTIsu5OaFS9DWXAiQezNGwGRzLIywDN8eJ6w3c9X6m2i5n7SZOJDt1zMcF7nyZcDv5wMNSsok42LQ2zSKsHIrjq6vDs',
-  'milk_tablet': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCqwXB7Y_gNcfsgG4MCYzUA6Xz4ZdAfaOVKfW5YPKKAHRIm4H3X159xE92MdqDa0jMpXy5Z2lE-rh0tr763aFEaD5PitL2ACsBIdBH0LMXrjkFbQuoPMKwQ659VVAhqs_zCEgi2mCHLCnXICSBP_Oaq-0NSjlXH2RWB82h-Law3czOU5AbRzU-eWZR78fm3TWZJ1LKxp7uaV-Nsn4WSDeYDCUsT5QmHZUr0Matr2mIQiYR2EmqkxFHnUWa2gSb9MtJxGlPtZr3QSxQ',
-  'mixed_box': 'https://lh3.googleusercontent.com/aida-public/AB6AXuAZczwKf5voGVSZ7Ysr3Mi6zR_p7ZiwwS06oIjdi_NS1FBV5mNJrZydaIQY4p3zdJABhzonyJx3hBP_jsYC_MKAmsWH2XYEjNr-HK-Bd19b3uhvT_zuhO5R6bw4xF7MePdhW6zIYskcHEB2HzG4FA7eMSK9K8Tj4QTlEvFOjWUWHu7NV36TfBrS_t-ubgL7zqH-uRNINJviAJxVMCUz3CWa1ESfajTarCel5KmcrWu6_PygICbM0_knskpk2lBY-7N5ygj-lsHuA38',
-  'velvet': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDC3lWEV-WeRIfV4nzWK9bZ664ajoZ3eoDrtplgj2yNtEqgt7uu24jic9ClBvVsFOl-uBxe--L0jb5gPV5u2OTOc3ACorl0AQ_X5WtS1wX-lozSBj48E4gJgnNkdv_4f3ALQdlEiZTTNVbzRyJ5z6RArRH9SQSQFvwa3ogJn3DvGmCyIYUBfZ79ShH_U-gN27aEEvZDByzZwPGvkCPKXAAh5D74yzZS_KmxOR-DVFhr5peRmZOIX1iTLjU1D2gW_QViRlgqON2qaCc',
-  'truffle_box': 'https://lh3.googleusercontent.com/aida-public/AB6AXuDAP8SQLCG9bzwUDPvoC3mI9tIZufuHAmdwk_8jWe-2WwKpQuxgE-zgtT9BozBEWa0DG7sAOeTL3LKamJUYsJWJjLnowwYNWJlC379NA7qUBdCBNAfJNiWlL9BNcES92n78F5h16LGyRqJW_e8htTmf2Kk7LSKNsw_H8AI_gGCf8N0v--hFqsAdMl3SliSrubmfDPcAej4h8zn1Wx5SIreep1jZgm6p6jvXF5ER022v-2Q0VXvW0K3mvt1kXbcbwNZLY7kKFg1wEQY'
+// Ürün görsellerini Firestore products'tan keyword eşleştirmesiyle çeker
+const buildImageMap = (products: Product[]): Record<string, string> => {
+  const findImage = (keywords: string[]) => {
+    const found = products.find(p =>
+      keywords.some(kw => p.title.toLowerCase().includes(kw))
+    );
+    return found?.image || products[0]?.image || '';
+  };
+
+  return {
+    'ruby_tablet': findImage(['ruby', 'pembe']),
+    'gold_tablet': findImage(['gold', 'altın', 'karamel']),
+    'bitter_tablet': findImage(['bitter', 'dark', '%70']),
+    'milk_tablet': findImage(['sütlü', 'milk', 'fındık']),
+    'mixed_box': findImage(['karışık', 'mixed', 'kutu']),
+    'velvet': findImage(['velvet', 'beyaz', 'white']),
+    'truffle_box': findImage(['truffle', 'trüf']),
+  };
 };
 
 const getSystemInstruction = (language: string) => `You are the "Sade Chocolate Gift Assistant". You act as a smart sales algorithm for a high-end chocolate brand based in Antalya.
@@ -87,7 +98,9 @@ export const GiftAssistant: React.FC<GiftAssistantProps> = ({ isOpen, onClose })
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const { addToCart, setIsCartOpen } = useCart();
+  const { products } = useProducts();
   const { t, language } = useLanguage();
+  const imageMap = useMemo(() => buildImageMap(products), [products]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
@@ -180,7 +193,7 @@ export const GiftAssistant: React.FC<GiftAssistantProps> = ({ isOpen, onClose })
           description: response.reason || 'Sizin için özel olarak seçildi.',
           price: priceNumber || 0,
           currency: '₺',
-          image: IMAGE_MAP[response.image_keyword || 'mixed_box'] || IMAGE_MAP['mixed_box'],
+          image: imageMap[response.image_keyword || 'mixed_box'] || imageMap['mixed_box'] || products[0]?.image || '',
           badge: 'Special',
           category: 'gift-box'
       };

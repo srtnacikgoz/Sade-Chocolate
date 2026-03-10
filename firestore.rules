@@ -21,9 +21,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Siparişler - sadece kendi siparişini okuyabilir, admin hepsini
+    // Siparişler - kendi siparişini okuyabilir, misafir siparişleri herkes (ID ile) okuyabilir, admin hepsini
     match /orders/{orderId} {
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.customerId == request.auth.uid);
+      // get: tek belge okuma (doc ID ile)
+      allow get: if isAdmin()
+                 || (isAuthenticated() && resource.data.customerId == request.auth.uid)
+                 || resource.data.isGuest == true;
+      // list: sorgu ile okuma - misafir siparisleri icin isGuest filtresi zorunlu
+      allow list: if isAdmin()
+                  || (isAuthenticated() && resource.data.customerId == request.auth.uid)
+                  || (resource.data.isGuest == true);
       allow create: if true; // Misafir checkout için
       allow update, delete: if isAdmin();
     }
