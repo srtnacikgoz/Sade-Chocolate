@@ -43,6 +43,8 @@ import { sendDeliveryConfirmationEmail, sendShippingNotificationEmail, sendPayme
 import type { PaymentSupportEmailData } from '../../../services/emailService';
 import { checkSingleShipmentStatus, checkAllShipmentStatus } from '../../../services/shippingService';
 import { useCompanyInfo } from '../../../hooks/useCompanyInfo';
+import { doc, setDoc, collection } from 'firebase/firestore';
+import { db } from '../../../lib/firebase';
 
 // --- EFT COUNTDOWN TIMER ---
 const EftCountdown = ({ deadline, compact = false }: { deadline: string; compact?: boolean }) => {
@@ -2453,12 +2455,30 @@ const OrderDetailModal = ({ order: initialOrder, onClose }: { order: Order; onCl
           quantity: item.quantity || 1
         })) || [];
 
+        // Review token üret ve Firestore'a kaydet
+        const reviewToken = crypto.randomUUID();
+        const reviewRef = doc(collection(db, 'reviews'));
+        setDoc(reviewRef, {
+          id: reviewRef.id,
+          orderId: order.id,
+          customerName: order.customer.name || 'Değerli Müşterimiz',
+          customerEmail: order.customer.email,
+          rating: 0,
+          comment: '',
+          token: reviewToken,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }).catch(err => console.error('Review dokümanı oluşturulamadı:', err));
+
+        const reviewUrl = `https://sadechocolate.com/yorum-yaz?token=${reviewToken}`;
+
         sendDeliveryConfirmationEmail(order.customer.email, {
           customerName: order.customer.name || 'Değerli Müşterimiz',
           orderId: order.id,
           deliveryDate: new Date().toISOString(),
           items,
-          reviewUrl: `https://sadechocolate.com/account?view=orders&order=${order.id}`
+          reviewUrl,
         }).catch(err => console.error('Teslimat emaili gönderilemedi:', err));
       }
     } catch (err: any) {
