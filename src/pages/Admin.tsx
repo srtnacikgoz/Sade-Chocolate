@@ -35,16 +35,18 @@ import { CustomersTab } from '../components/admin/tabs/CustomersTab';
 import { BadgesTab } from '../components/admin/tabs/BadgesTab';
 import { CMSTab } from '../components/admin/tabs/CMSTab';
 import { MetaAdsTab } from '../components/admin/tabs/MetaAdsTab';
+import { ReviewsTab } from '../components/admin/tabs/ReviewsTab';
 import { Building2, Truck } from 'lucide-react';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 
-type TabId = 'inventory' | 'operations' | 'cms' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
+type TabId = 'inventory' | 'operations' | 'reviews' | 'cms' | 'journey' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
 
 type ProductType = 'tablet' | 'box' | 'other';
 
 const menuItems = [
   { id: 'inventory', label: 'Envanter' },
   { id: 'operations', label: 'Sipariş Yönetimi' },
+  { id: 'reviews', label: 'Yorumlar' },
   { id: 'customers', label: 'Müşteriler' },
   { id: 'referrals', label: 'Referanslar' },
   { id: 'coupons', label: 'Kuponlar' },
@@ -334,6 +336,8 @@ export const Admin = () => {
             <AdminManagementTab />
           ) : activeTab === 'meta-ads' ? (
             <MetaAdsTab />
+          ) : activeTab === 'reviews' ? (
+            <ReviewsTab />
           ) : null}
         </div>
       </main>

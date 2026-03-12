@@ -26,12 +26,13 @@ import {
   Shield,
   FileSpreadsheet,
   Percent,
-  Megaphone
+  Megaphone,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Menu item type
-type TabId = 'dashboard' | 'inventory' | 'operations' | 'cms' | 'journey' | 'segments' | 'cohort' | 'reports' | 'email-automation' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
+type TabId = 'dashboard' | 'inventory' | 'operations' | 'reviews' | 'cms' | 'journey' | 'segments' | 'cohort' | 'reports' | 'email-automation' | 'customers' | 'badges' | 'loyalty-settings' | 'taste-quiz' | 'gift-notes' | 'referrals' | 'company-info' | 'box-config' | 'email-templates' | 'typography' | 'shipping' | 'catalog-settings' | 'bonbon-settings' | 'admin-management' | 'coupons' | 'meta-ads';
 
 type MenuItem = {
   id: TabId;
@@ -54,6 +55,7 @@ const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, group: 'ana' },
   { id: 'inventory', label: 'Envanter', icon: Package, group: 'ana' },
   { id: 'operations', label: 'Sipariş Yönetimi', icon: ShoppingCart, group: 'ana' },
+  { id: 'reviews', label: 'Yorumlar', icon: MessageSquare, group: 'ana' },
   { id: 'customers', label: 'Müşteriler', icon: Users, group: 'ana' },
   { id: 'referrals', label: 'Referanslar', icon: Gift, group: 'ana' },
   { id: 'coupons', label: 'Kuponlar', icon: Percent, group: 'ana' },
