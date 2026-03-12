@@ -6,6 +6,7 @@ import { QuickViewModal } from '../components/QuickViewModal';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
 import { AdminLoginModal } from '../components/AdminLoginModal';
 import { Footer } from '../components/Footer';
+import { ReviewCarousel } from '../components/ReviewCarousel';
 import { Product, BoxConfig } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
@@ -430,6 +431,8 @@ export const Home: React.FC = () => {
           </div>
         </section>
       )}
+
+      <ReviewCarousel />
 
       <Footer onLogoClick={handleLogoClick} />
 
