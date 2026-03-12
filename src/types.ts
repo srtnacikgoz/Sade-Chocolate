@@ -516,3 +516,19 @@ export interface WebFontSettings {
   updatedAt?: any;
   updatedBy?: string;
 }
+
+// Değerlendirme (Review) Sistemi
+export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export type Review = {
+  id: string;
+  orderId: string;
+  customerName: string;
+  customerEmail: string;
+  rating: number;
+  comment: string;
+  token: string;
+  status: ReviewStatus;
+  createdAt: any;
+  updatedAt: any;
+};
