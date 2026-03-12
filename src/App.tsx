@@ -75,6 +75,7 @@ const OrderConfirmation = lazyWithRetry(() => import('./pages/OrderConfirmation'
 const OrderTracking = lazyWithRetry(() => import('./pages/OrderTracking'));
 const Bonbonlar = lazyWithRetry(() => import('./pages/Bonbonlar'));
 const BonbonDetay = lazyWithRetry(() => import('./pages/BonbonDetay'));
+const ReviewWrite = lazyWithRetry(() => import('./pages/ReviewWrite').then(m => ({ default: m.ReviewWrite })));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
 
 // Minimal loading component - no spinner
@@ -419,6 +420,7 @@ const App: React.FC = () => {
                     <Route path="/siparis-takip" element={<OrderTracking />} />
                     <Route path="/bonbonlar" element={<Bonbonlar />} />
                     <Route path="/bonbonlar/:slug" element={<BonbonDetay />} />
+                    <Route path="/yorum-yaz" element={<ReviewWrite />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
