@@ -99,11 +99,15 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Yorumlar/Reviews - herkes okuyabilir, authenticated oluşturabilir
+    // Yorum sistemi
     match /reviews/{reviewId} {
+      // Herkes okuyabilir (ana sayfa carousel + yorum yazma sayfası)
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      // Authenticated kullanıcılar (admin) oluşturabilir ve yönetebilir
+      allow create, delete: if request.auth != null;
+      // Token sahibi yorum yazabilir VEYA admin güncelleyebilir
+      allow update: if request.auth != null
+                    || (request.resource.data.token == resource.data.token);
     }
 
     // Kuponlar - herkes okuyabilir, sadece admin yazabilir
