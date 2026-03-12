@@ -42,6 +42,7 @@ import { CreateShipmentModal } from '../CreateShipmentModal';
 import { sendDeliveryConfirmationEmail, sendShippingNotificationEmail, sendPaymentSupportEmail, generatePaymentSupportEmailHtml, checkEmailDeliveryStatus } from '../../../services/emailService';
 import type { PaymentSupportEmailData } from '../../../services/emailService';
 import { checkSingleShipmentStatus, checkAllShipmentStatus } from '../../../services/shippingService';
+import { useCompanyInfo } from '../../../hooks/useCompanyInfo';
 
 // --- EFT COUNTDOWN TIMER ---
 const EftCountdown = ({ deadline, compact = false }: { deadline: string; compact?: boolean }) => {
@@ -145,6 +146,7 @@ const StatusBadge = ({ status }: { status: Order['status'] | string }) => {
 
 // --- EMAIL CONFIRMATION MODAL ---
 const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onClose: () => void; onSend: () => void }) => {
+  const { companyInfo, city } = useCompanyInfo();
   const handleSend = () => {
     onSend();
     onClose();
@@ -187,7 +189,7 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
             {/* Email Header */}
             <div className="bg-gradient-to-r from-brand-mustard to-brand-orange p-6 text-center">
               <h4 className="text-xl font-semibold text-white mb-1">Sade Chocolate</h4>
-              <p className="text-xs text-white/80 uppercase tracking-wider">Handcrafted Excellence</p>
+              <p className="text-xs text-white/80 uppercase tracking-wider">{companyInfo.slogan || 'El Yapımı Artisan Çikolata'}</p>
             </div>
 
             {/* Email Body */}
@@ -319,11 +321,11 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
                 <div className="flex flex-col gap-2 text-xs">
                   <div className="flex items-center gap-2 text-mocha-600">
                     <Mail size={14} className="text-brand-blue" />
-                    <a href="mailto:info@sadechocolate.com" className="hover:text-brand-mustard">info@sadechocolate.com</a>
+                    <a href={`mailto:${companyInfo.generalEmail}`} className="hover:text-brand-mustard">{companyInfo.generalEmail}</a>
                   </div>
                   <div className="flex items-center gap-2 text-mocha-600">
                     <Phone size={14} className="text-brand-green" />
-                    <a href="tel:+902121234567" className="hover:text-brand-mustard">+90 (212) 123 45 67</a>
+                    <a href={`tel:${companyInfo.generalPhone.replace(/\s/g, '')}`} className="hover:text-brand-mustard">{companyInfo.generalPhone}</a>
                   </div>
                 </div>
               </div>
@@ -354,8 +356,8 @@ const EmailConfirmationModal = ({ order, onClose, onSend }: { order: Order; onCl
 
             {/* Email Footer */}
             <div className="bg-cream-50 p-4 text-center border-t border-cream-200">
-              <p className="text-xs text-mocha-400 uppercase tracking-wider mb-1">Artisan • Handcrafted Excellence</p>
-              <p className="text-xs text-mocha-400">© 2025 Sade Chocolate • İstanbul, Türkiye</p>
+              <p className="text-xs text-mocha-400 uppercase tracking-wider mb-1">{companyInfo.slogan || 'El Yapımı Artisan Çikolata'}</p>
+              <p className="text-xs text-mocha-400">© {new Date().getFullYear()} {companyInfo.brandName} • {city}, Türkiye</p>
             </div>
           </div>
         </div>
@@ -610,6 +612,7 @@ const StatusChangeModal = ({ order, onClose, onSave }: { order: Order; onClose: 
     { value: 'Ready for Packing', label: 'Paketlemeye Hazır', color: 'bg-brand-blue/30 text-blue-700 border-brand-blue', icon: Package },
     { value: 'Heat Hold', label: 'Isı Beklemesi', color: 'bg-orange-100 text-orange-700 border-orange-300', icon: Thermometer },
     { value: 'Shipped', label: 'Kargoya Verildi', color: 'bg-brand-green/30 text-green-700 border-brand-green', icon: Truck },
+    { value: 'Delivered', label: 'Teslim Edildi', color: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: CheckCircle },
     { value: 'Cancelled', label: 'İptal Edildi', color: 'bg-red-50 text-red-600 border-red-200', icon: XCircle },
     { value: 'Refunded', label: 'İade Edildi', color: 'bg-purple-50 text-purple-600 border-purple-200', icon: RefreshCw }
   ];
@@ -1626,6 +1629,7 @@ const TrackingNumberModal = ({ order, onClose, onSave }: { order: Order; onClose
 
 // --- PRINT ORDER MODAL ---
 const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void }) => {
+  const { companyInfo, city } = useCompanyInfo();
   const handlePrint = () => {
     // Create print content HTML
     const printContent = document.getElementById('print-document-content')?.innerHTML;
@@ -1794,7 +1798,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
                 <h1>Sade Chocolate</h1>
-                <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '2px' }}>Handcrafted Excellence</p>
+                <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '2px' }}>{companyInfo.slogan || 'El Yapımı Artisan Çikolata'}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '11px', color: '#999', marginBottom: '4px' }}>Sipariş Belgesi</p>
@@ -1844,7 +1848,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
               <tbody>
                 {(order.items || []).map((item) => (
                   <tr key={item.id}>
-                    <td><span className="inline-flex items-center gap-2">{item.image ? <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" /> : '🍫'} {item.name}</span></td>
+                    <td>{item.name}</td>
                     <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                     <td style={{ textAlign: 'right' }}>₺{item.price.toLocaleString('tr-TR')}</td>
                     <td style={{ textAlign: 'right' }}><strong>₺{(item.price * item.quantity).toLocaleString('tr-TR')}</strong></td>
@@ -1914,8 +1918,8 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
           {/* Footer */}
           <div className="footer">
-            <div style={{ marginBottom: '4px' }}>Sade Chocolate • Handcrafted Excellence</div>
-            <div>İstanbul, Türkiye • info@sadechocolate.com • +90 (212) 123 45 67</div>
+            <div style={{ marginBottom: '4px' }}>{companyInfo.brandName} • {companyInfo.slogan || 'El Yapımı Artisan Çikolata'}</div>
+            <div>{city}, Türkiye • {companyInfo.generalEmail} • {companyInfo.generalPhone}</div>
           </div>
         </div>
 
@@ -1926,7 +1930,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-semibold text-mocha-900 mb-1">Sade Chocolate</h1>
-                <p className="text-xs text-mocha-500 uppercase tracking-wider">Handcrafted Excellence</p>
+                <p className="text-xs text-mocha-500 uppercase tracking-wider">{companyInfo.slogan || 'El Yapımı Artisan Çikolata'}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-mocha-500 mb-1">Sipariş Belgesi</p>
@@ -1997,10 +2001,7 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
                 {(order.items || []).map((item) => (
                   <tr key={item.id} className="border-b border-cream-200">
                     <td className="py-3 text-sm text-mocha-900">
-                      <div className="flex items-center gap-2">
-                        {item.image ? <img src={item.image} alt={item.name} className="w-6 h-6 rounded object-cover" /> : <span className="text-lg">🍫</span>}
-                        <span>{item.name}</span>
-                      </div>
+                      <span>{item.name}</span>
                     </td>
                     <td className="py-3 text-sm text-center text-mocha-600">{item.quantity}</td>
                     <td className="py-3 text-sm text-right text-mocha-600">₺{item.price.toLocaleString('tr-TR')}</td>
@@ -2080,8 +2081,8 @@ const PrintOrderModal = ({ order, onClose }: { order: Order; onClose: () => void
 
           {/* Footer */}
           <div className="pt-6 border-t-2 border-cream-200 text-center">
-            <p className="text-xs text-mocha-500 mb-1">Sade Chocolate • Handcrafted Excellence</p>
-            <p className="text-xs text-mocha-400">İstanbul, Türkiye • info@sadechocolate.com • +90 (212) 123 45 67</p>
+            <p className="text-xs text-mocha-500 mb-1">{companyInfo.brandName} • {companyInfo.slogan || 'El Yapımı Artisan Çikolata'}</p>
+            <p className="text-xs text-mocha-400">{city}, Türkiye • {companyInfo.generalEmail} • {companyInfo.generalPhone}</p>
           </div>
         </div>
 
