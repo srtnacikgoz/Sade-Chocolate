@@ -111,6 +111,15 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, trackOrderId }) 
                 <div className="text-right">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">TOPLAM TUTAR</p>
                   <p className="font-display text-2xl font-bold text-brown-900 dark:text-gold italic">₺{order.total.toLocaleString('tr-TR')}</p>
+                  {order.status === 'delivered' && (
+                    <a
+                      href="/yorum-yaz"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-block mt-2 text-xs text-brand-mustard font-medium hover:underline"
+                    >
+                      Yorum Yaz →
+                    </a>
+                  )}
                 </div>
                 <div className="w-12 h-12 bg-brown-900 dark:bg-gold text-white dark:text-black flex items-center justify-center rounded-2xl group-hover:translate-x-2 transition-all shadow-lg">
                   <ChevronRight size={20} />
@@ -303,6 +312,16 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, trackOrderId }) 
                   </div>
                 </div>
               </div>
+
+              {/* Teslim edilen siparişler için yorum yazma butonu */}
+              {selectedOrder.status === 'delivered' && (
+                <a
+                  href="/yorum-yaz"
+                  className="flex items-center justify-center gap-2 w-full py-4 bg-brand-mustard/10 text-brand-mustard text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-brand-mustard/20 transition-all"
+                >
+                  Yorum Yaz →
+                </a>
+              )}
             </div>
             )}
           </div>
