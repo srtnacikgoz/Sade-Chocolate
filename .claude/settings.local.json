@@ -123,18 +123,8 @@
       "Bash(done)",
       "WebFetch(domain:www.eticaret.gov.tr)",
       "Bash(npx firebase deploy:*)",
-      "WebFetch(domain:webcache.googleusercontent.com)",
-      "Read(//c/dev/**)",
-      "Bash(netstat:*)",
-      "Bash(tasklist:*)",
-      "Bash(taskkill:*)",
-      "Bash($LOCALAPPDATA/Android/Sdk/platform-tools/adb devices:*)",
-      "Bash(npx firebase-tools:*)",
-      "WebFetch(domain:docs.testsprite.com)",
-      "Bash(claude mcp:*)",
-      "mcp__TestSprite__testsprite_check_account_info",
-      "mcp__TestSprite__testsprite_bootstrap",
-      "Bash(python3 -c \"\nimport subprocess\nresult = subprocess.run\\(['python3', '-m', 'pip', 'list'], capture_output=True, text=True\\)\nprint\\('pymupdf' in result.stdout.lower\\(\\) or 'fitz' in result.stdout.lower\\(\\)\\)\n\" 2>/dev/null; python -c \"import fitz; print\\('PyMuPDF available'\\)\" 2>/dev/null || echo \"PyMuPDF not available\")"
+      "Bash(npx firebase-tools firestore:get coupons --project sade-chocolate-prod 2>&1 | head -5 || echo \"CLI ile direkt okuma yapılamıyor, Firestore Console'dan kontrol et\")",
+      "Bash(which gcloud 2>/dev/null && gcloud auth application-default print-access-token 2>/dev/null | head -1 || echo \"gcloud yok veya auth yok\")"
     ]
   },
   "hooks": {
