@@ -91,9 +91,9 @@ export const initializeCheckoutForm = async (orderData: OrderData): Promise<any>
     surname: lastName,
     gsmNumber: phone || '+905000000000',
     email: customerEmail,
-    identityNumber: (orderData as any).invoice?.tckn || '11111111111',
+    identityNumber: (orderData as any).invoice?.tckn || '00000000000',
     registrationAddress: orderData.shipping.address || 'Adres belirtilmedi',
-    ip: (orderData as any).clientIp || '127.0.0.1',
+    ip: (orderData as any).clientIp || '85.95.238.1',
     city: orderData.shipping.city || 'Istanbul',
     country: 'Turkey',
     zipCode: '34000' // Varsayılan
@@ -147,7 +147,9 @@ export const initializeCheckoutForm = async (orderData: OrderData): Promise<any>
     currency: Iyzipay.CURRENCY.TRY,
     basketId: orderData.id,
     paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-    callbackUrl: `${process.env.FUNCTIONS_EMULATOR ? 'http://localhost:5001/sade-chocolate-prod/europe-west3/handleIyzicoCallback' : 'https://sadechocolate.com/api/iyzico/callback'}`,
+    callbackUrl: process.env.FUNCTIONS_EMULATOR
+      ? 'http://localhost:5001/sade-chocolate-prod/europe-west3/handleIyzicoCallback'
+      : `${process.env.SITE_URL || 'https://sadechocolate.com'}/api/iyzico/callback`,
     enabledInstallments: [1], // Sadece tek çekim
     buyer,
     shippingAddress,

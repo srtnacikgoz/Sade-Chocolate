@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, Package, ChevronRight, ChevronLeft } from 'lucide-react';
+import { SEOHead } from '../components/SEOHead';
 import { useBonbonDetail, BonbonCard } from '../features/bonbon';
 import { CuratedBoxModal } from '../components/CuratedBoxModal';
 
@@ -113,6 +114,26 @@ export default function BonbonDetay() {
 
   return (
     <div className="min-h-screen bg-cream-50 pt-40">
+      <SEOHead
+        title={`${title} - Sade Chocolate Bonbon`}
+        description={description || `${title} - El yapımı artisan bonbon`}
+        path={`/bonbonlar/${slug}`}
+        image={image}
+        type="product"
+        product={{
+          name: title,
+          price: bonbon.price,
+          currency: 'TRY',
+          availability: 'InStock',
+          image: image,
+          description: description
+        }}
+        breadcrumbs={[
+          { name: 'Ana Sayfa', url: '/' },
+          { name: 'Bonbon Koleksiyonu', url: '/bonbonlar' },
+          { name: title, url: `/bonbonlar/${slug}` }
+        ]}
+      />
       <div className="container mx-auto px-4 py-8">
         {/* 🔙 Geri Dön Butonu */}
         <div className="max-w-4xl mx-auto mb-6">

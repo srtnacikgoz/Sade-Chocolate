@@ -2,6 +2,7 @@
 // Bonbon koleksiyonu liste sayfası
 
 import { useBonbons, BonbonGrid, BonbonFilters } from '../features/bonbon';
+import { SEOHead } from '../components/SEOHead';
 
 export default function Bonbonlar() {
   const {
@@ -18,6 +19,15 @@ export default function Bonbonlar() {
 
   return (
     <div className="min-h-screen bg-cream-50">
+      <SEOHead
+        title="Bonbon Koleksiyonu - El Yapımı Artisan Bonbonlar"
+        description="Sade Chocolate bonbon koleksiyonu. Her biri ustaca hazırlanmış, benzersiz tat kombinasyonlarıyla özenle üretilen bonbonlarımızı keşfedin."
+        path="/bonbonlar"
+        breadcrumbs={[
+          { name: 'Ana Sayfa', url: '/' },
+          { name: 'Bonbon Koleksiyonu', url: '/bonbonlar' }
+        ]}
+      />
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-mocha-900 to-mocha-800 text-white pt-32 pb-16 md:pt-40 md:pb-20">
         <div className="container mx-auto px-4">

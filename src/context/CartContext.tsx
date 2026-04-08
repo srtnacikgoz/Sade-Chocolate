@@ -34,6 +34,8 @@ interface CartContextType {
   setGiftMessage: (message: string) => void;
   hideInvoice: boolean;
   setHideInvoice: (hide: boolean) => void;
+  hasGiftBag: boolean;
+  setHasGiftBag: (hasGiftBag: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);

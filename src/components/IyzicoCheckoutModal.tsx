@@ -30,7 +30,12 @@ export const IyzicoCheckoutModal: React.FC<IyzicoCheckoutModalProps> = ({
     // Checkout form content'i body'ye inject et (İyzico kendi modal'ını oluşturacak)
     const tempDiv = document.createElement('div');
     tempDiv.id = 'iyzico-checkout-container';
-    tempDiv.innerHTML = checkoutFormContent;
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(checkoutFormContent, 'text/html');
+    // İyzico'dan gelen content'i güvenli şekilde aktar
+    Array.from(parsed.body.childNodes).forEach(node => {
+      tempDiv.appendChild(document.importNode(node, true));
+    });
 
     // Script'leri ayır ve sonra ekle (DOM'a eklenince çalışması için)
     const scripts = tempDiv.querySelectorAll('script');

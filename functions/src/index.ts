@@ -1038,9 +1038,10 @@ export const initializeIyzicoPayment = functions.https.onCall(async (request: an
       }
 
       // Client IP'yi al (request context'ten)
-      const clientIp = (request as any).rawRequest?.ip
-        || (request as any).rawRequest?.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
-        || '127.0.0.1';
+      const clientIp = (request as any).rawRequest?.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
+        || (request as any).rawRequest?.headers?.['cf-connecting-ip']
+        || (request as any).rawRequest?.ip
+        || '85.95.238.1';
       orderData.clientIp = clientIp;
 
       // İyzico Checkout Form başlat
@@ -1195,9 +1196,9 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
 
         // Timeline ekle
         updateData.timeline = admin.firestore.FieldValue.arrayUnion({
-          action: 'Ödeme alındı',
-          time: new Date().toISOString(),
-          note: `${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
+          status: 'paid',
+          time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+          note: `Ödeme alındı - ${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
         });
       } else {
         // Failed payment - sipariş durumunu da cancelled yap
@@ -1205,8 +1206,8 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
         updateData['payment.retryCount'] = admin.firestore.FieldValue.increment(1);
         updateData['payment.lastRetryAt'] = admin.firestore.FieldValue.serverTimestamp();
         updateData.timeline = admin.firestore.FieldValue.arrayUnion({
-          action: 'Ödeme başarısız',
-          time: new Date().toISOString(),
+          status: 'payment_failed',
+          time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
           note: paymentDetails.failureReason || 'Ödeme reddedildi'
         });
       }

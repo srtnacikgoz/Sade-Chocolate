@@ -145,7 +145,21 @@ export const ProductDetail: React.FC = () => {
   // 🔙 Kutudan gelindiyse geri dönüş bilgisi
   const fromBox = (location.state as any)?.fromBox as { id: string; title: string } | undefined;
 
-  const product = useMemo(() => products.find(p => p.id === id), [id, products]);
+  const product = useMemo(() => {
+    // Önce document ID ile ara (normal akış)
+    const byId = products.find(p => p.id === id);
+    if (byId) return byId;
+
+    // Bulunamazsa slug benzeri eşleştirme dene (dış linkler için)
+    if (id) {
+      const normalized = id.toLowerCase().replace(/-/g, ' ');
+      return products.find(p =>
+        p.title?.toLowerCase().replace(/-/g, ' ').includes(normalized) ||
+        p.title?.toLowerCase().replace(/\s+/g, '-') === id.toLowerCase()
+      );
+    }
+    return undefined;
+  }, [id, products]);
 
   // Urun detay sayfasi goruntuleme takibi
   useEffect(() => {

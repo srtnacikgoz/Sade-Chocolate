@@ -842,7 +842,7 @@ exports.sendCustomPasswordResetEmail = functions.https.onCall(async (request) =>
  * @returns {Object} {token, checkoutFormContent, tokenExpireTime}
  */
 exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const { orderId } = request.data;
     // Validation
     if (!orderId) {
@@ -865,9 +865,10 @@ exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
             throw new functions.https.HttpsError('failed-precondition', 'Bu sipariş kart ödemesi için oluşturulmamış');
         }
         // Client IP'yi al (request context'ten)
-        const clientIp = ((_c = request.rawRequest) === null || _c === void 0 ? void 0 : _c.ip)
-            || ((_g = (_f = (_e = (_d = request.rawRequest) === null || _d === void 0 ? void 0 : _d.headers) === null || _e === void 0 ? void 0 : _e['x-forwarded-for']) === null || _f === void 0 ? void 0 : _f.split(',')[0]) === null || _g === void 0 ? void 0 : _g.trim())
-            || '127.0.0.1';
+        const clientIp = ((_f = (_e = (_d = (_c = request.rawRequest) === null || _c === void 0 ? void 0 : _c.headers) === null || _d === void 0 ? void 0 : _d['x-forwarded-for']) === null || _e === void 0 ? void 0 : _e.split(',')[0]) === null || _f === void 0 ? void 0 : _f.trim())
+            || ((_h = (_g = request.rawRequest) === null || _g === void 0 ? void 0 : _g.headers) === null || _h === void 0 ? void 0 : _h['cf-connecting-ip'])
+            || ((_j = request.rawRequest) === null || _j === void 0 ? void 0 : _j.ip)
+            || '85.95.238.1';
         orderData.clientIp = clientIp;
         // İyzico Checkout Form başlat
         const result = await iyzicoService.initializeCheckoutForm(orderData);
@@ -994,9 +995,9 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
             updateData.paymentConfirmedAt = admin.firestore.FieldValue.serverTimestamp();
             // Timeline ekle
             updateData.timeline = admin.firestore.FieldValue.arrayUnion({
-                action: 'Ödeme alındı',
-                time: new Date().toISOString(),
-                note: `${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
+                status: 'paid',
+                time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+                note: `Ödeme alındı - ${paymentDetails.cardAssociation} **** ${paymentDetails.lastFourDigits}`
             });
         }
         else {
@@ -1005,8 +1006,8 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
             updateData['payment.retryCount'] = admin.firestore.FieldValue.increment(1);
             updateData['payment.lastRetryAt'] = admin.firestore.FieldValue.serverTimestamp();
             updateData.timeline = admin.firestore.FieldValue.arrayUnion({
-                action: 'Ödeme başarısız',
-                time: new Date().toISOString(),
+                status: 'payment_failed',
+                time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
                 note: paymentDetails.failureReason || 'Ödeme reddedildi'
             });
         }

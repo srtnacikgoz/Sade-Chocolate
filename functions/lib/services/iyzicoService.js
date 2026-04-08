@@ -84,9 +84,9 @@ const initializeCheckoutForm = async (orderData) => {
         surname: lastName,
         gsmNumber: phone || '+905000000000',
         email: customerEmail,
-        identityNumber: ((_b = orderData.invoice) === null || _b === void 0 ? void 0 : _b.tckn) || '11111111111',
+        identityNumber: ((_b = orderData.invoice) === null || _b === void 0 ? void 0 : _b.tckn) || '00000000000',
         registrationAddress: orderData.shipping.address || 'Adres belirtilmedi',
-        ip: orderData.clientIp || '127.0.0.1',
+        ip: orderData.clientIp || '85.95.238.1',
         city: orderData.shipping.city || 'Istanbul',
         country: 'Turkey',
         zipCode: '34000' // Varsayılan
@@ -135,7 +135,9 @@ const initializeCheckoutForm = async (orderData) => {
         currency: Iyzipay.CURRENCY.TRY,
         basketId: orderData.id,
         paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-        callbackUrl: `${process.env.FUNCTIONS_EMULATOR ? 'http://localhost:5001/sade-chocolate-prod/europe-west3/handleIyzicoCallback' : 'https://sadechocolate.com/api/iyzico/callback'}`,
+        callbackUrl: process.env.FUNCTIONS_EMULATOR
+            ? 'http://localhost:5001/sade-chocolate-prod/europe-west3/handleIyzicoCallback'
+            : `${process.env.SITE_URL || 'https://sadechocolate.com'}/api/iyzico/callback`,
         enabledInstallments: [1], // Sadece tek çekim
         buyer,
         shippingAddress,

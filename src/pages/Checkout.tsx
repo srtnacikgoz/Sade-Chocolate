@@ -332,7 +332,9 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
   const bankTransferDiscount = bankTransferSettings?.isEnabled && paymentMethod === 'eft'
     ? (cartTotal * (bankTransferSettings?.discountPercent || 2) / 100)
     : 0;
-  const finalTotal = grandTotal - bankTransferDiscount - couponDiscount;
+  const totalDiscounts = bankTransferDiscount + couponDiscount;
+  const maxDiscount = Math.min(totalDiscounts, grandTotal - 1); // Minimum 1₺ kalmalı
+  const finalTotal = grandTotal - maxDiscount;
 
   // Shipping alerts state
   const [shippingAlerts, setShippingAlerts] = useState<{
@@ -684,6 +686,28 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
     if (!agreedToPreInfo) newErrors.preInfo = language === 'tr' ? "Lütfen Ön Bilgilendirme Formu'nu onaylayın." : "Please agree to the Pre-Information Form.";
     if (!agreedToKvkk) newErrors.kvkk = language === 'tr' ? "Lütfen KVKK Aydınlatma Metni'ni onaylayın." : "Please agree to the Data Protection Notice.";
 
+    // Fatura bilgileri validasyonu (profil seçilmemişse)
+    const hasInvoiceProfile = user?.invoiceProfiles?.find((p: any) => p.id === selectedInvoiceProfileId);
+    if (!hasInvoiceProfile) {
+      if (invoiceType === 'corporate') {
+        if (!firmaUnvani.trim()) newErrors.firmaUnvani = 'Firma ünvanı zorunludur.';
+        if (!vergiDairesi.trim()) newErrors.vergiDairesi = 'Vergi dairesi zorunludur.';
+        if (!vergiNo.trim() || vergiNo.length !== 10) newErrors.vergiNo = 'Geçerli bir vergi numarası girin (10 hane).';
+      } else {
+        // Bireysel fatura — TCKN opsiyonel ama girilmişse 11 hane olmalı
+        if (tcKimlikNo && tcKimlikNo.length !== 11) {
+          newErrors.tcKimlikNo = 'TC Kimlik No 11 haneli olmalıdır.';
+        }
+      }
+
+      // Fatura adresi kontrolü (teslimat adresi ile aynı değilse)
+      if (!isSameAsDelivery) {
+        if (!faturaAdresi.trim()) newErrors.faturaAdresi = 'Fatura adresi zorunludur.';
+        if (!faturaCity) newErrors.faturaCity = 'Fatura şehri seçiniz.';
+        if (!faturaDistrict) newErrors.faturaDistrict = 'Fatura ilçesi seçiniz.';
+      }
+    }
+
     // Card payment artık İyzico iframe'de yapılıyor, frontend validation kaldırıldı
 
     if (Object.keys(newErrors).length > 0) {
@@ -695,7 +719,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
 
     setIsSubmitting(true);
     try {
-      // Stok kontrolü (retry modunda skip - sipariş zaten var)
+      // Stok kontrolü ve düşümü (retry modunda skip - sipariş zaten var)
       if (!isRetryMode) {
         for (const item of items) {
           const productDoc = await getDoc(doc(db, 'products', item.id));
@@ -708,6 +732,14 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
               return;
             }
           }
+        }
+
+        // Stok kontrolü başarılı, stokları düş
+        for (const item of items) {
+          const productRef = doc(db, 'products', item.id);
+          await updateDoc(productRef, {
+            stock: increment(-item.quantity)
+          });
         }
       }
 
@@ -859,7 +891,18 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           }
         } catch (iyzicoError: any) {
           console.error('İyzico payment error:', iyzicoError);
-          // Siparişi sil veya iptal et
+
+          // Stokları geri ekle (sipariş oluşturulurken düşülmüştü)
+          if (!isRetryMode) {
+            for (const item of items) {
+              const productRef = doc(db, 'products', item.id);
+              await updateDoc(productRef, {
+                stock: increment(item.quantity)
+              });
+            }
+          }
+
+          // Siparişi iptal et
           await updateDoc(doc(db, 'orders', firestoreOrderId), {
             status: 'cancelled',
             'payment.status': 'failed',
@@ -2091,39 +2134,48 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
           <div className="bg-gray-50 dark:bg-dark-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 grid md:grid-cols-2 gap-6 mt-4">
             {invoiceType === 'corporate' ? (
               <>
-                <Input
-                  label="FİRMA UNVANI"
-                  placeholder="LTD. ŞTİ."
-                  className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
-                  value={firmaUnvani}
-                  onChange={(e) => setFirmaUnvani(e.target.value)}
-                  autoComplete="off"
-                  name="invoice_company"
-                />
+                <div>
+                  <Input
+                    label="FİRMA UNVANI"
+                    placeholder="LTD. ŞTİ."
+                    className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
+                    value={firmaUnvani}
+                    onChange={(e) => setFirmaUnvani(e.target.value)}
+                    autoComplete="off"
+                    name="invoice_company"
+                  />
+                  {errors.firmaUnvani && <p className="text-red-500 text-xs mt-1">{errors.firmaUnvani}</p>}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="VERGİ DAİRESİ"
-                    className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
-                    value={vergiDairesi}
-                    onChange={(e) => setVergiDairesi(e.target.value)}
-                    autoComplete="off"
-                    name="invoice_taxoffice"
-                  />
-                  <Input
-                    label="VERGİ NO"
-                    placeholder="0000000000"
-                    className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={10}
-                    value={vergiNo}
-                    onChange={(e) => {
-                      const onlyNumbers = e.target.value.replace(/\D/g, '');
-                      setVergiNo(onlyNumbers.substring(0, 10));
-                    }}
-                    autoComplete="off"
-                    name="invoice_taxno"
-                  />
+                  <div>
+                    <Input
+                      label="VERGİ DAİRESİ"
+                      className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
+                      value={vergiDairesi}
+                      onChange={(e) => setVergiDairesi(e.target.value)}
+                      autoComplete="off"
+                      name="invoice_taxoffice"
+                    />
+                    {errors.vergiDairesi && <p className="text-red-500 text-xs mt-1">{errors.vergiDairesi}</p>}
+                  </div>
+                  <div>
+                    <Input
+                      label="VERGİ NO"
+                      placeholder="0000000000"
+                      className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={10}
+                      value={vergiNo}
+                      onChange={(e) => {
+                        const onlyNumbers = e.target.value.replace(/\D/g, '');
+                        setVergiNo(onlyNumbers.substring(0, 10));
+                      }}
+                      autoComplete="off"
+                      name="invoice_taxno"
+                    />
+                    {errors.vergiNo && <p className="text-red-500 text-xs mt-1">{errors.vergiNo}</p>}
+                  </div>
                 </div>
               </>
             ) : (
@@ -2146,21 +2198,24 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                   autoComplete="off"
                   name="invoice_lastname"
                 />
-                <Input
-                  label="TC KİMLİK NO"
-                  placeholder="11111111111"
-                  className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={11}
-                  value={tcKimlikNo}
-                  onChange={(e) => {
-                    const onlyNumbers = e.target.value.replace(/\D/g, '');
-                    setTcKimlikNo(onlyNumbers.substring(0, 11));
-                  }}
-                  autoComplete="off"
-                  name="invoice_tckn"
-                />
+                <div>
+                  <Input
+                    label="TC KİMLİK NO"
+                    placeholder="11111111111"
+                    className="h-16 rounded-md bg-white dark:bg-dark-800 border border-gray-400 dark:border-gray-500 placeholder-gray-500 focus:border-brown-600 dark:focus:border-gold focus:ring-1 focus:ring-brown-200 dark:focus:ring-gold/30 transition-all"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={11}
+                    value={tcKimlikNo}
+                    onChange={(e) => {
+                      const onlyNumbers = e.target.value.replace(/\D/g, '');
+                      setTcKimlikNo(onlyNumbers.substring(0, 11));
+                    }}
+                    autoComplete="off"
+                    name="invoice_tckn"
+                  />
+                  {errors.tcKimlikNo && <p className="text-red-500 text-xs mt-1">{errors.tcKimlikNo}</p>}
+                </div>
               </>
             )}
             {!isSameAsDelivery && (
@@ -2182,6 +2237,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                       <option key={city} value={city}>{city}</option>
                     ))}
                   </select>
+                  {errors.faturaCity && <p className="text-red-500 text-xs mt-1">{errors.faturaCity}</p>}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">İLÇE</label>
@@ -2198,6 +2254,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                       <option key={district} value={district}>{district}</option>
                     ))}
                   </select>
+                  {errors.faturaDistrict && <p className="text-red-500 text-xs mt-1">{errors.faturaDistrict}</p>}
                 </div>
                 <div className="md:col-span-2 space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">FATURA ADRESİ</label>
@@ -2207,6 +2264,7 @@ const grandTotal = cartTotal + shippingCost + giftBagPrice;
                     value={faturaAdresi}
                     onChange={(e) => setFaturaAdresi(e.target.value)}
                   />
+                  {errors.faturaAdresi && <p className="text-red-500 text-xs mt-1">{errors.faturaAdresi}</p>}
                 </div>
               </>
             )}
