@@ -50,10 +50,16 @@ export const Account: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
-  // Kullanıcı giriş yaptıysa ve redirect parametresi varsa yönlendir
+  // Kullanıcı giriş yaptıysa ve redirect parametresi varsa yönlendir (whitelist ile)
   useEffect(() => {
     if (!loading && isLoggedIn && redirectTo) {
-      navigate(`/${redirectTo}`, { replace: true });
+      const allowedRedirects = ['checkout', 'catalog', 'favorites', 'account', 'bonbonlar'];
+      const cleanRedirect = redirectTo.replace(/^\/+/, '').split('/')[0].split('?')[0];
+      if (allowedRedirects.includes(cleanRedirect)) {
+        navigate(`/${redirectTo}`, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [loading, isLoggedIn, redirectTo, navigate]);
 

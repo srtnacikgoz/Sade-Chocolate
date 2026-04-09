@@ -159,14 +159,15 @@ const [couponDiscount, setCouponDiscount] = useState(0); // Kupon indirimi
     try {
       const draft = {
         isGuestMode,
-        guestData,
+        guestData: {
+          ...guestData,
+          phone: '' // Telefon numarasını saklama
+        },
         invoiceType,
         isSameAsDelivery,
-        tcKimlikNo,
-        vergiNo,
+        // TCKN ve vergi no gibi hassas veriler localStorage'da saklanmaz
         firmaUnvani,
         vergiDairesi,
-        faturaAdresi,
         faturaFirstName,
         faturaLastName,
         faturaCity,
@@ -181,7 +182,7 @@ const [couponDiscount, setCouponDiscount] = useState(0); // Kupon indirimi
     }
   }, [
     isGuestMode, guestData, invoiceType, isSameAsDelivery,
-    tcKimlikNo, vergiNo, firmaUnvani, vergiDairesi, faturaAdresi,
+    firmaUnvani, vergiDairesi,
     faturaFirstName, faturaLastName, faturaCity, faturaDistrict, faturaTitle, currentStep
   ]);
 
@@ -225,8 +226,7 @@ const [couponDiscount, setCouponDiscount] = useState(0); // Kupon indirimi
       if (draft.guestData) setGuestData(draft.guestData);
       if (draft.invoiceType) setInvoiceType(draft.invoiceType);
       if (draft.isSameAsDelivery !== undefined) setIsSameAsDelivery(draft.isSameAsDelivery);
-      if (draft.tcKimlikNo) setTcKimlikNo(draft.tcKimlikNo);
-      if (draft.vergiNo) setVergiNo(draft.vergiNo);
+      // TCKN ve vergi no artık localStorage'da saklanmıyor (güvenlik)
       if (draft.firmaUnvani) setFirmaUnvani(draft.firmaUnvani);
       if (draft.vergiDairesi) setVergiDairesi(draft.vergiDairesi);
       if (draft.faturaAdresi) setFaturaAdresi(draft.faturaAdresi);

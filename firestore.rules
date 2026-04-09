@@ -31,7 +31,11 @@ service cloud.firestore {
       allow list: if isAdmin()
                   || (isAuthenticated() && resource.data.customerId == request.auth.uid)
                   || (resource.data.isGuest == true);
-      allow create: if true; // Misafir checkout için
+      // Misafir checkout için - zorunlu alanlar kontrolü
+      allow create: if request.resource.data.keys().hasAll(['customer', 'items', 'payment', 'status'])
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() > 0
+                    && request.resource.data.items.size() <= 50;
       allow update, delete: if isAdmin();
     }
 
@@ -75,27 +79,30 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Email kuyruğu - sadece authenticated kullanıcılar oluşturabilir
+    // Email kuyruğu - sadece admin veya backend (Cloud Functions admin SDK ile bypass eder)
     match /mail/{mailId} {
-      allow create: if true; // Cloud Functions da yazıyor
+      allow create: if isAdmin();
       allow read, update, delete: if isAdmin();
     }
 
-    // Visitor sessions - herkes oluşturabilir ve kendi session'ını okuyabilir (tracking)
+    // Visitor sessions - oluşturma ve güncelleme için boyut sınırı
     match /sessions/{sessionId} {
-      allow create, update, read: if true;
+      allow create: if request.resource.data.keys().size() <= 20;
+      allow update: if request.resource.data.keys().size() <= 20;
+      allow read: if true;
       allow delete: if isAdmin();
     }
 
-    // Visitors - herkes oluşturabilir (tracking), sadece admin okuyabilir
+    // Visitors - oluşturma ve güncelleme için boyut sınırı
     match /visitors/{visitorId} {
-      allow create, update: if true;
+      allow create: if request.resource.data.keys().size() <= 20;
+      allow update: if request.resource.data.keys().size() <= 20;
       allow read, delete: if isAdmin();
     }
 
-    // Konuşma logları - herkes oluşturabilir, sadece admin okuyabilir
+    // Konuşma logları - boyut sınırı ile
     match /conversation_logs/{logId} {
-      allow create: if true;
+      allow create: if request.resource.data.keys().size() <= 15;
       allow read, update, delete: if isAdmin();
     }
 
@@ -105,8 +112,8 @@ service cloud.firestore {
       allow read: if true;
       // Authenticated kullanıcılar (admin) oluşturabilir ve yönetebilir
       allow create, delete: if request.auth != null;
-      // Token sahibi yorum yazabilir VEYA admin güncelleyebilir
-      allow update: if request.auth != null
+      // Admin güncelleyebilir VEYA token sahibi (misafir) yorum yazabilir
+      allow update: if isAdmin()
                     || (request.resource.data.token == resource.data.token);
     }
 
@@ -116,9 +123,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Newsletter abonelikleri
+    // Newsletter abonelikleri - email alanı zorunlu, boyut sınırlı
     match /newsletter/{subscriberId} {
-      allow create: if true;
+      allow create: if request.resource.data.keys().hasAll(['email'])
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() > 5
+                    && request.resource.data.email.size() < 100
+                    && request.resource.data.keys().size() <= 10;
       allow read, update, delete: if isAdmin();
     }
 

@@ -390,6 +390,11 @@ export const calculateShipping = functions.https.onCall(async (request) => {
  * @returns {Object} Takip numarası ve barkod bilgileri
  */
 export const createShipment = functions.https.onCall(async (request) => {
+  // Admin yetki kontrolü
+  if (!request.auth?.token?.admin) {
+    throw new functions.https.HttpsError('permission-denied', 'Bu işlem için admin yetkisi gerekli');
+  }
+
   const {
     orderId,
     customerName,
@@ -656,19 +661,11 @@ function getDistrictCode(districtName: string, cityCode?: number): number {
  * Health Check - API bağlantısını test eder
  */
 export const healthCheck = functions.https.onRequest(async (req, res) => {
-  try {
-    const config = getMNGConfig();
-    res.json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      configured: !!config.clientId
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message
-    });
-  }
+  // Sadece basit status dön, config bilgisi ifşa etme
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // ==========================================
@@ -1173,6 +1170,36 @@ export const handleIyzicoCallback = functions.https.onRequest(async (req: any, r
 
       // Payment başarılı mı?
       const isSuccess = paymentResult.status === 'success' && paymentResult.paymentStatus === 'SUCCESS';
+
+      // Ödeme tutarı doğrulama - siparişteki toplam ile İyzico'dan gelen tutar eşleşmeli
+      if (isSuccess) {
+        const expectedTotal = parseFloat(String(orderData.payment?.total || '0')).toFixed(2);
+        const paidTotal = parseFloat(String(paymentDetails.paidPrice || '0')).toFixed(2);
+        if (expectedTotal !== paidTotal) {
+          functions.logger.error('İyzico callback: TUTAR UYUŞMAZLIĞI!', {
+            orderId,
+            expectedTotal,
+            paidTotal,
+            difference: (parseFloat(expectedTotal) - parseFloat(paidTotal)).toFixed(2)
+          });
+          // Siparişi fraud olarak işaretle, ödemeyi kabul etme
+          await orderDoc.ref.update({
+            status: 'fraud_review',
+            'payment.status': 'amount_mismatch',
+            'payment.expectedTotal': expectedTotal,
+            'payment.paidTotal': paidTotal,
+            'payment.iyzicoPaymentId': paymentDetails.iyzicoPaymentId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            timeline: admin.firestore.FieldValue.arrayUnion({
+              status: 'fraud_review',
+              time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+              note: `Tutar uyuşmazlığı: Beklenen ₺${expectedTotal}, Ödenen ₺${paidTotal}`
+            })
+          });
+          res.redirect(`https://sadechocolate.com/?payment=failed&orderId=${firestoreOrderId}&error=${encodeURIComponent('Ödeme tutarı doğrulanamadı')}`);
+          return;
+        }
+      }
 
       // Firestore update
       const updateData: any = {
@@ -2320,6 +2347,11 @@ import * as geliverService from './services/geliverService';
  * MNG yerine Geliver API kullanır - 10+ kargo firması desteği
  */
 export const createGeliverShipment = functions.https.onCall(async (request) => {
+  // Admin yetki kontrolü
+  if (!request.auth?.token?.admin) {
+    throw new functions.https.HttpsError('permission-denied', 'Bu işlem için admin yetkisi gerekli');
+  }
+
   const {
     orderId,
     customerName,
@@ -2427,6 +2459,11 @@ export const getGeliverOffers = functions.https.onCall(async (request) => {
  * Geliver Teklif Kabul Et
  */
 export const acceptGeliverOffer = functions.https.onCall(async (request) => {
+  // Admin yetki kontrolü
+  if (!request.auth?.token?.admin) {
+    throw new functions.https.HttpsError('permission-denied', 'Bu işlem için admin yetkisi gerekli');
+  }
+
   const { shipmentId, offerId } = request.data;
 
   if (!shipmentId || !offerId) {

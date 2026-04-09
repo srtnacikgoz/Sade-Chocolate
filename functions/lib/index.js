@@ -338,7 +338,11 @@ exports.calculateShipping = functions.https.onCall(async (request) => {
  * @returns {Object} Takip numarası ve barkod bilgileri
  */
 exports.createShipment = functions.https.onCall(async (request) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
+    // Admin yetki kontrolü
+    if (!((_b = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.admin)) {
+        throw new functions.https.HttpsError('permission-denied', 'Bu işlem için admin yetkisi gerekli');
+    }
     const { orderId, customerName, customerPhone, customerEmail, shippingAddress, shippingCity, shippingDistrict, weight = 1, // kg
     desi = 2, contentDescription = 'Çikolata Ürünleri', coldPackage = false } = request.data;
     // DEBUG: Gelen verileri logla
@@ -454,7 +458,7 @@ exports.createShipment = functions.https.onCall(async (request) => {
     catch (error) {
         functions.logger.error('MNG Shipment creation failed:', error);
         // Hata detaylarını çıkar
-        const errorDetail = ((_a = error.details) === null || _a === void 0 ? void 0 : _a.message) || ((_b = error.details) === null || _b === void 0 ? void 0 : _b.detail) || ((_c = error.details) === null || _c === void 0 ? void 0 : _c.moreInformation) || error.message || 'Bilinmeyen hata';
+        const errorDetail = ((_c = error.details) === null || _c === void 0 ? void 0 : _c.message) || ((_d = error.details) === null || _d === void 0 ? void 0 : _d.detail) || ((_e = error.details) === null || _e === void 0 ? void 0 : _e.moreInformation) || error.message || 'Bilinmeyen hata';
         // Manuel mod yok - hata fırlat
         throw new functions.https.HttpsError('internal', `MNG Kargo hatası: ${errorDetail}`, error.details);
     }
@@ -560,20 +564,11 @@ function getDistrictCode(districtName, cityCode) {
  * Health Check - API bağlantısını test eder
  */
 exports.healthCheck = functions.https.onRequest(async (req, res) => {
-    try {
-        const config = getMNGConfig();
-        res.json({
-            status: 'healthy',
-            timestamp: new Date().toISOString(),
-            configured: !!config.clientId
-        });
-    }
-    catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: error.message
-        });
-    }
+    // Sadece basit status dön, config bilgisi ifşa etme
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+    });
 });
 // ==========================================
 // CBS INFO API - Şehir/İlçe Bilgileri
@@ -907,7 +902,7 @@ exports.initializeIyzicoPayment = functions.https.onCall(async (request) => {
  * @param {Response} res - HTTP response
  */
 exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     // CORS headers
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
@@ -975,6 +970,35 @@ exports.handleIyzicoCallback = functions.https.onRequest(async (req, res) => {
         const paymentDetails = iyzicoService.extractPaymentDetails(paymentResult);
         // Payment başarılı mı?
         const isSuccess = paymentResult.status === 'success' && paymentResult.paymentStatus === 'SUCCESS';
+        // Ödeme tutarı doğrulama - siparişteki toplam ile İyzico'dan gelen tutar eşleşmeli
+        if (isSuccess) {
+            const expectedTotal = parseFloat(String(((_d = orderData.payment) === null || _d === void 0 ? void 0 : _d.total) || '0')).toFixed(2);
+            const paidTotal = parseFloat(String(paymentDetails.paidPrice || '0')).toFixed(2);
+            if (expectedTotal !== paidTotal) {
+                functions.logger.error('İyzico callback: TUTAR UYUŞMAZLIĞI!', {
+                    orderId,
+                    expectedTotal,
+                    paidTotal,
+                    difference: (parseFloat(expectedTotal) - parseFloat(paidTotal)).toFixed(2)
+                });
+                // Siparişi fraud olarak işaretle, ödemeyi kabul etme
+                await orderDoc.ref.update({
+                    status: 'fraud_review',
+                    'payment.status': 'amount_mismatch',
+                    'payment.expectedTotal': expectedTotal,
+                    'payment.paidTotal': paidTotal,
+                    'payment.iyzicoPaymentId': paymentDetails.iyzicoPaymentId,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    timeline: admin.firestore.FieldValue.arrayUnion({
+                        status: 'fraud_review',
+                        time: new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }),
+                        note: `Tutar uyuşmazlığı: Beklenen ₺${expectedTotal}, Ödenen ₺${paidTotal}`
+                    })
+                });
+                res.redirect(`https://sadechocolate.com/?payment=failed&orderId=${firestoreOrderId}&error=${encodeURIComponent('Ödeme tutarı doğrulanamadı')}`);
+                return;
+            }
+        }
         // Firestore update
         const updateData = {
             'payment.status': isSuccess ? 'paid' : 'failed',
@@ -1942,6 +1966,11 @@ const geliverService = __importStar(require("./services/geliverService"));
  * MNG yerine Geliver API kullanır - 10+ kargo firması desteği
  */
 exports.createGeliverShipment = functions.https.onCall(async (request) => {
+    var _a, _b;
+    // Admin yetki kontrolü
+    if (!((_b = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.admin)) {
+        throw new functions.https.HttpsError('permission-denied', 'Bu işlem için admin yetkisi gerekli');
+    }
     const { orderId, customerName, customerPhone, customerEmail, shippingAddress, shippingCity, shippingDistrict, weight = 1, desi = 2, contentDescription = 'Çikolata Ürünleri', autoAccept = true // Otomatik en ucuz teklifi kabul et
      } = request.data;
     // Validation
@@ -2013,6 +2042,11 @@ exports.getGeliverOffers = functions.https.onCall(async (request) => {
  * Geliver Teklif Kabul Et
  */
 exports.acceptGeliverOffer = functions.https.onCall(async (request) => {
+    var _a, _b;
+    // Admin yetki kontrolü
+    if (!((_b = (_a = request.auth) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.admin)) {
+        throw new functions.https.HttpsError('permission-denied', 'Bu işlem için admin yetkisi gerekli');
+    }
     const { shipmentId, offerId } = request.data;
     if (!shipmentId || !offerId) {
         throw new functions.https.HttpsError('invalid-argument', 'shipmentId ve offerId gerekli');
