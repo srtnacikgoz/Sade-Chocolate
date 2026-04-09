@@ -1034,6 +1034,103 @@ export const initializeIyzicoPayment = functions.https.onCall(async (request: an
         );
       }
 
+      // ============ SERVER-SIDE FİYAT DOĞRULAMA ============
+      // Ürün fiyatlarını Firestore'dan tekrar oku ve toplamı yeniden hesapla
+      // Client-side manipülasyonu engeller
+      const db2 = admin.firestore();
+      let serverSubtotal = 0;
+      const orderItems = orderData.items || [];
+
+      for (const item of orderItems) {
+        const productId = item.productId || item.id;
+        if (!productId) {
+          throw new functions.https.HttpsError('invalid-argument', 'Ürün ID eksik');
+        }
+        const productDoc = await db2.collection('products').doc(productId).get();
+        if (!productDoc.exists) {
+          throw new functions.https.HttpsError('not-found', `Ürün bulunamadı: ${productId}`);
+        }
+        const productData = productDoc.data()!;
+        const realPrice = productData.price;
+        if (typeof realPrice !== 'number' || realPrice <= 0) {
+          throw new functions.https.HttpsError('failed-precondition', `Geçersiz ürün fiyatı: ${productId}`);
+        }
+        // Client'ın gönderdiği fiyat ile gerçek fiyatı karşılaştır
+        if (Math.abs(item.price - realPrice) > 0.01) {
+          functions.logger.error('FİYAT MANİPÜLASYONU TESPİT EDİLDİ!', {
+            orderId,
+            productId,
+            clientPrice: item.price,
+            realPrice,
+            customerEmail: orderData.customer?.email
+          });
+          // Siparişi fraud olarak işaretle
+          await orderDoc.ref.update({
+            status: 'fraud_review',
+            'payment.status': 'price_mismatch',
+            'payment.fraudDetails': {
+              type: 'price_manipulation',
+              productId,
+              clientPrice: item.price,
+              realPrice,
+              detectedAt: admin.firestore.FieldValue.serverTimestamp()
+            },
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          throw new functions.https.HttpsError('permission-denied', 'Sipariş doğrulanamadı');
+        }
+        serverSubtotal += realPrice * (item.quantity || 1);
+      }
+
+      // Kargo ayarlarını oku
+      const shippingDoc = await db2.collection('settings').doc('shipping').get();
+      const shippingSettings = shippingDoc.exists ? shippingDoc.data()! : {};
+      const freeShippingLimit = shippingSettings.freeShippingLimit ?? 1500;
+      const defaultShippingCost = shippingSettings.defaultShippingCost ?? 95;
+      const serverShipping = serverSubtotal >= freeShippingLimit ? 0 : defaultShippingCost;
+
+      // Gift bag fiyatı
+      const serverGiftBag = orderData.hasGiftBag && shippingSettings.giftBag?.enabled
+        ? (shippingSettings.giftBag?.price || 0) : 0;
+
+      // Server-side toplam hesapla (indirimler hariç — indirim client'tan gelir ama toplam kontrol edilir)
+      const serverGrandTotal = serverSubtotal + serverShipping + serverGiftBag;
+
+      // Client'ın gönderdiği toplam ile server hesabını karşılaştır (indirimler dahil tolerans)
+      const clientTotal = orderData.payment?.total || 0;
+      // Client toplam, server grand total'dan büyük olamaz (indirimle küçük olabilir ama büyük olamaz)
+      if (clientTotal > serverGrandTotal + 0.02) {
+        functions.logger.error('TOPLAM TUTAR UYUŞMAZLIĞI', {
+          orderId, clientTotal, serverGrandTotal, serverSubtotal, serverShipping
+        });
+        throw new functions.https.HttpsError('permission-denied', 'Sipariş tutarı doğrulanamadı');
+      }
+      // Client toplam çok düşükse (indirimler hesaba katılsa bile minimum %50'sinden az olamaz)
+      if (clientTotal < serverGrandTotal * 0.5 - 0.02) {
+        functions.logger.error('AŞIRI DÜŞÜK TUTAR - OLASI MANİPÜLASYON', {
+          orderId, clientTotal, serverGrandTotal, minimumAllowed: serverGrandTotal * 0.5
+        });
+        await orderDoc.ref.update({
+          status: 'fraud_review',
+          'payment.status': 'total_too_low',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        throw new functions.https.HttpsError('permission-denied', 'Sipariş tutarı doğrulanamadı');
+      }
+
+      // Doğrulanmış fiyat ile sipariş güncelle
+      await orderDoc.ref.update({
+        'payment.serverVerifiedTotal': serverGrandTotal,
+        'payment.serverSubtotal': serverSubtotal,
+        'payment.serverShipping': serverShipping,
+        'payment.priceVerifiedAt': admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // İyzico'ya gönderilecek tutarı server hesabıyla override et
+      orderData.payment.total = clientTotal; // Client indirimi dahil tutarı kullan (kontrol edildi)
+
+      // ============ FİYAT DOĞRULAMA SONU ============
+
       // Client IP'yi al (request context'ten)
       const clientIp = (request as any).rawRequest?.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
         || (request as any).rawRequest?.headers?.['cf-connecting-ip']
@@ -2000,6 +2097,82 @@ export const onNewOrder = onDocumentCreated('orders/{orderId}', async (event) =>
     functions.logger.error('Order data is undefined');
     return;
   }
+
+  // ============ SERVER-SIDE FİYAT DOĞRULAMA (TÜM SİPARİŞLER) ============
+  try {
+    const db = admin.firestore();
+    let serverSubtotal = 0;
+    const orderItems = order.items || [];
+
+    for (const item of orderItems) {
+      const productId = item.productId || item.id;
+      if (!productId) continue;
+      const productDoc = await db.collection('products').doc(productId).get();
+      if (!productDoc.exists) {
+        functions.logger.warn('onNewOrder: Ürün bulunamadı', { productId, orderId });
+        continue;
+      }
+      const realPrice = productDoc.data()!.price;
+      if (typeof realPrice === 'number' && realPrice > 0) {
+        // Fiyat uyuşmazlığı kontrolü
+        if (Math.abs((item.price || 0) - realPrice) > 0.01) {
+          functions.logger.error('onNewOrder: FİYAT MANİPÜLASYONU!', {
+            orderId, productId, clientPrice: item.price, realPrice
+          });
+          await snapshot.ref.update({
+            status: 'fraud_review',
+            'payment.status': 'price_mismatch',
+            'payment.fraudDetails': {
+              type: 'price_manipulation',
+              productId,
+              clientPrice: item.price,
+              realPrice,
+              detectedAt: admin.firestore.FieldValue.serverTimestamp()
+            },
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          return; // Bildirim gönderme
+        }
+        serverSubtotal += realPrice * (item.quantity || 1);
+      }
+    }
+
+    // Kargo ayarlarını oku
+    const shippingDoc = await db.collection('settings').doc('shipping').get();
+    const shippingSettings = shippingDoc.exists ? shippingDoc.data()! : {};
+    const freeShippingLimit = shippingSettings.freeShippingLimit ?? 1500;
+    const defaultShippingCost = shippingSettings.defaultShippingCost ?? 95;
+    const serverShipping = serverSubtotal >= freeShippingLimit ? 0 : defaultShippingCost;
+    const serverGiftBag = order.hasGiftBag && shippingSettings.giftBag?.enabled
+      ? (shippingSettings.giftBag?.price || 0) : 0;
+    const serverGrandTotal = serverSubtotal + serverShipping + serverGiftBag;
+    const clientTotal = order.payment?.total || 0;
+
+    // Toplam çok düşükse fraud_review
+    if (clientTotal < serverGrandTotal * 0.5 - 0.02 && serverGrandTotal > 0) {
+      functions.logger.error('onNewOrder: AŞIRI DÜŞÜK TUTAR', {
+        orderId, clientTotal, serverGrandTotal
+      });
+      await snapshot.ref.update({
+        status: 'fraud_review',
+        'payment.status': 'total_too_low',
+        'payment.serverVerifiedTotal': serverGrandTotal,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return; // Bildirim gönderme
+    }
+
+    // Doğrulama bilgisini siparişe yaz
+    await snapshot.ref.update({
+      'payment.serverVerifiedTotal': serverGrandTotal,
+      'payment.serverSubtotal': serverSubtotal,
+      'payment.priceVerifiedAt': admin.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (verifyError) {
+    functions.logger.error('onNewOrder: Fiyat doğrulama hatası', { orderId, error: verifyError });
+    // Doğrulama başarısız olsa bile siparişi engelleme, sadece logla
+  }
+  // ============ FİYAT DOĞRULAMA SONU ============
 
   // Kredi karti odemelerinde bildirim gonderme
   // Odeme onaylaninca iyzicoCallback icinden gonderilecek
