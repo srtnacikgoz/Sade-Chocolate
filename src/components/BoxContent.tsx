@@ -11,16 +11,18 @@ export const BoxContent: React.FC<BoxContentProps> = ({ items }) => {
     <section className="mt-32 py-24 bg-[#FDFDFD] dark:bg-dark-900 overflow-hidden border-y border-gray-50 dark:border-gray-800">
       <div className="max-w-screen-xl mx-auto px-4">
         <div className="mb-20 text-center">
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
             className="text-gold text-[10px] font-bold uppercase tracking-[0.5em] mb-4 block"
           >
             Koleksiyonun DNA'sı
           </motion.span>
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             className="font-display text-4xl lg:text-6xl italic text-gray-900 dark:text-white"
           >
             Kutu İçeriği

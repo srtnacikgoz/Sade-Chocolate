@@ -43,9 +43,18 @@ export const Legal: React.FC = () => {
   const renderContent = () => {
     const getContent = (contentKey: string) => {
       const raw = legalData?.[language]?.[contentKey] || 'İçerik yükleniyor...';
-      // Danışman notlarını filtrele (yanlışlıkla CMS'e girilmişse)
-      if (typeof raw === 'string' && /^(Sertan\s+Bey|Merhaba\s+Sertan|\[DANIŞMAN|\[NOT:|\[TODO:)/i.test(raw.trim())) {
-        return 'İçerik güncelleniyor...';
+      if (typeof raw !== 'string') return raw;
+      // Danışman notlarını filtrele — not bölümünü atla, arkasındaki gerçek içeriği göster
+      const trimmed = raw.trim();
+      if (/^(Sertan\s+Bey|Merhaba\s+Sertan|\[DANIŞMAN|\[NOT:|\[TODO:)/i.test(trimmed)) {
+        // Çift satır sonu sonrasında gerçek içerik olabilir
+        const parts = trimmed.split(/\n\n+/);
+        // İlk 1-2 paragraf danışman notu olabilir, gerisini göster
+        const filtered = parts.filter(p => !/^(Sertan\s+Bey|Merhaba|Saygılar|Not:|İyi çalışmalar|\[)/i.test(p.trim()));
+        if (filtered.length > 0 && filtered.join('\n\n').trim().length > 50) {
+          return filtered.join('\n\n').trim();
+        }
+        return 'Bu sayfa şu anda güncellenmektedir. Lütfen daha sonra tekrar kontrol ediniz. Sorularınız için info@sadechocolate.com adresinden bize ulaşabilirsiniz.';
       }
       return raw;
     };
