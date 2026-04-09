@@ -152,11 +152,26 @@ export const ProductDetail: React.FC = () => {
 
     // Bulunamazsa slug benzeri eşleştirme dene (dış linkler için)
     if (id) {
-      const normalized = id.toLowerCase().replace(/-/g, ' ');
-      return products.find(p =>
-        p.title?.toLowerCase().replace(/-/g, ' ').includes(normalized) ||
-        p.title?.toLowerCase().replace(/\s+/g, '-') === id.toLowerCase()
-      );
+      const slugLower = id.toLowerCase();
+      const slugWords = slugLower.replace(/-/g, ' ');
+
+      // Slug'dan sayısal suffix'i ayır (ör: "bitter-tablet-54" → "bitter tablet")
+      const withoutTrailingNum = slugWords.replace(/\s+\d+$/, '').trim();
+
+      return products.find(p => {
+        const titleLower = p.title?.toLowerCase() || '';
+        const titleSlug = titleLower.replace(/[^a-z0-9öüşıçğ\s]/g, '').replace(/\s+/g, ' ').trim();
+
+        // Tam eşleşme (slug → title)
+        if (titleSlug === slugWords || titleSlug === withoutTrailingNum) return true;
+        // Title slug'a dönüştürüldüğünde eşleşme
+        const titleAsSlug = titleLower.replace(/[^a-z0-9öüşıçğ\s]/g, '').replace(/\s+/g, '-').trim();
+        if (titleAsSlug === slugLower || titleAsSlug === withoutTrailingNum.replace(/\s+/g, '-')) return true;
+        // Title, slug kelimelerini içeriyorsa (kısmi eşleşme)
+        if (withoutTrailingNum.length >= 3 && titleSlug.includes(withoutTrailingNum)) return true;
+
+        return false;
+      });
     }
     return undefined;
   }, [id, products]);

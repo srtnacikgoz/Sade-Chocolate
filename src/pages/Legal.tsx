@@ -42,7 +42,12 @@ export const Legal: React.FC = () => {
 
   const renderContent = () => {
     const getContent = (contentKey: string) => {
-      return legalData?.[language]?.[contentKey] || 'İçerik yükleniyor...';
+      const raw = legalData?.[language]?.[contentKey] || 'İçerik yükleniyor...';
+      // Danışman notlarını filtrele (yanlışlıkla CMS'e girilmişse)
+      if (typeof raw === 'string' && /^(Sertan\s+Bey|Merhaba\s+Sertan|\[DANIŞMAN|\[NOT:|\[TODO:)/i.test(raw.trim())) {
+        return 'İçerik güncelleniyor...';
+      }
+      return raw;
     };
 
     switch (type) {
